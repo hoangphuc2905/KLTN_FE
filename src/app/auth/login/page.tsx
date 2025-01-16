@@ -30,7 +30,7 @@ const LoginPage: React.FC = () => {
             <input
               type="text"
               id="mssv"
-              placeholder="20123456"
+              placeholder="21036541"
               value={mssv}
               onChange={(e) => setMSSV(e.target.value)}
               required
