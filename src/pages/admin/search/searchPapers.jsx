@@ -11,7 +11,7 @@ const SearchPapers = () => {
     {
       id: 1,
       title: "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
+      author: "Nguyen Duy Thanh",
       department: "Khoa CNHH",
       views: 100,
       downloads: 27,
