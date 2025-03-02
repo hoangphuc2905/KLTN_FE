@@ -1,20 +1,24 @@
 import { Routes, Route, useNavigate } from "react-router-dom";
-import Login from "./app/auth/login/page";
 import Search from "./pages/admin/search/page";
+import LoginPage from "./app/auth/login/LoginPage";
+import UserHomePage from "./pages/user/home/HomePage";
 
 const App = () => {
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
-  const handleLoginClick = () => {
-    navigate("/admin/search");
-  };
+  // const handleLoginClick = () => {
+  //   navigate("/admin/search");
+  // };
 
   return (
     <div>
-      <button onClick={handleLoginClick}>Login</button>
+      {/* <Header /> */}
       <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/home" element={<UserHomePage />} />
         <Route path="/admin/search" element={<Search />} />
       </Routes>
+      {/* <Footer /> */}
     </div>
   );
 };
