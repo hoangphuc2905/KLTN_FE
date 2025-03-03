@@ -35,6 +35,19 @@ const HomePage = () => {
       viewCount: 150,
       commentCount: 35,
     },
+    {
+      id: "3",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
   ];
 
   const recentPapers = [
@@ -65,7 +78,7 @@ const HomePage = () => {
     activeTab === "recent" ? recentPapers : featuredPapers;
 
   return (
-    <div className="flex flex-col pb-7 bg-slate-200">
+    <div className="flex flex-col pb-7 bg-slate-200 pt-[80px]">
       <div className="w-full bg-white">
         <Header user={user} />
       </div>

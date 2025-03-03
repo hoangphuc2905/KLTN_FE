@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import authApi from "../../../api/authApi";
-import Logo from "../../../assets/logoLogin.png";
-import Image from "../../../assets/background.png";
+const Logo = new URL("../../../assets/logoLogin.png", import.meta.url).href;
+const Image = new URL("../../../assets/background.png", import.meta.url).href;
 
 const LoginPage = () => {
   const [user_id, setUser_id] = useState("");
