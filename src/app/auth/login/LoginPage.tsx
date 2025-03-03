@@ -1,18 +1,32 @@
 import React, { useState } from "react";
+import authApi from "../../../api/authApi";
 import Logo from "../../../assets/logoLogin.png";
 import Image from "../../../assets/background.png";
 
 const LoginPage = () => {
-  const [studentId, setStudentId] = useState("");
+  const [user_id, setUser_id] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login attempt with:", {
-      studentId,
-      password,
-    });
-    window.location.href = "/home";
+    setError("");
+    setLoading(true);
+
+    try {
+      const data = await authApi.login({ user_id, password });
+      console.log("Login successful:", data);
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user_id", data.user_id);
+      console.log("Login successful:", data);
+      console.log("Token:", data.user_id);
+      window.location.href = "/home";
+    } catch (err) {
+      setError(err.message || "Đăng nhập thất bại");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -48,38 +62,33 @@ const LoginPage = () => {
                 Nhập tài khoản và mật khẩu để đăng nhập hệ thống
               </p>
 
-              <div className="flex gap-2 self-start mt-6">
-                <span className="self-start text-sm font-bold text-red-500">
-                  *
-                </span>
-                <label
-                  htmlFor="student-id"
-                  className="flex-auto text-lg font-medium text-zinc-800"
-                >
-                  Mã số sinh viên / Mã số giảng viên
-                </label>
-              </div>
+              {error && (
+                <p className="text-red-500 mt-2 text-center">{error}</p>
+              )}
+
+              <label
+                htmlFor="student-id"
+                className="mt-6 text-lg font-medium text-zinc-800"
+              >
+                Mã số sinh viên / Mã số giảng viên{" "}
+                <span className="text-red-500">*</span>
+              </label>
 
               <input
                 id="student-id"
                 type="text"
-                value={studentId}
-                onChange={(e) => setStudentId(e.target.value)}
+                value={user_id}
+                onChange={(e) => setUser_id(e.target.value)}
                 placeholder="Nhập mã sinh viên / Mã giảng viên"
-                className="px-4 pt-2 pb-3 mt-4 text-lg rounded border border-blue-700 border-solid text-slate-500 max-md:pr-4 max-md:max-w-full"
+                className="px-4 py-2 mt-2 text-lg rounded border border-blue-700 text-slate-500"
               />
 
-              <div className="flex gap-1 self-start mt-6 max-md:mt-6 max-md:ml-2">
-                <span className="my-auto text-sm font-bold text-red-500">
-                  *
-                </span>
-                <label
-                  htmlFor="password"
-                  className="text-lg font-medium text-zinc-800"
-                >
-                  Mật khẩu
-                </label>
-              </div>
+              <label
+                htmlFor="password"
+                className="mt-6 text-lg font-medium text-zinc-800"
+              >
+                Mật khẩu <span className="text-red-500">*</span>
+              </label>
 
               <input
                 id="password"
@@ -87,14 +96,15 @@ const LoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Nhập mật khẩu"
-                className="px-4 py-3 mt-4 text-lg rounded border border-blue-700 border-solid text-slate-500 max-md:pr-4 max-md:max-w-full"
+                className="px-4 py-2 mt-2 text-lg rounded border border-blue-700 text-slate-500"
               />
 
               <button
                 type="submit"
-                className="self-end px-4 py-3 mt-12 text-lg font-bold text-center text-white bg-sky-500 rounded-xl max-md:mt-6 max-md:mr-1"
+                className="self-end px-4 py-3 mt-6 text-lg font-bold text-white bg-sky-500 rounded-xl disabled:opacity-50"
+                disabled={loading}
               >
-                Đăng nhập
+                {loading ? "Đang đăng nhập..." : "Đăng nhập"}
               </button>
             </form>
           </section>
