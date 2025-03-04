@@ -46,6 +46,10 @@ const Header = () => {
     window.location.href = "/";
   };
 
+  const openProfile = () => {
+    window.location.href = "/profile";
+  };
+
   return (
     <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
       <div className="max-w-screen-xl mx-auto flex items-center justify-between h-[70px] px-4 md:px-6 lg:px-8">
@@ -79,7 +83,7 @@ const Header = () => {
                 <div className="absolute top-full right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 border z-50">
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
-                    onClick={() => alert("Thông tin cá nhân")}
+                    onClick={openProfile}
                   >
                     👤 Thông tin cá nhân
                   </button>
