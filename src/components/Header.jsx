@@ -3,29 +3,31 @@ import Logo from "../assets/logoLogin.png";
 import userApi from "../../src/api/api";
 import { FaChevronDown } from "react-icons/fa";
 
-const Header = () => {
-  const [user, setUser] = useState(null);
+const Header = ({ user: propUser }) => {
+  const [user, setUser] = useState(propUser || null);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const user_id = localStorage.getItem("user_id");
-      if (!user_id) {
-        console.error("Thiếu user_id");
-        return;
-      }
+    if (!propUser) {
+      const fetchUserData = async () => {
+        const user_id = localStorage.getItem("user_id");
+        if (!user_id) {
+          console.error("Thiếu user_id");
+          return;
+        }
 
-      try {
-        const response = await userApi.getUserInfo(user_id);
-        setUser(response);
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin user:", error);
-      }
-    };
+        try {
+          const response = await userApi.getUserInfo(user_id);
+          setUser(response);
+        } catch (error) {
+          console.error("Lỗi khi lấy thông tin user:", error);
+        }
+      };
 
-    fetchUserData();
-  }, []);
+      fetchUserData();
+    }
+  }, [propUser]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
