@@ -31,7 +31,7 @@ const LoginPage = () => {
 
   return (
     <div className="flex overflow-hidden flex-col pb-24 bg-white max-md:pb-12">
-      <header className="flex flex-col items-center h-[100px] px-20 w-full bg-white shadow-[0px_4px_4px_rgba(0,0,0,0.25)] max-md:px-5 max-md:max-w-full">
+      <header className="flex flex-col items-center h-[60px] px-20 w-full bg-white shadow-[0px_4px_4px_rgba(0,0,0,0.25)] max-md:px-5 max-md:max-w-full">
         <img
           src={Logo}
           alt="Logo"

@@ -5,7 +5,6 @@ const API_URL = import.meta.env.VITE_API_URL;
 const authApi = {
   login: async (credentials) => {
     try {
-      // Ép kiểu user_id thành string trước khi gửi request
       const fixedCredentials = {
         user_id: String(credentials.user_id),
         password: credentials.password,

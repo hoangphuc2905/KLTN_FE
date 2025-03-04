@@ -1,24 +1,21 @@
 import { Routes, Route } from "react-router-dom";
+import Sidebar from "./components/Menu";
 import Search from "./pages/admin/search/page";
 import LoginPage from "./app/auth/login/LoginPage";
 import UserHomePage from "./pages/user/home/HomePage";
+import ProfilePage from "./pages/user/profile/ProfilePage";
 
 const App = () => {
-  // const navigate = useNavigate();
-
-  // const handleLoginClick = () => {
-  //   navigate("/admin/search");
-  // };
-
   return (
     <div>
-      {/* <Header /> */}
+      <Sidebar />
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/home" element={<UserHomePage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+
         <Route path="/admin/search" element={<Search />} />
       </Routes>
-      {/* <Footer /> */}
     </div>
   );
 };
