@@ -19,6 +19,18 @@ const authApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  changePassword: async (data) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/auth/change-password`,
+        data
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default authApi;

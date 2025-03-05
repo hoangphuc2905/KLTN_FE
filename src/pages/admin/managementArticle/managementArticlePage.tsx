@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "../../../components/header";
 import { Filter, Home, ChevronRight, FileText } from "lucide-react";
+import { Button } from "antd";
 
 const ManagementPapers = () => {
   const user = {
@@ -127,7 +128,7 @@ const ManagementPapers = () => {
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
         <div className="w-full bg-white">
-          <Header user={user} />
+          <Header />
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
@@ -146,7 +147,9 @@ const ManagementPapers = () => {
           <div className="flex border-b">
             <button
               className={`px-8 py-3 text-center ${
-                activeTab === "all" ? "border-b-2 border-[#00A3FF] text-[#00A3FF]" : "text-gray-700"
+                activeTab === "all"
+                  ? "border-b-2 border-[#00A3FF] text-[#00A3FF]"
+                  : "text-gray-700"
               }`}
               onClick={() => setActiveTab("all")}
             >
@@ -154,7 +157,9 @@ const ManagementPapers = () => {
             </button>
             <button
               className={`px-8 py-3 text-center ${
-                activeTab === "Đã duyệt" ? "border-b-2 border-[#00A3FF] text-[#00A3FF]" : "text-gray-700"
+                activeTab === "Đã duyệt"
+                  ? "border-b-2 border-[#00A3FF] text-[#00A3FF]"
+                  : "text-gray-700"
               }`}
               onClick={() => setActiveTab("Đã duyệt")}
             >
@@ -162,7 +167,9 @@ const ManagementPapers = () => {
             </button>
             <button
               className={`px-8 py-3 text-center ${
-                activeTab === "Đang chờ" ? "border-b-2 border-[#00A3FF] text-[#00A3FF]" : "text-gray-700"
+                activeTab === "Đang chờ"
+                  ? "border-b-2 border-[#00A3FF] text-[#00A3FF]"
+                  : "text-gray-700"
               }`}
               onClick={() => setActiveTab("Đang chờ")}
             >
@@ -170,7 +177,9 @@ const ManagementPapers = () => {
             </button>
             <button
               className={`px-8 py-3 text-center ${
-                activeTab === "Từ chối" ? "border-b-2 border-[#00A3FF] text-[#00A3FF]" : "text-gray-700"
+                activeTab === "Từ chối"
+                  ? "border-b-2 border-[#00A3FF] text-[#00A3FF]"
+                  : "text-gray-700"
               }`}
               onClick={() => setActiveTab("Từ chối")}
             >
@@ -190,49 +199,99 @@ const ManagementPapers = () => {
 
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead> 
+                <thead>
                   <tr className="bg-[#F5F7FB] text-left">
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[50px] text-center">STT</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[200px]">LOẠI BÀI BÁO</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px] text-center">THUỘC NHÓM</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[300px]">TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[200px]">TÁC GIẢ</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px] text-center">SỐ T/GIẢ</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px]">VAI TRÒ</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">CQ ĐỨNG TÊN</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">NGÀY CÔNG BỐ</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">MINH CHỨNG</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">TRẠNG THÁI</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">NGÀY THÊM</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">CHỈNH SỬA</th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[250px]">GHI CHÚ</th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[50px] text-center">
+                      STT
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[200px]">
+                      LOẠI BÀI BÁO
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px] text-center">
+                      THUỘC NHÓM
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[300px]">
+                      TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[200px]">
+                      TÁC GIẢ
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px] text-center">
+                      SỐ T/GIẢ
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px]">
+                      VAI TRÒ
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
+                      CQ ĐỨNG TÊN
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
+                      NGÀY CÔNG BỐ
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
+                      MINH CHỨNG
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
+                      TRẠNG THÁI
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
+                      NGÀY THÊM
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
+                      CHỈNH SỬA
+                    </th>
+                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[250px]">
+                      GHI CHÚ
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {currentItems.map((paper) => (
                     <tr key={paper.id} className="border-t">
-                      <td className="px-4 py-3 min-w-[50px] text-center">{paper.id}</td>
-                      <td className="px-4 py-3 min-w-[200px]">{paper.paperType}</td>
-                      <td className="px-4 py-3 min-w-[100px] text-center">{paper.group}</td>
-                      <td className="px-4 py-3 max-w-md min-w-[300px]">{paper.title}</td>
-                      <td className="px-4 py-3 min-w-[200px]">{paper.authors}</td>
-                      <td className="px-4 py-3 min-w-[100px] text-center">{paper.authorCount}</td>
+                      <td className="px-4 py-3 min-w-[50px] text-center">
+                        {paper.id}
+                      </td>
+                      <td className="px-4 py-3 min-w-[200px]">
+                        {paper.paperType}
+                      </td>
+                      <td className="px-4 py-3 min-w-[100px] text-center">
+                        {paper.group}
+                      </td>
+                      <td className="px-4 py-3 max-w-md min-w-[300px]">
+                        {paper.title}
+                      </td>
+                      <td className="px-4 py-3 min-w-[200px]">
+                        {paper.authors}
+                      </td>
+                      <td className="px-4 py-3 min-w-[100px] text-center">
+                        {paper.authorCount}
+                      </td>
                       <td className="px-4 py-3 min-w-[100px]">{paper.role}</td>
-                      <td className="px-4 py-3 min-w-[150px]">{paper.institution}</td>
-                      <td className="px-4 py-3 min-w-[150px]">{paper.publicationDate}</td>
+                      <td className="px-4 py-3 min-w-[150px]">
+                        {paper.institution}
+                      </td>
+                      <td className="px-4 py-3 min-w-[150px]">
+                        {paper.publicationDate}
+                      </td>
                       <td className="px-4 py-3 min-w-[105px]">
                         <div className="flex-col text-[#00A3FF]">
-                          <button className="hover:underline">Xem link |</button>
+                          <button className="hover:underline">
+                            Xem link |
+                          </button>
                           <button className="hover:underline">Xem file</button>
                         </div>
                       </td>
                       <td className="px-4 py-3 min-w-[150px]">
-                        <span className={`${getStatusColor(paper.status)}`}>{paper.status}</span>
+                        <span className={`${getStatusColor(paper.status)}`}>
+                          {paper.status}
+                        </span>
                       </td>
-                      <td className="px-4 py-3 min-w-[150px]">{paper.dateAdded}</td>
+                      <td className="px-4 py-3 min-w-[150px]">
+                        {paper.dateAdded}
+                      </td>
                       <td className="px-4 py-3 min-w-[150px]">
                         {paper.status === "Đang chờ" && (
-                          <button className="text-[#00A3FF]">
+                          <Button className="text-[#00A3FF]">
                             <svg
                               width="20"
                               height="20"
@@ -245,10 +304,12 @@ const ManagementPapers = () => {
                                 fill="currentColor"
                               />
                             </svg>
-                          </button>
+                          </Button>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-red-600 min-w-[250px]">{paper.note}</td>
+                      <td className="px-4 py-3 text-red-600 min-w-[250px]">
+                        {paper.note}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -260,21 +321,37 @@ const ManagementPapers = () => {
                 <span>Rows per page: {itemsPerPage}</span>
               </div>
               <div className="flex items-center gap-4">
-                <span>{indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredPapers.length)} of {filteredPapers.length}</span>
+                <span>
+                  {indexOfFirstItem + 1}-
+                  {Math.min(indexOfLastItem, filteredPapers.length)} of{" "}
+                  {filteredPapers.length}
+                </span>
                 <div className="flex gap-2">
-                  <button
+                  <Button
                     className="text-gray-400"
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
                     disabled={currentPage === 1}
                   >
                     <ChevronRight className="w-4 h-4 rotate-180" />
-                  </button>
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredPapers.length / itemsPerPage)))}
-                    disabled={currentPage === Math.ceil(filteredPapers.length / itemsPerPage)}
+                  </Button>
+                  <Button
+                    onClick={() =>
+                      setCurrentPage((prev) =>
+                        Math.min(
+                          prev + 1,
+                          Math.ceil(filteredPapers.length / itemsPerPage)
+                        )
+                      )
+                    }
+                    disabled={
+                      currentPage ===
+                      Math.ceil(filteredPapers.length / itemsPerPage)
+                    }
                   >
                     <ChevronRight className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
