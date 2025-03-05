@@ -2,32 +2,32 @@ import { useEffect, useState, useRef } from "react";
 import Logo from "../assets/logoLogin.png";
 import userApi from "../../src/api/api";
 import { FaChevronDown } from "react-icons/fa";
+import ChangePasswordPopup from "../pages/user/profile/ChangePasswordPopup";
 
-const Header = ({ user: propUser }) => {
-  const [user, setUser] = useState(propUser || null);
+const Header = () => {
+  const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showChangePasswordPopup, setShowChangePasswordPopup] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
-    if (!propUser) {
-      const fetchUserData = async () => {
-        const user_id = localStorage.getItem("user_id");
-        if (!user_id) {
-          console.error("Thiếu user_id");
-          return;
-        }
+    const fetchUserData = async () => {
+      const user_id = localStorage.getItem("user_id");
+      if (!user_id) {
+        console.error("Thiếu user_id");
+        return;
+      }
 
-        try {
-          const response = await userApi.getUserInfo(user_id);
-          setUser(response);
-        } catch (error) {
-          console.error("Lỗi khi lấy thông tin user:", error);
-        }
-      };
+      try {
+        const response = await userApi.getUserInfo(user_id);
+        setUser(response);
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin user:", error);
+      }
+    };
 
-      fetchUserData();
-    }
-  }, [propUser]);
+    fetchUserData();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -50,6 +50,14 @@ const Header = ({ user: propUser }) => {
 
   const openProfile = () => {
     window.location.href = "/profile";
+  };
+
+  const openUpdateProfile = () => {
+    window.location.href = "/update-profile";
+  };
+
+  const openWorkHistory = () => {
+    window.location.href = "/work-history";
   };
 
   return (
@@ -82,7 +90,7 @@ const Header = ({ user: propUser }) => {
 
               {/* Menu Dropdown */}
               {menuOpen && (
-                <div className="absolute top-full right-0 mt-2 w-48 bg-white shadow-lg rounded-lg py-2 border z-50">
+                <div className="absolute top-full left-0 mt-2 w-60 bg-white shadow-lg rounded-lg py-2 border z-50">
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
                     onClick={openProfile}
@@ -91,7 +99,19 @@ const Header = ({ user: propUser }) => {
                   </button>
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
-                    onClick={() => alert("Đổi mật khẩu")}
+                    onClick={openUpdateProfile}
+                  >
+                    👤 Cập nhật thông tin cá nhân
+                  </button>
+                  <button
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+                    onClick={openWorkHistory}
+                  >
+                    👤 Quá trình công tác
+                  </button>
+                  <button
+                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+                    onClick={() => setShowChangePasswordPopup(true)}
                   >
                     🔑 Đổi mật khẩu
                   </button>
@@ -109,6 +129,11 @@ const Header = ({ user: propUser }) => {
           )}
         </div>
       </div>
+      {showChangePasswordPopup && (
+        <ChangePasswordPopup
+          onClose={() => setShowChangePasswordPopup(false)}
+        />
+      )}
     </header>
   );
 };

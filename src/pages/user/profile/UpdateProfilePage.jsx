@@ -1,0 +1,223 @@
+import { useEffect, useState } from "react";
+import Header from "../../../components/header";
+import userApi from "../../../api/api";
+
+const UpdateProfilePage = () => {
+  const [user, setUser] = useState({
+    user_id: "",
+    start_date: "",
+    full_name: "",
+    gender: "",
+    date_of_birth: "",
+    faculty: "",
+    address: "",
+    email: "",
+    cccd: "",
+    phone: "",
+  });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const user_id = localStorage.getItem("user_id");
+      if (!user_id) {
+        console.error("Thiếu user_id");
+        return;
+      }
+
+      try {
+        const response = await userApi.getUserInfo(user_id);
+        setUser(response);
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin user:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const formatDate = (dateString) => {
+    const options = { year: "numeric", month: "2-digit", day: "2-digit" };
+    return new Date(dateString).toLocaleDateString("vi-VN", options);
+  };
+
+  const translateGender = (gender) => {
+    if (gender === "male") return "Nam";
+    if (gender === "female") return "Nữ";
+    return "Khác";
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUser((prevUser) => ({
+      ...prevUser,
+      [name]: value,
+    }));
+  };
+
+  return (
+    <div className="bg-[#E7ECF0] min-h-screen">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+        <div className="w-full bg-white">
+          <Header />
+        </div>
+
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
+          <div className="flex items-center gap-2 text-gray-600">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
+              alt="Home Icon"
+              className="w-5 h-5"
+            />
+            <span>Trang chủ</span>
+            <span className="text-gray-400"> &gt; </span>
+            <span className="font-semibold text-sky-900">
+              Cập nhật thông tin cá nhân
+            </span>
+          </div>
+        </div>
+
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
+          <section className="flex flex-col self-stretch py-6 pr-px pl-11 bg-white rounded-lg max-md:pl-5 max-md:max-w-full">
+            <section className="flex relative flex-col items-center self-stretch px-20 pt-5 pb-11 rounded-lg min-h-fit max-md:px-5 max-md:max-w-full">
+              <div className="flex relative flex-col max-w-full w-[1234px]">
+                <img
+                  src={user?.avatar}
+                  className="object-contain self-center ml-6 max-w-full aspect-[0.94] rounded-[250px] w-[150px]"
+                  alt="User avatar"
+                />
+                <p className="mt-6 mr-20 ml-10 text-base font-semibold leading-none text-red-600 max-md:mr-2.5 max-md:max-w-full">
+                  Lưu ý: Để chỉnh sửa những thông tin có ô "màu xám" Thầy/ cô và
+                  sinh viên liên hệ Chuyên viên Tú phòng CTHC để cập nhật từ
+                  phần mềm nhân sự.
+                </p>
+
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                  {/* Mã số sinh viên */}
+                  <label className="font-medium flex items-center text-base">
+                    Mã số sinh viên:
+                  </label>
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                    {user?.user_id}
+                  </div>
+
+                  {/* Ngày vào trường */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Ngày vào trường:
+                  </label>
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                    {formatDate(user?.start_date)}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                  {/* Họ và tên */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Họ và tên:
+                  </label>
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                    {user?.full_name}
+                  </div>
+
+                  {/* Giới tính */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Giới tính:
+                  </label>
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                    {translateGender(user?.gender)}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                  {/* Ngày sinh */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Ngày sinh:
+                  </label>
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                    {formatDate(user?.date_of_birth)}
+                  </div>
+
+                  {/* Khoa */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Khoa:
+                  </label>
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                    {user?.faculty}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                  {/* CCCD */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    CCCD:
+                  </label>
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                    {user?.cccd}
+                  </div>
+
+                  {/* Số điện thoại */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Số điện thoại:
+                  </label>
+                  <input
+                    type="text"
+                    name="phone"
+                    value={user?.phone}
+                    onChange={handleChange}
+                    className="border border-gray-300 rounded-md p-3 h-[35px] col-span-1 bg-white outline-none text-base"
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                  {/* Địa chỉ liên hệ */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Địa chỉ liên hệ:
+                  </label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={user?.address}
+                    onChange={handleChange}
+                    className="border border-gray-300 rounded-md p-3 h-[45px] col-span-1 bg-white outline-none text-base"
+                  />
+
+                  {/* Email */}
+                  <label className="font-medium flex items-center col-span-1 text-base">
+                    Email:
+                  </label>
+                  <input
+                    type="text"
+                    name="email"
+                    value={user?.email}
+                    onChange={handleChange}
+                    className="border border-gray-300 rounded-md p-3 h-[45px] col-span-1 bg-white outline-none text-base"
+                  />
+                </div>
+
+                <div className="flex gap-9 self-end mt-8 max-w-full text-base font-semibold leading-none text-white w-[257px] max-md:mr-1">
+                  <button
+                    className="flex flex-1 justify-center items-center whitespace-nowrap bg-red-600 rounded-md h-[35px]"
+                    onClick={() => console.log("Cancel button clicked")}
+                  >
+                    <span className="gap-2.5 self-stretch px-10 py-3 my-auto max-md:px-5">
+                      Hủy
+                    </span>
+                  </button>
+                  <button
+                    className="flex flex-1 justify-center items-center bg-sky-500 rounded-md h-[35px]"
+                    onClick={() => console.log("Save button clicked")}
+                  >
+                    <span className="gap-2.5 self-stretch px-10 py-3 my-auto max-md:px-5">
+                      Lưu
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </section>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UpdateProfilePage;

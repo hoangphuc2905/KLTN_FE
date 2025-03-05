@@ -19,9 +19,13 @@ const LoginPage = () => {
       console.log("Login successful:", data);
       localStorage.setItem("token", data.token);
       localStorage.setItem("user_id", data.user_id);
-      console.log("Login successful:", data);
-      console.log("Token:", data.user_id);
-      window.location.href = "/home";
+      localStorage.setItem("role", data.role);
+
+      if (data.role === "admin") {
+        window.location.href = "/admin/search";
+      } else {
+        window.location.href = "/home";
+      }
     } catch (err) {
       setError(err.message || "Đăng nhập thất bại");
     } finally {

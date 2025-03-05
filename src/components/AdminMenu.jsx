@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaBars,
   FaTimes,
@@ -11,21 +11,24 @@ import {
 } from "react-icons/fa";
 import "./Sidebar.scss";
 
-const PopupMenu = () => {
+const AdminMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const location = useLocation();
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const toggleStatsMenu = () => setIsStatsOpen(!isStatsOpen);
 
+  if (location.pathname === "/") {
+    return null;
+  }
+
   return (
     <>
-      {/* Nút mở menu */}
       <button className="menu-toggle-btn" onClick={toggleMenu}>
         <FaBars />
       </button>
 
-      {/* Menu popup */}
       <div className={`popup-menu ${isOpen ? "open" : ""}`}>
         <button className="close-btn" onClick={toggleMenu}>
           <FaTimes />
@@ -40,7 +43,6 @@ const PopupMenu = () => {
             <FaNewspaper /> <span>Bài Báo</span>
           </Link>
 
-          {/* Thống kê - Có submenu */}
           <div className="menu-item has-submenu" onClick={toggleStatsMenu}>
             <FaChartBar /> <span>Thống Kê</span>
           </div>
@@ -72,10 +74,9 @@ const PopupMenu = () => {
         </nav>
       </div>
 
-      {/* Background overlay */}
       {isOpen && <div className="overlay" onClick={toggleMenu}></div>}
     </>
   );
 };
 
-export default PopupMenu;
+export default AdminMenu;
