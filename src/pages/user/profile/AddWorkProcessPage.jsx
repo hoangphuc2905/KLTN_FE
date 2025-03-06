@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+// eslint-disable-next-line react/prop-types
 const AddWorkProcessPage = ({ onClose }) => {
   const [formData, setFormData] = useState({
     fromDate: "",

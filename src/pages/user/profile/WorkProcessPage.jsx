@@ -5,7 +5,7 @@ import userApi from "../../../api/api";
 import AddWorkProcessPage from "./AddWorkProcessPage";
 
 const WorkProcessPage = () => {
-  const [workProcesses, setWorkProcesses] = useState([]);
+  const [setWorkProcesses] = useState([]);
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
   useEffect(() => {
     const fetchWorkProcesses = async () => {

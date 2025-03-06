@@ -16,7 +16,7 @@ const HomePage = () => {
       department: "Khoa CNHH",
       publishDate: "20/02/2025",
       description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols. Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
+        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
       thumbnailUrl:
         "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
       viewCount: 100,
@@ -147,12 +147,12 @@ const HomePage = () => {
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div className="flex gap-4 p-4 rounded-lg items-center">
-            <select className="p-2 border rounded-lg w-48">
+            <select className="p-2 border rounded-lg w-48 text-sm">
               <option value="">Chọn danh mục</option>
               <option value="cnnt">Công nghệ thông tin</option>
               <option value="hoa-hoc">Hóa học</option>
             </select>
-            <select className="p-2 border rounded-lg w-48">
+            <select className="p-2 border rounded-lg w-48 text-sm">
               <option value="">Chọn loại tài liệu</option>
               <option value="luan-van">Luận văn</option>
               <option value="bai-bao">Bài báo</option>
@@ -160,11 +160,11 @@ const HomePage = () => {
 
             <input
               type="text"
-              className="p-2 border rounded-lg flex-1"
+              className="p-2 border rounded-lg flex-1 text-sm"
               placeholder="Nhập từ khóa tìm kiếm..."
             />
 
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg">
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">
               Tìm kiếm
             </button>
           </div>
@@ -177,51 +177,60 @@ const HomePage = () => {
                 {researchPapers.map((paper, index) => (
                   <article
                     key={paper.id}
-                    className={`flex flex-wrap gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:px-3 ${
+                    className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
                       index > 0 ? "mt-3" : ""
                     }`}
                   >
-                    <img
-                      src={paper.thumbnailUrl}
-                      className="object-contain shrink-0 self-start mt-2 max-w-full rounded-md aspect-[0.85] w-[150px]"
-                      alt={paper.title}
-                    />
-                    <div className="flex flex-col grow shrink-0 basis-0 w-fit max-md:max-w-full">
-                      <div className="flex flex-wrap gap-5 justify-between items-start max-md:max-w-full">
-                        <div className="flex flex-col mt-1 text-sky-900 max-md:max-w-full">
-                          <div className="flex items-center justify-between">
-                            <h2 className="text-xl font-bold max-w-[80%] break-words">
-                              {paper.title}
-                            </h2>
-                            <div className="flex gap-3 text-orange-500 ml-4">
-                              <img
-                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                                className="object-contain shrink-0 w-6 aspect-square"
-                                alt="Views icon"
-                              />
-                              <div className="my-auto">{paper.viewCount}</div>
-                              <img
-                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                                className="object-contain shrink-0 w-6 aspect-[1.2]"
-                                alt="Comments icon"
-                              />
-                              <div>{paper.commentCount}</div>
-                            </div>
+                    <div className="flex justify-center w-fit">
+                      <img
+                        src={paper.thumbnailUrl}
+                        className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
+                        alt={paper.title}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 w-full">
+                      {/* Hàng 1: Tiêu đề + Thông tin lượt xem */}
+                      <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-fit">
+                        {/* Tiêu đề */}
+                        <h2 className="text-sm font-bold break-words max-w-[100%] w-[500px] line-clamp-2">
+                          {paper.title}
+                        </h2>
+
+                        {/* Lượt xem + Bình luận */}
+                        <div className="flex flex-col items-center ml-[50px]">
+                          <div className="flex items-center gap-2 text-orange-500">
+                            <img
+                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                              className="object-contain w-4 aspect-square"
+                              alt="Views icon"
+                            />
+                            <div className="text-xs">{paper.viewCount}</div>
+                            <img
+                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                              className="object-contain w-4 aspect-[1.2]"
+                              alt="Comments icon"
+                            />
+                            <div className="text-xs">{paper.commentCount}</div>
                           </div>
-                          <div className="self-start mt-2 text-base">
-                            {paper.author}
-                          </div>
-                        </div>
-                        <div className="flex flex-col text-base">
-                          <div className="mt-3.5 italic text-neutral-800">
-                            Ngày đăng: {paper.publishDate}
+
+                          {/* Ngày đăng */}
+                          <div className="text-xs text-neutral-500 mt-[5%]">
+                            {paper.publishDate}
                           </div>
                         </div>
                       </div>
-                      <p className="mt-4 mr-8 text-base text-neutral-800 max-md:mr-2.5 max-md:max-w-full">
+
+                      {/* Hàng 2: Tác giả */}
+                      <div className="text-sm text-sky-900">{paper.author}</div>
+
+                      {/* Hàng 3: Mô tả */}
+                      <p className="text-sm text-neutral-800 break-words max-w-[100%] line-clamp-2">
                         {paper.description}
                       </p>
-                      <div className="self-start mt-4 text-base text-sky-900">
+
+                      {/* Hàng 4: Bộ phận */}
+                      <div className="text-sm text-sky-900">
                         {paper.department}
                       </div>
                     </div>
@@ -295,7 +304,7 @@ const HomePage = () => {
                     {displayedPapers.map((paper, index) => (
                       <React.Fragment key={index}>
                         <h3
-                          className={`self-stretch text-base font-bold tracking-tight leading-4 text-blue-950 ${
+                          className={`self-stretch text-sm font-bold tracking-tight leading-4 text-blue-950 ${
                             index > 0 ? "mt-8" : ""
                           }`}
                         >

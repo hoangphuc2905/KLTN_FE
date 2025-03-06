@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import authApi from "../../../api/authApi";
 
+// eslint-disable-next-line react/prop-types
 const ChangePasswordPopup = ({ onClose }) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
