@@ -57,7 +57,7 @@ const Header = () => {
   };
 
   const openWorkHistory = () => {
-    window.location.href = "/work-history";
+    window.location.href = "/work-process";
   };
 
   return (
