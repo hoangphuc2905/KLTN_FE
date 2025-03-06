@@ -77,85 +77,85 @@ const UpdateProfilePage = () => {
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <section className="flex flex-col self-stretch py-6 pr-px pl-11 bg-white rounded-lg max-md:pl-5 max-md:max-w-full">
-            <section className="flex relative flex-col items-center self-stretch px-20 pt-5 pb-11 rounded-lg min-h-fit max-md:px-5 max-md:max-w-full">
-              <div className="flex relative flex-col max-w-full w-[1234px]">
+          <section className="flex flex-col self-stretch py-2 pr-px pl-11 bg-white rounded-lg max-md:pl-5 max-md:max-w-full">
+            <section className="flex relative flex-col items-center self-stretch px-20 pb-11 rounded-lg min-h-fit max-md:px-5 max-md:max-w-full">
+              <div className="flex relative flex-col max-w-full w-[1300px] max-md:w-full">
                 <img
                   src={user?.avatar}
-                  className="object-contain self-center ml-6 max-w-full aspect-[0.94] rounded-[250px] w-[150px]"
+                  className="object-contain self-center max-w-full aspect-[0.94] rounded-[250px] w-[150px] h-[150px]"
                   alt="User avatar"
                 />
-                <p className="mt-6 mr-20 ml-10 text-base font-semibold leading-none text-red-600 max-md:mr-2.5 max-md:max-w-full">
-                  Lưu ý: Để chỉnh sửa những thông tin có ô "màu xám" Thầy/ cô và
-                  sinh viên liên hệ Chuyên viên Tú phòng CTHC để cập nhật từ
-                  phần mềm nhân sự.
+                <p className="mt-4 mr-20 ml-10 text-sm font-semibold leading-none text-red-600 max-md:mr-2.5 max-md:max-w-full">
+                  Lưu ý: Để chỉnh sửa những thông tin có ô (màu xám) Thầy/ cô và
+                  sinh viên liên hệ Chuyên viên phòng CTHC để cập nhật từ phần
+                  mềm nhân sự.
                 </p>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-4 w-full text-sm leading-none text-black">
                   {/* Mã số sinh viên */}
-                  <label className="font-medium flex items-center text-base">
+                  <label className="font-medium flex items-center text-sm">
                     Mã số sinh viên:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
                     {user?.user_id}
                   </div>
 
                   {/* Ngày vào trường */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Ngày vào trường:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
                     {formatDate(user?.start_date)}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
                   {/* Họ và tên */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Họ và tên:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
                     {user?.full_name}
                   </div>
 
                   {/* Giới tính */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Giới tính:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
                     {translateGender(user?.gender)}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
                   {/* Ngày sinh */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Ngày sinh:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
                     {formatDate(user?.date_of_birth)}
                   </div>
 
                   {/* Khoa */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Khoa:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
                     {user?.faculty}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
                   {/* CCCD */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     CCCD:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[35px] flex items-center col-span-1 text-base">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
                     {user?.cccd}
                   </div>
 
                   {/* Số điện thoại */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Số điện thoại:
                   </label>
                   <input
@@ -163,13 +163,13 @@ const UpdateProfilePage = () => {
                     name="phone"
                     value={user?.phone}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[35px] col-span-1 bg-white outline-none text-base"
+                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm"
                   />
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-base leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
                   {/* Địa chỉ liên hệ */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Địa chỉ liên hệ:
                   </label>
                   <input
@@ -177,11 +177,11 @@ const UpdateProfilePage = () => {
                     name="address"
                     value={user?.address}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[45px] col-span-1 bg-white outline-none text-base"
+                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm"
                   />
 
                   {/* Email */}
-                  <label className="font-medium flex items-center col-span-1 text-base">
+                  <label className="font-medium flex items-center col-span-1 text-sm">
                     Email:
                   </label>
                   <input
@@ -189,16 +189,16 @@ const UpdateProfilePage = () => {
                     name="email"
                     value={user?.email}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[45px] col-span-1 bg-white outline-none text-base"
+                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm"
                   />
                 </div>
 
-                <div className="flex gap-9 self-end mt-8 max-w-full text-base font-semibold leading-none text-white w-[257px] max-md:mr-1">
+                <div className="flex gap-9 self-end mt-8 max-w-full text-sm font-semibold leading-none text-white w-[257px] max-md:mr-1">
                   <button
                     className="flex flex-1 justify-center items-center whitespace-nowrap bg-red-600 rounded-md h-[35px]"
                     onClick={() => console.log("Cancel button clicked")}
                   >
-                    <span className="gap-2.5 self-stretch px-10 py-3 my-auto max-md:px-5">
+                    <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5">
                       Hủy
                     </span>
                   </button>
@@ -206,7 +206,7 @@ const UpdateProfilePage = () => {
                     className="flex flex-1 justify-center items-center bg-sky-500 rounded-md h-[35px]"
                     onClick={() => console.log("Save button clicked")}
                   >
-                    <span className="gap-2.5 self-stretch px-10 py-3 my-auto max-md:px-5">
+                    <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5">
                       Lưu
                     </span>
                   </button>

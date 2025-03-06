@@ -7,6 +7,7 @@ import LoginPage from "./app/auth/login/LoginPage";
 import UserHomePage from "./pages/user/home/HomePage";
 import ProfilePage from "./pages/user/profile/ProfilePage";
 import UpdateProfilePage from "./pages/user/profile/UpdateProfilePage";
+import WorkProcessPage from "./pages/user/profile/WorkProcessPage";
 import ManagementAccount from "./pages/admin/managementAccount/managementAccountPage";
 import ManagementAriticle from "./pages/admin/managementArticle/managementArticlePage";
 
@@ -27,6 +28,7 @@ const App = () => {
         <Route path="/home" element={<UserHomePage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/update-profile" element={<UpdateProfilePage />} />
+        <Route path="/work-process" element={<WorkProcessPage />} />
 
         <Route path="/admin/search" element={<Search />} />
         <Route
