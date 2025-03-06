@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { message } from "antd";
 import Header from "../../../components/header";
 import userApi from "../../../api/api";
 
@@ -15,6 +16,7 @@ const UpdateProfilePage = () => {
     cccd: "",
     phone: "",
   });
+  const [initialUser, setInitialUser] = useState(null);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -27,6 +29,7 @@ const UpdateProfilePage = () => {
       try {
         const response = await userApi.getUserInfo(user_id);
         setUser(response);
+        setInitialUser(response);
       } catch (error) {
         console.error("Lỗi khi lấy thông tin user:", error);
       }
@@ -52,6 +55,27 @@ const UpdateProfilePage = () => {
       ...prevUser,
       [name]: value,
     }));
+  };
+
+  const handleSave = async () => {
+    const user_id = localStorage.getItem("user_id");
+    if (!user_id) {
+      console.error("Thiếu user_id");
+      return;
+    }
+
+    try {
+      const response = await userApi.updateUserProfile(user_id, user);
+      console.log("User profile updated:", response);
+      message.success("Cập nhật thông tin thành công!");
+    } catch (error) {
+      console.error("Lỗi khi cập nhật thông tin user:", error);
+      message.error("Lỗi khi cập nhật thông tin.");
+    }
+  };
+
+  const handleCancel = () => {
+    setUser(initialUser);
   };
 
   return (
@@ -196,7 +220,7 @@ const UpdateProfilePage = () => {
                 <div className="flex gap-9 self-end mt-8 max-w-full text-sm font-semibold leading-none text-white w-[257px] max-md:mr-1">
                   <button
                     className="flex flex-1 justify-center items-center whitespace-nowrap bg-red-600 rounded-md h-[35px]"
-                    onClick={() => console.log("Cancel button clicked")}
+                    onClick={handleCancel}
                   >
                     <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5">
                       Hủy
@@ -204,7 +228,7 @@ const UpdateProfilePage = () => {
                   </button>
                   <button
                     className="flex flex-1 justify-center items-center bg-sky-500 rounded-md h-[35px]"
-                    onClick={() => console.log("Save button clicked")}
+                    onClick={handleSave}
                   >
                     <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5">
                       Lưu
