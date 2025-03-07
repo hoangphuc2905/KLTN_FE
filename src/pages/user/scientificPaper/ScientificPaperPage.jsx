@@ -1,7 +1,7 @@
 import React from "react";
 import Header from "../../../components/header";
-import { Filter, ChevronRight } from "lucide-react";
-import { Button } from "antd";
+import { Filter } from "lucide-react";
+import { Button, Table } from "antd";
 
 const ScientificPaperPage = () => {
   const [activeTab, setActiveTab] = React.useState("all");
@@ -115,9 +115,119 @@ const ScientificPaperPage = () => {
     return paper.status === activeTab;
   });
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredPapers.slice(indexOfFirstItem, indexOfLastItem);
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+      align: "center",
+      className: "text-sm",
+    },
+    {
+      title: "LOẠI BÀI BÁO",
+      dataIndex: "paperType",
+      key: "paperType",
+      className: "text-sm",
+    },
+    {
+      title: "THUỘC NHÓM",
+      dataIndex: "group",
+      key: "group",
+      align: "center",
+      className: "text-sm",
+    },
+    {
+      title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
+      dataIndex: "title",
+      key: "title",
+      className: "text-sm",
+    },
+    {
+      title: "TÁC GIẢ",
+      dataIndex: "authors",
+      key: "authors",
+      className: "text-sm",
+    },
+    {
+      title: "SỐ T/GIẢ",
+      dataIndex: "authorCount",
+      key: "authorCount",
+      align: "center",
+      className: "text-sm",
+    },
+    {
+      title: "VAI TRÒ",
+      dataIndex: "role",
+      key: "role",
+      className: "text-sm",
+    },
+    {
+      title: "CQ ĐỨNG TÊN",
+      dataIndex: "institution",
+      key: "institution",
+      className: "text-sm",
+    },
+    {
+      title: "NGÀY CÔNG BỐ",
+      dataIndex: "publicationDate",
+      key: "publicationDate",
+      className: "text-sm",
+    },
+    {
+      title: "MINH CHỨNG",
+      key: "proof",
+      render: () => (
+        <div className="flex-col text-[#00A3FF]">
+          <button className="hover:underline">Xem link |</button>
+          <button className="hover:underline">Xem file</button>
+        </div>
+      ),
+      className: "text-sm",
+    },
+    {
+      title: "TRẠNG THÁI",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <span className={`${getStatusColor(status)} text-sm`}>{status}</span>
+      ),
+      className: "text-sm",
+    },
+    {
+      title: "NGÀY THÊM",
+      dataIndex: "dateAdded",
+      key: "dateAdded",
+      className: "text-sm",
+    },
+    {
+      title: "CHỈNH SỬA",
+      key: "edit",
+      render: (_, record) =>
+        record.status === "Đang chờ" && (
+          <Button className="text-[#00A3FF]">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+                fill="currentColor"
+              />
+            </svg>
+          </Button>
+        ),
+      className: "text-sm",
+    },
+    {
+      title: "GHI CHÚ",
+      dataIndex: "note",
+      key: "note",
+      className: "text-sm text-red-600",
+    },
+  ];
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -195,164 +305,18 @@ const ScientificPaperPage = () => {
               </button>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-[#F5F7FB] text-left">
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[50px] text-center">
-                      STT
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[200px]">
-                      LOẠI BÀI BÁO
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px] text-center">
-                      THUỘC NHÓM
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[300px]">
-                      TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[200px]">
-                      TÁC GIẢ
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px] text-center">
-                      SỐ T/GIẢ
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[100px]">
-                      VAI TRÒ
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
-                      CQ ĐỨNG TÊN
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
-                      NGÀY CÔNG BỐ
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
-                      MINH CHỨNG
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
-                      TRẠNG THÁI
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
-                      NGÀY THÊM
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[150px]">
-                      CHỈNH SỬA
-                    </th>
-                    <th className="px-4 py-3 text-gray-700 font-medium min-w-[250px]">
-                      GHI CHÚ
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {currentItems.map((paper) => (
-                    <tr key={paper.id} className="border-t">
-                      <td className="px-4 py-3 min-w-[50px] text-center">
-                        {paper.id}
-                      </td>
-                      <td className="px-4 py-3 min-w-[200px]">
-                        {paper.paperType}
-                      </td>
-                      <td className="px-4 py-3 min-w-[100px] text-center">
-                        {paper.group}
-                      </td>
-                      <td className="px-4 py-3 max-w-md min-w-[300px]">
-                        {paper.title}
-                      </td>
-                      <td className="px-4 py-3 min-w-[200px]">
-                        {paper.authors}
-                      </td>
-                      <td className="px-4 py-3 min-w-[100px] text-center">
-                        {paper.authorCount}
-                      </td>
-                      <td className="px-4 py-3 min-w-[100px]">{paper.role}</td>
-                      <td className="px-4 py-3 min-w-[150px]">
-                        {paper.institution}
-                      </td>
-                      <td className="px-4 py-3 min-w-[150px]">
-                        {paper.publicationDate}
-                      </td>
-                      <td className="px-4 py-3 min-w-[105px]">
-                        <div className="flex-col text-[#00A3FF]">
-                          <button className="hover:underline">
-                            Xem link |
-                          </button>
-                          <button className="hover:underline">Xem file</button>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 min-w-[150px]">
-                        <span className={`${getStatusColor(paper.status)}`}>
-                          {paper.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 min-w-[150px]">
-                        {paper.dateAdded}
-                      </td>
-                      <td className="px-4 py-3 min-w-[150px]">
-                        {paper.status === "Đang chờ" && (
-                          <Button className="text-[#00A3FF]">
-                            <svg
-                              width="20"
-                              height="20"
-                              viewBox="0 0 20 20"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                            >
-                              <path
-                                d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                                fill="currentColor"
-                              />
-                            </svg>
-                          </Button>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-red-600 min-w-[250px]">
-                        {paper.note}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex gap-6 justify-end mt-4 text-xs font-semibold tracking-wide text-slate-500">
-              <div className="flex items-center gap-2">
-                <span>Rows per page: {itemsPerPage}</span>
-              </div>
-              <div className="flex items-center gap-4">
-                <span>
-                  {indexOfFirstItem + 1}-
-                  {Math.min(indexOfLastItem, filteredPapers.length)} of{" "}
-                  {filteredPapers.length}
-                </span>
-                <div className="flex gap-2">
-                  <Button
-                    className="text-gray-400"
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
-                    }
-                    disabled={currentPage === 1}
-                  >
-                    <ChevronRight className="w-4 h-4 rotate-180" />
-                  </Button>
-                  <Button
-                    onClick={() =>
-                      setCurrentPage((prev) =>
-                        Math.min(
-                          prev + 1,
-                          Math.ceil(filteredPapers.length / itemsPerPage)
-                        )
-                      )
-                    }
-                    disabled={
-                      currentPage ===
-                      Math.ceil(filteredPapers.length / itemsPerPage)
-                    }
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </div>
+            <Table
+              columns={columns}
+              dataSource={filteredPapers}
+              pagination={{
+                current: currentPage,
+                pageSize: itemsPerPage,
+                total: filteredPapers.length,
+                onChange: (page) => setCurrentPage(page),
+              }}
+              rowKey="id"
+              className="text-sm"
+            />
           </div>
         </div>
       </div>
