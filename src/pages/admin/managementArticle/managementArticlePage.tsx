@@ -1,7 +1,7 @@
 import React from "react";
 import Header from "../../../components/header";
 import { Filter, Home, ChevronRight, FileText } from "lucide-react";
-import { Button } from "antd";
+import { Input, Select } from "antd";
 
 const ManagementPapers = () => {
   const user = {
@@ -9,9 +9,19 @@ const ManagementPapers = () => {
     role: "Admin",
   };
 
-  const [activeTab, setActiveTab] = React.useState("all");
+  const [activeTab, setActiveTab] = React.useState("user");
+  const [showFilter, setShowFilter] = React.useState(false);
   const [currentPage, setCurrentPage] = React.useState(1);
   const itemsPerPage = 3;
+
+  const [filterPaperType, setFilterPaperType] = React.useState("Tất cả");
+  const [filterGroup, setFilterGroup] = React.useState("Tất cả");
+  const [filterPaperTitle, setFilterPaperTitle] = React.useState("");
+  const [filterAuthorName, setFilterAuthorName] = React.useState("");
+  const [filterAuthorCount, setFilterAuthorCount] = React.useState("");
+  const [filterRole, setFilterRole] = React.useState("Tất cả");
+  const [filterInstitution, setFilterInstitution] = React.useState("Tất cả");
+  const [filterStatus, setFilterStatus] = React.useState("Tất cả");
 
   const papers = [
     {
@@ -115,9 +125,34 @@ const ManagementPapers = () => {
     }
   };
 
+  const uniquePaperTypes = [
+    "Tất cả",
+    ...new Set(papers.map((paper) => paper.paperType)),
+  ];
+  const uniqueGroups = [
+    "Tất cả",
+    ...new Set(papers.map((paper) => paper.group)),
+  ];
+  const uniqueRoles = ["Tất cả", ...new Set(papers.map((paper) => paper.role))];
+  const uniqueInstitutions = [
+    "Tất cả",
+    ...new Set(papers.map((paper) => paper.institution)),
+  ];
+  const uniqueStatuses = ["Tất cả", "Đã duyệt", "Đang chờ", "Từ chối"];
+
   const filteredPapers = papers.filter((paper) => {
-    if (activeTab === "all") return true;
-    return paper.status === activeTab;
+    return (
+      (filterPaperType === "Tất cả" || paper.paperType === filterPaperType) &&
+      (filterGroup === "Tất cả" || paper.group === filterGroup) &&
+      (filterPaperTitle === "" || paper.title.includes(filterPaperTitle)) &&
+      (filterAuthorName === "" || paper.authors.includes(filterAuthorName)) &&
+      (filterAuthorCount === "" ||
+        paper.authorCount.includes(filterAuthorCount)) &&
+      (filterRole === "Tất cả" || paper.role === filterRole) &&
+      (filterInstitution === "Tất cả" ||
+        paper.institution === filterInstitution) &&
+      (filterStatus === "Tất cả" || paper.status === filterStatus)
+    );
   });
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -191,10 +226,148 @@ const ManagementPapers = () => {
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="bg-white rounded-xl shadow-sm p-4">
             <div className="flex justify-end mb-4">
-              <button className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border">
+              <button
+                className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border"
+                onClick={() => setShowFilter(!showFilter)}
+              >
                 <Filter className="w-4 h-4" />
                 <span>Bộ lọc</span>
               </button>
+              {showFilter && (
+                <div className="absolute top-full mt-2 z-50 shadow-lg w-full max-w-[500px]">
+                  <form className="relative px-4 py-5 bg-white max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                    <div className="mb-3">
+                      <label className="block text-gray-700">
+                        Loại bài báo:
+                      </label>
+                      <Select
+                        value={filterPaperType}
+                        onChange={(value) => setFilterPaperType(value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      >
+                        {uniquePaperTypes.map((type) => (
+                          <Select.Option key={type} value={type}>
+                            {type}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="block text-gray-700">Thuộc nhóm:</label>
+                      <Select
+                        value={filterGroup}
+                        onChange={(value) => setFilterGroup(value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      >
+                        {uniqueGroups.map((group) => (
+                          <Select.Option key={group} value={group}>
+                            {group}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="block text-gray-700">
+                        Tên bài báo:
+                      </label>
+                      <Input
+                        type="text"
+                        value={filterPaperTitle}
+                        onChange={(e) => setFilterPaperTitle(e.target.value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="block text-gray-700">
+                        Tên tác giả:
+                      </label>
+                      <Input
+                        type="text"
+                        value={filterAuthorName}
+                        onChange={(e) => setFilterAuthorName(e.target.value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="block text-gray-700">Số tác giả:</label>
+                      <Input
+                        type="text"
+                        value={filterAuthorCount}
+                        onChange={(e) => setFilterAuthorCount(e.target.value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      />
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="block text-gray-700">Vai trò:</label>
+                      <Select
+                        value={filterRole}
+                        onChange={(value) => setFilterRole(value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      >
+                        {uniqueRoles.map((role) => (
+                          <Select.Option key={role} value={role}>
+                            {role}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="block text-gray-700">
+                        CQ đứng tên:
+                      </label>
+                      <Select
+                        value={filterInstitution}
+                        onChange={(value) => setFilterInstitution(value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      >
+                        {uniqueInstitutions.map((institution) => (
+                          <Select.Option key={institution} value={institution}>
+                            {institution}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div className="mb-3">
+                      <label className="block text-gray-700">Trạng thái:</label>
+                      <Select
+                        value={filterStatus}
+                        onChange={(value) => setFilterStatus(value)}
+                        className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full"
+                      >
+                        {uniqueStatuses.map((status) => (
+                          <Select.Option key={status} value={status}>
+                            {status}
+                          </Select.Option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterPaperType("Tất cả");
+                        setFilterGroup("Tất cả");
+                        setFilterPaperTitle("");
+                        setFilterAuthorName("");
+                        setFilterAuthorCount("");
+                        setFilterRole("Tất cả");
+                        setFilterInstitution("Tất cả");
+                        setFilterStatus("Tất cả");
+                      }}
+                      className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md"
+                    >
+                      Bỏ lọc tất cả
+                    </button>
+                  </form>
+                </div>
+              )}
             </div>
 
             <div className="overflow-x-auto">
@@ -291,7 +464,7 @@ const ManagementPapers = () => {
                       </td>
                       <td className="px-4 py-3 min-w-[150px]">
                         {paper.status === "Đang chờ" && (
-                          <Button className="text-[#00A3FF]">
+                          <button className="text-[#00A3FF]">
                             <svg
                               width="20"
                               height="20"
@@ -304,7 +477,7 @@ const ManagementPapers = () => {
                                 fill="currentColor"
                               />
                             </svg>
-                          </Button>
+                          </button>
                         )}
                       </td>
                       <td className="px-4 py-3 text-red-600 min-w-[250px]">
@@ -327,7 +500,7 @@ const ManagementPapers = () => {
                   {filteredPapers.length}
                 </span>
                 <div className="flex gap-2">
-                  <Button
+                  <button
                     className="text-gray-400"
                     onClick={() =>
                       setCurrentPage((prev) => Math.max(prev - 1, 1))
@@ -335,8 +508,8 @@ const ManagementPapers = () => {
                     disabled={currentPage === 1}
                   >
                     <ChevronRight className="w-4 h-4 rotate-180" />
-                  </Button>
-                  <Button
+                  </button>
+                  <button
                     onClick={() =>
                       setCurrentPage((prev) =>
                         Math.min(
@@ -351,7 +524,7 @@ const ManagementPapers = () => {
                     }
                   >
                     <ChevronRight className="w-4 h-4" />
-                  </Button>
+                  </button>
                 </div>
               </div>
             </div>

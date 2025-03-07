@@ -223,7 +223,7 @@ const UserManagement = () => {
                         <label className="block text-gray-700">Khoa:</label>
                         <Select
                           value={filterDepartment}
-                          onChange={(e) => setFilterDepartment(e.target.value)}
+                          onChange={(value) => setFilterDepartment(value)}
                           className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
                         >
                           {uniqueDepartments.map((department) => (
@@ -238,7 +238,7 @@ const UserManagement = () => {
                         <label className="block text-gray-700">Chức vụ:</label>
                         <Select
                           value={filterPosition}
-                          onChange={(e) => setFilterPosition(e.target.value)}
+                          onChange={(value) => setFilterPosition(value)}
                           className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
                         >
                           {uniquePositions.map((position) => (
@@ -255,7 +255,7 @@ const UserManagement = () => {
                         </label>
                         <Select
                           value={filterStatus}
-                          onChange={(e) => setFilterStatus(e.target.value)}
+                          onChange={(value) => setFilterStatus(value)}
                           className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
                         >
                           {uniqueStatuses.map((status) => (
