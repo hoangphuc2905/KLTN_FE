@@ -6,14 +6,17 @@ import {
   FaHome,
   FaClipboardList,
   FaNewspaper,
+  FaPlus,
 } from "react-icons/fa";
 import "./Sidebar.scss";
 
 const UserMenu = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSubMenuOpen, setIsSubMenuOpen] = useState(false);
   const location = useLocation();
 
   const toggleMenu = () => setIsOpen(!isOpen);
+  const toggleSubMenu = () => setIsSubMenuOpen(!isSubMenuOpen);
 
   if (location.pathname === "/") {
     return null;
@@ -35,9 +38,30 @@ const UserMenu = () => {
             <FaHome /> <span>Trang Chủ</span>
           </Link>
 
-          <Link to="/bai-bao" className="menu-item" onClick={toggleMenu}>
+          <div className="menu-item" onClick={toggleSubMenu}>
             <FaNewspaper /> <span>Bài Báo</span>
-          </Link>
+            <FaPlus
+              className={`submenu-toggle ${isSubMenuOpen ? "open" : ""}`}
+            />
+          </div>
+          {isSubMenuOpen && (
+            <div className="submenu">
+              <Link
+                to="/scientific-paper"
+                className="submenu-item"
+                onClick={toggleMenu}
+              >
+                <span>Danh sách bài báo</span>
+              </Link>
+              <Link
+                to="/add-scientific-paper"
+                className="submenu-item"
+                onClick={toggleMenu}
+              >
+                <span>Thêm bài báo</span>
+              </Link>
+            </div>
+          )}
 
           <Link to="/user-dashboard" className="menu-item" onClick={toggleMenu}>
             <FaClipboardList /> <span>User Dashboard</span>
