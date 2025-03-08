@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import { useState } from "react";
+import { message } from "antd";
 import authApi from "../../../api/authApi";
 const Logo = new URL("../../../assets/logoLogin.png", import.meta.url).href;
 const Image = new URL("../../../assets/background.png", import.meta.url).href;
@@ -6,12 +7,10 @@ const Image = new URL("../../../assets/background.png", import.meta.url).href;
 const LoginPage = () => {
   const [user_id, setUser_id] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     try {
@@ -21,13 +20,17 @@ const LoginPage = () => {
       localStorage.setItem("user_id", data.user_id);
       localStorage.setItem("role", data.role);
 
+      message.success(`Đăng nhập thành công. Chào mừng ${data.user_id}!`);
+
       if (data.role === "admin") {
         window.location.href = "/admin/search";
       } else {
         window.location.href = "/home";
       }
     } catch (err) {
-      setError(err.message || "Đăng nhập thất bại");
+      message.error(
+        err.response?.data?.message || "Thông tin đăng nhập không chính xác"
+      );
     } finally {
       setLoading(false);
     }
@@ -65,10 +68,6 @@ const LoginPage = () => {
               <p className="mt-6 ml-2 text-lg text-slate-500 max-md:mt-5 max-md:mr-1 max-md:max-w-full">
                 Nhập tài khoản và mật khẩu để đăng nhập hệ thống
               </p>
-
-              {error && (
-                <p className="text-red-500 mt-2 text-center">{error}</p>
-              )}
 
               <label
                 htmlFor="student-id"
