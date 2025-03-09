@@ -5,8 +5,9 @@ import Header from "../../../components/header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
 
 const WorkProcessPage = () => {
-  const [setWorkProcesses] = useState([]);
+  const [workProcesses, setWorkProcesses] = useState([]);
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
+
   useEffect(() => {
     const fetchWorkProcesses = async () => {
       const user_id = localStorage.getItem("user_id");
@@ -16,8 +17,20 @@ const WorkProcessPage = () => {
       }
 
       try {
-        const response = await userApi.getWorkProcesses(user_id);
-        setWorkProcesses(response);
+        const userWorks = await userApi.getWorkProcesses(user_id);
+        const workProcessesWithDetails = await Promise.all(
+          userWorks.map(async (userWork) => {
+            const workUnit = await userApi.getWorkUnitById(
+              userWork.work_unit_id
+            );
+            return {
+              ...userWork,
+              name_vi: workUnit.name_vi,
+              address_vi: workUnit.address_vi,
+            };
+          })
+        );
+        setWorkProcesses(workProcessesWithDetails);
       } catch (error) {
         console.error("Lỗi khi lấy thông tin quá trình công tác:", error);
       }
@@ -28,46 +41,26 @@ const WorkProcessPage = () => {
 
   const columns = [
     { title: "STT", dataIndex: "stt", key: "stt" },
-    { title: "Mã cơ quan", dataIndex: "code", key: "code" },
-    { title: "Tên cơ quan", dataIndex: "organization", key: "organization" },
-    { title: "Địa chỉ", dataIndex: "address", key: "address" },
-    { title: "Vai trò", dataIndex: "position", key: "position" },
-    { title: "Ngày bắt đầu", dataIndex: "startDate", key: "startDate" },
-    { title: "Ngày kết thúc", dataIndex: "endDate", key: "endDate" },
+    { title: "Mã cơ quan", dataIndex: "work_unit_id", key: "work_unit_id" },
+    { title: "Tên cơ quan", dataIndex: "name_vi", key: "name_vi" },
+    { title: "Địa chỉ", dataIndex: "address_vi", key: "address_vi" },
+    { title: "Vai trò", dataIndex: "role_vi", key: "role_vi" },
+    { title: "Ngày bắt đầu", dataIndex: "start_date", key: "start_date" },
+    { title: "Ngày kết thúc", dataIndex: "end_date", key: "end_date" },
   ];
 
-  const dataSource = [
-    {
-      key: "1",
-      stt: 1,
-      code: "001",
-      organization: "Đại học Công nghiệp Thành phố Hồ Chí Minh",
-      address: "HCM",
-      position: "Giảng viên",
-      startDate: "02/02/2022",
-      endDate: "--",
-    },
-    {
-      key: "2",
-      stt: 2,
-      code: "002",
-      organization: "Đại học Công nghiệp Thành phố Hồ Chí Minh",
-      address: "HCM",
-      position: "Giảng viên",
-      startDate: "02/02/2022",
-      endDate: "02/02/2023",
-    },
-    {
-      key: "3",
-      stt: 3,
-      code: "003",
-      organization: "Đại học Công nghiệp Thành phố Hồ Chí Minh",
-      address: "HCM",
-      position: "Giảng viên",
-      startDate: "02/02/2022",
-      endDate: "--",
-    },
-  ];
+  const dataSource = workProcesses.map((process, index) => ({
+    key: index + 1,
+    stt: index + 1,
+    work_unit_id: process.work_unit_id,
+    name_vi: process.name_vi,
+    address_vi: process.address_vi,
+    role_vi: process.role_vi,
+    start_date: new Date(process.start_date).toLocaleDateString("vi-VN"),
+    end_date: process.end_date
+      ? new Date(process.end_date).toLocaleDateString("vi-VN")
+      : "--",
+  }));
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import userApi from "../../../api/api";
 
 // eslint-disable-next-line react/prop-types
 const AddWorkProcessPage = ({ onClose }) => {
@@ -17,10 +18,38 @@ const AddWorkProcessPage = ({ onClose }) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Submitted Data:", formData);
-    onClose();
+
+    try {
+      // Generate a unique work_unit_id (you can replace this with your own logic)
+      const workUnitId = Date.now();
+
+      // Create WorkUnit
+      const workUnitResponse = await userApi.createWorkUnit({
+        work_unit_id: workUnitId,
+        name_vi: formData.workplaceVi,
+        name_en: formData.workplaceEn,
+        address_vi: formData.addressVi,
+        address_en: formData.addressEn,
+      });
+
+      // Create UserWork
+      await userApi.createUserWork({
+        work_unit_id: workUnitResponse.work_unit_id,
+        user_id: localStorage.getItem("user_id"),
+        start_date: formData.fromDate,
+        end_date: formData.toDate,
+        role_vi: formData.roleVi,
+        role_en: formData.roleEn,
+        department: formData.roleEn, // Assuming department is the same as workplaceVi
+      });
+
+      console.log("Submitted Data:", formData);
+      onClose();
+    } catch (error) {
+      console.error("Error submitting data:", error);
+    }
   };
 
   return (
