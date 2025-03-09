@@ -60,18 +60,27 @@ const Header = () => {
     window.location.href = "/work-process";
   };
 
+  const openNotifications = () => {
+    window.location.href = "/notifications";
+  };
+
   return (
     <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
       <div className="max-w-screen-xl mx-auto flex items-center justify-between h-[70px] px-4 md:px-6 lg:px-8">
         <img src={Logo} alt="Logo" className="h-12 w-auto" />
 
-        <h1 className="text-lg font-bold text-black text-center">
+        <h1 className="text-sm font-bold text-black text-center">
           HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC <br />
           CỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM
         </h1>
 
         <div className="relative flex items-center gap-4" ref={menuRef}>
-          <button className="text-gray-500 hover:text-gray-700">🔔</button>
+          <button
+            className="text-gray-500 hover:text-gray-700"
+            onClick={openNotifications}
+          >
+            🔔
+          </button>
 
           {user ? (
             <div

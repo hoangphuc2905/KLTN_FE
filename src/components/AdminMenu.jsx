@@ -8,6 +8,7 @@ import {
   FaTable,
   FaClipboardList,
   FaNewspaper,
+  FaChevronDown,
 } from "react-icons/fa";
 import "./Sidebar.scss";
 
@@ -25,15 +26,14 @@ const AdminMenu = () => {
 
   return (
     <>
-      <button className="menu-toggle-btn" onClick={toggleMenu}>
-        <FaBars />
+      <button
+        className={`menu-toggle-btn ${isOpen ? "open" : ""}`}
+        onClick={toggleMenu}
+      >
+        {isOpen ? <FaTimes /> : <FaBars />}
       </button>
 
       <div className={`popup-menu ${isOpen ? "open" : ""}`}>
-        <button className="close-btn" onClick={toggleMenu}>
-          <FaTimes />
-        </button>
-
         <nav className="menu-list">
           <Link to="/home" className="menu-item" onClick={toggleMenu}>
             <FaHome /> <span>Trang Chủ</span>
@@ -45,6 +45,9 @@ const AdminMenu = () => {
 
           <div className="menu-item has-submenu" onClick={toggleStatsMenu}>
             <FaChartBar /> <span>Thống Kê</span>
+            <FaChevronDown
+              className={`submenu-toggle ${isStatsOpen ? "open" : ""}`}
+            />
           </div>
           {isStatsOpen && (
             <div className="submenu">
@@ -74,7 +77,7 @@ const AdminMenu = () => {
         </nav>
       </div>
 
-      {isOpen && <div className="overlay" onClick={toggleMenu}></div>}
+      {isOpen && <div className="overlay open" onClick={toggleMenu}></div>}
     </>
   );
 };
