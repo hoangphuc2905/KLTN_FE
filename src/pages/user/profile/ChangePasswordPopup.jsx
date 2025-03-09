@@ -36,7 +36,7 @@ const ChangePasswordPopup = ({ onClose }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 className="text-xl font-bold text-blue-600 text-center mb-4 text-sm">
+        <h2 className="font-bold text-blue-600 text-center mb-4 text-sm">
           ĐỔI MẬT KHẨU
         </h2>
         {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
