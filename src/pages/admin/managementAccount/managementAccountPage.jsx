@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import Header from "../../../components/header";
-import { Input, Select } from "antd";
+import { Input, Select, Table } from "antd";
 
-const UserManagement = () => {
+const ManagementUsers = () => {
   const users = [
     {
       id: "1",
@@ -49,6 +49,15 @@ const UserManagement = () => {
       role: "USER",
       status: "Hoạt động",
     },
+    {
+      id: "6",
+      name: "Nguyễn Văn F",
+      position: "Giảng viên",
+      department: "CÔNG NGHỆ THÔNG TIN",
+      studentId: "21040431",
+      role: "USER",
+      status: "Hoạt động",
+    }
   ];
 
   const admins = [
@@ -105,6 +114,8 @@ const UserManagement = () => {
   const [filterDepartment, setFilterDepartment] = useState("Tất cả");
   const [filterPosition, setFilterPosition] = useState("Tất cả");
   const [filterStatus, setFilterStatus] = useState("Tất cả");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   const displayedUsers = activeTab === "user" ? users : admins;
 
@@ -131,6 +142,67 @@ const UserManagement = () => {
     );
   });
 
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "HỌ VÀ TÊN",
+      dataIndex: "name",
+      key: "name",
+    },
+    {
+      title: "CHỨC VỤ",
+      dataIndex: "position",
+      key: "position",
+    },
+    {
+      title: "KHOA",
+      dataIndex: "department",
+      key: "department",
+    },
+    {
+      title: "MSSV/MSGV",
+      dataIndex: "studentId",
+      key: "studentId",
+    },
+    {
+      title: "QUYỀN",
+      dataIndex: "role",
+      key: "role",
+    },
+    {
+      title: "TRẠNG THÁI",
+      dataIndex: "status",
+      key: "status",
+      render: (status) => (
+        <span
+          className={`px-2 py-1 rounded text-sm ${
+            status === "Hoạt động" ? "text-green-700" : "text-red-700"
+          }`}
+        >
+          {status}
+        </span>
+      ),
+    },
+    {
+      title: "CHỈNH SỬA",
+      key: "edit",
+      render: (text, record) => (
+        <button className="text-blue-500">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
+            alt="Edit"
+            className="w-5 h-5"
+          />
+        </button>
+      ),
+    },
+  ];
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -138,7 +210,7 @@ const UserManagement = () => {
           <Header />
         </div>
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-gray-600 text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -146,7 +218,7 @@ const UserManagement = () => {
             />
             <span>Trang chủ</span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900">
+            <span className="font-semibold text-sm text-sky-900">
               Quản lý người dùng
             </span>
           </div>
@@ -155,7 +227,7 @@ const UserManagement = () => {
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div className="flex border-b">
             <button
-              className={`px-8 py-3 text-center ${
+              className={`px-8 py-3 text-center text-sm ${
                 activeTab === "user"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
@@ -165,7 +237,7 @@ const UserManagement = () => {
               Người dùng
             </button>
             <button
-              className={`px-8 py-3 text-center ${
+              className={`px-8 py-3 text-center text-sm ${
                 activeTab === "admin"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
@@ -182,7 +254,7 @@ const UserManagement = () => {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border"
+                  className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border text-sm"
                   onClick={() => setShowFilter(!showFilter)}
                 >
                   <img
@@ -190,41 +262,43 @@ const UserManagement = () => {
                     alt="Filter Icon"
                     className="w-4 h-4"
                   />
-                  <span>Bộ lọc</span>
+                  <span className="text-sm">Bộ lọc</span>
                 </button>
                 {showFilter && (
                   <div className="absolute top-full mt-2 z-50 shadow-lg">
                     <form className="relative px-4 py-5 w-full bg-white max-w-[500px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <div className="mb-3">
-                        <label className="block text-gray-700">
+                        <label className="block text-gray-700 text-sm">
                           Họ và tên:
                         </label>
                         <Input
                           type="text"
                           value={filterName}
                           onChange={(e) => setFilterName(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
                         />
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-gray-700">
+                        <label className="block text-gray-700 text-sm">
                           MSSV/MSGV:
                         </label>
                         <Input
                           type="text"
                           value={filterId}
                           onChange={(e) => setFilterId(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
                         />
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-gray-700">Khoa:</label>
+                        <label className="block text-gray-700 text-sm">
+                          Khoa:
+                        </label>
                         <Select
                           value={filterDepartment}
                           onChange={(value) => setFilterDepartment(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
                         >
                           {uniqueDepartments.map((department) => (
                             <option key={department} value={department}>
@@ -235,11 +309,13 @@ const UserManagement = () => {
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-gray-700">Chức vụ:</label>
+                        <label className="block text-gray-700 text-sm">
+                          Chức vụ:
+                        </label>
                         <Select
                           value={filterPosition}
                           onChange={(value) => setFilterPosition(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
                         >
                           {uniquePositions.map((position) => (
                             <option key={position} value={position}>
@@ -250,13 +326,13 @@ const UserManagement = () => {
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-gray-700">
+                        <label className="block text-gray-700 text-sm">
                           Trạng thái:
                         </label>
                         <Select
                           value={filterStatus}
                           onChange={(value) => setFilterStatus(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
                         >
                           {uniqueStatuses.map((status) => (
                             <option key={status} value={status}>
@@ -275,7 +351,7 @@ const UserManagement = () => {
                           setFilterPosition("Tất cả");
                           setFilterStatus("Tất cả");
                         }}
-                        className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md"
+                        className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md text-sm"
                       >
                         Bỏ lọc tất cả
                       </button>
@@ -284,92 +360,18 @@ const UserManagement = () => {
                 )}
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-[#F5F7FB] text-left">
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        STT
-                      </th>
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        HỌ VÀ TÊN
-                      </th>
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        CHỨC VỤ
-                      </th>
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        KHOA
-                      </th>
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        MSSV/MSGV
-                      </th>
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        QUYỀN
-                      </th>
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        TRẠNG THÁI
-                      </th>
-                      <th className="px-6 py-4 text-gray-700 font-medium">
-                        CHỈNH SỬA
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredUsers.map((user, index) => (
-                      <tr key={user.id} className="border-t">
-                        <td className="px-6 py-4">{index + 1}</td>
-                        <td className="px-6 py-4">{user.name}</td>
-                        <td className="px-6 py-4">{user.position}</td>
-                        <td className="px-6 py-4">{user.department}</td>
-                        <td className="px-6 py-4">{user.studentId}</td>
-                        <td className="px-6 py-4">{user.role}</td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`px-2 py-1 rounded ${
-                              user.status === "Hoạt động"
-                                ? "text-green-700"
-                                : "text-red-700"
-                            }`}
-                          >
-                            {user.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <button className="text-blue-500">
-                            <img
-                              src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-                              alt="Edit"
-                              className="w-5 h-5"
-                            />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="flex gap-6 self-end mt-4 text-xs font-semibold tracking-wide text-slate-500 max-md:mr-2.5">
-                <div className="basis-auto">Rows per page: 5</div>
-                <img
-                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/8e29a0ad94996b532b19cd0e968585b8ceb69861260ed667891dc4df2486e74d?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                  className="object-contain shrink-0 my-auto w-2 aspect-[1.6] fill-slate-500"
-                  alt="Dropdown icon"
-                />
-                <div className="flex gap-4 items-start">
-                  <div className="self-stretch">1-2 of 250</div>
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/50a83fa7ebc907e098614dc0c26babcadb79777ed3870782579f5c757a43f365?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                    className="object-contain shrink-0 w-1.5 aspect-[0.6] fill-slate-500"
-                    alt="Previous page"
-                  />
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/1422d2fb88e649dbd9e98e5e0ae1f3d31fe1cf5c52730537f0c558eb14410c87?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                    className="object-contain shrink-0 w-1.5 aspect-[0.6] fill-slate-500"
-                    alt="Next page"
-                  />
-                </div>
-              </div>
+              <Table
+                columns={columns}
+                dataSource={filteredUsers}
+                pagination={{
+                  current: currentPage,
+                  pageSize: itemsPerPage,
+                  total: filteredUsers.length,
+                  onChange: (page) => setCurrentPage(page),
+                }}
+                rowKey="id"
+                className="text-sm"
+              />
             </div>
           </div>
         </div>
@@ -378,4 +380,4 @@ const UserManagement = () => {
   );
 };
 
-export default UserManagement;
+export default ManagementUsers;
