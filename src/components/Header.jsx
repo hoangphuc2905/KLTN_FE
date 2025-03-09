@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import Logo from "../assets/logoLogin.png";
-import userApi from "../../src/api/api";
+import userApi from "../api/api";
 import { FaChevronDown } from "react-icons/fa";
 import ChangePasswordPopup from "../pages/user/profile/ChangePasswordPopup";
 

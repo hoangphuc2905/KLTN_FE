@@ -1,8 +1,8 @@
 import { Button, Input, Upload, Select, DatePicker, message } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
-import Header from "../../../components/header";
 import TextArea from "antd/es/input/TextArea";
-import { useState } from "react";
+import  { useState } from "react";
+import Header from "../../../components/header";
 
 const AddScientificPaperPage = () => {
   const [imageUrl, setImageUrl] = useState("");
