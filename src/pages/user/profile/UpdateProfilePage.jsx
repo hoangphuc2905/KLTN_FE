@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { message } from "antd";
-import Header from "../../../components/header";
 import userApi from "../../../api/api";
+import Header from "../../../components/header";
 
 const UpdateProfilePage = () => {
   const [user, setUser] = useState({

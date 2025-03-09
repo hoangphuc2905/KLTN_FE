@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import Header from "../../../components/header";
 import userApi from "../../../api/api";
+import Header from "../../../components/header";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
