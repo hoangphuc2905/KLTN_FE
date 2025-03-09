@@ -38,11 +38,11 @@ const App = () => {
 
         <Route path="/admin/search" element={<Search />} />
         <Route
-          path="/admin/management/Account"
+          path="/admin/management/account"
           element={<ManagementAccount />}
         />
         <Route
-          path="/admin/management/Ariticle"
+          path="/admin/management/ariticle"
           element={<ManagementAriticle />}
         />
       </Routes>
