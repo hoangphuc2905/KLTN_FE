@@ -1,5 +1,6 @@
 import React from "react";
 import Header from "../../../components/header";
+import Footer from "../../../components/footer";
 
 const HomePage = () => {
   const user = {
@@ -146,7 +147,7 @@ const HomePage = () => {
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex gap-4 p-4 rounded-lg items-center">
+          <div className="flex gap-4 rounded-lg items-center">
             <select className="p-2 border rounded-lg w-48 text-sm">
               <option value="">Chọn danh mục</option>
               <option value="cnnt">Công nghệ thông tin</option>
@@ -321,6 +322,7 @@ const HomePage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
