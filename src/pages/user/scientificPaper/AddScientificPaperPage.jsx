@@ -3,6 +3,7 @@ import { UploadOutlined } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import  { useState } from "react";
 import Header from "../../../components/header";
+import Footer from "../../../components/footer";
 
 const AddScientificPaperPage = () => {
   const [imageUrl, setImageUrl] = useState("");
@@ -181,6 +182,7 @@ const AddScientificPaperPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
