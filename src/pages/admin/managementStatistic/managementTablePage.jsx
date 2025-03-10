@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Select, Table, Tooltip, Modal, Space } from "antd";
+import { Input, Select, Table, Tooltip, Modal, Space, Checkbox, Divider } from "antd";
 
 const ManagementTable = () => {
   const papers = [
@@ -62,6 +62,120 @@ const ManagementTable = () => {
       status: "Đang chờ",
       dateAdded: "19/12/2024",
     },
+    {
+      id: 5,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q1",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "3 (0-0-1-2)",
+      role: "Vừa chính vừa liên hệ",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Đã duyệt",
+      dateAdded: "12/12/2024",
+    },
+    {
+      id: 6,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q3",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Đang chờ",
+      dateAdded: "19/12/2024",
+    },
+    {
+      id: 7,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q2",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Từ chối",
+      dateAdded: "19/12/2024",
+      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
+    },
+    {
+      id: 8,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q4",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Đang chờ",
+      dateAdded: "19/12/2024",
+    },
+    {
+      id: 9,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q1",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "3 (0-0-1-2)",
+      role: "Vừa chính vừa liên hệ",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Đã duyệt",
+      dateAdded: "12/12/2024",
+    },
+    {
+      id: 10,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q3",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Đang chờ",
+      dateAdded: "19/12/2024",
+    },
+    {
+      id: 11,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q2",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Từ chối",
+      dateAdded: "19/12/2024",
+      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
+    },
+    {
+      id: 12,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q4",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Đang chờ",
+      dateAdded: "19/12/2024",
+    },
   ];
 
   const [showFilter, setShowFilter] = useState(false);
@@ -76,7 +190,7 @@ const ManagementTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
-  const itemsPerPage = 3;
+  const itemsPerPage = 10;
 
   const uniquePaperTypes = [
     "Tất cả",
@@ -253,6 +367,17 @@ const ManagementTable = () => {
     },
   ];
 
+  const [showColumnFilter, setShowColumnFilter] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState(columns.map(col => col.key));
+
+  const columnOptions = columns.map(col => ({ label: col.title, value: col.key }));
+
+  const handleColumnVisibilityChange = (selectedColumns) => {
+    setVisibleColumns(selectedColumns);
+  };
+
+  const filteredColumns = columns.filter(col => visibleColumns.includes(col.key));
+
   const getStatusColor = (status) => {
     switch (status) {
       case "Đã duyệt":
@@ -293,173 +418,198 @@ const ManagementTable = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[85px]">
+            <select className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[85px]">
               <option value="2024">2024</option>
               <option value="2023">2023</option>
             </select>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg">Download</button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg">
+            <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">Download</button>
+            <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">
                 <img src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png" alt="Print Icon" className="w-4 h-4" />
                 Print
             </button>
           </div>
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative">
-                <button
-                  className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border"
-                  onClick={() => setShowFilter(!showFilter)}
-                >
-                  <Filter className="w-4 h-4" />
-                  <span className="text-sm">Bộ lọc</span>
-                </button>
-                {showFilter && (
-                  <div className="absolute top-full mt-2 z-50 shadow-lg">
-                    <form className="relative px-4 py-5 w-full bg-white max-w-[500px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Loại bài báo:
-                        </label>
-                        <Select
-                          value={filterPaperType}
-                          onChange={(value) => setFilterPaperType(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        >
-                          {uniquePaperTypes.map((type) => (
-                            <Select.Option key={type} value={type}>
-                              {type}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </div>
+            <div className="flex justify-end mb-4 relative gap-2">
+  <button
+    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+    onClick={() => {
+      setShowFilter(!showFilter);
+      setShowColumnFilter(false);
+    }}
+  >
+    <Filter className="w-4 h-4" />
+    <span className="text-xs">Bộ lọc</span>
+  </button>
+  {showFilter && (
+    <div className="absolute top-full mt-2 z-50 shadow-lg">
+      <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+        <div className="mb-3">
+          <label className="block text-gray-700 text-xs">
+            Loại bài báo:
+          </label>
+          <select
+            value={filterPaperType}
+            onChange={(e) => setFilterPaperType(e.target.value)}
+            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          >
+            {uniquePaperTypes.map((type) => (
+              <option key={type} value={type}>
+                {type}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Thuộc nhóm:
-                        </label>
-                        <Select
-                          value={filterGroup}
-                          onChange={(value) => setFilterGroup(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        >
-                          {uniqueGroups.map((group) => (
-                            <Select.Option key={group} value={group}>
-                              {group}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </div>
+        <div>
+          <label className="block text-gray-700 text-xs">
+            Thuộc nhóm:
+          </label>
+          <select
+            value={filterGroup}
+            onChange={(e) => setFilterGroup(e.target.value)}
+            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          >
+            {uniqueGroups.map((group) => (
+              <option key={group} value={group}>
+                {group}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Tên bài báo:
-                        </label>
-                        <Input
-                          type="text"
-                          value={filterPaperTitle}
-                          onChange={(e) => setFilterPaperTitle(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        />
-                      </div>
+        <div>
+          <label className="block text-gray-700 text-xs">
+            Tên bài báo:
+          </label>
+          <Input
+            type="text"
+            value={filterPaperTitle}
+            onChange={(e) => setFilterPaperTitle(e.target.value)}
+            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          />
+        </div>
 
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Tên tác giả:
-                        </label>
-                        <Input
-                          type="text"
-                          value={filterAuthorName}
-                          onChange={(e) => setFilterAuthorName(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        />
-                      </div>
+        <div>
+          <label className="block text-gray-700 text-xs">
+            Tên tác giả:
+          </label>
+          <Input
+            type="text"
+            value={filterAuthorName}
+            onChange={(e) => setFilterAuthorName(e.target.value)}
+            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          />
+        </div>
 
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Số tác giả:
-                        </label>
-                        <Input
-                          type="text"
-                          value={filterAuthorCount}
-                          onChange={(e) => setFilterAuthorCount(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        />
-                      </div>
+        <div>
+          <label className="block text-gray-700 text-xs">
+            Số tác giả:
+          </label>
+          <Input
+            type="text"
+            value={filterAuthorCount}
+            onChange={(e) => setFilterAuthorCount(e.target.value)}
+            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          />
+        </div>
 
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Vai trò:
-                        </label>
-                        <Select
-                          value={filterRole}
-                          onChange={(value) => setFilterRole(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        >
-                          {uniqueRoles.map((role) => (
-                            <Select.Option key={role} value={role}>
-                              {role}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </div>
+        <div>
+          <label className="block text-gray-700 text-xs">
+            Vai trò:
+          </label>
+          <select
+            value={filterRole}
+            onChange={(e) => setFilterRole(e.target.value)}
+            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          >
+            {uniqueRoles.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          CQ đứng tên:
-                        </label>
-                        <Select
-                          value={filterInstitution}
-                          onChange={(value) => setFilterInstitution(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        >
-                          {uniqueInstitutions.map((institution) => (
-                            <Select.Option key={institution} value={institution}>
-                              {institution}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </div>
+        <div>
+          <label className="block text-gray-700 text-xs">
+            CQ đứng tên:
+          </label>
+          <select
+            value={filterInstitution}
+            onChange={(e) => setFilterInstitution(e.target.value)}
+            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          >
+            {uniqueInstitutions.map((institution) => (
+              <option key={institution} value={institution}>
+                {institution}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Trạng thái:
-                        </label>
-                        <Select
-                          value={filterStatus}
-                          onChange={(value) => setFilterStatus(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        >
-                          {uniqueStatuses.map((status) => (
-                            <Select.Option key={status} value={status}>
-                              {status}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </div>
+        <div>
+          <label className="block text-gray-700 text-xs">
+            Trạng thái:
+          </label>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          >
+            {uniqueStatuses.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
+        </div>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFilterPaperType("Tất cả");
-                          setFilterGroup("Tất cả");
-                          setFilterPaperTitle("");
-                          setFilterAuthorName("");
-                          setFilterAuthorCount("");
-                          setFilterRole("Tất cả");
-                          setFilterInstitution("Tất cả");
-                          setFilterStatus("Tất cả");
-                        }}
-                        className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md text-sm"
-                      >
-                        Bỏ lọc tất cả
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-
+        <button
+          type="button"
+          onClick={() => {
+            setFilterPaperType("Tất cả");
+            setFilterGroup("Tất cả");
+            setFilterPaperTitle("");
+            setFilterAuthorName("");
+            setFilterAuthorCount("");
+            setFilterRole("Tất cả");
+            setFilterInstitution("Tất cả");
+            setFilterStatus("Tất cả");
+          }}
+          className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
+        >
+          Bỏ lọc tất cả
+        </button>
+      </form>
+    </div>
+  )}
+  <button
+    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+    onClick={() => {
+      setShowColumnFilter(!showColumnFilter);
+      setShowFilter(false);
+    }}
+  >
+    <Filter className="w-4 h-4" />
+    <span className="text-xs">Chọn cột</span>
+  </button>
+  {showColumnFilter && (
+    <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
+      <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+        <Checkbox.Group
+          options={columnOptions}
+          value={visibleColumns}
+          onChange={handleColumnVisibilityChange}
+          className="flex flex-col gap-2"
+        />
+        <Divider className="mt-4" />
+      </div>
+    </div>
+  )}
+</div>
               <Table
-                columns={columns}
+                columns={filteredColumns}
                 dataSource={filteredPapers}
                 pagination={{
                   current: currentPage,

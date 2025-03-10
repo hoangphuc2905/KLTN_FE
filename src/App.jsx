@@ -48,7 +48,7 @@ const App = () => {
         <Route path="/admin/search" element={<Search />} />
         <Route path="/admin/management/account" element={<ManagementAccount />} />
         <Route path="/admin/management/ariticle" element={<ManagementAriticle />} />
-        <Route path="/admin/management/chart" element={<ManagementChart/>} />
+        <Route path="/admin/management/chart" element={<ManagementChart />} />
         <Route path="/admin/management/table" element={<ManagementTable />} />
         <Route path="/admin/management/point" element={<ManagementPoint />} />
         
