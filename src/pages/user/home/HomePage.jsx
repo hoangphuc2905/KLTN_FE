@@ -1,6 +1,7 @@
 import React from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
+import { Link } from "react-router-dom";
 
 const HomePage = () => {
   const user = {
@@ -176,66 +177,72 @@ const HomePage = () => {
             <section className="w-[71%] max-md:ml-0 max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
                 {researchPapers.map((paper, index) => (
-                  <article
-                    key={paper.id}
-                    className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
-                      index > 0 ? "mt-3" : ""
-                    }`}
-                  >
-                    <div className="flex justify-center w-fit">
-                      <img
-                        src={paper.thumbnailUrl}
-                        className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
-                        alt={paper.title}
-                      />
-                    </div>
+                  <Link to={`/scientific-paper/${paper.id}`} key={paper.id}>
+                    <article
+                      key={paper.id}
+                      className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
+                        index > 0 ? "mt-3" : ""
+                      }`}
+                    >
+                      <div className="flex justify-center w-fit">
+                        <img
+                          src={paper.thumbnailUrl}
+                          className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
+                          alt={paper.title}
+                        />
+                      </div>
 
-                    <div className="grid grid-cols-1 gap-2 w-full">
-                      {/* Hàng 1: Tiêu đề + Thông tin lượt xem */}
-                      <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-fit">
-                        {/* Tiêu đề */}
-                        <h2 className="text-sm font-bold break-words max-w-[100%] w-[500px] line-clamp-2">
-                          {paper.title}
-                        </h2>
+                      <div className="grid grid-cols-1 gap-2 w-full">
+                        {/* Hàng 1: Tiêu đề + Thông tin lượt xem */}
+                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-fit">
+                          {/* Tiêu đề */}
+                          <h2 className="text-sm font-bold break-words max-w-[100%] w-[500px] line-clamp-2">
+                            {paper.title}
+                          </h2>
 
-                        {/* Lượt xem + Bình luận */}
-                        <div className="flex flex-col items-center ml-[50px]">
-                          <div className="flex items-center gap-2 text-orange-500">
-                            <img
-                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                              className="object-contain w-4 aspect-square"
-                              alt="Views icon"
-                            />
-                            <div className="text-xs">{paper.viewCount}</div>
-                            <img
-                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                              className="object-contain w-4 aspect-[1.2]"
-                              alt="Comments icon"
-                            />
-                            <div className="text-xs">{paper.commentCount}</div>
-                          </div>
+                          {/* Lượt xem + Bình luận */}
+                          <div className="flex flex-col items-center ml-[50px]">
+                            <div className="flex items-center gap-2 text-orange-500">
+                              <img
+                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                                className="object-contain w-4 aspect-square"
+                                alt="Views icon"
+                              />
+                              <div className="text-xs">{paper.viewCount}</div>
+                              <img
+                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                                className="object-contain w-4 aspect-[1.2]"
+                                alt="Comments icon"
+                              />
+                              <div className="text-xs">
+                                {paper.commentCount}
+                              </div>
+                            </div>
 
-                          {/* Ngày đăng */}
-                          <div className="text-xs text-neutral-500 mt-[5%]">
-                            {paper.publishDate}
+                            {/* Ngày đăng */}
+                            <div className="text-xs text-neutral-500 mt-[5%]">
+                              {paper.publishDate}
+                            </div>
                           </div>
                         </div>
+
+                        {/* Hàng 2: Tác giả */}
+                        <div className="text-sm text-sky-900">
+                          {paper.author}
+                        </div>
+
+                        {/* Hàng 3: Mô tả */}
+                        <p className="text-sm text-neutral-800 break-words max-w-[100%] line-clamp-2">
+                          {paper.description}
+                        </p>
+
+                        {/* Hàng 4: Bộ phận */}
+                        <div className="text-sm text-sky-900">
+                          {paper.department}
+                        </div>
                       </div>
-
-                      {/* Hàng 2: Tác giả */}
-                      <div className="text-sm text-sky-900">{paper.author}</div>
-
-                      {/* Hàng 3: Mô tả */}
-                      <p className="text-sm text-neutral-800 break-words max-w-[100%] line-clamp-2">
-                        {paper.description}
-                      </p>
-
-                      {/* Hàng 4: Bộ phận */}
-                      <div className="text-sm text-sky-900">
-                        {paper.department}
-                      </div>
-                    </div>
-                  </article>
+                    </article>
+                  </Link>
                 ))}
 
                 <div className="flex gap-6 self-end mt-4 text-xs font-semibold tracking-wide text-slate-500 max-md:mr-2.5">
