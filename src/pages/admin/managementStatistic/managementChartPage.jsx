@@ -1,10 +1,28 @@
 import React, { useState } from "react";
 import Header from "../../../components/header";
 import { Home, ChevronRight } from "lucide-react";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from "chart.js";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import { Bar, Doughnut } from "react-chartjs-2";
+import { Table } from "antd";
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = () => {
   const stats = {
@@ -19,7 +37,13 @@ const Dashboard = () => {
     datasets: [
       {
         data: [22, 25, 21, 19, 15],
-        backgroundColor: ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"],
+        backgroundColor: [
+          "#00A3FF",
+          "#7239EA",
+          "#F1416C",
+          "#7239EA",
+          "#FF0000",
+        ],
         borderWidth: 0,
         borderRadius: 6,
       },
@@ -39,7 +63,8 @@ const Dashboard = () => {
   };
 
   const chartOptions = {
-    responsive: true,
+    responsive: false, // Đặt responsive là false
+    maintainAspectRatio: false, // Đặt maintainAspectRatio là false
     plugins: {
       legend: {
         display: false,
@@ -57,18 +82,41 @@ const Dashboard = () => {
   };
 
   const donutChartData = {
-    labels: ["Category 1", "Category 2", "Category 3", "Category 4", "Category 5"],
+    labels: [
+      "Category 1",
+      "Category 2",
+      "Category 3",
+      "Category 4",
+      "Category 5",
+      "Category 6",
+      "Category 7",
+      "Category 8",
+      "Category 9",
+      "Category 10",
+    ],
     datasets: [
       {
-        data: [1, 6, 2, 7, 7],
-        backgroundColor: ["#00A3FF", "#F1416C", "#FFC700", "#7239EA", "#17B26A"],
+        data: [1, 6, 2, 7, 7, 4, 3, 2, 7, 8],
+        backgroundColor: [
+          "#ff0000",
+          "#8241f1",
+          "#705b10",
+          "#39eaa3",
+          "#c09624",
+          "#8686d4",
+          "#0cebd8",
+          "#F1416C",
+          "#FFC700",
+          "#856666",
+        ],
         borderWidth: 0,
       },
     ],
   };
 
   const donutOptions = {
-    responsive: true,
+    responsive: false, // Đặt responsive là false
+    maintainAspectRatio: false, // Đặt maintainAspectRatio là false
     plugins: {
       legend: {
         position: "right",
@@ -76,6 +124,7 @@ const Dashboard = () => {
         labels: {
           usePointStyle: true,
           padding: 20,
+          boxWidth: 10, // Adjust the box width to fit more labels
         },
       },
     },
@@ -106,6 +155,34 @@ const Dashboard = () => {
     },
   ];
 
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Tên bài nghiên cứu",
+      dataIndex: "title",
+      key: "title",
+    },
+    {
+      title: "Lượt xem",
+      dataIndex: "views",
+      key: "views",
+    },
+    {
+      title: "Lượt tải",
+      dataIndex: "downloads",
+      key: "downloads",
+    },
+    {
+      title: "Điểm đóng góp",
+      dataIndex: "contributions",
+      key: "contributions",
+    },
+  ];
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -115,98 +192,124 @@ const Dashboard = () => {
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div className="flex items-center gap-2 text-gray-600">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
-              alt="Home Icon"
-              className="w-5 h-5"
-            />
+            <Home className="w-5 h-5 text-[#00A3FF]" />
             <span>Trang chủ</span>
-            <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">
-              Thống kê
-            </span>
-            <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">
-              Dạng biểu đồ
-            </span>
+            <ChevronRight className="w-4 h-4" />
+            <span>Thống kê</span>
+            <ChevronRight className="w-4 h-4" />
+            <span className="font-semibold text-[#00A3FF]">Dạng biểu đồ</span>
           </div>
         </div>
 
         {/* Stats Cards */}
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-  <div className="flex justify-between items-center">
-    <div className="flex gap-4 justify-center w-full">
-      <div className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
-        <div className="text-2xl font-bold text-gray-700">{stats.totalPapers}</div>
-        <div className="text-gray-500 mt-2 text-lg">Tổng bài báo</div>
-      </div>
-      <div className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
-        <div className="text-2xl font-bold text-[#00A3FF]">{stats.totalViews.toLocaleString()}</div>
-        <div className="text-gray-500 mt-2 text-lg">Tổng lượt xem</div>
-      </div>
-      <div className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
-        <div className="text-2xl font-bold text-[#FFB700]">{stats.totalDownloads.toLocaleString()}</div>
-        <div className="text-gray-500 mt-2 text-lg">Tổng lượt tải</div>
-      </div>
-    </div>
-    <div className="ml-4">
-      <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[85px]">
-        <option value="2024">2024</option>
-        <option value="2023">2023</option>
-      </select>
-    </div>
-  </div>
-</div>
-
-
-            {/* Charts */}
-<div className="self-center w-full max-w-[1563px] px-6 mt-6">
-  <div className="grid grid-cols-2 gap-6">
-    <div className="bg-white rounded-xl p-4">
-  <div className="flex justify-between items-center mb-2">
-    <h2 className="font-semibold text-gray-700 text-xs">Biểu đồ Thống kê theo loại</h2>
-    <select className="text-xs border rounded p-1 px-2">
-      <option>Tất cả</option>
-    </select>
-  </div>
-  <Bar data={typeChartData} options={chartOptions} height={150} />
-</div>
-    <div className="bg-white rounded-xl p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold text-gray-700 text-sm">Biểu đồ Thống kê theo vai trò</h2>
-        <select className="text-xs border rounded p-1 px-2">
-          <option>Tất cả</option>
-        </select>
-      </div>
-      <Bar data={roleChartData} options={chartOptions} height={200} />
-    </div>
-  </div>
-</div>
-
-{/* Bottom Section */}
-<div className="self-center w-full max-w-[1563px] px-6 mt-6">
-  <div className="grid grid-cols-2 gap-6">
-    
-    
-    <div className="bg-white rounded-xl p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold text-gray-700 text-sm">Biểu đồ Thống kê theo lĩnh vực nghiên cứu</h2>
-        <select className="text-xs border rounded p-1 px-2">
-          <option>Tất cả</option>
-        </select>
-      </div>
-      <div className="flex justify-center items-center relative">
-        <div className="absolute">
-          <div className="text-center">
-            <div className="text-xl font-bold">23</div>
-            <div className="text-gray-500 text-xs">bài nghiên cứu</div>
+          <div className="flex justify-between items-center">
+            <div className="flex gap-4 justify-center w-full">
+              <div
+                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center"
+                style={{ width: "200px", height: "50px" }}
+              >
+                <div className="text-lg font-bold text-gray-700">
+                  {stats.totalPapers}
+                </div>
+                <div className="text-gray-500 mt-1 text-sm">Tổng bài báo</div>
+              </div>
+              <div
+                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"
+                style={{ width: "200px", height: "50px" }}
+              >
+                <div className="text-lg font-bold text-[#00A3FF]">
+                  {stats.totalViews.toLocaleString()}
+                </div>
+                <div className="text-gray-500 mt-1 text-sm">Tổng lượt xem</div>
+              </div>
+              <div
+                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center"
+                style={{ width: "200px", height: "50px" }}
+              >
+                <div className="text-lg font-bold text-[#FFB700]">
+                  {stats.totalDownloads.toLocaleString()}
+                </div>
+                <div className="text-gray-500 mt-1 text-sm">Tổng lượt tải</div>
+              </div>
+            </div>
+            <div className="ml-4">
+              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[85px]">
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+              </select>
+            </div>
           </div>
         </div>
-        <Doughnut data={donutChartData} options={donutOptions} />
-      </div>
-    </div>
-  </div>
-</div>
+
+        {/* Charts */}
+        <div className="self-center w-full max-w-[1563px] px-6 mt-6">
+          <div className="grid grid-cols-2 gap-6">
+            <div className="bg-white rounded-xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-semibold text-gray-700">
+                  Biểu đồ Thống kê theo loại
+                </h2>
+                <select className="text-sm border rounded p-1 px-3">
+                  <option>Tất cả</option>
+                </select>
+              </div>
+              <Bar
+                data={typeChartData}
+                options={chartOptions}
+                height={200}
+                width={500}
+              />
+            </div>
+            <div className="bg-white rounded-xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-semibold text-gray-700">
+                  Biểu đồ Thống kê theo vai trò
+                </h2>
+                <select className="text-sm border rounded p-1 px-3">
+                  <option>Tất cả</option>
+                </select>
+              </div>
+              <Bar
+                data={roleChartData}
+                options={chartOptions}
+                height={200}
+                width={540}
+              />
+            </div>
+
+            <div className="bg-white rounded-xl p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="font-semibold text-gray-700">
+                  Biểu đồ Thống kê theo lĩnh vực nghiên cứu
+                </h2>
+                <select className="text-sm border rounded p-1 px-3">
+                  <option>Tất cả</option>
+                </select>
+              </div>
+              <div className="flex justify-start items-center relative">
+                <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
+                <Doughnut
+                  data={donutChartData}
+                  options={donutOptions}
+                  height={200}
+                  width={500}
+                />
+              </div>
+            </div>
+            <div className="bg-white rounded-xl p-6 shadow-md">
+              <h2 className="font-semibold text-gray-700 mb-4">
+                TOP 3 BÀI NGHIÊN CỨU KHOA HỌC TIÊU BIỂU
+              </h2>
+              <Table
+                columns={columns}
+                dataSource={topPapers}
+                pagination={false}
+                rowKey="id"
+              />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
