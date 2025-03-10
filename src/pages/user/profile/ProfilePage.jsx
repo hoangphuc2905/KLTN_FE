@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
 import Header from "../../../components/header";
+import Footer from "../../../components/footer";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -246,6 +247,7 @@ const ProfilePage = () => {
           </section>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

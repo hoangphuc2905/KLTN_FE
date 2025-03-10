@@ -2,6 +2,7 @@ import React from "react";
 import { Filter } from "lucide-react";
 import { Button, Table } from "antd";
 import Header from "../../../components/header";
+import Footer from "../../../components/footer";
 
 const ScientificPaperPage = () => {
   const [activeTab, setActiveTab] = React.useState("all");
@@ -320,6 +321,7 @@ const ScientificPaperPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

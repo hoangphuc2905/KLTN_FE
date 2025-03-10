@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { message } from "antd";
 import userApi from "../../../api/api";
 import Header from "../../../components/header";
+import Footer from "../../../components/footer";
 
 const UpdateProfilePage = () => {
   const [user, setUser] = useState({
@@ -240,6 +241,7 @@ const UpdateProfilePage = () => {
           </section>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

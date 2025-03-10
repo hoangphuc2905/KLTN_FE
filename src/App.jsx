@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
 import AdminMenu from "./components/AdminMenu";
 import UserMenu from "./components/UserMenu";
+import NotificationPage from "./components/NotificationPage";
 import Search from "./pages/admin/search/page";
 import LoginPage from "./app/auth/login/LoginPage";
 import UserHomePage from "./pages/user/home/HomePage";
@@ -33,7 +34,10 @@ const App = () => {
         <Route path="/update-profile" element={<UpdateProfilePage />} />
         <Route path="/work-process" element={<WorkProcessPage />} />
         <Route path="/scientific-paper" element={<ScientificPaperPage />} />
-        <Route path="/add-scientific-paper" element={<AddScientificPaperPage />} />
+        <Route
+          path="/add-scientific-paper"
+          element={<AddScientificPaperPage />}
+        />
 
         <Route path="/admin/search" element={<Search />} />
         <Route path="/admin/management/account" element={<ManagementAccount />} />

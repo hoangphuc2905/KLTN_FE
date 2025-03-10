@@ -6,7 +6,7 @@ import {
   FaHome,
   FaClipboardList,
   FaNewspaper,
-  FaPlus,
+  FaChevronDown,
 } from "react-icons/fa";
 import "./Sidebar.scss";
 
@@ -24,15 +24,14 @@ const UserMenu = () => {
 
   return (
     <>
-      <button className="menu-toggle-btn" onClick={toggleMenu}>
-        <FaBars />
+      <button
+        className={`menu-toggle-btn ${isOpen ? "open" : ""}`}
+        onClick={toggleMenu}
+      >
+        {isOpen ? <FaTimes /> : <FaBars />}
       </button>
 
       <div className={`popup-menu ${isOpen ? "open" : ""}`}>
-        <button className="close-btn" onClick={toggleMenu}>
-          <FaTimes />
-        </button>
-
         <nav className="menu-list">
           <Link to="/home" className="menu-item" onClick={toggleMenu}>
             <FaHome /> <span>Trang Chủ</span>
@@ -40,7 +39,7 @@ const UserMenu = () => {
 
           <div className="menu-item" onClick={toggleSubMenu}>
             <FaNewspaper /> <span>Bài Báo</span>
-            <FaPlus
+            <FaChevronDown
               className={`submenu-toggle ${isSubMenuOpen ? "open" : ""}`}
             />
           </div>

@@ -3,6 +3,7 @@ import { Table, Button } from "antd";
 import userApi from "../../../api/api";
 import Header from "../../../components/header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
+import Footer from "../../../components/footer";
 
 const WorkProcessPage = () => {
   const [workProcesses, setWorkProcesses] = useState([]);
@@ -107,7 +108,9 @@ const WorkProcessPage = () => {
       {showAddWorkProcessPopup && (
         <AddWorkProcessPage onClose={() => setShowAddWorkProcessPopup(false)} />
       )}
+      <Footer />
     </div>
+    
   );
 };
 

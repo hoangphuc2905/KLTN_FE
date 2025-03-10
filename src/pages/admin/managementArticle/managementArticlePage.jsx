@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Header from "../../../components/header";
-import { Filter, Home, ChevronRight, FileText } from "lucide-react";
+import { Filter} from "lucide-react";
 import { Input, Select, Table } from "antd";
 
 const ManagementPapers = () => {
