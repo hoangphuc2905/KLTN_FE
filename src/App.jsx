@@ -14,8 +14,9 @@ import AddScientificPaperPage from "./pages/user/scientificPaper/AddScientificPa
 
 import ManagementAccount from "./pages/admin/managementAccount/managementAccountPage";
 import ManagementAriticle from "./pages/admin/managementArticle/managementArticlePage";
-import ManagementStatistic from "./pages/admin/managementStatistic/managementStatisticPage";
-
+import ManagementTable from "./pages/admin/managementStatistic/managementTablePage";
+import ManagementChart from "./pages/admin/managementStatistic/managementChartPage";
+import ManagementPoint from "./pages/admin/managementStatistic/managementPointPage";
 const App = () => {
   const [userRole, setUserRole] = useState(null);
 
@@ -34,15 +35,16 @@ const App = () => {
         <Route path="/update-profile" element={<UpdateProfilePage />} />
         <Route path="/work-process" element={<WorkProcessPage />} />
         <Route path="/scientific-paper" element={<ScientificPaperPage />} />
-        <Route
-          path="/add-scientific-paper"
-          element={<AddScientificPaperPage />}
-        />
+        <Route path="/add-scientific-paper" element={<AddScientificPaperPage />} />
+        <Route path="/notifications" element={<NotificationPage />} />
 
         <Route path="/admin/search" element={<Search />} />
         <Route path="/admin/management/account" element={<ManagementAccount />} />
         <Route path="/admin/management/ariticle" element={<ManagementAriticle />} />
-        <Route path="/admin/management/statistic" element={<ManagementStatistic />} />
+        <Route path="/admin/management/chart" element={<ManagementChart/>} />
+        <Route path="/admin/management/table" element={<ManagementTable />} />
+        <Route path="/admin/management/point" element={<ManagementPoint />} />
+        
       </Routes>
     </div>
   );

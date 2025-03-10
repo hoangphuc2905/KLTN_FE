@@ -123,7 +123,7 @@ const Dashboard = () => {
             <span>Trang chủ</span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
-              Quản lý người dùng
+              Thống kê
             </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
@@ -133,28 +133,30 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
-            <div className="flex justify-between items-center">
-                <div className="flex gap-4 justify-center w-full">
-                <div className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
-                    <div className="text-2xl font-bold text-gray-700">{stats.totalPapers}</div>
-                    <div className="text-gray-500 mt-2 text-lg">Tổng bài báo</div>
-                </div>
-                <div className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
-                    <div className="text-2xl font-bold text-[#00A3FF]">{stats.totalViews.toLocaleString()}</div>
-                    <div className="text-gray-500 mt-2 text-lg">Tổng lượt xem</div>
-                </div>
-                <div className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
-                    <div className="text-2xl font-bold text-[#FFB700]">{stats.totalDownloads.toLocaleString()}</div>
-                    <div className="text-gray-500 mt-2 text-lg">Tổng lượt tải</div>
-                </div>
-                </div>
-                <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg">
-                <option value="2024">2024</option>
-                <option value="2023">2023</option>
-                </select>
-                </div>
-            </div>
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
+  <div className="flex justify-between items-center">
+    <div className="flex gap-4 justify-center w-full">
+      <div className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
+        <div className="text-2xl font-bold text-gray-700">{stats.totalPapers}</div>
+        <div className="text-gray-500 mt-2 text-lg">Tổng bài báo</div>
+      </div>
+      <div className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
+        <div className="text-2xl font-bold text-[#00A3FF]">{stats.totalViews.toLocaleString()}</div>
+        <div className="text-gray-500 mt-2 text-lg">Tổng lượt xem</div>
+      </div>
+      <div className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center" style={{ width: '253px', height: '75px' }}>
+        <div className="text-2xl font-bold text-[#FFB700]">{stats.totalDownloads.toLocaleString()}</div>
+        <div className="text-gray-500 mt-2 text-lg">Tổng lượt tải</div>
+      </div>
+    </div>
+    <div className="ml-4">
+      <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[85px]">
+        <option value="2024">2024</option>
+        <option value="2023">2023</option>
+      </select>
+    </div>
+  </div>
+</div>
 
 
             {/* Charts */}
