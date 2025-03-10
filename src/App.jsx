@@ -11,7 +11,7 @@ import UpdateProfilePage from "./pages/user/profile/UpdateProfilePage";
 import WorkProcessPage from "./pages/user/profile/WorkProcessPage";
 import ScientificPaperPage from "./pages/user/scientificPaper/ScientificPaperPage";
 import AddScientificPaperPage from "./pages/user/scientificPaper/AddScientificPaperPage";
-
+import ScientificPaperDetailPage from "./pages/user/scientificPaper/ScientificPaperDetailPage";
 import ManagementAccount from "./pages/admin/managementAccount/managementAccountPage";
 import ManagementAriticle from "./pages/admin/managementArticle/managementArticlePage";
 import ManagementStatistic from "./pages/admin/managementStatistic/managementStatisticPage";
@@ -34,14 +34,29 @@ const App = () => {
         <Route path="/update-profile" element={<UpdateProfilePage />} />
         <Route path="/work-process" element={<WorkProcessPage />} />
         <Route path="/scientific-paper" element={<ScientificPaperPage />} />
-        <Route path="/add-scientific-paper" element={<AddScientificPaperPage />} />
+        <Route
+          path="/scientific-paper/:id"
+          element={<ScientificPaperDetailPage />}
+        />
+        <Route
+          path="/add-scientific-paper"
+          element={<AddScientificPaperPage />}
+        />
         <Route path="/notifications" element={<NotificationPage />} />
 
-
         <Route path="/admin/search" element={<Search />} />
-        <Route path="/admin/management/account" element={<ManagementAccount />} />
-        <Route path="/admin/management/ariticle" element={<ManagementAriticle />} />
-        <Route path="/admin/management/statistic" element={<ManagementStatistic />} />
+        <Route
+          path="/admin/management/account"
+          element={<ManagementAccount />}
+        />
+        <Route
+          path="/admin/management/ariticle"
+          element={<ManagementAriticle />}
+        />
+        <Route
+          path="/admin/management/statistic"
+          element={<ManagementStatistic />}
+        />
       </Routes>
     </div>
   );
