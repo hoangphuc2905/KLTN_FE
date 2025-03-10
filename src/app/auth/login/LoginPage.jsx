@@ -23,7 +23,7 @@ const LoginPage = () => {
       message.success(`Đăng nhập thành công. Chào mừng ${data.user_id}!`);
 
       if (data.role === "admin") {
-        window.location.href = "/admin/search";
+        window.location.href = "/admin/management/chart";
       } else {
         window.location.href = "/home";
       }

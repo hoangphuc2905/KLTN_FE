@@ -39,7 +39,7 @@ const AdminMenu = () => {
             <FaHome /> <span>Trang Chủ</span>
           </Link>
 
-          <Link to="/bai-bao" className="menu-item" onClick={toggleMenu}>
+          <Link to="/admin/management/ariticle" className="menu-item" onClick={toggleMenu}>
             <FaNewspaper /> <span>Bài Báo</span>
           </Link>
 
@@ -52,21 +52,21 @@ const AdminMenu = () => {
           {isStatsOpen && (
             <div className="submenu">
               <Link
-                to="/thong-ke/bieu-do"
+                to="/admin/management/chart"
                 className="submenu-item"
                 onClick={toggleMenu}
               >
                 <FaChartBar /> Dạng Biểu Đồ
               </Link>
               <Link
-                to="/thong-ke/bang"
+                to="/admin/management/table"
                 className="submenu-item"
                 onClick={toggleMenu}
               >
                 <FaTable /> Dạng Bảng
               </Link>
               <Link
-                to="/thong-ke/diem-dong-gop"
+                to="/admin/management/point"
                 className="submenu-item"
                 onClick={toggleMenu}
               >
