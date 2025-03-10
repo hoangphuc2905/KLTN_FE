@@ -49,15 +49,6 @@ const ManagementUsers = () => {
       role: "USER",
       status: "Hoạt động",
     },
-    {
-      id: "6",
-      name: "Nguyễn Văn F",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      studentId: "21040431",
-      role: "USER",
-      status: "Hoạt động",
-    }
   ];
 
   const admins = [
@@ -210,7 +201,7 @@ const ManagementUsers = () => {
           <Header />
         </div>
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600 text-sm">
+          <div className="flex items-center gap-2 text-gray-600">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -254,7 +245,7 @@ const ManagementUsers = () => {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border text-sm"
+                  className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border"
                   onClick={() => setShowFilter(!showFilter)}
                 >
                   <img
