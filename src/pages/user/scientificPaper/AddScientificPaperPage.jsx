@@ -8,6 +8,7 @@ import TextArea from "antd/es/input/TextArea";
 import { useState } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
+import userApi from "../../../api/api";
 
 const { Option } = Select;
 
@@ -17,6 +18,18 @@ const AddScientificPaperPage = () => {
     { id: 2, mssvMsgv: "", name: "", role: "", institution: "" },
   ]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [coverImage, setCoverImage] = useState(null);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setCoverImage(event.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleFileChange = () => {
     const input = document.createElement("input");
@@ -51,10 +64,22 @@ const AddScientificPaperPage = () => {
     setAuthors(newAuthors);
   };
 
-  const handleAuthorChange = (index, field, value) => {
-    const newAuthors = [...authors];
-    newAuthors[index][field] = value;
-    setAuthors(newAuthors);
+  const handleAuthorChange = async (index, field, value) => {
+    const updatedAuthors = [...authors];
+    updatedAuthors[index][field] = value;
+
+    // Nếu đang nhập vào ô MSSV/MSGV thì gọi API
+    if (field === "mssvMsgv" && value.trim() !== "") {
+      try {
+        const userData = await userApi.getUserInfo(value);
+        updatedAuthors[index].full_name = userData.full_name || ""; // Gán tên tự động từ API
+      } catch (error) {
+        console.error("Không tìm thấy thông tin:", error);
+        updatedAuthors[index].full_name = ""; // Xóa tên nếu không tìm thấy
+      }
+    }
+
+    setAuthors(updatedAuthors);
   };
 
   // xóa trắng
@@ -93,13 +118,32 @@ const AddScientificPaperPage = () => {
                 </h2>
 
                 <div className="flex gap-4">
-                  <div className="w-1/3">
-                    <img
-                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/0563f14b44500ff5b83245fb9a6af2b57eb332ec4bbe05eafafe76a4e02af753?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                      alt="Form illustration"
-                      className=" w-[180px] h-[200px] max-w-[180px] max-h-[250px] pl-4"
+                  <div className="w-1/3 flex justify-center">
+                    <label
+                      htmlFor="cover-upload"
+                      className="cursor-pointer relative"
+                    >
+                      <img
+                        src={
+                          coverImage ||
+                          "https://via.placeholder.com/180x200?text=Bìa+Bài+Báo"
+                        }
+                        alt="Bìa bài báo"
+                        className="w-[180px] h-[200px] object-cover border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 text-white font-semibold text-sm rounded-lg transition duration-300">
+                        Chọn ảnh
+                      </div>
+                    </label>
+                    <input
+                      id="cover-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="hidden"
                     />
                   </div>
+
                   <div className="w-2/3 grid grid-cols-1">
                     <Input
                       className="w-full h-10 bg-gray-200"
@@ -205,25 +249,23 @@ const AddScientificPaperPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   {authors.map((author, index) => (
                     <div
-                      key={author.id}
-                      className="grid grid-cols-5 gap-4 col-span-2"
+                      key={author.user_id}
+                      className="grid grid-cols-6 gap-4 col-span-2"
                     >
                       <Input
                         placeholder="MSSV/MSGV"
-                        value={author.mssvMsgv}
+                        value={author.user_id}
                         onChange={(e) =>
                           handleAuthorChange(index, "mssvMsgv", e.target.value)
                         }
                         required
                       />
                       <Input
+                        className="col-span-2"
                         placeholder="Tên sinh viên / giảng viên"
-                        value={author.name}
-                        onChange={(e) =>
-                          handleAuthorChange(index, "name", e.target.value)
-                        }
-                        required
+                        value={author.full_name}
                       />
+
                       <Select
                         placeholder="Vai trò"
                         value={author.role}
@@ -232,8 +274,12 @@ const AddScientificPaperPage = () => {
                         }
                         required
                       >
-                        <Option value="role1">Role 1</Option>
-                        <Option value="role2">Role 2</Option>
+                        <Option value="primary">Chính</Option>
+                        <Option value="corresponding">Liên hệ</Option>
+                        <Option value="primaryCorresponding">
+                          Vừa chính vừa liên hệ
+                        </Option>
+                        <Option value="contributor">Tham gia</Option>
                       </Select>
                       <Input
                         placeholder="CQ công tác"
@@ -254,6 +300,9 @@ const AddScientificPaperPage = () => {
                       />
                     </div>
                   ))}
+                  <h2 className="col-span-2 text-xs text-red-700 italic">
+                    (Nếu tác giả không có MSSV/MSGV, vui lòng điền CCCD)
+                  </h2>
                   <Button icon={<PlusOutlined />} onClick={handleAddAuthor}>
                     Thêm tác giả
                   </Button>
