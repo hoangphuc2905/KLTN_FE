@@ -39,8 +39,20 @@ const AdminMenu = () => {
             <FaHome /> <span>Trang Chủ</span>
           </Link>
 
-          <Link to="/admin/management/ariticle" className="menu-item" onClick={toggleMenu}>
+          <Link
+            to="/admin/management/ariticle"
+            className="menu-item"
+            onClick={toggleMenu}
+          >
             <FaNewspaper /> <span>Bài Báo</span>
+          </Link>
+
+          <Link
+            to="/admin/management/scoringformulas"
+            className="menu-item"
+            onClick={toggleMenu}
+          >
+            <FaNewspaper /> <span>Công thức điểm</span>
           </Link>
 
           <div className="menu-item has-submenu" onClick={toggleStatsMenu}>
