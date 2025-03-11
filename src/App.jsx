@@ -17,6 +17,7 @@ import ManagementAriticle from "./pages/admin/managementArticle/managementArticl
 import ManagementTable from "./pages/admin/managementStatistic/managementTablePage";
 import ManagementChart from "./pages/admin/managementStatistic/managementChartPage";
 import ManagementPoint from "./pages/admin/managementStatistic/managementPointPage";
+import ManagementFormulas from "./pages/admin/managementScoringformulas/managementScoringformulasPage";
 const App = () => {
   const [userRole, setUserRole] = useState(null);
 
@@ -46,12 +47,19 @@ const App = () => {
         <Route path="/notifications" element={<NotificationPage />} />
 
         <Route path="/admin/search" element={<Search />} />
-        <Route path="/admin/management/account" element={<ManagementAccount />} />
-        <Route path="/admin/management/ariticle" element={<ManagementAriticle />} />
+        <Route
+          path="/admin/management/account"
+          element={<ManagementAccount />}
+        />
+        <Route
+          path="/admin/management/ariticle"
+          element={<ManagementAriticle />}
+        />
         <Route path="/admin/management/chart" element={<ManagementChart />} />
         <Route path="/admin/management/table" element={<ManagementTable />} />
         <Route path="/admin/management/point" element={<ManagementPoint />} />
-        
+        <Route path="/admin/management/scoringformulas" element={<ManagementFormulas />}
+/>
       </Routes>
     </div>
   );
