@@ -11,9 +11,9 @@ import {
   Checkbox,
   Divider,
 } from "antd";
-
-const ManagementTable = () => {
-  const papers = [
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
+ const papers = [
     {
       id: 1,
       paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
@@ -408,6 +408,56 @@ const ManagementTable = () => {
     }
   };
 
+  const handleDownload = () => {
+    const tableData = filteredPapers.map((paper, index) => {
+      const rowData = { STT: index + 1 };
+      visibleColumns.forEach((col) => {
+        switch (col) {
+          case "paperType":
+            rowData["Loại bài báo"] = paper.paperType;
+            break;
+          case "group":
+            rowData["Nhóm"] = paper.group;
+            break;
+          case "title":
+            rowData["Tên bài báo nghiên cứu khoa học"] = paper.title;
+            break;
+          case "authors":
+            rowData["Tác giả"] = paper.authors;
+            break;
+          case "authorCount":
+            rowData["Số tác giả"] = paper.authorCount;
+            break;
+          case "role":
+            rowData["Vai trò"] = paper.role;
+            break;
+          case "institution":
+            rowData["CQ đứng tên"] = paper.institution;
+            break;
+          case "publicationDate":
+            rowData["Ngày công bố"] = paper.publicationDate;
+            break;
+          case "dateAdded":
+            rowData["Ngày thêm"] = paper.dateAdded;
+            break;
+          default:
+            break;
+        }
+      });
+      return rowData;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(tableData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Papers");
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "papers.xlsx");
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -437,10 +487,14 @@ const ManagementTable = () => {
               <option value="2024">2024</option>
               <option value="2023">2023</option>
             </select>
-            <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">
+            <button
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              onClick={handleDownload}
+            >
               Download
             </button>
             <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">
+
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"
