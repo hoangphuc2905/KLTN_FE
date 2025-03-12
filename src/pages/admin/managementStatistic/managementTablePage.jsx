@@ -13,7 +13,9 @@ import {
 } from "antd";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
- const papers = [
+
+const ManagementTable = () => {
+  const papers = [
     {
       id: 1,
       paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
@@ -494,7 +496,6 @@ import * as XLSX from "xlsx";
               Download
             </button>
             <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">
-
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"
