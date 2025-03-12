@@ -69,6 +69,28 @@ const userApi = {
     }
   },
 
+  createFormula: async (formulaData) => {
+    try {
+      const response = await axios.post(`${API_URL}/formulas`, formulaData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating formula:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updateFormula: async (formulaData) => {
+    try {
+      const response = await axios.put(`${API_URL}/formulas`, formulaData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating formula:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   getFormulas: async (year) => {
     try {
       const response = await axios.get(`${API_URL}/formulas/${year}`);
