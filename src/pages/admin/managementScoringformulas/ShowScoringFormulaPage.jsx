@@ -6,23 +6,27 @@ const { Option } = Select;
 
 const ShowScoringFormulaPage = ({ onClose, data }) => {
   const [formData, setFormData] = useState({
-    criterion: "",
-    percentage: "",
-    coefficient: "",
+    name: "",
+    description: "",
+    weight: "",
   });
 
-  const [additionalFields, setAdditionalFields] = useState([
-    { percentage: "", coefficient: "" },
-  ]);
+  const [additionalFields, setAdditionalFields] = useState([]);
 
+  // Cập nhật form khi có dữ liệu mới
   useEffect(() => {
     if (data) {
       setFormData({
-        criterion: data.criterion,
-        percentage: data.percentage,
-        coefficient: data.coefficient,
+        name: data.name || "",
+        description: data.description || "",
+        weight: data.weight || "",
       });
-      setAdditionalFields(data.additionalFields || []);
+      setAdditionalFields(
+        Object.entries(data.values || {}).map(([key, value]) => ({
+          key,
+          value,
+        }))
+      );
     }
   }, [data]);
 
@@ -31,14 +35,11 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
   };
 
   const handleSelectChange = (value) => {
-    setFormData({ ...formData, criterion: value });
+    setFormData({ ...formData, name: value });
   };
 
   const handleAddField = () => {
-    setAdditionalFields([
-      ...additionalFields,
-      { percentage: "", coefficient: "" },
-    ]);
+    setAdditionalFields([...additionalFields, { key: "", value: "" }]);
   };
 
   const handleRemoveField = (index) => {
@@ -54,7 +55,7 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
 
   const handleSubmit = async () => {
     try {
-      console.log("Submitted Data:", { ...formData, additionalFields });
+      console.log("Submitted Data:", { ...formData, values: additionalFields });
       onClose();
     } catch (error) {
       console.error("Error submitting data:", error);
@@ -78,36 +79,49 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
 
         <Form onFinish={handleSubmit}>
           <div className="space-y-4 pt-4">
-            {/* Tiêu chí */}
+            {/* Tên tiêu chí */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
                 Tên tiêu chí <span className="text-red-500">(*)</span>
               </label>
               <Select
-                name="criterion"
-                value={formData.criterion}
+                name="name"
+                value={formData.name}
                 onChange={handleSelectChange}
                 placeholder="Chọn tiêu chí"
                 className="w-full"
               >
-                <Option value="journal">NHÓM TẠP CHÍ</Option>
-                <Option value="role">VAI TRÒ</Option>
-                <Option value="organization">CƠ ĐỨNG TÊN</Option>
+                <Option value="journal_group">NHÓM TẠP CHÍ</Option>
+                <Option value="author_role">VAI TRÒ</Option>
+                <Option value="institution_count">CƠ ĐỨNG TÊN</Option>
                 <Option value="doi">DOI</Option>
-                <Option value="exemplary">TIÊU BIỂU</Option>
+                <Option value="exemplary_paper">TIÊU BIỂU</Option>
               </Select>
             </div>
 
-            {/* Phần trăm đóng góp */}
+            {/* Mô tả */}
             <div className="space-y-2">
               <label className="text-sm font-medium">
-                Phần trăm đóng góp <span className="text-red-500">(*)</span>
+                Mô tả <span className="text-red-500">(*)</span>
               </label>
               <Input
-                name="percentage"
-                value={formData.percentage}
+                name="description"
+                value={formData.description}
                 onChange={handleChange}
-                placeholder="Nhập phần trăm đóng góp"
+                placeholder="Nhập mô tả"
+              />
+            </div>
+
+            {/* Trọng số */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Trọng số <span className="text-red-500">(*)</span>
+              </label>
+              <Input
+                name="weight"
+                value={formData.weight}
+                onChange={handleChange}
+                placeholder="Nhập trọng số"
               />
             </div>
 
@@ -119,15 +133,15 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
                 </label>
                 <div className="flex gap-4">
                   <Input
-                    name="percentage"
-                    value={field.percentage}
+                    name="key"
+                    value={field.key}
                     onChange={(e) => handleAdditionalFieldChange(index, e)}
                     placeholder="Thành phần"
                     className="w-1/2"
                   />
                   <Input
-                    name="coefficient"
-                    value={field.coefficient}
+                    name="value"
+                    value={field.value}
                     onChange={(e) => handleAdditionalFieldChange(index, e)}
                     placeholder="Hệ số"
                     className="w-1/2"
@@ -153,7 +167,16 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
 
             {/* Nút Xóa trắng và Lưu */}
             <div className="flex justify-end gap-4 pt-4">
-              <Button type="default" onClick={() => setFormData({})}>
+              <Button
+                type="default"
+                onClick={() =>
+                  setFormData({
+                    name: "",
+                    description: "",
+                    weight: "",
+                  })
+                }
+              >
                 Xóa trắng
               </Button>
               <Button type="primary" htmlType="submit">
