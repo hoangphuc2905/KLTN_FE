@@ -11,13 +11,13 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import AddScoringFormulaPage from "./AddScoringFormulaPage";
 
 const ItemTypes = {
-  CRITERION: "criterion",
+  ATTRIBUTE: "attribute",
 };
 
-const DraggableCriterion = ({ criterion, onSettingsClick }) => {
+const DraggableAttribute = ({ attribute, onSettingsClick }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
-    type: ItemTypes.CRITERION,
-    item: { criterion },
+    type: ItemTypes.ATTRIBUTE,
+    item: { attribute },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -30,11 +30,11 @@ const DraggableCriterion = ({ criterion, onSettingsClick }) => {
         isDragging ? "opacity-50" : "bg-white"
       } hover:shadow-md transition-shadow`}
     >
-      <span className="text-sm font-medium">{criterion.name}</span>
+      <span className="text-sm font-medium">{attribute.name}</span>
       <div className="flex gap-1">
         <button
           className="p-1 rounded-full text-gray-500 hover:bg-gray-50"
-          onClick={() => onSettingsClick(criterion)}
+          onClick={() => onSettingsClick(attribute)}
         >
           <Settings className="w-4 h-4" />
         </button>
@@ -48,14 +48,14 @@ const DraggableCriterion = ({ criterion, onSettingsClick }) => {
 
 const DroppableSlot = ({ index, formula, setFormula, isEditing }) => {
   const [{ isOver }, drop] = useDrop(() => ({
-    accept: ItemTypes.CRITERION,
-    drop: (item) => addCriterionToSlot(item.criterion),
+    accept: ItemTypes.ATTRIBUTE,
+    drop: (item) => addAttributeToSlot(item.attribute),
     collect: (monitor) => ({
       isOver: !!monitor.isOver(),
     }),
   }));
 
-  const addCriterionToSlot = (criterion) => {
+  const addAttributeToSlot = (attribute) => {
     setFormula((prevFormula) => {
       const newFormula = [...prevFormula];
 
@@ -64,18 +64,20 @@ const DroppableSlot = ({ index, formula, setFormula, isEditing }) => {
         newFormula.push(null);
       }
 
-      // Check if the criterion already exists
-      if (!newFormula.some((slot) => slot && slot.name === criterion.name)) {
-        newFormula[index] = { ...criterion, coefficient: 1 };
+      // Check if the attribute already exists
+      if (
+        !newFormula.some((slot) => slot && slot.attribute._id === attribute._id)
+      ) {
+        newFormula[index] = { attribute, weight: 1 };
         return newFormula;
       } else {
-        message.error("Tiêu chí này đã được thêm vào công thức.");
+        message.error("Thuộc tính này đã được thêm vào công thức.");
         return prevFormula;
       }
     });
   };
 
-  const removeCriterion = () => {
+  const removeAttribute = () => {
     setFormula((prevFormula) => {
       const newFormula = [...prevFormula];
       if (newFormula[index]) {
@@ -94,18 +96,20 @@ const DroppableSlot = ({ index, formula, setFormula, isEditing }) => {
     >
       {formula[index] ? (
         <>
-          <span className="text-sm font-medium">{formula[index].name}</span>
+          <span className="text-sm font-medium">
+            {formula[index].attribute.name}
+          </span>
           {isEditing && (
             <button
               className="p-1 rounded-full text-red-500 hover:bg-red-50"
-              onClick={removeCriterion}
+              onClick={removeAttribute}
             >
               <X className="w-4 h-4" />
             </button>
           )}
         </>
       ) : (
-        <span className="text-gray-400">Kéo tiêu chí vào đây</span>
+        <span className="text-gray-400">Kéo thuộc tính vào đây</span>
       )}
     </div>
   );
@@ -122,10 +126,10 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
     setFormula(newFormula);
   };
 
-  const handleCoefficientChange = (index, value) => {
+  const handleWeightChange = (index, value) => {
     const newFormula = [...formula];
     if (newFormula[index]) {
-      newFormula[index].coefficient = value;
+      newFormula[index].weight = value;
       setFormula(newFormula);
     }
   };
@@ -135,9 +139,9 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
       <div className="space-y-4">
         {formula.map((slot, index) => (
           <div key={index} className="flex items-center space-x-2">
-            <span className="text-sm font-medium">{slot?.name}</span>
+            <span className="text-sm font-medium">{slot?.attribute.name}</span>
             <span className="text-lg font-semibold">×</span>
-            <span className="text-sm font-medium">{slot?.coefficient}</span>
+            <span className="text-sm font-medium">{slot?.weight}</span>
             {index < formula.length - 1 && (
               <span className="text-lg font-semibold">+</span>
             )}
@@ -160,8 +164,8 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
           <span className="text-lg font-semibold">×</span>
           <InputNumber
             min={0}
-            value={formula[index]?.coefficient || 1}
-            onChange={(value) => handleCoefficientChange(index, value)}
+            value={formula[index]?.weight || 1}
+            onChange={(value) => handleWeightChange(index, value)}
             className="mx-2"
             disabled={!isEditing}
           />
@@ -183,7 +187,7 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
           onClick={addSlot}
           className="mt-4 bg-blue-500 text-white hover:bg-blue-600"
         >
-          Thêm tiêu chí
+          Thêm thuộc tính
         </Button>
       )}
     </div>
@@ -193,17 +197,17 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
 const ManagementFormulas = () => {
   const [showAddFormulasPopup, setShowAddFormulasPopup] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
-  const [criteria, setCriteria] = useState([]);
+  const [attributes, setAttributes] = useState([]);
   const [selectedYear, setSelectedYear] = useState(2024);
   const [recentFormulas, setRecentFormulas] = useState([]);
   const [currentFormula, setCurrentFormula] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
-  const [selectedCriterion, setSelectedCriterion] = useState(null);
+  const [selectedAttribute, setSelectedAttribute] = useState(null);
 
   const getFormulas = async (year) => {
     try {
-      const response = await userApi.getFormulas(year);
+      const response = await userApi.getFormulaByYear(year);
       console.log("API Response:", response);
       return response;
     } catch (error) {
@@ -212,24 +216,35 @@ const ManagementFormulas = () => {
     }
   };
 
+  const getAttributes = async (year) => {
+    try {
+      const response = await userApi.getAttributeByYear(year);
+      console.log("API Response:", response);
+      return response;
+    } catch (error) {
+      console.error("Error fetching attributes:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  };
+
   useEffect(() => {
-    const fetchCriteria = async () => {
+    const fetchAttributes = async () => {
       try {
         const data = await getFormulas(selectedYear);
-        setCriteria(data.formula);
+        setAttributes(data.formula.map((f) => f.attribute));
         setRecentFormulas([data]); // Assuming the API returns a single formula object for the selected year
-        setCurrentFormula(data.formula.map((f) => ({ ...f, coefficient: 1 }))); // Initialize with coefficients
+        setCurrentFormula(data.formula.map((f) => ({ ...f, weight: 1 }))); // Initialize with weights
       } catch (error) {
-        console.error("Error fetching criteria:", error);
+        console.error("Error fetching attributes:", error);
         message.error("Lỗi kết nối đến server hoặc không tìm thấy dữ liệu");
       }
     };
 
-    fetchCriteria();
+    fetchAttributes();
   }, [selectedYear]);
 
-  const handleSettingsClick = (criterion) => {
-    setSelectedCriterion(criterion);
+  const handleSettingsClick = (attribute) => {
+    setSelectedAttribute(attribute);
     setSettingsModalVisible(true);
   };
 
@@ -241,10 +256,10 @@ const ManagementFormulas = () => {
     setIsEditing(!isEditing);
   };
 
-  const handleSaveCriterion = (updatedCriterion) => {
-    setCriteria((prevCriteria) =>
-      prevCriteria.map((c) =>
-        c._id === updatedCriterion._id ? updatedCriterion : c
+  const handleSaveAttribute = (updatedAttribute) => {
+    setAttributes((prevAttributes) =>
+      prevAttributes.map((a) =>
+        a._id === updatedAttribute._id ? updatedAttribute : a
       )
     );
   };
@@ -328,18 +343,9 @@ const ManagementFormulas = () => {
                             <td className="px-4 py-3">{item.year}</td>
                             <td className="px-4 py-3 font-mono text-sm">
                               {item.formula.map((f) => (
-                                <div key={f._id}>
-                                  <strong>{f.name}</strong>: {f.description}{" "}
-                                  (Weight: {f.weight})
-                                  <ul>
-                                    {Object.entries(f.values).map(
-                                      ([key, value]) => (
-                                        <li key={key}>
-                                          {key}: {value}
-                                        </li>
-                                      )
-                                    )}
-                                  </ul>
+                                <div key={f.attribute._id}>
+                                  <strong>{f.attribute.name}</strong>:{" "}
+                                  {f.attribute.description} (Weight: {f.weight})
                                 </div>
                               ))}
                             </td>
@@ -350,11 +356,11 @@ const ManagementFormulas = () => {
                   </div>
                 </div>
 
-                {/* Criteria Section */}
+                {/* Attributes Section */}
                 <div className="bg-white rounded-xl p-6 shadow-md">
                   <div className="flex justify-between items-center mb-6">
                     <h2 className="font-semibold text-gray-700">
-                      CÁC TIÊU CHÍ TÍNH ĐIỂM ĐÓNG GÓP
+                      CÁC THUỘC TÍNH TÍNH ĐIỂM ĐÓNG GÓP
                     </h2>
                     <Button
                       className="bg-blue-500 text-white hover:bg-blue-600"
@@ -364,10 +370,10 @@ const ManagementFormulas = () => {
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    {criteria.map((criterion) => (
-                      <DraggableCriterion
-                        key={criterion._id}
-                        criterion={criterion}
+                    {attributes.map((attribute) => (
+                      <DraggableAttribute
+                        key={attribute._id}
+                        attribute={attribute}
                         onSettingsClick={handleSettingsClick}
                       />
                     ))}
@@ -394,7 +400,7 @@ const ManagementFormulas = () => {
           </Modal>
 
           <Modal
-            title="Chỉnh sửa tiêu chí"
+            title="Chỉnh sửa thuộc tính"
             open={settingsModalVisible}
             onCancel={() => setSettingsModalVisible(false)}
             footer={null}
@@ -404,7 +410,7 @@ const ManagementFormulas = () => {
           >
             <ShowScoringFormulaPage
               onClose={() => setSettingsModalVisible(false)}
-              data={selectedCriterion}
+              data={selectedAttribute}
             />
           </Modal>
 
