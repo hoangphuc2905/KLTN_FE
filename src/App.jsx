@@ -12,6 +12,9 @@ import WorkProcessPage from "./pages/user/profile/WorkProcessPage";
 import ScientificPaperPage from "./pages/user/scientificPaper/ScientificPaperPage";
 import AddScientificPaperPage from "./pages/user/scientificPaper/AddScientificPaperPage";
 import ScientificPaperDetailPage from "./pages/user/scientificPaper/ScientificPaperDetailPage";
+import StatisticsTablePage from "./pages/user/statistics/StatisticsTablePage";
+import StatisticsChartPage from "./pages/user/statistics/StatisticsChartPage";
+import StatisticsPointPage from "./pages/user/statistics/StatisticsPointPage";
 import ManagementAccount from "./pages/admin/managementAccount/managementAccountPage";
 import ManagementAriticle from "./pages/admin/managementArticle/managementArticlePage";
 import ManagementTable from "./pages/admin/managementStatistic/managementTablePage";
@@ -44,6 +47,9 @@ const App = () => {
           path="/add-scientific-paper"
           element={<AddScientificPaperPage />}
         />
+        <Route path="/statistics-table" element={<StatisticsTablePage />} />
+        <Route path="/statistics-chart" element={<StatisticsChartPage />} />
+        <Route path="/statistics-point" element={<StatisticsPointPage />} />
         <Route path="/notifications" element={<NotificationPage />} />
 
         <Route path="/admin/search" element={<Search />} />
@@ -58,8 +64,10 @@ const App = () => {
         <Route path="/admin/management/chart" element={<ManagementChart />} />
         <Route path="/admin/management/table" element={<ManagementTable />} />
         <Route path="/admin/management/point" element={<ManagementPoint />} />
-        <Route path="/admin/management/scoringformulas" element={<ManagementFormulas />}
-/>
+        <Route
+          path="/admin/management/scoringformulas"
+          element={<ManagementFormulas />}
+        />
       </Routes>
     </div>
   );
