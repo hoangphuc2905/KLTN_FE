@@ -4,9 +4,11 @@ import {
   FaBars,
   FaTimes,
   FaHome,
-  FaClipboardList,
   FaNewspaper,
   FaChevronDown,
+  FaClipboardList,
+  FaTable,
+  FaChartBar,
 } from "react-icons/fa";
 import "./Sidebar.scss";
 
@@ -17,6 +19,8 @@ const UserMenu = () => {
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const toggleSubMenu = () => setIsSubMenuOpen(!isSubMenuOpen);
+  const toggleStatsMenu = () => setIsStatsOpen(!isStatsOpen);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
 
   if (location.pathname === "/") {
     return null;
@@ -62,9 +66,37 @@ const UserMenu = () => {
             </div>
           )}
 
-          <Link to="/user-dashboard" className="menu-item" onClick={toggleMenu}>
-            <FaClipboardList /> <span>User Dashboard</span>
-          </Link>
+          <div className="menu-item has-submenu" onClick={toggleStatsMenu}>
+            <FaChartBar /> <span>Thống Kê</span>
+            <FaChevronDown
+              className={`submenu-toggle ${isStatsOpen ? "open" : ""}`}
+            />
+          </div>
+          {isStatsOpen && (
+            <div className="submenu">
+              <Link
+                to="statistics-chart"
+                className="submenu-item"
+                onClick={toggleMenu}
+              >
+                <FaChartBar /> Dạng Biểu Đồ
+              </Link>
+              <Link
+                to="statistics-table"
+                className="submenu-item"
+                onClick={toggleMenu}
+              >
+                <FaTable /> Dạng Bảng
+              </Link>
+              <Link
+                to="statistics-point"
+                className="submenu-item"
+                onClick={toggleMenu}
+              >
+                <FaClipboardList /> Điểm Đóng Góp
+              </Link>
+            </div>
+          )}
         </nav>
       </div>
 

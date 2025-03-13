@@ -91,7 +91,18 @@ const userApi = {
     }
   },
 
-  getFormulas: async (year) => {
+  getAttributeByYear: async (year) => {
+    try {
+      const response = await axios.get(`${API_URL}/attributes/${year}`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching attributes:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getFormulaByYear: async (year) => {
     try {
       const response = await axios.get(`${API_URL}/formulas/${year}`);
       console.log("API Response:", response.data);

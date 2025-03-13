@@ -1,16 +1,25 @@
 import { useState } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Table, Checkbox, Divider, Tooltip } from "antd";
+import {
+  Input,
+  Table,
+  Tooltip,
+  Modal,
+  Checkbox,
+  Divider,
+} from "antd";
+import { saveAs } from "file-saver";
+import * as XLSX from "xlsx";
 
-const ScientificPaperPage = () => {
+const ManagementTable = () => {
   const papers = [
     {
       id: 1,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q1",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "3 (0-0-1-2)",
       role: "Vừa chính vừa liên hệ",
@@ -21,10 +30,10 @@ const ScientificPaperPage = () => {
     },
     {
       id: 2,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q3",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
@@ -35,10 +44,10 @@ const ScientificPaperPage = () => {
     },
     {
       id: 3,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q2",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
@@ -50,10 +59,10 @@ const ScientificPaperPage = () => {
     },
     {
       id: 4,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q3",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q4",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
@@ -64,25 +73,10 @@ const ScientificPaperPage = () => {
     },
     {
       id: 5,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 6,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q1",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "3 (0-0-1-2)",
       role: "Vừa chính vừa liên hệ",
@@ -92,11 +86,11 @@ const ScientificPaperPage = () => {
       dateAdded: "12/12/2024",
     },
     {
-      id: 7,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      id: 6,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q3",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
@@ -106,11 +100,11 @@ const ScientificPaperPage = () => {
       dateAdded: "19/12/2024",
     },
     {
-      id: 8,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      id: 7,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q2",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
@@ -121,11 +115,25 @@ const ScientificPaperPage = () => {
       note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
     },
     {
+      id: 8,
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q4",
+      title:
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
+      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      status: "Đang chờ",
+      dateAdded: "19/12/2024",
+    },
+    {
       id: 9,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q1",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "3 (0-0-1-2)",
       role: "Vừa chính vừa liên hệ",
@@ -136,10 +144,10 @@ const ScientificPaperPage = () => {
     },
     {
       id: 10,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q3",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
@@ -150,10 +158,10 @@ const ScientificPaperPage = () => {
     },
     {
       id: 11,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
       group: "Q2",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
@@ -165,23 +173,21 @@ const ScientificPaperPage = () => {
     },
     {
       id: 12,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q1",
+      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q4",
       title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
       institution: "IUH",
       publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
+      status: "Đang chờ",
+      dateAdded: "19/12/2024",
     },
   ];
 
-  const [activeTab, setActiveTab] = useState("all");
   const [showFilter, setShowFilter] = useState(false);
-  const [showColumnFilter, setShowColumnFilter] = useState(false);
   const [filterPaperType, setFilterPaperType] = useState("Tất cả");
   const [filterGroup, setFilterGroup] = useState("Tất cả");
   const [filterPaperTitle, setFilterPaperTitle] = useState("");
@@ -191,7 +197,9 @@ const ScientificPaperPage = () => {
   const [filterInstitution, setFilterInstitution] = useState("Tất cả");
   const [filterStatus, setFilterStatus] = useState("Tất cả");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState({});
+  const itemsPerPage = 10;
 
   const uniquePaperTypes = [
     "Tất cả",
@@ -219,10 +227,14 @@ const ScientificPaperPage = () => {
       (filterRole === "Tất cả" || paper.role === filterRole) &&
       (filterInstitution === "Tất cả" ||
         paper.institution === filterInstitution) &&
-      (filterStatus === "Tất cả" || paper.status === filterStatus) &&
-      (activeTab === "all" || paper.status === activeTab)
+      (filterStatus === "Tất cả" || paper.status === filterStatus)
     );
   });
+
+  const handleRowClick = (record) => {
+    setModalContent(record);
+    setIsModalVisible(true);
+  };
 
   const columns = [
     {
@@ -230,7 +242,8 @@ const ScientificPaperPage = () => {
       dataIndex: "id",
       key: "id",
       render: (text, record, index) => index + 1,
-      width: 65,
+      width: 75,
+      sorter: (a, b) => a.id - b.id,
     },
     {
       title: "LOẠI BÀI BÁO",
@@ -239,6 +252,7 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => a.paperType.localeCompare(b.paperType),
       render: (paperType) => (
         <Tooltip placement="topLeft" title={paperType}>
           {paperType}
@@ -247,18 +261,19 @@ const ScientificPaperPage = () => {
       width: 150,
     },
     {
-      title: "THUỘC NHÓM",
+      title: "NHÓM",
       dataIndex: "group",
       key: "group",
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => a.group.localeCompare(b.group),
       render: (group) => (
         <Tooltip placement="topLeft" title={group}>
           {group}
         </Tooltip>
       ),
-      width: 150,
+      width: 100,
     },
     {
       title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
@@ -267,6 +282,7 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => a.title.localeCompare(b.title),
       render: (title) => (
         <Tooltip placement="topLeft" title={title}>
           {title}
@@ -281,12 +297,13 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => a.authors.localeCompare(b.authors),
       render: (authors) => (
         <Tooltip placement="topLeft" title={authors}>
           {authors}
         </Tooltip>
       ),
-      width: 200,
+      width: 110,
     },
     {
       title: "SỐ T/GIẢ",
@@ -295,12 +312,13 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => a.authorCount.localeCompare(b.authorCount),
       render: (authorCount) => (
         <Tooltip placement="topLeft" title={authorCount}>
           {authorCount}
         </Tooltip>
       ),
-      width: 100,
+      width: 120,
     },
     {
       title: "VAI TRÒ",
@@ -309,12 +327,13 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => a.role.localeCompare(b.role),
       render: (role) => (
         <Tooltip placement="topLeft" title={role}>
           {role}
         </Tooltip>
       ),
-      width: 150,
+      width: 110,
     },
     {
       title: "CQ ĐỨNG TÊN",
@@ -323,6 +342,7 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => a.institution.localeCompare(b.institution),
       render: (institution) => (
         <Tooltip placement="topLeft" title={institution}>
           {institution}
@@ -337,35 +357,14 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) =>
+        new Date(a.publicationDate) - new Date(b.publicationDate),
       render: (publicationDate) => (
         <Tooltip placement="topLeft" title={publicationDate}>
           {publicationDate}
         </Tooltip>
       ),
-      width: 150,
-    },
-    {
-      title: "MINH CHỨNG",
-      key: "evidence",
-      render: () => (
-        <div className="flex-col text-[#00A3FF]">
-          <button className="hover:underline">Xem link|</button>
-          <button className="hover:underline">Xem file</button>
-        </div>
-      ),
-      width: 150,
-    },
-    {
-      title: "TRẠNG THÁI",
-      dataIndex: "status",
-      key: "status",
-      render: (status) => (
-        <span className={`${getStatusColor(status)}`}>{status}</span>
-      ),
-      ellipsis: {
-        showTitle: false,
-      },
-      width: 150,
+      width: 160,
     },
     {
       title: "NGÀY THÊM",
@@ -374,6 +373,7 @@ const ScientificPaperPage = () => {
       ellipsis: {
         showTitle: false,
       },
+      sorter: (a, b) => new Date(a.dateAdded) - new Date(b.dateAdded),
       render: (dateAdded) => (
         <Tooltip placement="topLeft" title={dateAdded}>
           {dateAdded}
@@ -381,38 +381,29 @@ const ScientificPaperPage = () => {
       ),
       width: 150,
     },
-    {
-      title: "CHỈNH SỬA",
-      key: "edit",
-      render: () => (
-        <button className="text-[#00A3FF]">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-              fill="currentColor"
-            />
-          </svg>
-        </button>
-      ),
-      width: 100,
-    },
-    {
-      title: "GHI CHÚ",
-      dataIndex: "note",
-      key: "note",
-      render: (note) => <span className="text-red-600">{note}</span>,
-      ellipsis: {
-        showTitle: false,
-      },
-      width: 200,
-    },
   ];
+
+  const [showColumnFilter, setShowColumnFilter] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((col) => col.key)
+  );
+
+  const columnOptions = columns.map((col) => ({
+    label: col.title,
+    value: col.key,
+  }));
+
+  const checkedList = columns.map((col) => col.key);
+
+  const newColumns = columns.filter((item) => checkedList.includes(item.key));
+
+  const handleColumnVisibilityChange = (selectedColumns) => {
+    setVisibleColumns(selectedColumns);
+  };
+
+  const filteredColumns = columns.filter((col) =>
+    visibleColumns.includes(col.key)
+  );
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -427,14 +418,55 @@ const ScientificPaperPage = () => {
     }
   };
 
-  const [checkedList, setCheckedList] = useState(
-    columns.map((item) => item.key)
-  );
-  const options = columns.map(({ key, title }) => ({
-    label: title,
-    value: key,
-  }));
-  const newColumns = columns.filter((item) => checkedList.includes(item.key));
+  const handleDownload = () => {
+    const tableData = filteredPapers.map((paper, index) => {
+      const rowData = { STT: index + 1 };
+      visibleColumns.forEach((col) => {
+        switch (col) {
+          case "paperType":
+            rowData["Loại bài báo"] = paper.paperType;
+            break;
+          case "group":
+            rowData["Nhóm"] = paper.group;
+            break;
+          case "title":
+            rowData["Tên bài báo nghiên cứu khoa học"] = paper.title;
+            break;
+          case "authors":
+            rowData["Tác giả"] = paper.authors;
+            break;
+          case "authorCount":
+            rowData["Số tác giả"] = paper.authorCount;
+            break;
+          case "role":
+            rowData["Vai trò"] = paper.role;
+            break;
+          case "institution":
+            rowData["CQ đứng tên"] = paper.institution;
+            break;
+          case "publicationDate":
+            rowData["Ngày công bố"] = paper.publicationDate;
+            break;
+          case "dateAdded":
+            rowData["Ngày thêm"] = paper.dateAdded;
+            break;
+          default:
+            break;
+        }
+      });
+      return rowData;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(tableData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Papers");
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: "xlsx",
+      type: "array",
+    });
+    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
+    saveAs(data, "papers.xlsx");
+  };
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -451,64 +483,35 @@ const ScientificPaperPage = () => {
             />
             <span>Trang chủ</span>
             <span className="text-gray-400"> &gt; </span>
+            <span className="font-semibold text-sm text-sky-900">Thống kê</span>
+            <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
-              Bài báo nghiên cứu khoa học
+              Dạng bảng
             </span>
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div
-            className="flex border-b"
-            style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
-          >
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+          <div className="flex justify-end gap-4 mb-4">
+            <select className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[85px]">
+              <option value="2024">2024</option>
+              <option value="2023">2023</option>
+            </select>
             <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "all"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("all")}
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              onClick={handleDownload}
             >
-              Tất cả ({papers.length})
+              Download
             </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Đã duyệt"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("Đã duyệt")}
-            >
-              Đã duyệt (
-              {papers.filter((paper) => paper.status === "Đã duyệt").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Đang chờ"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("Đang chờ")}
-            >
-              Chờ duyệt (
-              {papers.filter((paper) => paper.status === "Đang chờ").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Từ chối"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("Từ chối")}
-            >
-              Từ chối (
-              {papers.filter((paper) => paper.status === "Từ chối").length})
+            <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
+                alt="Print Icon"
+                className="w-4 h-4"
+              />
+              Print
             </button>
           </div>
-        </div>
-
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative gap-2">
@@ -679,11 +682,9 @@ const ScientificPaperPage = () => {
                   <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
                     <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <Checkbox.Group
-                        options={options}
-                        value={checkedList}
-                        onChange={(value) => {
-                          setCheckedList(value);
-                        }}
+                        options={columnOptions}
+                        value={visibleColumns}
+                        onChange={handleColumnVisibilityChange}
                         className="flex flex-col gap-2"
                       />
                       <Divider className="mt-4" />
@@ -692,7 +693,7 @@ const ScientificPaperPage = () => {
                 )}
               </div>
               <Table
-                columns={newColumns}
+                columns={filteredColumns}
                 dataSource={filteredPapers}
                 pagination={{
                   current: currentPage,
@@ -702,19 +703,61 @@ const ScientificPaperPage = () => {
                 }}
                 rowKey="id"
                 className="text-sm"
+                onRow={(record) => ({
+                  onClick: () => handleRowClick(record),
+                })}
                 scroll={{
-                  x: newColumns.reduce(
+                  x: filteredColumns.reduce(
                     (total, col) => total + (col.width || 0),
                     0
                   ),
-                }} // Thêm dòng này để tạo thanh kéo ngang
+                }}
               />
             </div>
           </div>
         </div>
       </div>
+      <Modal
+        title="Chi tiết"
+        visible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <p>
+          <strong>Loại bài báo:</strong> {modalContent.paperType}
+        </p>
+        <p>
+          <strong>Thuộc nhóm:</strong> {modalContent.group}
+        </p>
+        <p>
+          <strong>Tên bài báo nghiên cứu khoa học:</strong> {modalContent.title}
+        </p>
+        <p>
+          <strong>Tác giả:</strong> {modalContent.authors}
+        </p>
+        <p>
+          <strong>Số tác giả:</strong> {modalContent.authorCount}
+        </p>
+        <p>
+          <strong>Vai trò:</strong> {modalContent.role}
+        </p>
+        <p>
+          <strong>CQ đứng tên:</strong> {modalContent.institution}
+        </p>
+        <p>
+          <strong>Ngày công bố:</strong> {modalContent.publicationDate}
+        </p>
+        <p>
+          <strong>Ngày thêm:</strong> {modalContent.dateAdded}
+        </p>
+        {modalContent.note && (
+          <p>
+            <strong>Ghi chú:</strong> {modalContent.note}
+          </p>
+        )}
+      </Modal>
     </div>
   );
 };
 
-export default ScientificPaperPage;
+export default ManagementTable;
