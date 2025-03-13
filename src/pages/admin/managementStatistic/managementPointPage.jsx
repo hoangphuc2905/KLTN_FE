@@ -109,7 +109,7 @@ const ManagementPoint = () => {
     {
       id: 12,
       author: "Nguyễn Văn B",
-      position: "P.S TRƯỞNG KHOA CÔNG NGHỆ THÔNG TIN",
+      position: "Trưởng khoa",
       department: "NGOẠI NGỮ",
       totalPapers: 3,
       journalType: "Tất cả",
@@ -202,6 +202,7 @@ const ManagementPoint = () => {
       render: (text, record, index) => index + 1,
       sorter: (a, b) => a.id - b.id,
       sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null,
+      width: 65,
     },
     {
       title: "TÁC GIẢ",
@@ -209,6 +210,7 @@ const ManagementPoint = () => {
       key: "author",
       sorter: (a, b) => a.author.localeCompare(b.author),
       sortOrder: sortedInfo.columnKey === "author" ? sortedInfo.order : null,
+      width: 250,
     },
     {
       title: "CHỨC VỤ",
@@ -216,6 +218,7 @@ const ManagementPoint = () => {
       key: "position",
       sorter: (a, b) => a.position.localeCompare(b.position),
       sortOrder: sortedInfo.columnKey === "position" ? sortedInfo.order : null,
+      width: 150,
     },
     {
       title: "KHOA",
@@ -224,6 +227,7 @@ const ManagementPoint = () => {
       sorter: (a, b) => a.department.localeCompare(b.department),
       sortOrder:
         sortedInfo.columnKey === "department" ? sortedInfo.order : null,
+      width: 270,
     },
     {
       title: "TỔNG BÀI",
@@ -232,6 +236,7 @@ const ManagementPoint = () => {
       sorter: (a, b) => a.totalPapers - b.totalPapers,
       sortOrder:
         sortedInfo.columnKey === "totalPapers" ? sortedInfo.order : null,
+      width: 120,
     },
     {
       title: "LOẠI TẠP CHÍ",
@@ -240,6 +245,7 @@ const ManagementPoint = () => {
       sorter: (a, b) => a.journalType.localeCompare(b.journalType),
       sortOrder:
         sortedInfo.columnKey === "journalType" ? sortedInfo.order : null,
+      width: 140,
     },
     {
       title: "TỔNG ĐIỂM",
@@ -248,6 +254,7 @@ const ManagementPoint = () => {
       sorter: (a, b) => a.totalPoints - b.totalPoints,
       sortOrder:
         sortedInfo.columnKey === "totalPoints" ? sortedInfo.order : null,
+      width: 130,
     },
     {
       title: "XEM CHI TIẾT",
@@ -257,6 +264,7 @@ const ManagementPoint = () => {
           Xem chi tiết
         </a>
       ),
+      width: 130,
     },
   ].filter((column) => visibleColumns.includes(column.key));
 

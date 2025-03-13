@@ -290,7 +290,7 @@ const ManagementTable = () => {
           {title}
         </Tooltip>
       ),
-      width: 120,
+      width: 300,
     },
     {
       title: "TÁC GIẢ",
@@ -305,6 +305,7 @@ const ManagementTable = () => {
           {authors}
         </Tooltip>
       ),
+      width: 110,
     },
     {
       title: "SỐ T/GIẢ",
@@ -319,6 +320,7 @@ const ManagementTable = () => {
           {authorCount}
         </Tooltip>
       ),
+      width: 120,
     },
     {
       title: "VAI TRÒ",
@@ -333,6 +335,7 @@ const ManagementTable = () => {
           {role}
         </Tooltip>
       ),
+      width: 110,
     },
     {
       title: "CQ ĐỨNG TÊN",
@@ -347,6 +350,7 @@ const ManagementTable = () => {
           {institution}
         </Tooltip>
       ),
+      width: 150,
     },
     {
       title: "NGÀY CÔNG BỐ",
@@ -362,6 +366,7 @@ const ManagementTable = () => {
           {publicationDate}
         </Tooltip>
       ),
+      width: 160,
     },
     {
       title: "NGÀY THÊM",
@@ -376,6 +381,7 @@ const ManagementTable = () => {
           {dateAdded}
         </Tooltip>
       ),
+      width: 150,
     },
   ];
 
@@ -388,6 +394,10 @@ const ManagementTable = () => {
     label: col.title,
     value: col.key,
   }));
+
+  const checkedList = columns.map((col) => col.key);
+
+  const newColumns = columns.filter((item) => checkedList.includes(item.key));
 
   const handleColumnVisibilityChange = (selectedColumns) => {
     setVisibleColumns(selectedColumns);
@@ -698,6 +708,12 @@ const ManagementTable = () => {
                 onRow={(record) => ({
                   onClick: () => handleRowClick(record),
                 })}
+                scroll={{
+                  x: filteredColumns.reduce(
+                    (total, col) => total + (col.width || 0),
+                    0
+                  ),
+                }}
               />
             </div>
           </div>
