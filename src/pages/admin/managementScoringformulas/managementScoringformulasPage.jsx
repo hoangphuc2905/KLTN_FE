@@ -4,7 +4,7 @@ import Footer from "../../../components/footer";
 import { Settings, X } from "lucide-react";
 import { Button, Modal, message, InputNumber } from "antd";
 import { MathJaxContext } from "better-react-mathjax";
-import ShowScoringFormulaPage from "./ShowScoringFormulaPage";
+import EditScoringFormulaPage from "./EditScoringFormulaPage";
 import userApi from "../../../api/api";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
@@ -136,10 +136,11 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
 
   if (!isEditing) {
     return (
-      <div className="space-y-4">
+      <div className="flex flex-wrap items-center space-x-2">
+        <span className="text-base font-semibold text-cyan-500">Điểm đóng góp =</span>
         {formula.map((slot, index) => (
           <div key={index} className="flex items-center space-x-2">
-            <span className="text-sm font-medium">{slot?.attribute.name}</span>
+            <span className="text-sm font-medium">{slot?.attribute?.name}</span>
             <span className="text-lg font-semibold">×</span>
             <span className="text-sm font-medium">{slot?.weight}</span>
             {index < formula.length - 1 && (
@@ -152,7 +153,7 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-wrap items-center space-x-2">
       {formula.map((slot, index) => (
         <div key={index} className="flex items-center space-x-2">
           <DroppableSlot
@@ -228,19 +229,24 @@ const ManagementFormulas = () => {
   };
 
   useEffect(() => {
-    const fetchAttributes = async () => {
+    const fetchData = async () => {
       try {
-        const data = await getFormulas(selectedYear);
-        setAttributes(data.formula.map((f) => f.attribute));
-        setRecentFormulas([data]); // Assuming the API returns a single formula object for the selected year
-        setCurrentFormula(data.formula.map((f) => ({ ...f, weight: 1 }))); // Initialize with weights
+        const attributesData = await getAttributes(selectedYear);
+        const formulasData = await getFormulas(selectedYear);
+        setAttributes(
+          Array.isArray(attributesData) ? attributesData : [attributesData]
+        );
+        setRecentFormulas(
+          Array.isArray(formulasData) ? formulasData : [formulasData]
+        ); // Ensure recentFormulas is always an array
+        setCurrentFormula(formulasData.formula || []); // Initialize with weights from the API
       } catch (error) {
-        console.error("Error fetching attributes:", error);
+        console.error("Error fetching data:", error);
         message.error("Lỗi kết nối đến server hoặc không tìm thấy dữ liệu");
       }
     };
 
-    fetchAttributes();
+    fetchData();
   }, [selectedYear]);
 
   const handleSettingsClick = (attribute) => {
@@ -262,6 +268,28 @@ const ManagementFormulas = () => {
         a._id === updatedAttribute._id ? updatedAttribute : a
       )
     );
+  };
+
+  const handleAddAttribute = (newAttribute) => {
+    setAttributes((prevAttributes) => [...prevAttributes, newAttribute]);
+  };
+
+  const handleSaveFormula = async () => {
+    try {
+      const formulaData = {
+        formula: currentFormula,
+      };
+      const response = await userApi.updateFormula(selectedYear, formulaData);
+      console.log("Updated Formula:", response);
+      message.success("Lưu công thức thành công!");
+      setRecentFormulas((prevFormulas) =>
+        prevFormulas.map((f) => (f.year === selectedYear ? response : f))
+      );
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Error saving formula:", error);
+      message.error("Lỗi khi lưu công thức.");
+    }
   };
 
   return (
@@ -311,7 +339,7 @@ const ManagementFormulas = () => {
                       </h2>
                       <Button
                         className="bg-blue-500 text-white hover:bg-blue-600"
-                        onClick={toggleEditMode}
+                        onClick={isEditing ? handleSaveFormula : toggleEditMode}
                       >
                         {isEditing ? "Lưu" : "Chỉnh sửa"}
                       </Button>
@@ -342,12 +370,17 @@ const ManagementFormulas = () => {
                           <tr key={item.year} className="border-t">
                             <td className="px-4 py-3">{item.year}</td>
                             <td className="px-4 py-3 font-mono text-sm">
-                              {item.formula.map((f) => (
-                                <div key={f.attribute._id}>
-                                  <strong>{f.attribute.name}</strong>:{" "}
-                                  {f.attribute.description} (Weight: {f.weight})
-                                </div>
-                              ))}
+                              <div className="flex flex-wrap gap-1">
+                                {item.formula.map((f, index) => (
+                                  <span key={f.attribute._id}>
+                                    <strong>{f.attribute.name}</strong>:{" "}
+                                    {f.weight}
+                                    {index < item.formula.length - 1 && (
+                                      <span className="mx-1">+</span>
+                                    )}
+                                  </span>
+                                ))}
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -370,13 +403,16 @@ const ManagementFormulas = () => {
                     </Button>
                   </div>
                   <div className="space-y-2">
-                    {attributes.map((attribute) => (
-                      <DraggableAttribute
-                        key={attribute._id}
-                        attribute={attribute}
-                        onSettingsClick={handleSettingsClick}
-                      />
-                    ))}
+                    {attributes.map(
+                      (attribute) =>
+                        attribute && (
+                          <DraggableAttribute
+                            key={attribute._id}
+                            attribute={attribute}
+                            onSettingsClick={handleSettingsClick}
+                          />
+                        )
+                    )}
                   </div>
                 </div>
               </div>
@@ -394,8 +430,8 @@ const ManagementFormulas = () => {
           >
             <AddScoringFormulaPage
               onClose={() => setShowAddFormulasPopup(false)}
-              selectedYear={selectedYear} // Pass the selectedYear prop here
-              data={selectedData}
+              selectedYear={selectedYear}
+              onAddAttribute={handleAddAttribute}
             />
           </Modal>
 
@@ -408,7 +444,7 @@ const ManagementFormulas = () => {
             width={600}
             closable={false}
           >
-            <ShowScoringFormulaPage
+            <EditScoringFormulaPage
               onClose={() => setSettingsModalVisible(false)}
               data={selectedAttribute}
             />

@@ -80,9 +80,12 @@ const userApi = {
     }
   },
 
-  updateFormula: async (formulaData) => {
+  updateFormula: async (year, formulaData) => {
     try {
-      const response = await axios.put(`${API_URL}/formulas`, formulaData);
+      const response = await axios.put(
+        `${API_URL}/formulas/${year}`,
+        formulaData
+      );
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
@@ -98,6 +101,28 @@ const userApi = {
       return response.data;
     } catch (error) {
       console.error("Error fetching attributes:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  createAttribute: async (attributeData) => {
+    try {
+      const response = await axios.post(`${API_URL}/attributes`, attributeData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating attribute:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updateAttribute: async (attributeData) => {
+    try {
+      const response = await axios.put(`${API_URL}/attributes`, attributeData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating attribute:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },

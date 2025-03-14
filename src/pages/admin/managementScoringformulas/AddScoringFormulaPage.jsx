@@ -5,11 +5,9 @@ import userApi from "../../../api/api";
 
 const { Option } = Select;
 
-const AddScoringFormulaPage = ({ onClose, selectedYear }) => {
+const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
-    weight: "",
   });
 
   const [additionalFields, setAdditionalFields] = useState([
@@ -42,40 +40,30 @@ const AddScoringFormulaPage = ({ onClose, selectedYear }) => {
   const handleSubmit = async () => {
     try {
       const values = additionalFields.reduce((acc, field) => {
-        acc[field.key] = parseFloat(field.value);
+        if (field.key && field.value) {
+          acc[field.key] = parseFloat(field.value);
+        }
         return acc;
       }, {});
-      const formulaData = {
+      const attributeData = {
         year: selectedYear,
-        formula: [
-          {
-            name: formData.name,
-            description: formData.description,
-            weight: parseFloat(formData.weight),
-            values: values,
-          },
-        ],
+        name: formData.name,
+        values: values,
       };
-      console.log("Submitting Data:", formulaData); // Log the data being sent
+      console.log("Submitting Data:", attributeData); // Log the data being sent
 
-      // Check if a formula for the selected year already exists
-      const existingFormulas = await userApi.getFormulas(selectedYear);
-      if (existingFormulas.length > 0) {
-        // Update the existing formula
-        const response = await userApi.updateFormula(selectedYear, formulaData);
-        console.log("Updated Data:", response.data);
-        message.success("Cập nhật công thức tính điểm thành công!");
-      } else {
-        // Create a new formula
-        const response = await userApi.createFormula(formulaData);
-        console.log("Submitted Data:", response.data);
-        message.success("Lưu công thức tính điểm thành công!");
-      }
+      // Create a new attribute
+      const response = await userApi.createAttribute(attributeData);
+      console.log("Submitted Data:", response.data);
+      message.success("Lưu thuộc tính thành công!");
+
+      // Gọi hàm callback để cập nhật danh sách thuộc tính
+      onAddAttribute(response.data);
 
       onClose();
     } catch (error) {
       console.error("Error submitting data:", error.response?.data || error);
-      message.error("Lỗi khi lưu công thức tính điểm.");
+      message.error("Lỗi khi lưu thuộc tính.");
     }
   };
 
@@ -91,7 +79,7 @@ const AddScoringFormulaPage = ({ onClose, selectedYear }) => {
         </button>
 
         <h2 className="text-lg font-semibold text-blue-600 text-center mb-4">
-          THÊM CÔNG THỨC TÍNH ĐIỂM
+          THÊM THUỘC TÍNH TÍNH ĐIỂM
         </h2>
 
         <Form onFinish={handleSubmit}>
@@ -114,33 +102,6 @@ const AddScoringFormulaPage = ({ onClose, selectedYear }) => {
                 <Option value="doi">DOI</Option>
                 <Option value="exemplary_paper">TIÊU BIỂU</Option>
               </Select>
-            </div>
-
-            {/* Mô tả */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Mô tả <span className="text-red-500">(*)</span>
-              </label>
-              <Input
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Nhập mô tả"
-              />
-            </div>
-
-            {/* Trọng số */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Trọng số <span className="text-red-500">(*)</span>
-              </label>
-              <Input
-                name="weight"
-                value={formData.weight}
-                onChange={handleChange}
-                placeholder="Nhập trọng số"
-                type="number"
-              />
             </div>
 
             {/* Cặp giá trị Thành phần - Hệ số */}
@@ -191,8 +152,6 @@ const AddScoringFormulaPage = ({ onClose, selectedYear }) => {
                 onClick={() =>
                   setFormData({
                     name: "",
-                    description: "",
-                    weight: "",
                   })
                 }
               >
