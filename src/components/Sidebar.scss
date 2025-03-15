@@ -56,6 +56,10 @@
       svg {
         margin-right: 10px;
       }
+
+      span {
+        display: inline-block;
+      }
     }
 
     .submenu {
@@ -64,6 +68,8 @@
       padding-left: 20px;
 
       .submenu-item {
+        display: flex;
+        align-items: center;
         padding: 10px 20px;
         color: #666;
         text-decoration: none;
@@ -71,6 +77,14 @@
 
         &:hover {
           background: #f0f0f0;
+        }
+
+        svg {
+          margin-right: 10px;
+        }
+
+        span {
+          display: inline-block;
         }
       }
     }
