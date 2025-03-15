@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Settings, X } from "lucide-react";
-import { Button, Modal, message, InputNumber } from "antd";
+import { Button, Modal, message, InputNumber, Input } from "antd";
 import { MathJaxContext } from "better-react-mathjax";
 import EditScoringFormulaPage from "./EditScoringFormulaPage";
 import userApi from "../../../api/api";
@@ -137,7 +137,9 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
   if (!isEditing) {
     return (
       <div className="flex flex-wrap items-center space-x-2">
-        <span className="text-base font-semibold text-cyan-500">Điểm đóng góp =</span>
+        <span className="text-base font-semibold text-cyan-500">
+          Điểm đóng góp =
+        </span>
         {formula.map((slot, index) => (
           <div key={index} className="flex items-center space-x-2">
             <span className="text-sm font-medium">{slot?.attribute?.name}</span>
@@ -205,6 +207,8 @@ const ManagementFormulas = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [selectedAttribute, setSelectedAttribute] = useState(null);
+  const [years, setYears] = useState([2025, 2024, 2023, 2022, 2021, 2020]);
+  const [newYear, setNewYear] = useState("");
 
   const getFormulas = async (year) => {
     try {
@@ -213,7 +217,7 @@ const ManagementFormulas = () => {
       return response;
     } catch (error) {
       console.error("Error fetching formulas:", error);
-      throw error.response?.data || "Lỗi kết nối đến server";
+      return null; // Return null if there's an error
     }
   };
 
@@ -224,7 +228,7 @@ const ManagementFormulas = () => {
       return response;
     } catch (error) {
       console.error("Error fetching attributes:", error);
-      throw error.response?.data || "Lỗi kết nối đến server";
+      return []; // Return empty array if there's an error
     }
   };
 
@@ -239,10 +243,12 @@ const ManagementFormulas = () => {
         setRecentFormulas(
           Array.isArray(formulasData) ? formulasData : [formulasData]
         ); // Ensure recentFormulas is always an array
-        setCurrentFormula(formulasData.formula || []); // Initialize with weights from the API
+        setCurrentFormula(formulasData?.formula || []); // Initialize with weights from the API
       } catch (error) {
         console.error("Error fetching data:", error);
-        message.error("Lỗi kết nối đến server hoặc không tìm thấy dữ liệu");
+        setAttributes([]);
+        setRecentFormulas([]);
+        setCurrentFormula([]);
       }
     };
 
@@ -256,6 +262,20 @@ const ManagementFormulas = () => {
 
   const handleYearChange = (event) => {
     setSelectedYear(event.target.value);
+  };
+
+  const handleAddYear = () => {
+    const year = parseInt(newYear, 10);
+    if (!isNaN(year) && !years.includes(year)) {
+      setYears([...years, year].sort((a, b) => b - a));
+      setSelectedYear(year);
+      setNewYear("");
+      setAttributes([]);
+      setRecentFormulas([]);
+      setCurrentFormula([]);
+    } else {
+      message.error("Năm không hợp lệ hoặc đã tồn tại.");
+    }
   };
 
   const toggleEditMode = () => {
@@ -275,12 +295,30 @@ const ManagementFormulas = () => {
   };
 
   const handleSaveFormula = async () => {
+    const totalWeight = currentFormula.reduce(
+      (sum, slot) => sum + (slot?.weight || 0),
+      0
+    );
+    if (totalWeight !== 100) {
+      message.error("Tổng các hệ số phải bằng 100%");
+      return;
+    }
+
     try {
       const formulaData = {
         formula: currentFormula,
       };
-      const response = await userApi.updateFormula(selectedYear, formulaData);
-      console.log("Updated Formula:", response);
+      const existingFormula = await getFormulas(selectedYear);
+      let response;
+      if (existingFormula) {
+        response = await userApi.updateFormula(selectedYear, formulaData);
+      } else {
+        response = await userApi.createFormula({
+          year: selectedYear,
+          ...formulaData,
+        });
+      }
+      console.log("Saved Formula:", response);
       message.success("Lưu công thức thành công!");
       setRecentFormulas((prevFormulas) =>
         prevFormulas.map((f) => (f.year === selectedYear ? response : f))
@@ -317,16 +355,30 @@ const ManagementFormulas = () => {
             </div>
 
             <div className="self-center w-full max-w-[1563px] px-6 mt-6">
-              <div className="flex justify-end mb-4">
+              <div className="flex justify-end mb-4 gap-2">
                 <select
                   className="p-2 px-4 border rounded-lg bg-blue-500 text-white hover:bg-blue-600"
                   value={selectedYear}
                   onChange={handleYearChange}
                 >
-                  <option value="2025">2025</option>
-                  <option value="2024">2024</option>
-                  <option value="2023">2023</option>
+                  {years.map((year) => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
                 </select>
+                <Input
+                  placeholder="Thêm năm mới"
+                  value={newYear}
+                  onChange={(e) => setNewYear(e.target.value)}
+                  className="w-32"
+                />
+                <Button
+                  className="bg-blue-500 text-white hover:bg-blue-600"
+                  onClick={handleAddYear}
+                >
+                  Thêm năm
+                </Button>
               </div>
 
               <div className="grid grid-cols-3 gap-6">
@@ -366,24 +418,27 @@ const ManagementFormulas = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {recentFormulas.map((item) => (
-                          <tr key={item.year} className="border-t">
-                            <td className="px-4 py-3">{item.year}</td>
-                            <td className="px-4 py-3 font-mono text-sm">
-                              <div className="flex flex-wrap gap-1">
-                                {item.formula.map((f, index) => (
-                                  <span key={f.attribute._id}>
-                                    <strong>{f.attribute.name}</strong>:{" "}
-                                    {f.weight}
-                                    {index < item.formula.length - 1 && (
-                                      <span className="mx-1">+</span>
-                                    )}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
+                        {recentFormulas.map(
+                          (item) =>
+                            item && (
+                              <tr key={item.year} className="border-t">
+                                <td className="px-4 py-3">{item.year}</td>
+                                <td className="px-4 py-3 font-mono text-sm">
+                                  <div className="flex flex-wrap gap-1">
+                                    {item.formula.map((f, index) => (
+                                      <span key={f.attribute._id}>
+                                        <strong>{f.attribute.name}</strong>:{" "}
+                                        {f.weight}
+                                        {index < item.formula.length - 1 && (
+                                          <span className="mx-1">+</span>
+                                        )}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </td>
+                              </tr>
+                            )
+                        )}
                       </tbody>
                     </table>
                   </div>

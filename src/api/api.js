@@ -116,9 +116,12 @@ const userApi = {
     }
   },
 
-  updateAttribute: async (attributeData) => {
+  updateAttribute: async (year, attributeData) => {
     try {
-      const response = await axios.put(`${API_URL}/attributes`, attributeData);
+      const response = await axios.put(
+        `${API_URL}/attributes/${year}`,
+        attributeData
+      );
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {

@@ -1,14 +1,13 @@
-import { Select, Input, Button, Form } from "antd";
+import { Select, Input, Button, Form, message } from "antd";
 import { useState, useEffect } from "react";
 import { CloseOutlined, PlusOutlined, MinusOutlined } from "@ant-design/icons";
+import userApi from "../../../api/api"; // Import API
 
 const { Option } = Select;
 
 const ShowScoringFormulaPage = ({ onClose, data }) => {
   const [formData, setFormData] = useState({
     name: "",
-    description: "",
-    weight: "",
   });
 
   const [additionalFields, setAdditionalFields] = useState([]);
@@ -18,8 +17,6 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
     if (data) {
       setFormData({
         name: data.name || "",
-        description: data.description || "",
-        weight: data.weight || "",
       });
       setAdditionalFields(
         Object.entries(data.values || {}).map(([key, value]) => ({
@@ -55,9 +52,17 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
 
   const handleSubmit = async () => {
     try {
-      console.log("Submitted Data:", { ...formData, values: additionalFields });
+      const values = additionalFields.reduce((acc, field) => {
+        acc[field.key] = field.value;
+        return acc;
+      }, {});
+      const updatedData = { ...formData, values };
+      await userApi.updateAttribute(data.year, updatedData);
+      message.success("Cập nhật công thức tính điểm thành công!");
+      console.log("Submitted Data:", updatedData);
       onClose();
     } catch (error) {
+      message.error("Cập nhật công thức tính điểm thất bại!");
       console.error("Error submitting data:", error);
     }
   };
@@ -97,32 +102,6 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
                 <Option value="doi">DOI</Option>
                 <Option value="exemplary_paper">TIÊU BIỂU</Option>
               </Select>
-            </div>
-
-            {/* Mô tả */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Mô tả <span className="text-red-500">(*)</span>
-              </label>
-              <Input
-                name="description"
-                value={formData.description}
-                onChange={handleChange}
-                placeholder="Nhập mô tả"
-              />
-            </div>
-
-            {/* Trọng số */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Trọng số <span className="text-red-500">(*)</span>
-              </label>
-              <Input
-                name="weight"
-                value={formData.weight}
-                onChange={handleChange}
-                placeholder="Nhập trọng số"
-              />
             </div>
 
             {/* Cặp giá trị Thành phần - Hệ số */}
@@ -172,8 +151,6 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
                 onClick={() =>
                   setFormData({
                     name: "",
-                    description: "",
-                    weight: "",
                   })
                 }
               >
