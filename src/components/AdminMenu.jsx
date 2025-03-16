@@ -48,6 +48,14 @@ const AdminMenu = () => {
           </Link>
 
           <Link
+            to="/admin/management/data"
+            className="menu-item"
+            onClick={toggleMenu}
+          >
+            <FaNewspaper /> <span>Quản lý dữ liệu</span>
+          </Link>
+
+          <Link
             to="/admin/management/scoringformulas"
             className="menu-item"
             onClick={toggleMenu}
