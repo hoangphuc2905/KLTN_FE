@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Header from "../../../components/header";
 import { Home, ChevronRight } from "lucide-react";
+import Footer from "../../../components/Footer";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -183,6 +184,110 @@ const Dashboard = () => {
     },
   ];
 
+  const [selectedQuarters, setSelectedQuarters] = useState(["All"]);
+  const [showFilter, setShowFilter] = useState(false);
+  const [selectedRoles, setSelectedRoles] = useState(["All"]);
+  const [showRoleFilter, setShowRoleFilter] = useState(false);
+  const [selectedFields, setSelectedFields] = useState(["All"]);
+  const [showFieldFilter, setShowFieldFilter] = useState(false);
+  const filterRef = useRef(null);
+  const roleFilterRef = useRef(null);
+  const fieldFilterRef = useRef(null);
+
+  const handleQuarterChange = (event) => {
+    const value = event.target.value;
+    setSelectedQuarters((prevSelected) =>
+      prevSelected.includes(value)
+        ? prevSelected.filter((item) => item !== value)
+        : [...prevSelected, value]
+    );
+  };
+
+  const handleRoleChange = (event) => {
+    const value = event.target.value;
+    setSelectedRoles((prevSelected) =>
+      prevSelected.includes(value)
+        ? prevSelected.filter((item) => item !== value)
+        : [...prevSelected, value]
+    );
+  };
+
+  const handleFieldChange = (event) => {
+    const value = event.target.value;
+    setSelectedFields((prevSelected) =>
+      prevSelected.includes(value)
+        ? prevSelected.filter((item) => item !== value)
+        : [...prevSelected, value]
+    );
+  };
+
+  const handleClickOutside = (event) => {
+    if (filterRef.current && !filterRef.current.contains(event.target)) {
+      setShowFilter(false);
+    }
+    if (
+      roleFilterRef.current &&
+      !roleFilterRef.current.contains(event.target)
+    ) {
+      setShowRoleFilter(false);
+    }
+    if (
+      fieldFilterRef.current &&
+      !fieldFilterRef.current.contains(event.target)
+    ) {
+      setShowFieldFilter(false);
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const filteredTypeChartData = {
+    ...typeChartData,
+    datasets: [
+      {
+        ...typeChartData.datasets[0],
+        data: selectedQuarters.includes("All")
+          ? typeChartData.datasets[0].data
+          : typeChartData.datasets[0].data.map((value, index) =>
+              selectedQuarters.includes(typeChartData.labels[index]) ? value : 0
+            ),
+      },
+    ],
+  };
+
+  const filteredRoleChartData = {
+    ...roleChartData,
+    datasets: [
+      {
+        ...roleChartData.datasets[0],
+        data: selectedRoles.includes("All")
+          ? roleChartData.datasets[0].data
+          : roleChartData.datasets[0].data.map((value, index) =>
+              selectedRoles.includes(roleChartData.labels[index]) ? value : 0
+            ),
+      },
+    ],
+  };
+
+  const filteredDonutChartData = {
+    ...donutChartData,
+    datasets: [
+      {
+        ...donutChartData.datasets[0],
+        data: selectedFields.includes("All")
+          ? donutChartData.datasets[0].data
+          : donutChartData.datasets[0].data.map((value, index) =>
+              selectedFields.includes(donutChartData.labels[index]) ? value : 0
+            ),
+      },
+    ],
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -250,28 +355,93 @@ const Dashboard = () => {
                 <h2 className="font-semibold text-gray-700">
                   Biểu đồ Thống kê theo loại
                 </h2>
-                <select className="text-sm border rounded p-1 px-3">
-                  <option>Tất cả</option>
-                </select>
+                <div className="relative" ref={filterRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    onClick={() => setShowFilter(!showFilter)}
+                  >
+                    <span className="text-xs">Bộ lọc</span>
+                  </button>
+                  {showFilter && (
+                    <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
+                      <div className="px-4 py-5 w-full max-w-[400px]">
+                        {["All", "Q1", "Q2", "Q3", "Q4", "None"].map(
+                          (quarter) => (
+                            <label key={quarter} className="flex items-center">
+                              <input
+                                type="checkbox"
+                                value={quarter}
+                                checked={selectedQuarters.includes(quarter)}
+                                onChange={handleQuarterChange}
+                                className="mr-2"
+                              />
+                              {quarter}
+                            </label>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <Bar
-                data={typeChartData}
+                data={filteredTypeChartData}
                 options={chartOptions}
                 height={200}
                 width={500}
               />
             </div>
+
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
                   Biểu đồ Thống kê theo vai trò
                 </h2>
-                <select className="text-sm border rounded p-1 px-3">
-                  <option>Tất cả</option>
-                </select>
+                <div className="relative" ref={roleFilterRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    onClick={() => setShowRoleFilter(!showRoleFilter)}
+                  >
+                    <span className="text-xs">Bộ lọc</span>
+                  </button>
+                  {showRoleFilter && (
+                    <div
+                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ left: "-100px", width: "200px" }}
+                    >
+                      {" "}
+                      {/* Adjusted width and position */}
+                      <div className="px-4 py-5 w-full">
+                        {[
+                          "All",
+                          "Tác giả chính",
+                          "Liên hệ",
+                          "Vừa chính vừa liên hệ",
+                          "Tham gia",
+                        ].map((role) => (
+                          <label
+                            key={role}
+                            className="flex items-center mb-2 flex-wrap"
+                          >
+                            {" "}
+                            {/* Added margin-bottom */}
+                            <input
+                              type="checkbox"
+                              value={role}
+                              checked={selectedRoles.includes(role)}
+                              onChange={handleRoleChange}
+                              className="mr-2"
+                            />
+                            {role}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <Bar
-                data={roleChartData}
+                data={filteredRoleChartData}
                 options={chartOptions}
                 height={200}
                 width={540}
@@ -283,14 +453,55 @@ const Dashboard = () => {
                 <h2 className="font-semibold text-gray-700">
                   Biểu đồ Thống kê theo lĩnh vực nghiên cứu
                 </h2>
-                <select className="text-sm border rounded p-1 px-3">
-                  <option>Tất cả</option>
-                </select>
+                <div className="relative" ref={fieldFilterRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    onClick={() => setShowFieldFilter(!showFieldFilter)}
+                  >
+                    <span className="text-xs">Bộ lọc</span>
+                  </button>
+                  {showFieldFilter && (
+                    <div
+                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "200px" }}
+                    >
+                      <div className="px-4 py-5 w-full max-w-[200px]">
+                        {[
+                          "All",
+                          "Category 1",
+                          "Category 2",
+                          "Category 3",
+                          "Category 4",
+                          "Category 5",
+                          "Category 6",
+                          "Category 7",
+                          "Category 8",
+                          "Category 9",
+                          "Category 10",
+                        ].map((field) => (
+                          <label
+                            key={field}
+                            className="flex items-center mb-2 flex-wrap"
+                          >
+                            <input
+                              type="checkbox"
+                              value={field}
+                              checked={selectedFields.includes(field)}
+                              onChange={handleFieldChange}
+                              className="mr-2"
+                            />
+                            {field}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="flex justify-start items-center relative">
                 <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
                 <Doughnut
-                  data={donutChartData}
+                  data={filteredDonutChartData}
                   options={donutOptions}
                   height={200}
                   width={500}
@@ -311,6 +522,7 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
