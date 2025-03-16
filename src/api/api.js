@@ -162,6 +162,59 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  updatePaperType: async (paperTypeData) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/papertypes/${paperTypeData._id}`,
+        paperTypeData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating paper type:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  createPaperGroup: async (paperGroupData) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/papergroups`,
+        paperGroupData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating paper group:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAllPaperGroups: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/papergroups`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching paper groups:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updatePaperGroup: async (paperGroupData) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/papergroups/${paperGroupData._id}`,
+        paperGroupData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating paper group:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
