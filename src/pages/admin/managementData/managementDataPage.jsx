@@ -1,50 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Button, Table, Input, Form, Modal, message } from "antd"; // Remove Space from antd
+import { Button, Table, Input, Form, Modal, message } from "antd";
+import userApi from "../../../api/api"; // Import userApi
 
 const ManagementData = () => {
   const [activeTab, setActiveTab] = useState("type");
-  const [paperTypes, setPaperTypes] = useState([
-    {
-      id: 1,
-      name: "Bài báo trên Tạp chí khoa học quốc tế khác (có chỉ số ISSN)",
-    },
-    {
-      id: 2,
-      name: "Bài báo trên Tạp chí khoa học và công nghệ (IUH)",
-    },
-    {
-      id: 3,
-      name: "Kỷ yếu hội nghị SCOPUS (chung)",
-    },
-    {
-      id: 4,
-      name: "Tạp chí ESCI",
-    },
-    {
-      id: 5,
-      name: "Bài báo đăng Kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-    },
-  ]);
-
-  const [paperGroups, setPaperGroups] = useState([
-    { id: 1, name: "Q1" },
-    { id: 2, name: "Q2" },
-    { id: 3, name: "Q3" },
-    { id: 4, name: "Q4" },
-    { id: 5, name: "Q5" },
-  ]);
-
+  const [paperTypes, setPaperTypes] = useState([]);
+  const [paperGroups, setPaperGroups] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [currentRecord, setCurrentRecord] = useState(null);
   const [form] = Form.useForm();
-  const [showFilter, setShowFilter] = useState(false); // Add this line
-  const [filterPaperType, setFilterPaperType] = useState(""); // Add this line
-  const [filterGroup, setFilterGroup] = useState(""); // Add this line
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterPaperType, setFilterPaperType] = useState("");
+  const [filterGroup, setFilterGroup] = useState("");
   const filterRef = useRef(null);
-  const [sortedInfo, setSortedInfo] = useState({}); // Add this line
+  const [sortedInfo, setSortedInfo] = useState({});
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -59,6 +31,20 @@ const ManagementData = () => {
     };
   }, [filterRef]);
 
+  useEffect(() => {
+    const fetchPaperTypes = async () => {
+      try {
+        const response = await userApi.getAllPaperTypes();
+        setPaperTypes(response);
+      } catch (error) {
+        console.error("Error fetching paper types:", error);
+        message.error("Lỗi khi lấy danh sách loại bài báo.");
+      }
+    };
+
+    fetchPaperTypes();
+  }, []);
+
   const handleAdd = () => {
     setIsEditMode(false);
     setIsModalVisible(true);
@@ -67,26 +53,26 @@ const ManagementData = () => {
   const handleEdit = (record) => {
     setIsEditMode(true);
     setCurrentRecord(record);
-    form.setFieldsValue({ name: record.name });
+    form.setFieldsValue({ type_name: record.type_name });
     setIsModalVisible(true);
   };
 
   const handleOk = () => {
-    form.validateFields().then((values) => {
+    form.validateFields().then(async (values) => {
       if (isEditMode) {
         if (activeTab === "type") {
           setPaperTypes((prev) =>
             prev.map((item) =>
-              item.id === currentRecord.id
-                ? { ...item, name: values.name }
+              item._id === currentRecord._id
+                ? { ...item, type_name: values.type_name }
                 : item
             )
           );
         } else {
           setPaperGroups((prev) =>
             prev.map((item) =>
-              item.id === currentRecord.id
-                ? { ...item, name: values.name }
+              item._id === currentRecord._id
+                ? { ...item, type_name: values.type_name }
                 : item
             )
           );
@@ -94,13 +80,24 @@ const ManagementData = () => {
         message.success("Chỉnh sửa thành công!");
       } else {
         if (activeTab === "type") {
-          const newType = { id: paperTypes.length + 1, name: values.name };
-          setPaperTypes([...paperTypes, newType]);
+          try {
+            const newType = await userApi.createPaperType({
+              type_name: values.type_name,
+            });
+            setPaperTypes([...paperTypes, newType]);
+            message.success("Thêm thành công!");
+          } catch (error) {
+            console.error("Error creating paper type:", error);
+            message.error("Lỗi khi thêm loại bài báo.");
+          }
         } else {
-          const newGroup = { id: paperGroups.length + 1, name: values.name };
+          const newGroup = {
+            _id: paperGroups.length + 1,
+            type_name: values.type_name,
+          };
           setPaperGroups([...paperGroups, newGroup]);
+          message.success("Thêm thành công!");
         }
-        message.success("Thêm thành công!");
       }
       setIsModalVisible(false);
       form.resetFields();
@@ -113,27 +110,26 @@ const ManagementData = () => {
   };
 
   const handleChange = (pagination, filters, sorter) => {
-    setSortedInfo(sorter); // Add this line
+    setSortedInfo(sorter);
   };
 
   const clearAll = () => {
-    setSortedInfo({}); // Add this line
+    setSortedInfo({});
   };
 
   const typeColumns = [
     {
       title: "STT",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => a.id - b.id, // Add this line
-      sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null, // Add this line
+      dataIndex: "stt",
+      key: "stt",
+      render: (text, record, index) => index + 1,
     },
     {
       title: "TÊN LOẠI BÀI BÁO/TẠP CHÍ",
-      dataIndex: "name",
-      key: "name",
-      sorter: (a, b) => a.name.length - b.name.length, // Add this line
-      sortOrder: sortedInfo.columnKey === "name" ? sortedInfo.order : null, // Add this line
+      dataIndex: "type_name",
+      key: "type_name",
+      sorter: (a, b) => a.type_name.length - b.type_name.length,
+      sortOrder: sortedInfo.columnKey === "type_name" ? sortedInfo.order : null,
     },
     {
       title: "CHỈNH SỬA",
@@ -154,17 +150,16 @@ const ManagementData = () => {
   const groupColumns = [
     {
       title: "STT",
-      dataIndex: "id",
-      key: "id",
-      sorter: (a, b) => a.id - b.id, // Add this line
-      sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null, // Add this line
+      dataIndex: "stt",
+      key: "stt",
+      render: (text, record, index) => index + 1,
     },
     {
       title: "TÊN NHÓM BÀI BÁO",
-      dataIndex: "name",
-      key: "name",
-      sorter: (a, b) => a.name.length - b.name.length, // Add this line
-      sortOrder: sortedInfo.columnKey === "name" ? sortedInfo.order : null, // Add this line
+      dataIndex: "type_name",
+      key: "type_name",
+      sorter: (a, b) => a.type_name.length - b.type_name.length,
+      sortOrder: sortedInfo.columnKey === "type_name" ? sortedInfo.order : null,
     },
     {
       title: "CHỈNH SỬA",
@@ -183,11 +178,15 @@ const ManagementData = () => {
   ];
 
   const filteredPaperTypes = paperTypes.filter((type) =>
-    type.name.toLowerCase().includes(filterPaperType.toLowerCase())
+    type.type_name
+      ? type.type_name.toLowerCase().includes(filterPaperType.toLowerCase())
+      : false
   );
 
   const filteredPaperGroups = paperGroups.filter((group) =>
-    group.name.toLowerCase().includes(filterGroup.toLowerCase())
+    group.type_name
+      ? group.type_name.toLowerCase().includes(filterGroup.toLowerCase())
+      : false
   );
 
   return (
@@ -312,7 +311,7 @@ const ManagementData = () => {
                   columns={typeColumns}
                   dataSource={filteredPaperTypes}
                   pagination={{ pageSize: 5 }}
-                  rowKey="id"
+                  rowKey="_id"
                   onChange={handleChange} // Add this line
                 />
               ) : (
@@ -320,7 +319,7 @@ const ManagementData = () => {
                   columns={groupColumns}
                   dataSource={filteredPaperGroups}
                   pagination={{ pageSize: 5 }}
-                  rowKey="id"
+                  rowKey="_id"
                   onChange={handleChange} // Add this line
                 />
               )}
@@ -347,7 +346,7 @@ const ManagementData = () => {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="name"
+            name="type_name"
             label={
               activeTab === "type"
                 ? "Tên Loại Bài Báo/Tạp Chí"

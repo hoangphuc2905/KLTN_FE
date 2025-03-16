@@ -140,6 +140,28 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  createPaperType: async (paperTypeData) => {
+    try {
+      const response = await axios.post(`${API_URL}/papertypes`, paperTypeData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating paper type:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAllPaperTypes: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/papertypes`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching paper types:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
