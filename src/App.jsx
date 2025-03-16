@@ -21,6 +21,7 @@ import ManagementTable from "./pages/admin/managementStatistic/managementTablePa
 import ManagementChart from "./pages/admin/managementStatistic/managementChartPage";
 import ManagementPoint from "./pages/admin/managementStatistic/managementPointPage";
 import ManagementFormulas from "./pages/admin/managementScoringformulas/managementScoringformulasPage";
+import ManagementData from "./pages/admin/managementData/managementDataPage";
 const App = () => {
   const [userRole, setUserRole] = useState(null);
 
@@ -68,6 +69,7 @@ const App = () => {
           path="/admin/management/scoringformulas"
           element={<ManagementFormulas />}
         />
+        <Route path="/admin/management/data" element={<ManagementData />} />
       </Routes>
     </div>
   );
