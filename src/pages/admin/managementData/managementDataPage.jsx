@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Button, Table, Input, Form, Modal, message } from "antd";
-import userApi from "../../../api/api"; // Import userApi
+import userApi from "../../../api/api";
 
 const ManagementData = () => {
   const [activeTab, setActiveTab] = useState("type");
@@ -42,7 +42,18 @@ const ManagementData = () => {
       }
     };
 
+    const fetchPaperGroups = async () => {
+      try {
+        const response = await userApi.getAllPaperGroups();
+        setPaperGroups(response);
+      } catch (error) {
+        console.error("Error fetching paper groups:", error);
+        message.error("Lỗi khi lấy danh sách nhóm bài báo.");
+      }
+    };
+
     fetchPaperTypes();
+    fetchPaperGroups();
   }, []);
 
   const handleAdd = () => {
@@ -53,7 +64,7 @@ const ManagementData = () => {
   const handleEdit = (record) => {
     setIsEditMode(true);
     setCurrentRecord(record);
-    form.setFieldsValue({ type_name: record.type_name });
+    form.setFieldsValue({ name: record.type_name || record.group_name });
     setIsModalVisible(true);
   };
 
@@ -61,28 +72,47 @@ const ManagementData = () => {
     form.validateFields().then(async (values) => {
       if (isEditMode) {
         if (activeTab === "type") {
-          setPaperTypes((prev) =>
-            prev.map((item) =>
-              item._id === currentRecord._id
-                ? { ...item, type_name: values.type_name }
-                : item
-            )
-          );
+          try {
+            await userApi.updatePaperType({
+              _id: currentRecord._id,
+              type_name: values.name,
+            });
+            setPaperTypes((prev) =>
+              prev.map((item) =>
+                item._id === currentRecord._id
+                  ? { ...item, type_name: values.name }
+                  : item
+              )
+            );
+            message.success("Chỉnh sửa thành công!");
+          } catch (error) {
+            console.error("Error updating paper type:", error);
+            message.error("Lỗi khi chỉnh sửa loại bài báo.");
+          }
         } else {
-          setPaperGroups((prev) =>
-            prev.map((item) =>
-              item._id === currentRecord._id
-                ? { ...item, type_name: values.type_name }
-                : item
-            )
-          );
+          try {
+            await userApi.updatePaperGroup({
+              _id: currentRecord._id,
+              group_name: values.name,
+            });
+            setPaperGroups((prev) =>
+              prev.map((item) =>
+                item._id === currentRecord._id
+                  ? { ...item, group_name: values.name }
+                  : item
+              )
+            );
+            message.success("Chỉnh sửa thành công!");
+          } catch (error) {
+            console.error("Error updating paper group:", error);
+            message.error("Lỗi khi chỉnh sửa nhóm bài báo.");
+          }
         }
-        message.success("Chỉnh sửa thành công!");
       } else {
         if (activeTab === "type") {
           try {
             const newType = await userApi.createPaperType({
-              type_name: values.type_name,
+              type_name: values.name,
             });
             setPaperTypes([...paperTypes, newType]);
             message.success("Thêm thành công!");
@@ -91,12 +121,16 @@ const ManagementData = () => {
             message.error("Lỗi khi thêm loại bài báo.");
           }
         } else {
-          const newGroup = {
-            _id: paperGroups.length + 1,
-            type_name: values.type_name,
-          };
-          setPaperGroups([...paperGroups, newGroup]);
-          message.success("Thêm thành công!");
+          try {
+            const newGroup = await userApi.createPaperGroup({
+              group_name: values.name,
+            });
+            setPaperGroups([...paperGroups, newGroup]);
+            message.success("Thêm thành công!");
+          } catch (error) {
+            console.error("Error creating paper group:", error);
+            message.error("Lỗi khi thêm nhóm bài báo.");
+          }
         }
       }
       setIsModalVisible(false);
@@ -156,10 +190,11 @@ const ManagementData = () => {
     },
     {
       title: "TÊN NHÓM BÀI BÁO",
-      dataIndex: "type_name",
-      key: "type_name",
-      sorter: (a, b) => a.type_name.length - b.type_name.length,
-      sortOrder: sortedInfo.columnKey === "type_name" ? sortedInfo.order : null,
+      dataIndex: "group_name",
+      key: "group_name",
+      sorter: (a, b) => a.group_name.length - b.group_name.length,
+      sortOrder:
+        sortedInfo.columnKey === "group_name" ? sortedInfo.order : null,
     },
     {
       title: "CHỈNH SỬA",
@@ -184,8 +219,8 @@ const ManagementData = () => {
   );
 
   const filteredPaperGroups = paperGroups.filter((group) =>
-    group.type_name
-      ? group.type_name.toLowerCase().includes(filterGroup.toLowerCase())
+    group.group_name
+      ? group.group_name.toLowerCase().includes(filterGroup.toLowerCase())
       : false
   );
 
@@ -196,7 +231,7 @@ const ManagementData = () => {
           <Header />
         </div>
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-gray-600 text-xs">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -204,7 +239,7 @@ const ManagementData = () => {
             />
             <span>Trang chủ</span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">
+            <span className="font-semibold text-xs text-sky-900">
               Quản lý data
             </span>
           </div>
@@ -244,14 +279,14 @@ const ManagementData = () => {
               {" "}
               {/* Add relative class */}
               <Button
-                className="bg-blue-500 text-white hover:bg-blue-600"
+                className="bg-blue-500 text-white hover:bg-blue-600 text-xs"
                 onClick={handleAdd}
               >
                 Thêm
               </Button>
               <button
-                className="flex items-center gap-2 text-gray-600 px-3 py-0.5 rounded-lg border"
-                onClick={() => setShowFilter(!showFilter)} // Add this line
+                className="flex items-center gap-2 text-gray-600 px-3 py-0.5 rounded-lg border text-xs"
+                onClick={() => setShowFilter(!showFilter)} 
               >
                 <Filter className="w-4 h-4" />
                 <span>Bộ lọc</span>
@@ -272,8 +307,8 @@ const ManagementData = () => {
                         <Input
                           type="text"
                           value={filterPaperType}
-                          onChange={(e) => setFilterPaperType(e.target.value)} // Fix this line
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          onChange={(e) => setFilterPaperType(e.target.value)} 
+                          className="px-2 py-1  bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
                     ) : (
@@ -285,7 +320,7 @@ const ManagementData = () => {
                           type="text"
                           value={filterGroup}
                           onChange={(e) => setFilterGroup(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1  bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
                     )}
@@ -295,7 +330,7 @@ const ManagementData = () => {
                       onClick={() => {
                         setFilterPaperType("");
                         setFilterGroup("");
-                      }} // Fix this line
+                      }} 
                       className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
                     >
                       Xóa trắng
@@ -312,7 +347,7 @@ const ManagementData = () => {
                   dataSource={filteredPaperTypes}
                   pagination={{ pageSize: 5 }}
                   rowKey="_id"
-                  onChange={handleChange} // Add this line
+                  onChange={handleChange} 
                 />
               ) : (
                 <Table
@@ -320,7 +355,7 @@ const ManagementData = () => {
                   dataSource={filteredPaperGroups}
                   pagination={{ pageSize: 5 }}
                   rowKey="_id"
-                  onChange={handleChange} // Add this line
+                  onChange={handleChange}
                 />
               )}
             </div>
@@ -346,7 +381,7 @@ const ManagementData = () => {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="type_name"
+            name="name"
             label={
               activeTab === "type"
                 ? "Tên Loại Bài Báo/Tạp Chí"
@@ -354,7 +389,7 @@ const ManagementData = () => {
             }
             rules={[{ required: true, message: "Vui lòng nhập tên" }]}
           >
-            <Input placeholder="Nhập tên" />
+            <Input placeholder="Nhập tên" className="text-xs" />
           </Form.Item>
         </Form>
       </Modal>
