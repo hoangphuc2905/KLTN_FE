@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
+import { useNavigate } from "react-router-dom";
 import { Filter } from "lucide-react";
 import {
   Input,
@@ -25,7 +26,7 @@ const ManagementTable = () => {
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "3 (0-0-1-2)",
       role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
+      institution: "EUH",
       publicationDate: "25/11/2024",
       status: "Đã duyệt",
       dateAdded: "12/12/2024",
@@ -82,7 +83,7 @@ const ManagementTable = () => {
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "3 (0-0-1-2)",
       role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
+      institution: "EUH",
       publicationDate: "25/11/2024",
       status: "Đã duyệt",
       dateAdded: "12/12/2024",
@@ -96,7 +97,7 @@ const ManagementTable = () => {
       authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
       authorCount: "5 (1-1-0-3)",
       role: "T/g chính",
-      institution: "IUH",
+      institution: "EUH",
       publicationDate: "25/11/2024",
       status: "Đang chờ",
       dateAdded: "19/12/2024",
@@ -189,15 +190,30 @@ const ManagementTable = () => {
     },
   ];
 
+  const [showGroupFilter, setShowGroupFilter] = useState(false);
+  const [fromAuthorCount, setFromAuthorCount] = useState("");
+  const [toAuthorCount, setToAuthorCount] = useState("");
+  const navigate = useNavigate();
+
   const [showFilter, setShowFilter] = useState(false);
   const [filterPaperType, setFilterPaperType] = useState("Tất cả");
-  const [filterGroup, setFilterGroup] = useState("Tất cả");
+  const uniqueGroups = [...new Set(papers.map((paper) => paper.group))];
+  const [filterGroup, setFilterGroup] = useState(uniqueGroups);
   const [filterPaperTitle, setFilterPaperTitle] = useState("");
   const [filterAuthorName, setFilterAuthorName] = useState("");
   const [filterAuthorCount, setFilterAuthorCount] = useState("");
-  const [filterRole, setFilterRole] = useState("Tất cả");
-  const [filterInstitution, setFilterInstitution] = useState("Tất cả");
-  const [filterStatus, setFilterStatus] = useState("Tất cả");
+  const uniqueRoles = [...new Set(papers.map((paper) => paper.role))];
+  const [filterRole, setFilterRole] = useState(uniqueRoles);
+  const [showRoleFilter, setShowRoleFilter] = useState(false);
+  const uniqueInstitutions = [
+    ...new Set(papers.map((paper) => paper.institution)),
+  ];
+  const [filterInstitution, setFilterInstitution] =
+    useState(uniqueInstitutions);
+  const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
+  const uniqueStatuses = ["Đã duyệt", "Đang chờ", "Từ chối"];
+  const [filterStatus, setFilterStatus] = useState(uniqueStatuses);
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
@@ -207,29 +223,20 @@ const ManagementTable = () => {
     "Tất cả",
     ...new Set(papers.map((paper) => paper.paperType)),
   ];
-  const uniqueGroups = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.group)),
-  ];
-  const uniqueRoles = ["Tất cả", ...new Set(papers.map((paper) => paper.role))];
-  const uniqueInstitutions = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.institution)),
-  ];
-  const uniqueStatuses = ["Tất cả", "Đã duyệt", "Đang chờ", "Từ chối"];
 
   const filteredPapers = papers.filter((paper) => {
+    const authorCount = parseInt(paper.authorCount.match(/\d+/)[0]);
     return (
       (filterPaperType === "Tất cả" || paper.paperType === filterPaperType) &&
-      (filterGroup === "Tất cả" || paper.group === filterGroup) &&
+      (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
       (filterPaperTitle === "" || paper.title.includes(filterPaperTitle)) &&
       (filterAuthorName === "" || paper.authors.includes(filterAuthorName)) &&
-      (filterAuthorCount === "" ||
-        paper.authorCount.includes(filterAuthorCount)) &&
-      (filterRole === "Tất cả" || paper.role === filterRole) &&
-      (filterInstitution === "Tất cả" ||
-        paper.institution === filterInstitution) &&
-      (filterStatus === "Tất cả" || paper.status === filterStatus)
+      (fromAuthorCount === "" || authorCount >= fromAuthorCount) &&
+      (toAuthorCount === "" || authorCount <= toAuthorCount) &&
+      (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
+      (filterInstitution.length === 0 ||
+        filterInstitution.includes(paper.institution)) &&
+      (filterStatus.length === 0 || filterStatus.includes(paper.status))
     );
   });
 
@@ -237,6 +244,22 @@ const ManagementTable = () => {
     setModalContent(record);
     setIsModalVisible(true);
   };
+
+  const handleFromAuthorCountChange = (value) => {
+    if (!isNaN(value) && value >= 0) {
+      setFromAuthorCount(value);
+    }
+  };
+
+  const handleToAuthorCountChange = (value) => {
+    if (!isNaN(value) && value >= 0) {
+      setToAuthorCount(value);
+    }
+  };
+
+  const maxAuthorCount = Math.max(
+    ...papers.map((paper) => parseInt(paper.authorCount.match(/\d+/)[0]))
+  );
 
   const columns = [
     {
@@ -401,6 +424,9 @@ const ManagementTable = () => {
 
   const handleColumnVisibilityChange = (selectedColumns) => {
     setVisibleColumns(selectedColumns);
+    if (selectedColumns.length === 0) {
+      setFilterInstitution([]);
+    }
   };
 
   const filteredColumns = columns.filter((col) =>
@@ -472,6 +498,10 @@ const ManagementTable = () => {
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
+  const groupFilterRef = useRef(null);
+  const roleFilterRef = useRef(null);
+  const institutionFilterRef = useRef(null);
+  const statusFilterRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -489,13 +519,48 @@ const ManagementTable = () => {
       ) {
         setShowColumnFilter(false);
       }
+      if (
+        showGroupFilter &&
+        groupFilterRef.current &&
+        !groupFilterRef.current.contains(event.target)
+      ) {
+        setShowGroupFilter(false);
+      }
+      if (
+        showRoleFilter &&
+        roleFilterRef.current &&
+        !roleFilterRef.current.contains(event.target)
+      ) {
+        setShowRoleFilter(false);
+      }
+      if (
+        showInstitutionFilter &&
+        institutionFilterRef.current &&
+        !institutionFilterRef.current.contains(event.target)
+      ) {
+        setShowInstitutionFilter(false);
+      }
+      if (
+        showStatusFilter &&
+        statusFilterRef.current &&
+        !statusFilterRef.current.contains(event.target)
+      ) {
+        setShowStatusFilter(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showFilter, showColumnFilter]);
+  }, [
+    showFilter,
+    showColumnFilter,
+    showGroupFilter,
+    showRoleFilter,
+    showInstitutionFilter,
+    showStatusFilter,
+  ]);
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -510,9 +575,20 @@ const ManagementTable = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
+
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">Thống kê</span>
+            <span
+              onClick={() => navigate("/admin/management/chart")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Thống kê
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Dạng bảng
@@ -577,21 +653,55 @@ const ManagementTable = () => {
                         </select>
                       </div>
 
-                      <div>
+                      <div className="mb-3">
                         <label className="block text-gray-700 text-xs">
                           Thuộc nhóm:
                         </label>
-                        <select
-                          value={filterGroup}
-                          onChange={(e) => setFilterGroup(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        >
-                          {uniqueGroups.map((group) => (
-                            <option key={group} value={group}>
-                              {group}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setShowGroupFilter(!showGroupFilter)}
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                          >
+                            Chọn nhóm
+                          </button>
+                          {showGroupFilter && (
+                            <div
+                              ref={groupFilterRef}
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                            >
+                              <Checkbox
+                                indeterminate={
+                                  filterGroup.length > 0 &&
+                                  filterGroup.length < uniqueGroups.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFilterGroup(uniqueGroups);
+                                  } else {
+                                    setFilterGroup([]);
+                                  }
+                                }}
+                                checked={
+                                  filterGroup.length === uniqueGroups.length
+                                }
+                              >
+                                Tất cả
+                              </Checkbox>
+                              <Checkbox.Group
+                                options={uniqueGroups.map((group) => ({
+                                  label: group,
+                                  value: group,
+                                }))}
+                                value={filterGroup}
+                                onChange={(checkedValues) =>
+                                  setFilterGroup(checkedValues)
+                                }
+                                className="flex flex-col gap-2 mt-2"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div>
@@ -622,76 +732,220 @@ const ManagementTable = () => {
                         <label className="block text-gray-700 text-xs">
                           Số tác giả:
                         </label>
-                        <Input
-                          type="text"
-                          value={filterAuthorCount}
-                          onChange={(e) => setFilterAuthorCount(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            value={fromAuthorCount}
+                            onChange={(e) =>
+                              handleFromAuthorCountChange(e.target.value)
+                            }
+                            placeholder="Từ"
+                            min={0}
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                          />
+                          <Input
+                            type="number"
+                            value={toAuthorCount}
+                            onChange={(e) =>
+                              handleToAuthorCountChange(e.target.value)
+                            }
+                            placeholder="Đến"
+                            min={0}
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                          />
+                        </div>
                       </div>
 
                       <div>
                         <label className="block text-gray-700 text-xs">
                           Vai trò:
                         </label>
-                        <select
-                          value={filterRole}
-                          onChange={(e) => setFilterRole(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        >
-                          {uniqueRoles.map((role) => (
-                            <option key={role} value={role}>
-                              {role}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() => setShowRoleFilter(!showRoleFilter)}
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                          >
+                            Chọn vai trò
+                          </button>
+                          {showRoleFilter && (
+                            <div
+                              ref={roleFilterRef}
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                            >
+                              <Checkbox
+                                indeterminate={
+                                  filterRole.length > 0 &&
+                                  filterRole.length < uniqueRoles.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFilterRole(uniqueRoles);
+                                  } else {
+                                    setFilterRole([]);
+                                  }
+                                }}
+                                checked={
+                                  filterRole.length === uniqueRoles.length
+                                }
+                              >
+                                Tất cả
+                              </Checkbox>
+                              <Checkbox.Group
+                                options={uniqueRoles.map((role) => ({
+                                  label: role,
+                                  value: role,
+                                }))}
+                                value={filterRole}
+                                onChange={(checkedValues) =>
+                                  setFilterRole(checkedValues)
+                                }
+                                className="flex flex-col gap-2 mt-2"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div>
                         <label className="block text-gray-700 text-xs">
                           CQ đứng tên:
                         </label>
-                        <select
-                          value={filterInstitution}
-                          onChange={(e) => setFilterInstitution(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        >
-                          {uniqueInstitutions.map((institution) => (
-                            <option key={institution} value={institution}>
-                              {institution}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowInstitutionFilter(!showInstitutionFilter)
+                            }
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                          >
+                            Chọn CQ đứng tên
+                          </button>
+                          {showInstitutionFilter && (
+                            <div
+                              ref={institutionFilterRef}
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                            >
+                              <Checkbox
+                                indeterminate={
+                                  filterInstitution.length > 0 &&
+                                  filterInstitution.length <
+                                    uniqueInstitutions.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFilterInstitution(uniqueInstitutions);
+                                  } else {
+                                    setFilterInstitution([]);
+                                  }
+                                }}
+                                checked={
+                                  filterInstitution.length ===
+                                  uniqueInstitutions.length
+                                }
+                              >
+                                Tất cả
+                              </Checkbox>
+                              <Checkbox.Group
+                                options={uniqueInstitutions.map(
+                                  (institution) => ({
+                                    label: institution,
+                                    value: institution,
+                                  })
+                                )}
+                                value={filterInstitution}
+                                onChange={(checkedValues) => {
+                                  if (checkedValues.length === 0) {
+                                    setFilterInstitution([]); // Khi không chọn gì, dữ liệu sẽ trống
+                                  } else if (
+                                    checkedValues.length ===
+                                    uniqueInstitutions.length
+                                  ) {
+                                    setFilterInstitution(uniqueInstitutions); // Chọn lại tất cả
+                                  } else {
+                                    setFilterInstitution(checkedValues);
+                                  }
+                                }}
+                                className="flex flex-col gap-2 mt-2"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <div>
                         <label className="block text-gray-700 text-xs">
                           Trạng thái:
                         </label>
-                        <select
-                          value={filterStatus}
-                          onChange={(e) => setFilterStatus(e.target.value)}
-                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        >
-                          {uniqueStatuses.map((status) => (
-                            <option key={status} value={status}>
-                              {status}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowStatusFilter(!showStatusFilter)
+                            }
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                          >
+                            Chọn trạng thái
+                          </button>
+                          {showStatusFilter && (
+                            <div
+                              ref={statusFilterRef}
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                            >
+                              <Checkbox
+                                indeterminate={
+                                  filterStatus.length > 0 &&
+                                  filterStatus.length < uniqueStatuses.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFilterStatus(uniqueStatuses);
+                                  } else {
+                                    setFilterStatus([]);
+                                  }
+                                }}
+                                checked={
+                                  filterStatus.length === uniqueStatuses.length
+                                }
+                              >
+                                Tất cả
+                              </Checkbox>
+                              <Checkbox.Group
+                                options={uniqueStatuses.map((status) => ({
+                                  label: status,
+                                  value: status,
+                                }))}
+                                value={filterStatus}
+                                onChange={(checkedValues) => {
+                                  if (checkedValues.length === 0) {
+                                    setFilterStatus([]); // Khi không chọn gì, dữ liệu sẽ trống
+                                  } else if (
+                                    checkedValues.length ===
+                                    uniqueStatuses.length
+                                  ) {
+                                    setFilterStatus(uniqueStatuses); // Chọn lại tất cả
+                                  } else {
+                                    setFilterStatus(checkedValues);
+                                  }
+                                }}
+                                className="flex flex-col gap-2 mt-2"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </div>
 
                       <button
                         type="button"
                         onClick={() => {
                           setFilterPaperType("Tất cả");
-                          setFilterGroup("Tất cả");
+                          setFilterGroup(["Tất cả"]);
                           setFilterPaperTitle("");
                           setFilterAuthorName("");
                           setFilterAuthorCount("");
-                          setFilterRole("Tất cả");
-                          setFilterInstitution("Tất cả");
-                          setFilterStatus("Tất cả");
+                          setFilterRole(uniqueRoles);
+                          setFilterInstitution([]);
+                          setFilterStatus(uniqueStatuses);
                         }}
                         className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
                       >
