@@ -14,6 +14,14 @@ const ItemTypes = {
   ATTRIBUTE: "attribute",
 };
 
+const attributeNames = {
+  journal_group: "NHÓM TẠP CHÍ",
+  author_role: "VAI TRÒ",
+  institution_count: "CƠ QUAN ĐỨNG TÊN",
+  doi: "DOI",
+  exemplary_paper: "TIÊU BIỂU",
+};
+
 const DraggableAttribute = ({ attribute, onSettingsClick }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.ATTRIBUTE,
@@ -30,7 +38,9 @@ const DraggableAttribute = ({ attribute, onSettingsClick }) => {
         isDragging ? "opacity-50" : "bg-white"
       } hover:shadow-md transition-shadow`}
     >
-      <span className="text-sm font-medium">{attribute.name}</span>
+      <span className="text-sm font-medium">
+        {attributeNames[attribute.name] || attribute.name}
+      </span>
       <div className="flex gap-1">
         <button
           className="p-1 rounded-full text-gray-500 hover:bg-gray-50"
@@ -97,7 +107,8 @@ const DroppableSlot = ({ index, formula, setFormula, isEditing }) => {
       {formula[index] ? (
         <>
           <span className="text-sm font-medium">
-            {formula[index].attribute.name}
+            {attributeNames[formula[index].attribute.name] ||
+              formula[index].attribute.name}
           </span>
           {isEditing && (
             <button
@@ -142,7 +153,9 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
         </span>
         {formula.map((slot, index) => (
           <div key={index} className="flex items-center space-x-2">
-            <span className="text-sm font-medium">{slot?.attribute?.name}</span>
+            <span className="text-sm font-medium">
+              {attributeNames[slot?.attribute?.name] || slot?.attribute?.name}
+            </span>
             <span className="text-lg font-semibold">×</span>
             <span className="text-sm font-medium">{slot?.weight}</span>
             {index < formula.length - 1 && (
@@ -201,13 +214,13 @@ const ManagementFormulas = () => {
   const [showAddFormulasPopup, setShowAddFormulasPopup] = useState(false);
   const [selectedData, setSelectedData] = useState(null);
   const [attributes, setAttributes] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(2024);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [recentFormulas, setRecentFormulas] = useState([]);
   const [currentFormula, setCurrentFormula] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [selectedAttribute, setSelectedAttribute] = useState(null);
-  const [years, setYears] = useState([2025, 2024, 2023, 2022, 2021, 2020]);
+  const [years, setYears] = useState([]);
   const [newYear, setNewYear] = useState("");
 
   const getFormulas = async (year) => {
@@ -232,11 +245,23 @@ const ManagementFormulas = () => {
     }
   };
 
+  const getAllYears = async () => {
+    try {
+      const response = await userApi.getAllYearsByFormula();
+      console.log("API Response:", response);
+      return response;
+    } catch (error) {
+      console.error("Error fetching years:", error);
+      return []; // Return empty array if there's an error
+    }
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const attributesData = await getAttributes(selectedYear);
         const formulasData = await getFormulas(selectedYear);
+        const yearsData = await getAllYears();
         setAttributes(
           Array.isArray(attributesData) ? attributesData : [attributesData]
         );
@@ -244,11 +269,13 @@ const ManagementFormulas = () => {
           Array.isArray(formulasData) ? formulasData : [formulasData]
         ); // Ensure recentFormulas is always an array
         setCurrentFormula(formulasData?.formula || []); // Initialize with weights from the API
+        setYears(yearsData);
       } catch (error) {
         console.error("Error fetching data:", error);
         setAttributes([]);
         setRecentFormulas([]);
         setCurrentFormula([]);
+        setYears([]);
       }
     };
 
@@ -264,15 +291,21 @@ const ManagementFormulas = () => {
     setSelectedYear(event.target.value);
   };
 
-  const handleAddYear = () => {
+  const handleAddYear = async () => {
     const year = parseInt(newYear, 10);
     if (!isNaN(year) && !years.includes(year)) {
-      setYears([...years, year].sort((a, b) => b - a));
-      setSelectedYear(year);
-      setNewYear("");
-      setAttributes([]);
-      setRecentFormulas([]);
-      setCurrentFormula([]);
+      try {
+        await userApi.addNewYear(year);
+        setYears([...years, year].sort((a, b) => b - a));
+        setSelectedYear(year);
+        setNewYear("");
+        setAttributes([]);
+        setRecentFormulas([]);
+        setCurrentFormula([]);
+        message.success("Thêm năm mới thành công!");
+      } catch (error) {
+        message.error("Lỗi khi thêm năm mới.");
+      }
     } else {
       message.error("Năm không hợp lệ hoặc đã tồn tại.");
     }
@@ -427,8 +460,11 @@ const ManagementFormulas = () => {
                                   <div className="flex flex-wrap gap-1">
                                     {item.formula.map((f, index) => (
                                       <span key={f.attribute._id}>
-                                        <strong>{f.attribute.name}</strong>:{" "}
-                                        {f.weight}
+                                        <strong>
+                                          {attributeNames[f.attribute.name] ||
+                                            f.attribute.name}
+                                        </strong>
+                                        : {f.weight}
                                         {index < item.formula.length - 1 && (
                                           <span className="mx-1">+</span>
                                         )}

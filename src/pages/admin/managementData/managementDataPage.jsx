@@ -286,7 +286,7 @@ const ManagementData = () => {
               </Button>
               <button
                 className="flex items-center gap-2 text-gray-600 px-3 py-0.5 rounded-lg border text-xs"
-                onClick={() => setShowFilter(!showFilter)} 
+                onClick={() => setShowFilter(!showFilter)}
               >
                 <Filter className="w-4 h-4" />
                 <span>Bộ lọc</span>
@@ -307,7 +307,7 @@ const ManagementData = () => {
                         <Input
                           type="text"
                           value={filterPaperType}
-                          onChange={(e) => setFilterPaperType(e.target.value)} 
+                          onChange={(e) => setFilterPaperType(e.target.value)}
                           className="px-2 py-1  bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
@@ -330,7 +330,7 @@ const ManagementData = () => {
                       onClick={() => {
                         setFilterPaperType("");
                         setFilterGroup("");
-                      }} 
+                      }}
                       className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
                     >
                       Xóa trắng
@@ -347,7 +347,7 @@ const ManagementData = () => {
                   dataSource={filteredPaperTypes}
                   pagination={{ pageSize: 5 }}
                   rowKey="_id"
-                  onChange={handleChange} 
+                  onChange={handleChange}
                 />
               ) : (
                 <Table

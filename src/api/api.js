@@ -130,6 +130,17 @@ const userApi = {
     }
   },
 
+  deleteAttributeByYear: async (year) => {
+    try {
+      const response = await axios.delete(`${API_URL}/attributes/${year}`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting attribute:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   getFormulaByYear: async (year) => {
     try {
       const response = await axios.get(`${API_URL}/formulas/${year}`);
@@ -137,6 +148,30 @@ const userApi = {
       return response.data;
     } catch (error) {
       console.error("Error fetching formulas:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAllYearsByFormula: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/formulas/years`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching years:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  addNewYear: async (year) => {
+    try {
+      const response = await axios.post(`${API_URL}/formulas/add-year`, {
+        year,
+      });
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error adding new year:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },

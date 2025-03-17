@@ -63,7 +63,7 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
       onClose();
     } catch (error) {
       console.error("Error submitting data:", error.response?.data || error);
-      message.error("Lỗi khi lưu thuộc tính.");
+      message.error("Thuộc tính đã tồn tại!");
     }
   };
 
@@ -98,7 +98,7 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
               >
                 <Option value="journal_group">NHÓM TẠP CHÍ</Option>
                 <Option value="author_role">VAI TRÒ</Option>
-                <Option value="institution_count">CƠ ĐỨNG TÊN</Option>
+                <Option value="institution_count">CƠ QUAN ĐỨNG TÊN</Option>
                 <Option value="doi">DOI</Option>
                 <Option value="exemplary_paper">TIÊU BIỂU</Option>
               </Select>
