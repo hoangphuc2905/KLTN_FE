@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Select, Table, Checkbox, Divider, Tooltip } from "antd";
+import { Input, Select, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
 
 const ManagementAriticle = () => {
   const papers = [
@@ -193,6 +193,36 @@ const ManagementAriticle = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 7;
 
+  const filterRef = useRef(null);
+  const columnFilterRef = useRef(null);
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState({});
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showFilter &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setShowFilter(false);
+      }
+      if (
+        showColumnFilter &&
+        columnFilterRef.current &&
+        !columnFilterRef.current.contains(event.target)
+      ) {
+        setShowColumnFilter(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFilter, showColumnFilter]);
+
   const uniquePaperTypes = [
     "Tất cả",
     ...new Set(papers.map((paper) => paper.paperType)),
@@ -223,6 +253,11 @@ const ManagementAriticle = () => {
       (activeTab === "all" || paper.status === activeTab)
     );
   });
+
+  const handleRowClick = (record) => {
+    setModalContent(record);
+    setIsModalVisible(true);
+  };
 
   const columns = [
     {
@@ -385,7 +420,10 @@ const ManagementAriticle = () => {
       title: "CHỈNH SỬA",
       key: "edit",
       render: (text, record) => (
-        <button className="text-[#00A3FF]">
+        <button
+          className="text-[#00A3FF]"
+          onClick={() => handleRowClick(record)}
+        >
           <svg
             width="20"
             height="20"
@@ -435,6 +473,14 @@ const ManagementAriticle = () => {
     value: key,
   }));
   const newColumns = columns.filter((item) => checkedList.includes(item.key));
+
+  const handleSelectAllColumns = (e) => {
+    if (e.target.checked) {
+      setCheckedList(columns.map((item) => item.key));
+    } else {
+      setCheckedList([]);
+    }
+  };
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -523,7 +569,10 @@ const ManagementAriticle = () => {
                   <span className="text-xs">Bộ lọc</span>
                 </button>
                 {showFilter && (
-                  <div className="absolute top-full mt-2 z-50 shadow-lg">
+                  <div
+                    ref={filterRef}
+                    className="absolute top-full mt-2 z-50 shadow-lg"
+                  >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <div className="mb-3">
                         <label className="block text-gray-700 text-xs">
@@ -676,15 +725,24 @@ const ManagementAriticle = () => {
                   <span className="text-xs">Chọn cột</span>
                 </button>
                 {showColumnFilter && (
-                  <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
+                  <div
+                    ref={columnFilterRef}
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                  >
                     <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                      <Checkbox
+                        onChange={handleSelectAllColumns}
+                        checked={checkedList.length === columns.length}
+                      >
+                        Chọn tất cả
+                      </Checkbox>
                       <Checkbox.Group
                         options={options}
                         value={checkedList}
                         onChange={(value) => {
                           setCheckedList(value);
                         }}
-                        className="flex flex-col gap-2"
+                        className="flex flex-col gap-2 mt-2"
                       />
                       <Divider className="mt-4" />
                     </div>
@@ -708,11 +766,73 @@ const ManagementAriticle = () => {
                     0
                   ),
                 }} // Thêm dòng này để tạo thanh kéo ngang
+                onRow={(record) => ({
+                  onClick: () => handleRowClick(record),
+                })}
               />
             </div>
           </div>
         </div>
       </div>
+      <Modal
+        title="Chi tiết"
+        visible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <p>
+          <strong>Loại bài báo:</strong> {modalContent.paperType}
+        </p>
+        <p>
+          <strong>Thuộc nhóm:</strong> {modalContent.group}
+        </p>
+        <p>
+          <strong>Tên bài báo nghiên cứu khoa học:</strong> {modalContent.title}
+        </p>
+        <p>
+          <strong>Tác giả:</strong> {modalContent.authors}
+        </p>
+        <p>
+          <strong>Số tác giả:</strong> {modalContent.authorCount}
+        </p>
+        <p>
+          <strong>Vai trò:</strong> {modalContent.role}
+        </p>
+        <p>
+          <strong>CQ đứng tên:</strong> {modalContent.institution}
+        </p>
+        <p>
+          <strong>Ngày công bố:</strong> {modalContent.publicationDate}
+        </p>
+        <p>
+          <strong>Ngày thêm:</strong> {modalContent.dateAdded}
+        </p>
+        <p>
+          <strong>Trạng thái:</strong> {modalContent.status}
+        </p>
+        {modalContent.note && (
+          <p>
+            <strong>Ghi chú:</strong> {modalContent.note}
+          </p>
+        )}
+        {modalContent.status === "Đang chờ" && (
+          <button className="text-[#00A3FF] mt-4">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+                fill="currentColor"
+              />
+            </svg>
+            Chỉnh sửa
+          </button>
+        )}
+      </Modal>
     </div>
   );
 };
