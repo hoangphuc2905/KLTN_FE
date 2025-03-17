@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
+import { useNavigate } from "react-router-dom";
 import { Filter } from "lucide-react";
 import {
   Input,
@@ -190,6 +191,9 @@ const ManagementTable = () => {
   ];
 
   const [showGroupFilter, setShowGroupFilter] = useState(false);
+  const [fromAuthorCount, setFromAuthorCount] = useState("");
+  const [toAuthorCount, setToAuthorCount] = useState("");
+  const navigate = useNavigate();
 
   const [showFilter, setShowFilter] = useState(false);
   const [filterPaperType, setFilterPaperType] = useState("Tất cả");
@@ -221,18 +225,18 @@ const ManagementTable = () => {
   ];
 
   const filteredPapers = papers.filter((paper) => {
+    const authorCount = parseInt(paper.authorCount.match(/\d+/)[0]);
     return (
       (filterPaperType === "Tất cả" || paper.paperType === filterPaperType) &&
       (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
       (filterPaperTitle === "" || paper.title.includes(filterPaperTitle)) &&
       (filterAuthorName === "" || paper.authors.includes(filterAuthorName)) &&
-      (filterAuthorCount === "" ||
-        paper.authorCount.includes(filterAuthorCount)) &&
+      (fromAuthorCount === "" || authorCount >= fromAuthorCount) &&
+      (toAuthorCount === "" || authorCount <= toAuthorCount) &&
       (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
-      filterInstitution.length > 0 &&
-      filterInstitution.includes(paper.institution) &&
-      filterStatus.length > 0 &&
-      filterStatus.includes(paper.status)
+      (filterInstitution.length === 0 ||
+        filterInstitution.includes(paper.institution)) &&
+      (filterStatus.length === 0 || filterStatus.includes(paper.status))
     );
   });
 
@@ -240,6 +244,22 @@ const ManagementTable = () => {
     setModalContent(record);
     setIsModalVisible(true);
   };
+
+  const handleFromAuthorCountChange = (value) => {
+    if (!isNaN(value) && value >= 0) {
+      setFromAuthorCount(value);
+    }
+  };
+
+  const handleToAuthorCountChange = (value) => {
+    if (!isNaN(value) && value >= 0) {
+      setToAuthorCount(value);
+    }
+  };
+
+  const maxAuthorCount = Math.max(
+    ...papers.map((paper) => parseInt(paper.authorCount.match(/\d+/)[0]))
+  );
 
   const columns = [
     {
@@ -555,9 +575,20 @@ const ManagementTable = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
+
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">Thống kê</span>
+            <span
+              onClick={() => navigate("/admin/management/chart")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Thống kê
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Dạng bảng
@@ -630,7 +661,7 @@ const ManagementTable = () => {
                           <button
                             type="button"
                             onClick={() => setShowGroupFilter(!showGroupFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn nhóm
                           </button>
@@ -701,12 +732,28 @@ const ManagementTable = () => {
                         <label className="block text-gray-700 text-xs">
                           Số tác giả:
                         </label>
-                        <Input
-                          type="text"
-                          value={filterAuthorCount}
-                          onChange={(e) => setFilterAuthorCount(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        />
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            value={fromAuthorCount}
+                            onChange={(e) =>
+                              handleFromAuthorCountChange(e.target.value)
+                            }
+                            placeholder="Từ"
+                            min={0}
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                          />
+                          <Input
+                            type="number"
+                            value={toAuthorCount}
+                            onChange={(e) =>
+                              handleToAuthorCountChange(e.target.value)
+                            }
+                            placeholder="Đến"
+                            min={0}
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                          />
+                        </div>
                       </div>
 
                       <div>
@@ -717,7 +764,7 @@ const ManagementTable = () => {
                           <button
                             type="button"
                             onClick={() => setShowRoleFilter(!showRoleFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn vai trò
                           </button>
@@ -770,7 +817,7 @@ const ManagementTable = () => {
                             onClick={() =>
                               setShowInstitutionFilter(!showInstitutionFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn CQ đứng tên
                           </button>
@@ -836,7 +883,7 @@ const ManagementTable = () => {
                             onClick={() =>
                               setShowStatusFilter(!showStatusFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn trạng thái
                           </button>
