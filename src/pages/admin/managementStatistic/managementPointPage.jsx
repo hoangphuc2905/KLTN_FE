@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox } from "antd";
@@ -142,8 +142,25 @@ const ManagementPoint = () => {
     { label: "XEM CHI TIẾT", value: "action" },
   ];
 
+  const [selectAll, setSelectAll] = useState(
+    visibleColumns.length === columnOptions.length
+  );
+  useEffect(() => {
+    setSelectAll(visibleColumns.length === columnOptions.length);
+  }, [visibleColumns]);
+
+  const handleSelectAllChange = (e) => {
+    const checked = e.target.checked;
+    if (checked) {
+      setVisibleColumns(columnOptions.map((option) => option.value));
+    } else {
+      setVisibleColumns([]);
+    }
+  };
+
   const handleColumnVisibilityChange = (checkedValues) => {
     setVisibleColumns(checkedValues);
+    setSelectAll(checkedValues.length === columnOptions.length);
   };
 
   const [filterAuthorName, setFilterAuthorName] = useState("");
@@ -288,6 +305,33 @@ const ManagementPoint = () => {
     saveAs(data, "table_data.xlsx");
   };
 
+  const filterRef = useRef(null);
+  const columnFilterRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showFilter &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setShowFilter(false);
+      }
+      if (
+        showColumnFilter &&
+        columnFilterRef.current &&
+        !columnFilterRef.current.contains(event.target)
+      ) {
+        setShowColumnFilter(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFilter, showColumnFilter]);
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -353,8 +397,17 @@ const ManagementPoint = () => {
                   <span className="text-xs">Chọn cột</span>
                 </button>
                 {showColumnFilter && (
-                  <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
+                  <div
+                    ref={columnFilterRef}
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                  >
                     <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                      <Checkbox
+                        checked={selectAll}
+                        onChange={handleSelectAllChange}
+                      >
+                        Chọn tất cả
+                      </Checkbox>
                       <Checkbox.Group
                         options={columnOptions}
                         value={visibleColumns}
@@ -365,7 +418,10 @@ const ManagementPoint = () => {
                   </div>
                 )}
                 {showFilter && (
-                  <div className="absolute top-full mt-2 z-50 shadow-lg">
+                  <div
+                    ref={filterRef}
+                    className="absolute top-full mt-2 z-50 shadow-lg"
+                  >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[500px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <div className="mb-3">
                         <label className="block text-gray-700 text-sm">
