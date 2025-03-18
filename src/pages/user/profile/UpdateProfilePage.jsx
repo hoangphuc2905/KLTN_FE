@@ -21,18 +21,32 @@ const UpdateProfilePage = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const user_id = localStorage.getItem("user_id");
-      if (!user_id) {
-        console.error("Thiếu user_id");
+      const token = localStorage.getItem("token"); // Lấy token từ localStorage
+      if (!token) {
+        console.error("Thiếu token. Vui lòng đăng nhập.");
         return;
       }
 
       try {
-        const response = await userApi.getUserInfo(user_id);
-        setUser(response);
-        setInitialUser(response);
+        const response = await userApi.getUserInfo({
+          headers: {
+            Authorization: `Bearer ${token}`, // Gửi token trong header
+          },
+        });
+
+        setUser(response.data); // Lưu dữ liệu người dùng vào state
+        setInitialUser(response.data); // Lưu dữ liệu ban đầu để khôi phục khi hủy
       } catch (error) {
-        console.error("Lỗi khi lấy thông tin user:", error);
+        if (error.response?.data?.message === "Invalid token") {
+          console.error("Token không hợp lệ. Vui lòng đăng nhập lại.");
+          localStorage.clear();
+          window.location.href = "/login"; // Chuyển hướng về trang đăng nhập
+        } else {
+          console.error(
+            "Lỗi khi lấy thông tin user:",
+            error.response?.data || error.message
+          );
+        }
       }
     };
 
@@ -122,7 +136,7 @@ const UpdateProfilePage = () => {
                     Mã số sinh viên:
                   </label>
                   <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
-                    {user?.user_id}
+                    {user?.lecturer_id || user?.student_id}
                   </div>
 
                   {/* Ngày vào trường */}

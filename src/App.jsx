@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import AdminMenu from "./components/AdminMenu";
 import UserMenu from "./components/UserMenu";
+import ProtectedRoute from "./components/ProtectedRoute";
 import NotificationPage from "./components/NotificationPage";
 import Search from "./pages/admin/search/page";
 import LoginPage from "./app/auth/login/LoginPage";
@@ -22,54 +23,243 @@ import ManagementChart from "./pages/admin/managementStatistic/managementChartPa
 import ManagementPoint from "./pages/admin/managementStatistic/managementPointPage";
 import ManagementFormulas from "./pages/admin/managementScoringformulas/managementScoringformulasPage";
 import ManagementData from "./pages/admin/managementData/managementDataPage";
+import ErrorPage from "./components/ErrorPage";
+
 const App = () => {
-  const [userRole, setUserRole] = useState(null);
+  const [userRoles, setUserRoles] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const role = localStorage.getItem("role");
-    setUserRole(role);
+    const fetchRoles = async () => {
+      try {
+        const roles = localStorage.getItem("roles");
+        const token = localStorage.getItem("token");
+
+        console.log("Token hiện tại:", token);
+        console.log("Roles hiện tại:", roles);
+
+        if (roles) {
+          const parsedRoles = JSON.parse(roles);
+          setUserRoles(
+            Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]
+          );
+        } else {
+          setUserRoles([]);
+        }
+      } catch (error) {
+        console.error("Lỗi khi xử lý roles:", error);
+        setUserRoles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoles();
   }, []);
+
+  if (loading) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "20px" }}>Đang tải...</div>
+    );
+  }
 
   return (
     <div>
-      {userRole === "admin" ? <AdminMenu /> : <UserMenu />}
+      {userRoles.includes("admin") ? <AdminMenu /> : <UserMenu />}
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/home" element={<UserHomePage />} />
-        <Route path="/profile" element={<ProfilePage />} />
-        <Route path="/update-profile" element={<UpdateProfilePage />} />
-        <Route path="/work-process" element={<WorkProcessPage />} />
-        <Route path="/scientific-paper" element={<ScientificPaperPage />} />
-        <Route
-          path="/scientific-paper/:id"
-          element={<ScientificPaperDetailPage />}
-        />
-        <Route
-          path="/add-scientific-paper"
-          element={<AddScientificPaperPage />}
-        />
-        <Route path="/statistics-table" element={<StatisticsTablePage />} />
-        <Route path="/statistics-chart" element={<StatisticsChartPage />} />
-        <Route path="/statistics-point" element={<StatisticsPointPage />} />
-        <Route path="/notifications" element={<NotificationPage />} />
+        {!localStorage.getItem("token") ? (
+          <>
+            <Route path="/" element={<LoginPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </>
+        ) : (
+          <>
+            <Route path="/" element={<Navigate to="/home" replace />} />
+            <Route
+              path="/home"
+              element={
+                <ProtectedRoute roles={userRoles} path="/home">
+                  <UserHomePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute roles={userRoles} path="/profile">
+                  <ProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/update-profile"
+              element={
+                <ProtectedRoute roles={userRoles} path="/update-profile">
+                  <UpdateProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/work-process"
+              element={
+                <ProtectedRoute roles={userRoles} path="/work-process">
+                  <WorkProcessPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scientific-paper"
+              element={
+                <ProtectedRoute roles={userRoles} path="/scientific-paper">
+                  <ScientificPaperPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scientific-paper/:id"
+              element={
+                <ProtectedRoute roles={userRoles} path="/scientific-paper/:id">
+                  <ScientificPaperDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/add-scientific-paper"
+              element={
+                <ProtectedRoute roles={userRoles} path="/add-scientific-paper">
+                  <AddScientificPaperPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/statistics-table"
+              element={
+                <ProtectedRoute roles={userRoles} path="/statistics-table">
+                  <StatisticsTablePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/statistics-chart"
+              element={
+                <ProtectedRoute roles={userRoles} path="/statistics-chart">
+                  <StatisticsChartPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/statistics-point"
+              element={
+                <ProtectedRoute roles={userRoles} path="/statistics-point">
+                  <StatisticsPointPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute roles={userRoles} path="/notifications">
+                  <NotificationPage />
+                </ProtectedRoute>
+              }
+            />
 
-        <Route path="/admin/search" element={<Search />} />
-        <Route
-          path="/admin/management/account"
-          element={<ManagementAccount />}
-        />
-        <Route
-          path="/admin/management/ariticle"
-          element={<ManagementAriticle />}
-        />
-        <Route path="/admin/management/chart" element={<ManagementChart />} />
-        <Route path="/admin/management/table" element={<ManagementTable />} />
-        <Route path="/admin/management/point" element={<ManagementPoint />} />
-        <Route
-          path="/admin/management/scoringformulas"
-          element={<ManagementFormulas />}
-        />
-        <Route path="/admin/management/data" element={<ManagementData />} />
+            {/* Admin Routes */}
+            <Route
+              path="/admin/search"
+              element={
+                <ProtectedRoute roles={userRoles} path="/admin/search">
+                  <Search />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/account"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/account"
+                >
+                  <ManagementAccount />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/ariticle"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/ariticle"
+                >
+                  <ManagementAriticle />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/chart"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/chart"
+                >
+                  <ManagementChart />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/table"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/table"
+                >
+                  <ManagementTable />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/point"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/point"
+                >
+                  <ManagementPoint />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/scoringformulas"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/scoringformulas"
+                >
+                  <ManagementFormulas />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/data"
+              element={
+                <ProtectedRoute roles={userRoles} path="/admin/management/data">
+                  <ManagementData />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="*"
+              element={
+                <ErrorPage
+                  status="404"
+                  title="404"
+                  subTitle="Trang bạn tìm kiếm không tồn tại."
+                />
+              }
+            />
+          </>
+        )}
       </Routes>
     </div>
   );

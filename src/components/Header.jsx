@@ -3,6 +3,7 @@ import Logo from "../assets/logoLogin.png";
 import userApi from "../api/api";
 import { FaChevronDown } from "react-icons/fa";
 import ChangePasswordPopup from "../pages/user/profile/ChangePasswordPopup";
+import { message } from "antd";
 
 const Header = () => {
   const [user, setUser] = useState(null);
@@ -12,17 +13,32 @@ const Header = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const user_id = localStorage.getItem("user_id");
-      if (!user_id) {
-        console.error("Thiếu user_id");
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Thiếu token. Chuyển hướng đến trang đăng nhập.");
+        window.location.href = "/";
         return;
       }
 
       try {
-        const response = await userApi.getUserInfo(user_id);
-        setUser(response);
+        const response = await userApi.getUserInfo({
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        setUser(response.data);
       } catch (error) {
-        console.error("Lỗi khi lấy thông tin user:", error);
+        if (error.response?.data?.message === "Invalid token") {
+          message.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+          localStorage.clear();
+          window.location.href = "/login";
+        } else {
+          console.error(
+            "Lỗi khi lấy thông tin user:",
+            error.response?.data || error.message
+          );
+        }
       }
     };
 
@@ -43,8 +59,8 @@ const Header = () => {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("user_id");
-    localStorage.removeItem("token");
+    localStorage.clear();
+    message.success("Bạn đã đăng xuất thành công.");
     window.location.href = "/";
   };
 
