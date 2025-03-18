@@ -6,7 +6,7 @@ const authApi = {
   login: async (credentials) => {
     try {
       const fixedCredentials = {
-        user_id: String(credentials.user_id),
+        user_id: String(credentials.user_id), 
         password: credentials.password,
       };
 
@@ -14,6 +14,7 @@ const authApi = {
         `${API_URL}/auth/login`,
         fixedCredentials
       );
+
       return response.data;
     } catch (error) {
       throw error.response?.data || "Lỗi kết nối đến server";
