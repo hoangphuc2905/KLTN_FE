@@ -1,103 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Modal, Input, Select, Table } from "antd";
 import Header from "../../../components/header";
+import userApi from "../../../api/api";
 
-const ManagementUsers = () => {
-  const users = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      studentId: "21040431",
-      role: "USER",
-      status: "Hoạt động",
-    },
-    {
-      id: "2",
-      name: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      studentId: "22055592",
-      role: "USER",
-      status: "Khóa",
-    },
-    {
-      id: "3",
-      name: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      studentId: "11024521",
-      role: "USER",
-      status: "Hoạt động",
-    },
-    {
-      id: "4",
-      name: "Nguyễn Văn D",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "USER",
-      status: "Hoạt động",
-    },
-    {
-      id: "5",
-      name: "Nguyễn Văn C",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "USER",
-      status: "Hoạt động",
-    },
-  ];
-
-  const admins = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      studentId: "21040431",
-      role: "TRƯỞNG KHOA",
-      status: "Hoạt động",
-    },
-    {
-      id: "2",
-      name: "Nguyễn Duy Thanh",
-      position: "Trưởng khoa CNTT",
-      department: "QUẢN TRỊ KINH DOANH",
-      studentId: "22055592",
-      role: "PHÓ KHOA",
-      status: "Khóa",
-    },
-    {
-      id: "3",
-      name: "Huỳnh Hoàng Phúc",
-      position: "Phó trưởng khoa TCKT",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      studentId: "11024521",
-      role: "ADMIN",
-      status: "Hoạt động",
-    },
-    {
-      id: "4",
-      name: "Nguyễn Văn D",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "ADMIN",
-      status: "Hoạt động",
-    },
-    {
-      id: "5",
-      name: "Nguyễn Văn C",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "ADMIN",
-      status: "Hoạt động",
-    },
-  ];
+const ManagementUsers = ({ userDepartment }) => {
+  const [userRole, setUserRole] = useState(
+    localStorage.getItem("current_role") || ""
+  ); // Retrieve role from localStorage
+  const [users, setUsers] = useState([]);
+  const [lecturers, setLecturers] = useState([]);
+  const [departmentNames, setDepartmentNames] = useState({});
   const [activeTab, setActiveTab] = useState("user");
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
@@ -113,6 +25,69 @@ const ManagementUsers = () => {
   const [newStatus, setNewStatus] = useState("");
   const [newRole, setNewRole] = useState("");
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (userRole === "admin") {
+          const lecturersData = await userApi.getAllLecturers();
+          const students = await userApi.getAllStudents();
+
+          setUsers(students);
+          setLecturers(lecturersData);
+        } else if (
+          [
+            "head_of_department",
+            "deputy_head_of_department",
+            "department_in_charge",
+          ].includes(userRole)
+        ) {
+          const data = await userApi.getLecturerAndStudentByDepartment(
+            userDepartment
+          );
+          setUsers(data.students);
+          setLecturers(data.lecturers);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [userRole, userDepartment]);
+
+  useEffect(() => {
+    const fetchDepartmentNames = async () => {
+      try {
+        const uniqueDepartmentIds = [
+          ...new Set([...users, ...lecturers].map((user) => user.department)),
+        ];
+
+        const departmentData = {};
+        for (const departmentId of uniqueDepartmentIds) {
+          if (typeof departmentId === "object" && departmentId._id) {
+            const department = await userApi.getDepartmentById(
+              departmentId._id
+            );
+            departmentData[departmentId._id] = department.department_name;
+          } else if (typeof departmentId === "string") {
+            const department = await userApi.getDepartmentById(departmentId);
+            departmentData[departmentId] = department.department_name;
+          } else {
+            console.warn("Invalid departmentId:", departmentId);
+          }
+        }
+
+        setDepartmentNames(departmentData);
+      } catch (error) {
+        console.error("Lỗi khi lấy tên khoa:", error);
+      }
+    };
+
+    if (users.length > 0 || lecturers.length > 0) {
+      fetchDepartmentNames();
+    }
+  }, [users, lecturers]);
+
   const handleEditClick = (user) => {
     setSelectedUser(user);
     setNewStatus(user.status);
@@ -121,10 +96,10 @@ const ManagementUsers = () => {
   };
 
   const handleOk = () => {
-    // Update the user's status and role here
+    // Update the ser's status and role here
     if (selectedUser) {
       selectedUser.status = newStatus;
-      if (activeTab === "admin") {
+      if (activeTab === "lecturer") {
         selectedUser.role = newRole;
       }
     }
@@ -135,7 +110,7 @@ const ManagementUsers = () => {
     setIsModalVisible(false);
   };
 
-  const displayedUsers = activeTab === "user" ? users : admins;
+  const displayedUsers = activeTab === "user" ? users : lecturers;
 
   const uniquePositions = [
     "Tất cả",
@@ -149,7 +124,7 @@ const ManagementUsers = () => {
     "Tất cả",
     ...new Set(displayedUsers.map((user) => user.status)),
   ];
-  const uniqueRoles = [...new Set(admins.map((admin) => admin.role))];
+  const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
 
   const filteredUsers = displayedUsers.filter((user) => {
     return (
@@ -172,18 +147,20 @@ const ManagementUsers = () => {
           },
           {
             title: "HỌ VÀ TÊN",
-            dataIndex: "name",
-            key: "name",
+            dataIndex: "full_name",
+            key: "full_name",
           },
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
+            render: (departmentId) =>
+              departmentNames[departmentId] || "Đang tải...",
           },
           {
             title: "MSSV",
-            dataIndex: "studentId",
-            key: "studentId",
+            dataIndex: "student_id",
+            key: "student_id",
           },
           {
             title: "TRẠNG THÁI",
@@ -225,13 +202,23 @@ const ManagementUsers = () => {
           },
           {
             title: "HỌ VÀ TÊN",
-            dataIndex: "name",
-            key: "name",
+            dataIndex: "full_name",
+            key: "full_name",
           },
+
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
+            render: (department) => {
+              if (
+                typeof department === "object" &&
+                department.department_name
+              ) {
+                return department.department_name; // Lấy trực tiếp từ đối tượng
+              }
+              return departmentNames[department] || "Đang tải..."; // Tra cứu từ departmentNames
+            },
           },
           {
             title: "CHỨC VỤ",
@@ -240,8 +227,8 @@ const ManagementUsers = () => {
           },
           {
             title: "MSGV",
-            dataIndex: "studentId",
-            key: "studentId",
+            dataIndex: "lecturer_id",
+            key: "lecturer_id",
           },
           {
             title: "TRẠNG THÁI",
@@ -319,7 +306,7 @@ const ManagementUsers = () => {
         </Select>
       </div>
 
-      {activeTab === "admin" && (
+      {activeTab === "lecturer" && (
         <div className="mb-3">
           <label className="block text-gray-700 text-sm">Chức vụ:</label>
           <Select
@@ -405,11 +392,11 @@ const ManagementUsers = () => {
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
-                activeTab === "admin"
+                activeTab === "lecturer"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
               } rounded-lg`}
-              onClick={() => setActiveTab("admin")}
+              onClick={() => setActiveTab("lecturer")}
             >
               Giảng viên
             </button>
@@ -475,7 +462,7 @@ const ManagementUsers = () => {
             ))}
           </Select>
         </div>
-        {activeTab === "admin" && (
+        {activeTab === "lecturer" && (
           <div className="mb-3">
             <label className="block text-gray-700 text-sm">Quyền:</label>
             <Select

@@ -37,26 +37,25 @@ const permissions = {
   ],
   head_of_department: [
     "/admin/management/chart",
-
     "/role-selection",
-
     "/home",
-    // "/profile",
-    "/department/overview",
-    "/department/reports",
+    "/profile",
     "/work-process",
+    "/admin/management/account",
   ],
   deputy_head_of_department: [
     "/admin/management/chart",
     "/role-selection",
     "/home",
     "/profile",
+    "/admin/management/account",
   ],
   department_in_charge: [
     "/role-selection",
     "/home",
     "/profile",
     "/department/tasks",
+    "/admin/management/account",
   ],
 };
 
