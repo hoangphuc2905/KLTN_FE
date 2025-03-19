@@ -24,9 +24,14 @@ const LoginPage = () => {
         JSON.stringify(Array.isArray(data.roles) ? data.roles : [data.roles])
       );
 
-      const defaultPath = defaultRoutes[data.roles[0]] || "/home";
-      console.log("Default Path:", defaultPath);
-      window.location.href = defaultPath;
+
+      if (data.roles.length > 1) {
+        window.location.href = "/role-selection";
+      } else {
+        // Nếu chỉ có một quyền, chuyển hướng đến trang mặc định
+        const defaultPath = defaultRoutes[data.roles[0]] || "/home";
+        window.location.href = defaultPath;
+      }
     } catch (error) {
       console.error("Đăng nhập thất bại:", error);
       message.error("Thông tin đăng nhập không chính xác");

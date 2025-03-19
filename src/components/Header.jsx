@@ -8,8 +8,18 @@ import { message } from "antd";
 const Header = () => {
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [currentRole, setCurrentRole] = useState("");
   const [showChangePasswordPopup, setShowChangePasswordPopup] = useState(false);
   const menuRef = useRef(null);
+
+  const roleMapping = {
+    student: "Sinh viên",
+    admin: "Quản trị viên",
+    lecturer: "Giảng viên",
+    head_of_department: "Trưởng khoa",
+    deputy_head_of_department: "Phó khoa",
+    department_in_charge: "Bộ phận phụ trách",
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -43,6 +53,9 @@ const Header = () => {
     };
 
     fetchUserData();
+    const role = localStorage.getItem("current_role");
+    const roleInVietnamese = roleMapping[role] || "Không xác định";
+    setCurrentRole(roleInVietnamese);
   }, []);
 
   useEffect(() => {
@@ -108,10 +121,13 @@ const Header = () => {
                 alt="User Avatar"
                 className="w-10 h-10 rounded-full border border-gray-300"
               />
-              <span className="text-gray-700 font-semibold flex items-center gap-1">
-                {user.full_name}{" "}
-                <FaChevronDown className="text-gray-500 text-xs" />
-              </span>
+              <div className="text-gray-700 font-semibold flex flex-col items-start">
+                <span>{user.full_name}</span>
+                <span className="text-sm text-gray-500">
+                  {currentRole ? `${currentRole}` : "Không xác định"}
+                </span>
+              </div>
+              <FaChevronDown className="text-gray-500 text-xs" />
 
               {/* Menu Dropdown */}
               {menuOpen && (

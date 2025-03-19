@@ -23,6 +23,7 @@ import ManagementChart from "./pages/admin/managementStatistic/managementChartPa
 import ManagementPoint from "./pages/admin/managementStatistic/managementPointPage";
 import ManagementFormulas from "./pages/admin/managementScoringformulas/managementScoringformulasPage";
 import ManagementData from "./pages/admin/managementData/managementDataPage";
+import RoleSelectionPage from "./components/RoleSelectionPage";
 import ErrorPage from "./components/ErrorPage";
 
 const App = () => {
@@ -30,15 +31,21 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRoles = async () => {
+    const fetchRoles = () => {
       try {
         const roles = localStorage.getItem("roles");
+        const currentRole = localStorage.getItem("current_role");
         const token = localStorage.getItem("token");
 
         console.log("Token hiện tại:", token);
         console.log("Roles hiện tại:", roles);
+        console.log("Vai trò hiện tại:", currentRole);
 
-        if (roles) {
+        if (currentRole) {
+          // Nếu có current_role, chỉ sử dụng vai trò này
+          setUserRoles([currentRole]);
+        } else if (roles) {
+          // Nếu không có current_role, sử dụng toàn bộ danh sách roles
           const parsedRoles = JSON.parse(roles);
           setUserRoles(
             Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]
@@ -47,7 +54,7 @@ const App = () => {
           setUserRoles([]);
         }
       } catch (error) {
-        console.error("Lỗi khi xử lý roles:", error);
+        console.error("Lỗi khi xử lý roles hoặc current_role:", error);
         setUserRoles([]);
       } finally {
         setLoading(false);
@@ -55,6 +62,16 @@ const App = () => {
     };
 
     fetchRoles();
+
+    const handleStorageChange = () => {
+      fetchRoles();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
   }, []);
 
   if (loading) {
@@ -65,7 +82,20 @@ const App = () => {
 
   return (
     <div>
-      {userRoles.includes("admin") ? <AdminMenu /> : <UserMenu />}
+      {window.location.pathname !== "/role-selection" &&
+        (userRoles.some((role) =>
+          [
+            "admin",
+            "head_of_department",
+            "deputy_head_of_department",
+            "lecturer",
+            "department_in_charge",
+          ].includes(role)
+        ) ? (
+          <AdminMenu currentRole={userRoles[0]} />
+        ) : (
+          <UserMenu />
+        ))}
       <Routes>
         {!localStorage.getItem("token") ? (
           <>
@@ -80,6 +110,14 @@ const App = () => {
               element={
                 <ProtectedRoute roles={userRoles} path="/home">
                   <UserHomePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/role-selection"
+              element={
+                <ProtectedRoute roles={userRoles} path="/role-selection">
+                  <RoleSelectionPage />
                 </ProtectedRoute>
               }
             />
