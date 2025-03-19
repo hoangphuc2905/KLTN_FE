@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { message } from "antd";
 import authApi from "../../../api/authApi";
+import defaultRoutes from "../../../configs/defaultRoutes";
 const Logo = new URL("../../../assets/logoLogin.png", import.meta.url).href;
 const Image = new URL("../../../assets/background.png", import.meta.url).href;
 
@@ -15,22 +16,21 @@ const LoginPage = () => {
 
     try {
       const data = await authApi.login({ user_id, password });
-      console.log("Login successful:", data);
+
       localStorage.setItem("token", data.token);
       localStorage.setItem("user_id", data.user_id);
-      localStorage.setItem("role", data.role);
-
-      message.success(`Đăng nhập thành công. Chào mừng ${data.user_id}!`);
-
-      if (data.role === "admin") {
-        window.location.href = "/admin/management/chart";
-      } else {
-        window.location.href = "/home";
-      }
-    } catch (err) {
-      message.error(
-        err.response?.data?.message || "Thông tin đăng nhập không chính xác"
+      localStorage.setItem(
+        "roles",
+        JSON.stringify(Array.isArray(data.roles) ? data.roles : [data.roles])
       );
+
+      // const defaultPath = defaultRoutes[data.roles[0]] || "/home";
+      // console.log("Default Path:", defaultPath);
+      // window.location.href = defaultPath;
+      window.location.href = "/role-selection";
+    } catch (error) {
+      console.error("Đăng nhập thất bại:", error);
+      message.error("Thông tin đăng nhập không chính xác");
     } finally {
       setLoading(false);
     }

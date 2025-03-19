@@ -3,15 +3,17 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const userApi = {
-  getUserInfo: async (user_id) => {
-    try {
-      const response = await axios.get(`${API_URL}/users/${user_id}`);
-      console.log("API Response:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      throw error.response?.data || "Lỗi kết nối đến server";
+  getUserInfo: async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      throw new Error("No token found. Please log in.");
     }
+
+    return await axios.get(`${API_URL}/auth/userinfo`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
   },
 
   updateUserProfile: async (user_id, userData) => {

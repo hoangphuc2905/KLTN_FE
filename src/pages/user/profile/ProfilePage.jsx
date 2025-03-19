@@ -9,17 +9,31 @@ const ProfilePage = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const user_id = localStorage.getItem("user_id");
-      if (!user_id) {
-        console.error("Thiếu user_id");
+      const token = localStorage.getItem("token"); 
+      if (!token) {
+        console.error("Thiếu token. Vui lòng đăng nhập.");
         return;
       }
 
       try {
-        const response = await userApi.getUserInfo(user_id);
-        setUser(response);
+        const response = await userApi.getUserInfo({
+          headers: {
+            Authorization: `Bearer ${token}`, // Gửi token trong header
+          },
+        });
+
+        setUser(response.data); // Lưu dữ liệu người dùng vào state
       } catch (error) {
-        console.error("Lỗi khi lấy thông tin user:", error);
+        if (error.response?.data?.message === "Invalid token") {
+          console.error("Token không hợp lệ. Vui lòng đăng nhập lại.");
+          localStorage.clear();
+          window.location.href = "/login"; // Chuyển hướng về trang đăng nhập
+        } else {
+          console.error(
+            "Lỗi khi lấy thông tin user:",
+            error.response?.data || error.message
+          );
+        }
       }
     };
 
@@ -81,7 +95,7 @@ const ProfilePage = () => {
                         <div className="flex flex-col grow text-sm font-medium leading-none text-black max-md:mt-10">
                           <div className="mr-7 max-md:mr-2.5">
                             Mã số sinh viên:{" "}
-                            <span className="font-bold">{user?.user_id}</span>
+                            <span className="font-bold">{user?.lecturer_id || user?.student_id}</span>
                           </div>
                           <div className="mt-4">
                             Họ và tên:{" "}
