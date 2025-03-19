@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Select, Table, Checkbox } from "antd";
+import { Input, Select, Table, Checkbox, Tooltip, Modal } from "antd"; // Added Tooltip and Modal import
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 
@@ -9,111 +9,55 @@ const ManagementPoint = () => {
   const papers = [
     {
       id: 1,
-      author: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      totalPapers: 10,
-      journalType: "Tất cả",
-      totalPoints: 90,
+      type: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q1",
+      title:
+        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+      authorCount: "3 (0-0-1-2)",
+      role: "Vừa chính vừa liên hệ",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      featured: true,
+      points: 8,
     },
     {
       id: 2,
-      author: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      totalPapers: 8,
-      journalType: "Tất cả",
-      totalPoints: 43,
+      type: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q3",
+      title:
+        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      featured: true,
+      points: 5,
     },
     {
       id: 3,
-      author: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      totalPapers: 5,
-      journalType: "Tất cả",
-      totalPoints: 25,
+      type: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q2",
+      title:
+        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      featured: true,
+      points: 3,
     },
     {
       id: 4,
-      author: "Nguyễn Văn B",
-      position: "Giảng viên",
-      department: "NGOẠI NGỮ",
-      totalPapers: 3,
-      journalType: "Tất cả",
-      totalPoints: 12,
-    },
-    {
-      id: 5,
-      author: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      totalPapers: 10,
-      journalType: "Tất cả",
-      totalPoints: 90,
-    },
-    {
-      id: 6,
-      author: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      totalPapers: 8,
-      journalType: "Tất cả",
-      totalPoints: 43,
-    },
-    {
-      id: 7,
-      author: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      totalPapers: 5,
-      journalType: "Tất cả",
-      totalPoints: 25,
-    },
-    {
-      id: 8,
-      author: "Nguyễn Văn B",
-      position: "Giảng viên",
-      department: "NGOẠI NGỮ",
-      totalPapers: 3,
-      journalType: "Tất cả",
-      totalPoints: 12,
-    },
-    {
-      id: 9,
-      author: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      totalPapers: 10,
-      journalType: "Tất cả",
-      totalPoints: 90,
-    },
-    {
-      id: 10,
-      author: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      totalPapers: 8,
-      journalType: "Tất cả",
-      totalPoints: 43,
-    },
-    {
-      id: 11,
-      author: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      totalPapers: 5,
-      journalType: "Tất cả",
-      totalPoints: 25,
-    },
-    {
-      id: 12,
-      author: "Nguyễn Văn B",
-      position: "Trưởng khoa",
-      department: "NGOẠI NGỮ",
-      totalPapers: 3,
-      journalType: "Tất cả",
-      totalPoints: 12,
+      type: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
+      group: "Q2",
+      title:
+        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
+      authorCount: "5 (1-1-0-3)",
+      role: "T/g chính",
+      institution: "IUH",
+      publicationDate: "25/11/2024",
+      featured: true,
+      points: 2,
     },
   ];
 
@@ -122,24 +66,28 @@ const ManagementPoint = () => {
   const [visibleColumns, setVisibleColumns] = useState([
     "checkbox",
     "id",
-    "author",
-    "position",
-    "department",
-    "totalPapers",
-    "journalType",
-    "totalPoints",
+    "type",
+    "group",
+    "title",
+    "authorCount",
+    "role",
+    "institution",
+    "publicationDate",
+    "points",
     "action",
   ]);
 
   const columnOptions = [
     { label: "STT", value: "id" },
-    { label: "TÁC GIẢ", value: "author" },
-    { label: "CHỨC VỤ", value: "position" },
-    { label: "KHOA", value: "department" },
-    { label: "TỔNG BÀI", value: "totalPapers" },
-    { label: "LOẠI TẠP CHÍ", value: "journalType" },
-    { label: "TỔNG ĐIỂM", value: "totalPoints" },
-    { label: "XEM CHI TIẾT", value: "action" },
+    { label: "Loại bài báo", value: "type" },
+    { label: "Nhóm", value: "group" },
+    { label: "Tiêu đề", value: "title" },
+    { label: "Số lượng tác giả", value: "authorCount" },
+    { label: "Vai trò", value: "role" },
+    { label: "Cơ quan", value: "institution" },
+    { label: "Ngày xuất bản", value: "publicationDate" },
+    { label: "Điểm", value: "points" },
+    { label: "Xem chi tiết", value: "action" },
   ];
 
   const handleColumnVisibilityChange = (checkedValues) => {
@@ -157,34 +105,31 @@ const ManagementPoint = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const uniqueRoles = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.position)),
-  ];
+  const uniqueRoles = ["Tất cả", ...new Set(papers.map((paper) => paper.role))];
   const uniqueInstitutions = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.department)),
+    ...new Set(papers.map((paper) => paper.institution)),
   ];
   const uniquePaperTypes = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.journalType)),
+    ...new Set(papers.map((paper) => paper.type)),
   ];
 
   const filteredPapers = papers.filter((paper) => {
     return (
       (filterAuthorName === "" || paper.author.includes(filterAuthorName)) &&
-      (filterRole === "Tất cả" || paper.position === filterRole) &&
+      (filterRole === "Tất cả" || paper.role === filterRole) &&
       (filterInstitution === "Tất cả" ||
-        paper.department === filterInstitution) &&
+        paper.institution === filterInstitution) &&
       (filterTotalPapersFrom === "" ||
         paper.totalPapers >= parseInt(filterTotalPapersFrom)) &&
       (filterTotalPapersTo === "" ||
         paper.totalPapers <= parseInt(filterTotalPapersTo)) &&
-      (filterPaperType === "Tất cả" || paper.journalType === filterPaperType) &&
+      (filterPaperType === "Tất cả" || paper.type === filterPaperType) &&
       (filterTotalPointsFrom === "" ||
-        paper.totalPoints >= parseInt(filterTotalPointsFrom)) &&
+        paper.points >= parseInt(filterTotalPointsFrom)) &&
       (filterTotalPointsTo === "" ||
-        paper.totalPoints <= parseInt(filterTotalPointsTo))
+        paper.points <= parseInt(filterTotalPointsTo))
     );
   });
 
@@ -192,6 +137,14 @@ const ManagementPoint = () => {
 
   const handleChange = (pagination, filters, sorter) => {
     setSortedInfo(sorter);
+  };
+
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [modalContent, setModalContent] = useState({});
+
+  const handleRowClick = (record) => {
+    setModalContent(record);
+    setIsModalVisible(true);
   };
 
   const columns = [
@@ -202,62 +155,102 @@ const ManagementPoint = () => {
       render: (text, record, index) => index + 1,
       sorter: (a, b) => a.id - b.id,
       sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null,
-      width: 65,
+      width: 75,
     },
     {
-      title: "TÁC GIẢ",
-      dataIndex: "author",
-      key: "author",
-      sorter: (a, b) => a.author.localeCompare(b.author),
-      sortOrder: sortedInfo.columnKey === "author" ? sortedInfo.order : null,
-      width: 250,
+      title: "LOẠI BÀI BÁO",
+      dataIndex: "type",
+      key: "type",
+      sorter: (a, b) => a.type.localeCompare(b.type),
+      sortOrder: sortedInfo.columnKey === "type" ? sortedInfo.order : null,
+      width: 150,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (type) => (
+        <Tooltip placement="topLeft" title={type}>
+          {type}
+        </Tooltip>
+      ),
     },
     {
-      title: "CHỨC VỤ",
-      dataIndex: "position",
-      key: "position",
-      sorter: (a, b) => a.position.localeCompare(b.position),
-      sortOrder: sortedInfo.columnKey === "position" ? sortedInfo.order : null,
+      title: "THUỘC NHÓM",
+      dataIndex: "group",
+      key: "group",
+      sorter: (a, b) => a.group.localeCompare(b.group),
+      sortOrder: sortedInfo.columnKey === "group" ? sortedInfo.order : null,
       width: 150,
     },
     {
-      title: "KHOA",
-      dataIndex: "department",
-      key: "department",
-      sorter: (a, b) => a.department.localeCompare(b.department),
-      sortOrder:
-        sortedInfo.columnKey === "department" ? sortedInfo.order : null,
-      width: 270,
+      title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
+      dataIndex: "title",
+      key: "title",
+      sorter: (a, b) => a.title.localeCompare(b.title),
+      sortOrder: sortedInfo.columnKey === "title" ? sortedInfo.order : null,
+      width: 300,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (title) => (
+        <Tooltip placement="topLeft" title={title}>
+          {title}
+        </Tooltip>
+      ),
     },
     {
-      title: "TỔNG BÀI",
-      dataIndex: "totalPapers",
-      key: "totalPapers",
-      sorter: (a, b) => a.totalPapers - b.totalPapers,
+      title: "SỐ T/GIẢ",
+      dataIndex: "authorCount",
+      key: "authorCount",
+      sorter: (a, b) => a.authorCount.localeCompare(b.authorCount),
       sortOrder:
-        sortedInfo.columnKey === "totalPapers" ? sortedInfo.order : null,
+        sortedInfo.columnKey === "authorCount" ? sortedInfo.order : null,
       width: 120,
     },
     {
-      title: "LOẠI TẠP CHÍ",
-      dataIndex: "journalType",
-      key: "journalType",
-      sorter: (a, b) => a.journalType.localeCompare(b.journalType),
-      sortOrder:
-        sortedInfo.columnKey === "journalType" ? sortedInfo.order : null,
-      width: 140,
+      title: "VAI TRÒ",
+      dataIndex: "role",
+      key: "role",
+      sorter: (a, b) => a.role.localeCompare(b.role),
+      sortOrder: sortedInfo.columnKey === "role" ? sortedInfo.order : null,
+      width: 120,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (role) => (
+        <Tooltip placement="topLeft" title={role}>
+          {role}
+        </Tooltip>
+      ),
     },
     {
-      title: "TỔNG ĐIỂM",
-      dataIndex: "totalPoints",
-      key: "totalPoints",
-      sorter: (a, b) => a.totalPoints - b.totalPoints,
+      title: "CQ ĐỨNG TÊN",
+      dataIndex: "institution",
+      key: "institution",
+      sorter: (a, b) => a.institution.localeCompare(b.institution),
       sortOrder:
-        sortedInfo.columnKey === "totalPoints" ? sortedInfo.order : null,
+        sortedInfo.columnKey === "institution" ? sortedInfo.order : null,
+      width: 160,
+    },
+    {
+      title: "NGÀY CÔNG BỐ",
+      dataIndex: "publicationDate",
+      key: "publicationDate",
+      sorter: (a, b) =>
+        new Date(a.publicationDate) - new Date(b.publicationDate),
+      sortOrder:
+        sortedInfo.columnKey === "publicationDate" ? sortedInfo.order : null,
+      width: 160,
+    },
+    {
+      title: "ĐIỂM",
+      dataIndex: "points",
+      key: "points",
+      sorter: (a, b) => a.points - b.points,
+      sortOrder: sortedInfo.columnKey === "points" ? sortedInfo.order : null,
       width: 130,
     },
     {
-      title: "XEM CHI TIẾT",
+      title: "Xem chi tiết",
       key: "action",
       render: (text, record) => (
         <a href={`/details/${record.id}`} className="text-blue-500">
@@ -306,7 +299,7 @@ const ManagementPoint = () => {
             <span className="font-semibold text-sm text-sky-900">Thống kê</span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
-              Thống kê điểm đóng góp 
+              Thống kê điểm đóng góp
             </span>
           </div>
         </div>
@@ -539,11 +532,51 @@ const ManagementPoint = () => {
                 rowKey="id"
                 className="text-sm"
                 onChange={handleChange}
+                onRow={(record) => ({
+                  onClick: () => handleRowClick(record),
+                })}
+                scroll={{
+                  x: columns.reduce(
+                    (total, col) => total + (col.width || 0),
+                    0
+                  ),
+                }} // Added horizontal scroll
               />
             </div>
           </div>
         </div>
       </div>
+      <Modal
+        title="Chi tiết"
+        visible={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+      >
+        <p>
+          <strong>Loại bài báo:</strong> {modalContent.type}
+        </p>
+        <p>
+          <strong>Thuộc nhóm:</strong> {modalContent.group}
+        </p>
+        <p>
+          <strong>Tên bài báo nghiên cứu khoa học:</strong> {modalContent.title}
+        </p>
+        <p>
+          <strong>Số tác giả:</strong> {modalContent.authorCount}
+        </p>
+        <p>
+          <strong>Vai trò:</strong> {modalContent.role}
+        </p>
+        <p>
+          <strong>CQ đứng tên:</strong> {modalContent.institution}
+        </p>
+        <p>
+          <strong>Ngày công bố:</strong> {modalContent.publicationDate}
+        </p>
+        <p>
+          <strong>Điểm:</strong> {modalContent.points}
+        </p>
+      </Modal>
     </div>
   );
 };
