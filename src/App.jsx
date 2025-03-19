@@ -23,6 +23,7 @@ import ManagementChart from "./pages/admin/managementStatistic/managementChartPa
 import ManagementPoint from "./pages/admin/managementStatistic/managementPointPage";
 import ManagementFormulas from "./pages/admin/managementScoringformulas/managementScoringformulasPage";
 import ManagementData from "./pages/admin/managementData/managementDataPage";
+import RoleSelectionPage from "./app/auth/RoleSelectionPage";
 import ErrorPage from "./components/ErrorPage";
 
 const App = () => {
@@ -96,6 +97,14 @@ const App = () => {
               element={
                 <ProtectedRoute roles={userRoles} path="/update-profile">
                   <UpdateProfilePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/role-selection"
+              element={
+                <ProtectedRoute roles={userRoles} path="/role-selection">
+                  <RoleSelectionPage />
                 </ProtectedRoute>
               }
             />
