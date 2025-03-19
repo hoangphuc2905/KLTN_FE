@@ -164,7 +164,7 @@ const ManagementPoint = () => {
   };
 
   const [filterAuthorName, setFilterAuthorName] = useState("");
-  const [filterRole, setFilterRole] = useState("Tất cả");
+  const [filterRole, setFilterRole] = useState(uniqueRoles);
   const [filterInstitution, setFilterInstitution] = useState("Tất cả");
   const [filterTotalPapersFrom, setFilterTotalPapersFrom] = useState("");
   const [filterTotalPapersTo, setFilterTotalPapersTo] = useState("");
@@ -190,9 +190,9 @@ const ManagementPoint = () => {
   const filteredPapers = papers.filter((paper) => {
     return (
       (filterAuthorName === "" || paper.author.includes(filterAuthorName)) &&
-      (filterRole === "Tất cả" || paper.position === filterRole) &&
-      (filterInstitution === "Tất cả" ||
-        paper.department === filterInstitution) &&
+      (filterRole.length === 0 || filterRole.includes(paper.position)) &&
+      (filterInstitution.length === 0 ||
+        filterInstitution.includes(paper.department)) &&
       (filterTotalPapersFrom === "" ||
         paper.totalPapers >= parseInt(filterTotalPapersFrom)) &&
       (filterTotalPapersTo === "" ||
@@ -431,7 +431,7 @@ const ManagementPoint = () => {
                           type="text"
                           value={filterAuthorName}
                           onChange={(e) => setFilterAuthorName(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
 
@@ -439,17 +439,35 @@ const ManagementPoint = () => {
                         <label className="block text-gray-700 text-sm">
                           Chức vụ:
                         </label>
-                        <Select
-                          value={filterRole}
-                          onChange={(value) => setFilterRole(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-                        >
-                          {uniqueRoles.map((role) => (
-                            <Select.Option key={role} value={role}>
-                              {role}
-                            </Select.Option>
-                          ))}
-                        </Select>
+                        <div className="relative">
+                          <Checkbox
+                            indeterminate={
+                              filterRole.length > 0 &&
+                              filterRole.length < uniqueRoles.length
+                            }
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFilterRole(uniqueRoles);
+                              } else {
+                                setFilterRole([]);
+                              }
+                            }}
+                            checked={filterRole.length === uniqueRoles.length}
+                          >
+                            Tất cả
+                          </Checkbox>
+                          <Checkbox.Group
+                            options={uniqueRoles.map((role) => ({
+                              label: role,
+                              value: role,
+                            }))}
+                            value={filterRole}
+                            onChange={(checkedValues) =>
+                              setFilterRole(checkedValues)
+                            }
+                            className="flex flex-col gap-2 mt-2"
+                          />
+                        </div>
                       </div>
 
                       <div className="mb-3">
@@ -459,7 +477,7 @@ const ManagementPoint = () => {
                         <Select
                           value={filterInstitution}
                           onChange={(value) => setFilterInstitution(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         >
                           {uniqueInstitutions.map((institution) => (
                             <Select.Option
@@ -485,7 +503,7 @@ const ManagementPoint = () => {
                                 Math.max(0, e.target.value)
                               )
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[170px] max-md:w-full max-md:max-w-[170px] max-sm:w-full text-sm"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                             min={0}
                             max={Number.MAX_SAFE_INTEGER}
                           />
@@ -502,7 +520,7 @@ const ManagementPoint = () => {
                                 Math.max(0, e.target.value)
                               )
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[170px] max-md:w-full max-md:max-w-[170px] max-sm:w-full text-sm"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                             min={0}
                             max={Number.MAX_SAFE_INTEGER}
                             defaultValue={Number.MAX_SAFE_INTEGER}
@@ -517,7 +535,7 @@ const ManagementPoint = () => {
                         <Select
                           value={filterPaperType}
                           onChange={(value) => setFilterPaperType(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         >
                           {uniquePaperTypes.map((type) => (
                             <Select.Option key={type} value={type}>
@@ -540,7 +558,7 @@ const ManagementPoint = () => {
                                 Math.max(0, e.target.value)
                               )
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[170px] max-md:w-full max-md:max-w-[170px] max-sm:w-full text-sm"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                             min={0}
                           />
                         </div>
@@ -556,7 +574,7 @@ const ManagementPoint = () => {
                                 Math.max(0, e.target.value)
                               )
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[170px] max-md:w-full max-md:max-w-[170px] max-sm:w-full text-sm"
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                             min={0}
                           />
                         </div>
@@ -574,7 +592,7 @@ const ManagementPoint = () => {
                           setFilterTotalPointsFrom("");
                           setFilterTotalPointsTo("");
                         }}
-                        className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md text-sm"
+                        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
                       >
                         Bỏ lọc tất cả
                       </button>
