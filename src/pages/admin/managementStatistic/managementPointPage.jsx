@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox } from "antd";
+import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 
@@ -119,6 +120,7 @@ const ManagementPoint = () => {
 
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnFilter, setShowColumnFilter] = useState(false);
+  const navigate = useNavigate();
   const [visibleColumns, setVisibleColumns] = useState([
     "checkbox",
     "id",
@@ -164,11 +166,14 @@ const ManagementPoint = () => {
   };
 
   const [filterAuthorName, setFilterAuthorName] = useState("");
-  const [filterRole, setFilterRole] = useState(uniqueRoles);
-  const [filterInstitution, setFilterInstitution] = useState("Tất cả");
+  const [filterRole, setFilterRole] = useState(["Tất cả"]);
+  const [showRoleFilter, setShowRoleFilter] = useState(false);
+  const [filterInstitution, setFilterInstitution] = useState(["Tất cả"]);
+  const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
   const [filterTotalPapersFrom, setFilterTotalPapersFrom] = useState("");
   const [filterTotalPapersTo, setFilterTotalPapersTo] = useState("");
-  const [filterPaperType, setFilterPaperType] = useState("Tất cả");
+  const [filterPaperType, setFilterPaperType] = useState(["Tất cả"]);
+  const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
   const [filterTotalPointsFrom, setFilterTotalPointsFrom] = useState("");
   const [filterTotalPointsTo, setFilterTotalPointsTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -190,14 +195,15 @@ const ManagementPoint = () => {
   const filteredPapers = papers.filter((paper) => {
     return (
       (filterAuthorName === "" || paper.author.includes(filterAuthorName)) &&
-      (filterRole.length === 0 || filterRole.includes(paper.position)) &&
-      (filterInstitution.length === 0 ||
+      (filterRole.includes("Tất cả") || filterRole.includes(paper.position)) &&
+      (filterInstitution.includes("Tất cả") ||
         filterInstitution.includes(paper.department)) &&
       (filterTotalPapersFrom === "" ||
         paper.totalPapers >= parseInt(filterTotalPapersFrom)) &&
       (filterTotalPapersTo === "" ||
         paper.totalPapers <= parseInt(filterTotalPapersTo)) &&
-      (filterPaperType === "Tất cả" || paper.journalType === filterPaperType) &&
+      (filterPaperType.includes("Tất cả") ||
+        filterPaperType.includes(paper.journalType)) &&
       (filterTotalPointsFrom === "" ||
         paper.totalPoints >= parseInt(filterTotalPointsFrom)) &&
       (filterTotalPointsTo === "" ||
@@ -307,6 +313,9 @@ const ManagementPoint = () => {
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
+  const roleFilterRef = useRef(null);
+  const institutionFilterRef = useRef(null);
+  const paperTypeFilterRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -324,13 +333,40 @@ const ManagementPoint = () => {
       ) {
         setShowColumnFilter(false);
       }
+      if (
+        showRoleFilter &&
+        roleFilterRef.current &&
+        !roleFilterRef.current.contains(event.target)
+      ) {
+        setShowRoleFilter(false);
+      }
+      if (
+        showInstitutionFilter &&
+        institutionFilterRef.current &&
+        !institutionFilterRef.current.contains(event.target)
+      ) {
+        setShowInstitutionFilter(false);
+      }
+      if (
+        showPaperTypeFilter &&
+        paperTypeFilterRef.current &&
+        !paperTypeFilterRef.current.contains(event.target)
+      ) {
+        setShowPaperTypeFilter(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showFilter, showColumnFilter]);
+  }, [
+    showFilter,
+    showColumnFilter,
+    showRoleFilter,
+    showInstitutionFilter,
+    showPaperTypeFilter,
+  ]);
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -345,12 +381,22 @@ const ManagementPoint = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">Thống kê</span>
+            <span
+              onClick={() => navigate("/admin/management/chart")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Thống kê
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
-              Dạng bảng
+              Điểm đóng góp
             </span>
           </div>
         </div>
@@ -380,14 +426,14 @@ const ManagementPoint = () => {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs mr-2" // Added margin-right
                   onClick={() => setShowFilter(!showFilter)}
                 >
                   <Filter className="w-4 h-4" />
                   <span className="text-xs">Bộ lọc</span>
                 </button>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs" // Removed margin-right
                   onClick={() => {
                     setShowColumnFilter(!showColumnFilter);
                     setShowFilter(false);
@@ -422,9 +468,9 @@ const ManagementPoint = () => {
                     ref={filterRef}
                     className="absolute top-full mt-2 z-50 shadow-lg"
                   >
-                    <form className="relative px-4 py-5 w-full bg-white max-w-[500px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
+                        <label className="block text-gray-700 text-xs">
                           Tên tác giả:
                         </label>
                         <Input
@@ -436,147 +482,189 @@ const ManagementPoint = () => {
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
+                        <label className="block text-gray-700 text-xs">
                           Chức vụ:
                         </label>
                         <div className="relative">
-                          <Checkbox
-                            indeterminate={
-                              filterRole.length > 0 &&
-                              filterRole.length < uniqueRoles.length
-                            }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setFilterRole(uniqueRoles);
-                              } else {
-                                setFilterRole([]);
-                              }
-                            }}
-                            checked={filterRole.length === uniqueRoles.length}
+                          <button
+                            type="button"
+                            onClick={() => setShowRoleFilter(!showRoleFilter)}
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
-                            Tất cả
-                          </Checkbox>
-                          <Checkbox.Group
-                            options={uniqueRoles.map((role) => ({
-                              label: role,
-                              value: role,
-                            }))}
-                            value={filterRole}
-                            onChange={(checkedValues) =>
-                              setFilterRole(checkedValues)
-                            }
-                            className="flex flex-col gap-2 mt-2"
-                          />
+                            Chọn chức vụ
+                          </button>
+                          {showRoleFilter && (
+                            <div
+                              ref={roleFilterRef}
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                            >
+                              <Checkbox
+                                indeterminate={
+                                  filterRole.length > 0 &&
+                                  filterRole.length < uniqueRoles.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFilterRole(uniqueRoles);
+                                  } else {
+                                    setFilterRole([]);
+                                  }
+                                }}
+                                checked={
+                                  filterRole.length === uniqueRoles.length
+                                }
+                              >
+                                Tất cả
+                              </Checkbox>
+                              <Checkbox.Group
+                                options={uniqueRoles
+                                  .filter((role) => role !== "Tất cả")
+                                  .map((role) => ({
+                                    label: role,
+                                    value: role,
+                                  }))}
+                                value={filterRole}
+                                onChange={(checkedValues) =>
+                                  setFilterRole(checkedValues)
+                                }
+                                className="flex flex-col gap-2 mt-2"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
+                        <label className="block text-gray-700 text-xs">
                           Khoa:
                         </label>
-                        <Select
-                          value={filterInstitution}
-                          onChange={(value) => setFilterInstitution(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        >
-                          {uniqueInstitutions.map((institution) => (
-                            <Select.Option
-                              key={institution}
-                              value={institution}
+                        <div className="relative">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowInstitutionFilter(!showInstitutionFilter)
+                            }
+                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                          >
+                            Chọn khoa
+                          </button>
+                          {showInstitutionFilter && (
+                            <div
+                              ref={institutionFilterRef}
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
                             >
-                              {institution}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </div>
-
-                      <div className="mb-3 flex gap-2">
-                        <div>
-                          <label className="block text-gray-700 text-sm">
-                            Tổng bài từ:
-                          </label>
-                          <Input
-                            type="number"
-                            value={filterTotalPapersFrom}
-                            onChange={(e) =>
-                              setFilterTotalPapersFrom(
-                                Math.max(0, e.target.value)
-                              )
-                            }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                            min={0}
-                            max={Number.MAX_SAFE_INTEGER}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-gray-700 text-sm">
-                            Tổng bài đến:
-                          </label>
-                          <Input
-                            type="number"
-                            value={filterTotalPapersTo}
-                            onChange={(e) =>
-                              setFilterTotalPapersTo(
-                                Math.max(0, e.target.value)
-                              )
-                            }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                            min={0}
-                            max={Number.MAX_SAFE_INTEGER}
-                            defaultValue={Number.MAX_SAFE_INTEGER}
-                          />
+                              <Checkbox
+                                indeterminate={
+                                  filterInstitution.length > 0 &&
+                                  filterInstitution.length <
+                                    uniqueInstitutions.length
+                                }
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setFilterInstitution(uniqueInstitutions);
+                                  } else {
+                                    setFilterInstitution([]);
+                                  }
+                                }}
+                                checked={
+                                  filterInstitution.length ===
+                                  uniqueInstitutions.length
+                                }
+                              >
+                                Tất cả
+                              </Checkbox>
+                              <Checkbox.Group
+                                options={uniqueInstitutions
+                                  .filter(
+                                    (institution) => institution !== "Tất cả"
+                                  )
+                                  .map((institution) => ({
+                                    label: institution,
+                                    value: institution,
+                                  }))}
+                                value={filterInstitution}
+                                onChange={(checkedValues) =>
+                                  setFilterInstitution(checkedValues)
+                                }
+                                className="flex flex-col gap-2 mt-2"
+                              />
+                            </div>
+                          )}
                         </div>
                       </div>
 
                       <div className="mb-3">
-                        <label className="block text-gray-700 text-sm">
-                          Loại tạp chí:
+                        <label className="block text-gray-700 text-xs">
+                          Tổng bài:
                         </label>
-                        <Select
-                          value={filterPaperType}
-                          onChange={(value) => setFilterPaperType(value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        >
-                          {uniquePaperTypes.map((type) => (
-                            <Select.Option key={type} value={type}>
-                              {type}
-                            </Select.Option>
-                          ))}
-                        </Select>
+                        <div className="flex gap-2">
+                          <div>
+                            <Input
+                              type="number"
+                              placeholder="Từ"
+                              value={filterTotalPapersFrom}
+                              onChange={(e) =>
+                                setFilterTotalPapersFrom(
+                                  Math.max(0, e.target.value)
+                                )
+                              }
+                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              min={0}
+                              max={Number.MAX_SAFE_INTEGER}
+                            />
+                          </div>
+                          <div>
+                            <Input
+                              type="number"
+                              placeholder="Đến"
+                              value={filterTotalPapersTo}
+                              onChange={(e) =>
+                                setFilterTotalPapersTo(
+                                  Math.max(0, e.target.value)
+                                )
+                              }
+                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              min={0}
+                              max={Number.MAX_SAFE_INTEGER}
+                              defaultValue={Number.MAX_SAFE_INTEGER}
+                            />
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="mb-3 flex gap-2">
-                        <div>
-                          <label className="block text-gray-700 text-sm">
-                            Tổng điểm từ:
-                          </label>
-                          <Input
-                            type="number"
-                            value={filterTotalPointsFrom}
-                            onChange={(e) =>
-                              setFilterTotalPointsFrom(
-                                Math.max(0, e.target.value)
-                              )
-                            }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                            min={0}
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-gray-700 text-sm">
-                            Tổng điểm đến:
-                          </label>
-                          <Input
-                            type="number"
-                            value={filterTotalPointsTo}
-                            onChange={(e) =>
-                              setFilterTotalPointsTo(
-                                Math.max(0, e.target.value)
-                              )
-                            }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                            min={0}
-                          />
+                      <div className="mb-3">
+                        <label className="block text-gray-700 text-xs">
+                          Tổng điểm:
+                        </label>
+                        <div className="flex gap-2">
+                          <div>
+                            <Input
+                              type="number"
+                              placeholder="Từ"
+                              value={filterTotalPointsFrom}
+                              onChange={(e) =>
+                                setFilterTotalPointsFrom(
+                                  Math.max(0, e.target.value)
+                                )
+                              }
+                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              min={0}
+                            />
+                          </div>
+                          <div>
+                            <Input
+                              type="number"
+                              placeholder="Đến"
+                              value={filterTotalPointsTo}
+                              onChange={(e) =>
+                                setFilterTotalPointsTo(
+                                  Math.max(0, e.target.value)
+                                )
+                              }
+                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              min={0}
+                            />
+                          </div>
                         </div>
                       </div>
 
@@ -584,11 +672,11 @@ const ManagementPoint = () => {
                         type="button"
                         onClick={() => {
                           setFilterAuthorName("");
-                          setFilterRole("Tất cả");
-                          setFilterInstitution("Tất cả");
+                          setFilterRole(["Tất cả"]);
+                          setFilterInstitution(["Tất cả"]);
                           setFilterTotalPapersFrom("");
                           setFilterTotalPapersTo("");
-                          setFilterPaperType("Tất cả");
+                          setFilterPaperType(["Tất cả"]);
                           setFilterTotalPointsFrom("");
                           setFilterTotalPointsTo("");
                         }}

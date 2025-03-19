@@ -24,6 +24,7 @@ const LoginPage = () => {
         JSON.stringify(Array.isArray(data.roles) ? data.roles : [data.roles])
       );
 
+
       if (data.roles.length > 1) {
         window.location.href = "/role-selection";
       } else {
