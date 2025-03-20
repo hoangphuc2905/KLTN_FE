@@ -51,7 +51,7 @@ const RoleSelectionPage = () => {
       lecturer: "/home",
       head_of_department: "/admin/management/chart",
       deputy_head_of_department: "/admin/management/chart",
-      department_in_charge: "/subject-home",
+      department_in_charge: "/admin/management/chart",
     };
 
     localStorage.setItem("current_role", role);

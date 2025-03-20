@@ -1,103 +1,13 @@
-import { useState } from "react";
-import { Modal, Input, Select, Table } from "antd";
+import { useState, useEffect } from "react";
+import { Modal, Input, Select, Table, message, Radio } from "antd";
 import Header from "../../../components/header";
+import userApi from "../../../api/api";
 
 const ManagementUsers = () => {
-  const users = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      studentId: "21040431",
-      role: "USER",
-      status: "Hoạt động",
-    },
-    {
-      id: "2",
-      name: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      studentId: "22055592",
-      role: "USER",
-      status: "Khóa",
-    },
-    {
-      id: "3",
-      name: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      studentId: "11024521",
-      role: "USER",
-      status: "Hoạt động",
-    },
-    {
-      id: "4",
-      name: "Nguyễn Văn D",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "USER",
-      status: "Hoạt động",
-    },
-    {
-      id: "5",
-      name: "Nguyễn Văn C",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "USER",
-      status: "Hoạt động",
-    },
-  ];
-
-  const admins = [
-    {
-      id: "1",
-      name: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      studentId: "21040431",
-      role: "TRƯỞNG KHOA",
-      status: "Hoạt động",
-    },
-    {
-      id: "2",
-      name: "Nguyễn Duy Thanh",
-      position: "Trưởng khoa CNTT",
-      department: "QUẢN TRỊ KINH DOANH",
-      studentId: "22055592",
-      role: "PHÓ KHOA",
-      status: "Khóa",
-    },
-    {
-      id: "3",
-      name: "Huỳnh Hoàng Phúc",
-      position: "Phó trưởng khoa TCKT",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      studentId: "11024521",
-      role: "ADMIN",
-      status: "Hoạt động",
-    },
-    {
-      id: "4",
-      name: "Nguyễn Văn D",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "ADMIN",
-      status: "Hoạt động",
-    },
-    {
-      id: "5",
-      name: "Nguyễn Văn C",
-      position: "Giảng viên",
-      department: "CƠ NGOẠI NGỮ",
-      studentId: "12230421",
-      role: "ADMIN",
-      status: "Hoạt động",
-    },
-  ];
+  const [userRole] = useState(localStorage.getItem("current_role") || "");
+  const [users, setUsers] = useState([]);
+  const [lecturers, setLecturers] = useState([]);
+  const [departmentNames, setDepartmentNames] = useState({});
   const [activeTab, setActiveTab] = useState("user");
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
@@ -113,19 +23,117 @@ const ManagementUsers = () => {
   const [newStatus, setNewStatus] = useState("");
   const [newRole, setNewRole] = useState("");
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const departmentId = localStorage.getItem("department");
+
+        if (userRole === "admin") {
+          const lecturersData = await userApi.getAllLecturers();
+          const students = await userApi.getAllStudents();
+
+          setUsers(students);
+          setLecturers(lecturersData);
+        } else if (
+          [
+            "head_of_department",
+            "deputy_head_of_department",
+            "department_in_charge",
+          ].includes(userRole)
+        ) {
+          if (!departmentId) {
+            console.error("Department ID is missing in localStorage");
+            return;
+          }
+
+          const data = await userApi.getLecturerAndStudentByDepartment(
+            departmentId
+          );
+          console.log("Data theo khoa $departmentId:", data);
+          setUsers(data.students || []);
+          setLecturers(data.lecturers || []);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [userRole]);
+
+  useEffect(() => {
+    const fetchDepartmentNames = async () => {
+      try {
+        const uniqueDepartmentIds = [
+          ...new Set([...users, ...lecturers].map((user) => user.department)),
+        ];
+
+        const departmentData = {};
+        for (const departmentId of uniqueDepartmentIds) {
+          if (typeof departmentId === "object" && departmentId._id) {
+            const department = await userApi.getDepartmentById(
+              departmentId._id
+            );
+            departmentData[departmentId._id] = department.department_name;
+          } else if (typeof departmentId === "string") {
+            const department = await userApi.getDepartmentById(departmentId);
+            departmentData[departmentId] = department.department_name;
+          } else {
+            console.warn("Invalid departmentId:", departmentId);
+          }
+        }
+
+        setDepartmentNames(departmentData);
+      } catch (error) {
+        console.error("Lỗi khi lấy tên khoa:", error);
+      }
+    };
+
+    if (users.length > 0 || lecturers.length > 0) {
+      fetchDepartmentNames();
+    }
+  }, [users, lecturers]);
+
   const handleEditClick = (user) => {
     setSelectedUser(user);
-    setNewStatus(user.status);
+    setNewStatus(user.isActive ? "Hoạt động" : "Không hoạt động");
     setNewRole(user.role);
     setIsModalVisible(true);
   };
 
-  const handleOk = () => {
-    // Update the user's status and role here
+  const handleOk = async () => {
     if (selectedUser) {
-      selectedUser.status = newStatus;
-      if (activeTab === "admin") {
-        selectedUser.role = newRole;
+      try {
+        const updatedStatus = newStatus === "Hoạt động";
+        if (activeTab === "user") {
+          await userApi.updateStatusStudentById(
+            selectedUser.student_id,
+            updatedStatus
+          );
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user.student_id === selectedUser.student_id
+                ? { ...user, isActive: updatedStatus }
+                : user
+            ) 
+          );
+        } else if (activeTab === "lecturer") {
+          await userApi.updateStatusLecturerById(
+            selectedUser.lecturer_id,
+            updatedStatus
+          );
+          setLecturers((prevLecturers) =>
+            prevLecturers.map((lecturer) =>
+              lecturer.lecturer_id === selectedUser.lecturer_id
+                ? { ...lecturer, isActive: updatedStatus, role: newRole }
+                : lecturer
+            )
+          );
+        }
+        message.success("Cập nhật trạng thái thành công!");
+      } catch (error) {
+        console.error("Error updating status:", error);
+        message.error("Cập nhật trạng thái thất bại!");
       }
     }
     setIsModalVisible(false);
@@ -135,7 +143,7 @@ const ManagementUsers = () => {
     setIsModalVisible(false);
   };
 
-  const displayedUsers = activeTab === "user" ? users : admins;
+  const displayedUsers = activeTab === "user" ? users : lecturers;
 
   const uniquePositions = [
     "Tất cả",
@@ -145,11 +153,8 @@ const ManagementUsers = () => {
     "Tất cả",
     ...new Set(displayedUsers.map((user) => user.department)),
   ];
-  const uniqueStatuses = [
-    "Tất cả",
-    ...new Set(displayedUsers.map((user) => user.status)),
-  ];
-  const uniqueRoles = [...new Set(admins.map((admin) => admin.role))];
+  const uniqueStatuses = ["Hoạt động", "Không hoạt động"];
+  const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
 
   const filteredUsers = displayedUsers.filter((user) => {
     return (
@@ -157,7 +162,7 @@ const ManagementUsers = () => {
       (filterId === "" || user.studentId.includes(filterId)) &&
       (filterDepartment === "Tất cả" || user.department === filterDepartment) &&
       (filterPosition === "Tất cả" || user.position === filterPosition) &&
-      (filterStatus === "Tất cả" || user.status === filterStatus)
+      (filterStatus === "Tất cả" || user.isActive === filterStatus)
     );
   });
 
@@ -172,30 +177,39 @@ const ManagementUsers = () => {
           },
           {
             title: "HỌ VÀ TÊN",
-            dataIndex: "name",
-            key: "name",
+            dataIndex: "full_name",
+            key: "full_name",
           },
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
+            render: (department) => {
+              if (
+                typeof department === "object" &&
+                department.department_name
+              ) {
+                return department.department_name;
+              }
+              return departmentNames[department] || "Đang tải...";
+            },
           },
           {
             title: "MSSV",
-            dataIndex: "studentId",
-            key: "studentId",
+            dataIndex: "student_id",
+            key: "student_id",
           },
           {
             title: "TRẠNG THÁI",
-            dataIndex: "status",
-            key: "status",
-            render: (status) => (
+            dataIndex: "isActive",
+            key: "isActive",
+            render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
-                  status === "Hoạt động" ? "text-green-700" : "text-red-700"
+                  isActive ? "text-green-700" : "text-red-700"
                 }`}
               >
-                {status}
+                {isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             ),
           },
@@ -225,13 +239,23 @@ const ManagementUsers = () => {
           },
           {
             title: "HỌ VÀ TÊN",
-            dataIndex: "name",
-            key: "name",
+            dataIndex: "full_name",
+            key: "full_name",
           },
+
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
+            render: (department) => {
+              if (
+                typeof department === "object" &&
+                department.department_name
+              ) {
+                return department.department_name;
+              }
+              return departmentNames[department] || "Đang tải...";
+            },
           },
           {
             title: "CHỨC VỤ",
@@ -240,20 +264,20 @@ const ManagementUsers = () => {
           },
           {
             title: "MSGV",
-            dataIndex: "studentId",
-            key: "studentId",
+            dataIndex: "lecturer_id",
+            key: "lecturer_id",
           },
           {
             title: "TRẠNG THÁI",
-            dataIndex: "status",
-            key: "status",
-            render: (status) => (
+            dataIndex: "isActive",
+            key: "isActive",
+            render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
-                  status === "Hoạt động" ? "text-green-700" : "text-red-700"
+                  isActive ? "text-green-700" : "text-red-700"
                 }`}
               >
-                {status}
+                {isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             ),
           },
@@ -288,7 +312,7 @@ const ManagementUsers = () => {
           type="text"
           value={filterName}
           onChange={(e) => setFilterName(e.target.value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         />
       </div>
 
@@ -300,7 +324,7 @@ const ManagementUsers = () => {
           type="text"
           value={filterId}
           onChange={(e) => setFilterId(e.target.value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         />
       </div>
 
@@ -309,7 +333,7 @@ const ManagementUsers = () => {
         <Select
           value={filterDepartment}
           onChange={(value) => setFilterDepartment(value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         >
           {uniqueDepartments.map((department) => (
             <option key={department} value={department}>
@@ -319,13 +343,13 @@ const ManagementUsers = () => {
         </Select>
       </div>
 
-      {activeTab === "admin" && (
+      {activeTab === "lecturer" && (
         <div className="mb-3">
           <label className="block text-gray-700 text-sm">Chức vụ:</label>
           <Select
             value={filterPosition}
             onChange={(value) => setFilterPosition(value)}
-            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
           >
             {uniquePositions.map((position) => (
               <option key={position} value={position}>
@@ -341,7 +365,7 @@ const ManagementUsers = () => {
         <Select
           value={filterStatus}
           onChange={(value) => setFilterStatus(value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         >
           {uniqueStatuses.map((status) => (
             <option key={status} value={status}>
@@ -405,11 +429,11 @@ const ManagementUsers = () => {
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
-                activeTab === "admin"
+                activeTab === "lecturer"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
               } rounded-lg`}
-              onClick={() => setActiveTab("admin")}
+              onClick={() => setActiveTab("lecturer")}
             >
               Giảng viên
             </button>
@@ -456,37 +480,36 @@ const ManagementUsers = () => {
       </div>
 
       <Modal
-        title="Cập nhật trạng thái"
+        title={`Cập nhật trạng thái - ${
+          selectedUser?.full_name || "Người dùng"
+        }`} // Display user name
         visible={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
       >
         <div className="mb-3">
           <label className="block text-gray-700 text-sm">Trạng thái:</label>
-          <Select
+          <Radio.Group
             value={newStatus}
-            onChange={(value) => setNewStatus(value)}
-            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full text-sm"
+            onChange={(e) => setNewStatus(e.target.value)}
+            className="w-full"
           >
-            {uniqueStatuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </Select>
+            <Radio value="Hoạt động">Hoạt động</Radio>
+            <Radio value="Không hoạt động">Không hoạt động</Radio>
+          </Radio.Group>
         </div>
-        {activeTab === "admin" && (
+        {activeTab === "lecturer" && (
           <div className="mb-3">
             <label className="block text-gray-700 text-sm">Quyền:</label>
             <Select
               value={newRole}
               onChange={(value) => setNewRole(value)}
-              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full text-sm"
+              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full text-sm"
             >
               {uniqueRoles.map((role) => (
-                <option key={role} value={role}>
+                <Select.Option key={role} value={role}>
                   {role}
-                </option>
+                </Select.Option>
               ))}
             </Select>
           </div>
