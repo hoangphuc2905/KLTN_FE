@@ -299,6 +299,34 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  updateStatusLecturerById: async (lecturer_id, isActive) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/lecturers/status/${lecturer_id}`,
+        { isActive }
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating lecturer status:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updateStatusStudentById: async (student_id, isActive) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/students/status/${student_id}`,
+        { isActive }
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating student status:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;

@@ -1,12 +1,10 @@
 import { useState, useEffect } from "react";
-import { Modal, Input, Select, Table } from "antd";
+import { Modal, Input, Select, Table, message, Radio } from "antd";
 import Header from "../../../components/header";
 import userApi from "../../../api/api";
 
 const ManagementUsers = () => {
-  const [userRole, setUserRole] = useState(
-    localStorage.getItem("current_role") || ""
-  ); // Retrieve role from localStorage
+  const [userRole] = useState(localStorage.getItem("current_role") || "");
   const [users, setUsers] = useState([]);
   const [lecturers, setLecturers] = useState([]);
   const [departmentNames, setDepartmentNames] = useState({});
@@ -98,17 +96,44 @@ const ManagementUsers = () => {
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
-    setNewStatus(user.status);
+    setNewStatus(user.isActive ? "Hoạt động" : "Không hoạt động");
     setNewRole(user.role);
     setIsModalVisible(true);
   };
 
-  const handleOk = () => {
-    // Update the ser's status and role here
+  const handleOk = async () => {
     if (selectedUser) {
-      selectedUser.status = newStatus;
-      if (activeTab === "lecturer") {
-        selectedUser.role = newRole;
+      try {
+        const updatedStatus = newStatus === "Hoạt động";
+        if (activeTab === "user") {
+          await userApi.updateStatusStudentById(
+            selectedUser.student_id,
+            updatedStatus
+          );
+          setUsers((prevUsers) =>
+            prevUsers.map((user) =>
+              user.student_id === selectedUser.student_id
+                ? { ...user, isActive: updatedStatus }
+                : user
+            ) 
+          );
+        } else if (activeTab === "lecturer") {
+          await userApi.updateStatusLecturerById(
+            selectedUser.lecturer_id,
+            updatedStatus
+          );
+          setLecturers((prevLecturers) =>
+            prevLecturers.map((lecturer) =>
+              lecturer.lecturer_id === selectedUser.lecturer_id
+                ? { ...lecturer, isActive: updatedStatus, role: newRole }
+                : lecturer
+            )
+          );
+        }
+        message.success("Cập nhật trạng thái thành công!");
+      } catch (error) {
+        console.error("Error updating status:", error);
+        message.error("Cập nhật trạng thái thất bại!");
       }
     }
     setIsModalVisible(false);
@@ -128,10 +153,7 @@ const ManagementUsers = () => {
     "Tất cả",
     ...new Set(displayedUsers.map((user) => user.department)),
   ];
-  const uniqueStatuses = [
-    "Tất cả",
-    ...new Set(displayedUsers.map((user) => user.status)),
-  ];
+  const uniqueStatuses = ["Hoạt động", "Không hoạt động"];
   const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
 
   const filteredUsers = displayedUsers.filter((user) => {
@@ -140,7 +162,7 @@ const ManagementUsers = () => {
       (filterId === "" || user.studentId.includes(filterId)) &&
       (filterDepartment === "Tất cả" || user.department === filterDepartment) &&
       (filterPosition === "Tất cả" || user.position === filterPosition) &&
-      (filterStatus === "Tất cả" || user.status === filterStatus)
+      (filterStatus === "Tất cả" || user.isActive === filterStatus)
     );
   });
 
@@ -179,15 +201,15 @@ const ManagementUsers = () => {
           },
           {
             title: "TRẠNG THÁI",
-            dataIndex: "status",
-            key: "status",
-            render: (status) => (
+            dataIndex: "isActive",
+            key: "isActive",
+            render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
-                  status === "Hoạt động" ? "text-green-700" : "text-red-700"
+                  isActive ? "text-green-700" : "text-red-700"
                 }`}
               >
-                {status}
+                {isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             ),
           },
@@ -247,15 +269,15 @@ const ManagementUsers = () => {
           },
           {
             title: "TRẠNG THÁI",
-            dataIndex: "status",
-            key: "status",
-            render: (status) => (
+            dataIndex: "isActive",
+            key: "isActive",
+            render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
-                  status === "Hoạt động" ? "text-green-700" : "text-red-700"
+                  isActive ? "text-green-700" : "text-red-700"
                 }`}
               >
-                {status}
+                {isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             ),
           },
@@ -290,7 +312,7 @@ const ManagementUsers = () => {
           type="text"
           value={filterName}
           onChange={(e) => setFilterName(e.target.value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         />
       </div>
 
@@ -302,7 +324,7 @@ const ManagementUsers = () => {
           type="text"
           value={filterId}
           onChange={(e) => setFilterId(e.target.value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         />
       </div>
 
@@ -311,7 +333,7 @@ const ManagementUsers = () => {
         <Select
           value={filterDepartment}
           onChange={(value) => setFilterDepartment(value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         >
           {uniqueDepartments.map((department) => (
             <option key={department} value={department}>
@@ -327,7 +349,7 @@ const ManagementUsers = () => {
           <Select
             value={filterPosition}
             onChange={(value) => setFilterPosition(value)}
-            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
           >
             {uniquePositions.map((position) => (
               <option key={position} value={position}>
@@ -343,7 +365,7 @@ const ManagementUsers = () => {
         <Select
           value={filterStatus}
           onChange={(value) => setFilterStatus(value)}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
         >
           {uniqueStatuses.map((status) => (
             <option key={status} value={status}>
@@ -458,24 +480,23 @@ const ManagementUsers = () => {
       </div>
 
       <Modal
-        title="Cập nhật trạng thái"
+        title={`Cập nhật trạng thái - ${
+          selectedUser?.full_name || "Người dùng"
+        }`} // Display user name
         visible={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
       >
         <div className="mb-3">
           <label className="block text-gray-700 text-sm">Trạng thái:</label>
-          <Select
+          <Radio.Group
             value={newStatus}
-            onChange={(value) => setNewStatus(value)}
-            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full text-sm"
+            onChange={(e) => setNewStatus(e.target.value)}
+            className="w-full"
           >
-            {uniqueStatuses.map((status) => (
-              <option key={status} value={status}>
-                {status}
-              </option>
-            ))}
-          </Select>
+            <Radio value="Hoạt động">Hoạt động</Radio>
+            <Radio value="Không hoạt động">Không hoạt động</Radio>
+          </Radio.Group>
         </div>
         {activeTab === "lecturer" && (
           <div className="mb-3">
@@ -483,12 +504,12 @@ const ManagementUsers = () => {
             <Select
               value={newRole}
               onChange={(value) => setNewRole(value)}
-              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full text-sm"
+              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full text-sm"
             >
               {uniqueRoles.map((role) => (
-                <option key={role} value={role}>
+                <Select.Option key={role} value={role}>
                   {role}
-                </option>
+                </Select.Option>
               ))}
             </Select>
           </div>
