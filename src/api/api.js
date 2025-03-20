@@ -277,13 +277,25 @@ const userApi = {
 
   getDepartmentById: async (department) => {
     try {
-      const response = await axios.get(
-        `${API_URL}/departments/${department}`
-      );
+      const response = await axios.get(`${API_URL}/departments/${department}`);
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching department:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getLecturerAndStudentByDepartment: async (department) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/lecturers/lecturers-and-students/${department}`
+      );
+
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching users by department:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },

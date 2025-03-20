@@ -3,7 +3,7 @@ import { Modal, Input, Select, Table } from "antd";
 import Header from "../../../components/header";
 import userApi from "../../../api/api";
 
-const ManagementUsers = ({ userDepartment }) => {
+const ManagementUsers = () => {
   const [userRole, setUserRole] = useState(
     localStorage.getItem("current_role") || ""
   ); // Retrieve role from localStorage
@@ -28,6 +28,8 @@ const ManagementUsers = ({ userDepartment }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        const departmentId = localStorage.getItem("department");
+
         if (userRole === "admin") {
           const lecturersData = await userApi.getAllLecturers();
           const students = await userApi.getAllStudents();
@@ -41,11 +43,17 @@ const ManagementUsers = ({ userDepartment }) => {
             "department_in_charge",
           ].includes(userRole)
         ) {
+          if (!departmentId) {
+            console.error("Department ID is missing in localStorage");
+            return;
+          }
+
           const data = await userApi.getLecturerAndStudentByDepartment(
-            userDepartment
+            departmentId
           );
-          setUsers(data.students);
-          setLecturers(data.lecturers);
+          console.log("Data theo khoa $departmentId:", data);
+          setUsers(data.students || []);
+          setLecturers(data.lecturers || []);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -53,7 +61,7 @@ const ManagementUsers = ({ userDepartment }) => {
     };
 
     fetchData();
-  }, [userRole, userDepartment]);
+  }, [userRole]);
 
   useEffect(() => {
     const fetchDepartmentNames = async () => {
@@ -154,8 +162,15 @@ const ManagementUsers = ({ userDepartment }) => {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
-            render: (departmentId) =>
-              departmentNames[departmentId] || "Đang tải...",
+            render: (department) => {
+              if (
+                typeof department === "object" &&
+                department.department_name
+              ) {
+                return department.department_name;
+              }
+              return departmentNames[department] || "Đang tải...";
+            },
           },
           {
             title: "MSSV",
@@ -215,9 +230,9 @@ const ManagementUsers = ({ userDepartment }) => {
                 typeof department === "object" &&
                 department.department_name
               ) {
-                return department.department_name; // Lấy trực tiếp từ đối tượng
+                return department.department_name;
               }
-              return departmentNames[department] || "Đang tải..."; // Tra cứu từ departmentNames
+              return departmentNames[department] || "Đang tải...";
             },
           },
           {
