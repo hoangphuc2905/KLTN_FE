@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { message } from "antd";
 import userApi from "../../../api/api";
+import authApi from "../../../api/authApi";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 
@@ -18,10 +19,11 @@ const UpdateProfilePage = () => {
     phone: "",
   });
   const [initialUser, setInitialUser] = useState(null);
+  const [departmentName, setDepartmentName] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem("token"); // Lấy token từ localStorage
+      const token = localStorage.getItem("token");
       if (!token) {
         console.error("Thiếu token. Vui lòng đăng nhập.");
         return;
@@ -30,17 +32,23 @@ const UpdateProfilePage = () => {
       try {
         const response = await userApi.getUserInfo({
           headers: {
-            Authorization: `Bearer ${token}`, // Gửi token trong header
+            Authorization: `Bearer ${token}`,
           },
         });
 
-        setUser(response.data); // Lưu dữ liệu người dùng vào state
-        setInitialUser(response.data); // Lưu dữ liệu ban đầu để khôi phục khi hủy
+        setUser(response.data);
+        setInitialUser(response.data);
+        if (response.data.department) {
+          const departmentResponse = await userApi.getDepartmentById(
+            response.data.department
+          );
+          setDepartmentName(departmentResponse.department_name); // Lưu tên khoa vào state
+        }
       } catch (error) {
         if (error.response?.data?.message === "Invalid token") {
           console.error("Token không hợp lệ. Vui lòng đăng nhập lại.");
           localStorage.clear();
-          window.location.href = "/login"; // Chuyển hướng về trang đăng nhập
+          window.location.href = "/login";
         } else {
           console.error(
             "Lỗi khi lấy thông tin user:",
@@ -73,19 +81,27 @@ const UpdateProfilePage = () => {
   };
 
   const handleSave = async () => {
-    const user_id = localStorage.getItem("user_id");
-    if (!user_id) {
-      console.error("Thiếu user_id");
-      return;
-    }
+    const data = {
+      address: user.address,
+      phone: user.phone,
+      email: user.email,
+    };
 
     try {
-      const response = await userApi.updateUserProfile(user_id, user);
+      const response = await authApi.updateUserInfo(data);
       console.log("User profile updated:", response);
       message.success("Cập nhật thông tin thành công!");
     } catch (error) {
+      if (error.message === "Bạn chưa đăng nhập!") {
+        message.error("Bạn chưa đăng nhập!");
+      } else if (error.message === "Lecturer not found") {
+        message.error("Không tìm thấy giảng viên!");
+      } else if (error.message === "Invalid request body") {
+        message.error("Dữ liệu gửi không hợp lệ!");
+      } else {
+        message.error(error.message || "Lỗi khi cập nhật thông tin.");
+      }
       console.error("Lỗi khi cập nhật thông tin user:", error);
-      message.error("Lỗi khi cập nhật thông tin.");
     }
   };
 
@@ -180,7 +196,7 @@ const UpdateProfilePage = () => {
                     Khoa:
                   </label>
                   <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
-                    {user?.faculty}
+                    {departmentName}
                   </div>
                 </div>
 

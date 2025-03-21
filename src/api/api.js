@@ -16,17 +16,6 @@ const userApi = {
     });
   },
 
-  updateUserProfile: async (user_id, userData) => {
-    try {
-      const response = await axios.put(`${API_URL}/users/${user_id}`, userData);
-      console.log("API Response:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error updating user profile:", error);
-      throw error.response?.data || "Lỗi kết nối đến server";
-    }
-  },
-
   getWorkProcesses: async (user_id) => {
     try {
       const response = await axios.get(`${API_URL}/userworks/${user_id}`);

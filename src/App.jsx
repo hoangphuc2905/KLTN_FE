@@ -88,7 +88,6 @@ const App = () => {
             "admin",
             "head_of_department",
             "deputy_head_of_department",
-            "lecturer",
             "department_in_charge",
           ].includes(role)
         ) ? (
