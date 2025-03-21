@@ -6,7 +6,7 @@ const authApi = {
   login: async (credentials) => {
     try {
       const fixedCredentials = {
-        user_id: String(credentials.user_id), 
+        user_id: String(credentials.user_id),
         password: credentials.password,
       };
 
@@ -30,6 +30,29 @@ const authApi = {
       return response.data;
     } catch (error) {
       throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updateUserInfo: async (data) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("Bạn chưa đăng nhập!");
+      }
+
+      const response = await axios.put(`${API_URL}/auth/update-info`, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error updating user info:",
+        error.response?.data || error.message
+      );
+      throw error.response?.data || error.message; // Ném lỗi để xử lý ở `handleSave`
     }
   },
 };
