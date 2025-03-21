@@ -6,10 +6,11 @@ import Footer from "../../../components/footer";
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [selectedYear, setSelectedYear] = useState("2024");
+  const [departmentName, setDepartmentName] = useState(""); 
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem("token"); 
+      const token = localStorage.getItem("token");
       if (!token) {
         console.error("Thiếu token. Vui lòng đăng nhập.");
         return;
@@ -18,16 +19,22 @@ const ProfilePage = () => {
       try {
         const response = await userApi.getUserInfo({
           headers: {
-            Authorization: `Bearer ${token}`, // Gửi token trong header
+            Authorization: `Bearer ${token}`,
           },
         });
 
-        setUser(response.data); // Lưu dữ liệu người dùng vào state
+        setUser(response.data);
+        if (response.data.department) {
+          const departmentResponse = await userApi.getDepartmentById(
+            response.data.department
+          );
+          setDepartmentName(departmentResponse.department_name); // Lưu tên khoa vào state
+        }
       } catch (error) {
         if (error.response?.data?.message === "Invalid token") {
           console.error("Token không hợp lệ. Vui lòng đăng nhập lại.");
           localStorage.clear();
-          window.location.href = "/login"; // Chuyển hướng về trang đăng nhập
+          window.location.href = "/login";
         } else {
           console.error(
             "Lỗi khi lấy thông tin user:",
@@ -95,7 +102,9 @@ const ProfilePage = () => {
                         <div className="flex flex-col grow text-sm font-medium leading-none text-black max-md:mt-10">
                           <div className="mr-7 max-md:mr-2.5">
                             Mã số sinh viên:{" "}
-                            <span className="font-bold">{user?.lecturer_id || user?.student_id}</span>
+                            <span className="font-bold">
+                              {user?.lecturer_id || user?.student_id}
+                            </span>
                           </div>
                           <div className="mt-4">
                             Họ và tên:{" "}
@@ -115,7 +124,9 @@ const ProfilePage = () => {
                           </div>
                           <div className="self-start mt-4">
                             Khoa:{" "}
-                            <span className="font-bold">{user?.faculty}</span>
+                            <span className="font-bold">
+                              {departmentName || "Chưa cập nhật"}
+                            </span>
                           </div>
                         </div>
                       </div>

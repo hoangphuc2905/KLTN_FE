@@ -19,6 +19,7 @@ const UpdateProfilePage = () => {
     phone: "",
   });
   const [initialUser, setInitialUser] = useState(null);
+  const [departmentName, setDepartmentName] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -37,6 +38,12 @@ const UpdateProfilePage = () => {
 
         setUser(response.data);
         setInitialUser(response.data);
+        if (response.data.department) {
+          const departmentResponse = await userApi.getDepartmentById(
+            response.data.department
+          );
+          setDepartmentName(departmentResponse.department_name); // Lưu tên khoa vào state
+        }
       } catch (error) {
         if (error.response?.data?.message === "Invalid token") {
           console.error("Token không hợp lệ. Vui lòng đăng nhập lại.");
@@ -189,7 +196,7 @@ const UpdateProfilePage = () => {
                     Khoa:
                   </label>
                   <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
-                    {user?.faculty}
+                    {departmentName}
                   </div>
                 </div>
 

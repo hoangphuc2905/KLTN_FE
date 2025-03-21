@@ -68,14 +68,13 @@ const AddScientificPaperPage = () => {
     const updatedAuthors = [...authors];
     updatedAuthors[index][field] = value;
 
-    // Nếu đang nhập vào ô MSSV/MSGV thì gọi API
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
         const userData = await userApi.getUserInfo(value);
-        updatedAuthors[index].full_name = userData.full_name || ""; // Gán tên tự động từ API
+        updatedAuthors[index].full_name = userData.full_name || ""; 
       } catch (error) {
         console.error("Không tìm thấy thông tin:", error);
-        updatedAuthors[index].full_name = ""; // Xóa tên nếu không tìm thấy
+        updatedAuthors[index].full_name = ""; 
       }
     }
 
