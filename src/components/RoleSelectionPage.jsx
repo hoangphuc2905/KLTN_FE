@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Card, Typography, Button } from "antd";
+import { Button } from "antd";
 
 const Logo = new URL("../../src/assets/logoLogin.png", import.meta.url).href;
-const { Title, Text } = Typography;
 
 const roleDetails = {
   admin: {
@@ -55,61 +54,51 @@ const RoleSelectionPage = () => {
     };
 
     localStorage.setItem("current_role", role);
-
-    console.log("Chuyển hướng đến:", routes[role]);
-
     window.dispatchEvent(new Event("storage"));
-
     navigate(routes[role] || "/home");
   };
 
   return (
-    <>
-      <div className="flex overflow-hidden flex-col pb-24 bg-white max-md:pb-12">
-        <header className="flex flex-col items-center h-[60px] px-20 w-full bg-white shadow-[0px_4px_4px_rgba(0,0,0,0.25)] max-md:px-5 max-md:max-w-full">
-          <img
-            src={Logo}
-            alt="Logo"
-            className="object-contain z-10 h-full max-w-full aspect-[7.19] w-[600px] max-md:w-[200px]"
-          />
-        </header>
+    <div className="flex flex-col items-center min-h-screen bg-gray-100">
+      <header className="w-full flex justify-center py-4 bg-white shadow-md">
+        <img src={Logo} alt="Logo" className="h-12" />
+      </header>
 
-        <div className="flex flex-col items-center mt-10 px-4">
-          <Title level={3}>Chọn quyền đăng nhập</Title>
-          <Text>Vui lòng chọn vai trò của bạn:</Text>
+      <div className="mt-12 w-full max-w-4xl text-center">
+        <h2 className="text-2xl font-semibold">Chọn quyền đăng nhập</h2>
+        <p className="text-gray-600 mt-2">Vui lòng chọn vai trò của bạn:</p>
 
-          <div className="mt-5 w-full max-w-md">
-            {roles.map((role) => (
-              <Card
-                key={role}
-                hoverable
-                className="mb-3 text-center cursor-pointer"
-                onClick={() => redirectToRolePage(role)}
-              >
-                <Title level={4}>
-                  {roleDetails[role]?.icon} {roleDetails[role]?.name || role}
-                </Title>
-                <Text>
-                  {roleDetails[role]?.description || "Vai trò không xác định"}
-                </Text>
-              </Card>
-            ))}
-          </div>
-
-          <Button
-            type="primary"
-            danger
-            className="mt-4"
-            onClick={() => {
-              localStorage.clear();
-              navigate("/");
-            }}
-          >
-            Đăng xuất
-          </Button>
+        <div className="mt-6 flex flex-wrap justify-center gap-4">
+          {roles.map((role) => (
+            <div
+              key={role}
+              className="flex flex-col items-center p-4 bg-white shadow rounded-lg cursor-pointer hover:bg-gray-100 w-48"
+              onClick={() => redirectToRolePage(role)}
+            >
+              <span className="text-3xl">{roleDetails[role]?.icon}</span>
+              <h3 className="text-lg font-medium mt-2">
+                {roleDetails[role]?.name || role}
+              </h3>
+              <p className="text-gray-500 text-sm text-center">
+                {roleDetails[role]?.description || "Vai trò không xác định"}
+              </p>
+            </div>
+          ))}
         </div>
+
+        <Button
+          type="primary"
+          danger
+          className="mt-6 px-6 py-2"
+          onClick={() => {
+            localStorage.clear();
+            navigate("/");
+          }}
+        >
+          Đăng xuất
+        </Button>
       </div>
-    </>
+    </div>
   );
 };
 

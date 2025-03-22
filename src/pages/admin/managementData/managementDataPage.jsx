@@ -231,7 +231,7 @@ const ManagementData = () => {
           <Header />
         </div>
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600 text-xs">
+          <div className="flex items-center gap-2 text-gray-600">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -239,8 +239,8 @@ const ManagementData = () => {
             />
             <span>Trang chủ</span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-xs text-sky-900">
-              Quản lý data
+            <span className="font-semibold text-sm text-sky-900">
+              Quản lý dữ liệu
             </span>
           </div>
         </div>

@@ -13,6 +13,7 @@ const permissions = {
     "/profile",
     "/update-profile",
     "/work-process",
+    "/notifications",
   ],
   student: [
     "/home",
@@ -43,6 +44,7 @@ const permissions = {
     "/statistics-chart",
     "/statistics-table",
     "/statistics-point",
+    "/notifications",
   ],
   head_of_department: [
     "/admin/management/chart",
@@ -57,6 +59,7 @@ const permissions = {
     "/admin/management/point",
     "/scientific-paper/:id",
     "/update-profile",
+    "/notifications",
   ],
   deputy_head_of_department: [
     "/admin/management/chart",
@@ -71,6 +74,7 @@ const permissions = {
     "/admin/management/point",
     "/scientific-paper/:id",
     "/update-profile",
+    "/notifications",
   ],
   department_in_charge: [
     "/admin/management/chart",
@@ -85,6 +89,7 @@ const permissions = {
     "/admin/management/point",
     "/scientific-paper/:id",
     "/update-profile",
+    "/notifications",
   ],
 };
 
