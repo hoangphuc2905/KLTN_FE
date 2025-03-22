@@ -38,6 +38,7 @@ const Header = () => {
         });
 
         setUser(response.data);
+        console.log("Thông tin user:", response.data);
       } catch (error) {
         if (error.response?.data?.message === "Invalid token") {
           message.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");

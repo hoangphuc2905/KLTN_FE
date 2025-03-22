@@ -23,7 +23,7 @@ const LoginPage = () => {
         "roles",
         JSON.stringify(Array.isArray(data.roles) ? data.roles : [data.roles])
       );
-      localStorage.setItem("department", data.department); 
+      localStorage.setItem("department", data.department);
 
       if (data.roles.length > 1) {
         window.location.href = "/role-selection";

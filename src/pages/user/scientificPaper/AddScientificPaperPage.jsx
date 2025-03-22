@@ -8,7 +8,7 @@ import TextArea from "antd/es/input/TextArea";
 import { useState } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
-import userApi from "../../../api/api";
+import authApi from "../../../api/authApi";
 
 const { Option } = Select;
 
@@ -70,11 +70,11 @@ const AddScientificPaperPage = () => {
 
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
-        const userData = await userApi.getUserInfo(value);
-        updatedAuthors[index].full_name = userData.full_name || ""; 
+        const userData = await authApi.getUserInfo(value);
+        updatedAuthors[index].full_name = userData.full_name || "";
       } catch (error) {
         console.error("Không tìm thấy thông tin:", error);
-        updatedAuthors[index].full_name = ""; 
+        updatedAuthors[index].full_name = "";
       }
     }
 

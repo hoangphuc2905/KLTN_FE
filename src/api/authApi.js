@@ -15,9 +15,21 @@ const authApi = {
         fixedCredentials
       );
 
-      return response.data;
+      const data = response.data;
+
+      const userInfo = {
+        token: data.token,
+        userId: data.student_id || data.lecturer_id,
+        roles: data.roles,
+        email: data.email,
+        userType: data.user_type,
+        department: data.department,
+      };
+
+      return userInfo;
     } catch (error) {
-      throw error.response?.data || "Lỗi kết nối đến server";
+      console.error("Error during login:", error);
+      throw error.response?.data || "Login failed.";
     }
   },
 
@@ -52,7 +64,7 @@ const authApi = {
         "Error updating user info:",
         error.response?.data || error.message
       );
-      throw error.response?.data || error.message; // Ném lỗi để xử lý ở `handleSave`
+      throw error.response?.data || error.message;
     }
   },
 };
