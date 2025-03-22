@@ -38,6 +38,7 @@ const Header = () => {
         });
 
         setUser(response.data);
+        console.log("Thông tin user:", response.data);
       } catch (error) {
         if (error.response?.data?.message === "Invalid token") {
           message.error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
@@ -96,8 +97,12 @@ const Header = () => {
   return (
     <header className="bg-white shadow-md fixed top-0 left-0 w-full z-50">
       <div className="max-w-screen-xl mx-auto flex items-center justify-between h-[70px] px-4 md:px-6 lg:px-8">
-        <img src={Logo} alt="Logo" className="h-12 w-auto" />
-
+        <img
+          src={Logo}
+          alt="Logo"
+          className="h-12 w-auto cursor-pointer"
+          onClick={() => (window.location.href = "/")}
+        />
         <h1 className="text-sm font-bold text-black text-center">
           HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC <br />
           CỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM

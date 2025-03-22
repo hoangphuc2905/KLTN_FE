@@ -316,6 +316,27 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getLecturerById: async (lecturer_id) => {
+    try {
+      const response = await axios.get(`${API_URL}/lecturers/${lecturer_id}`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching lecturer:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getStudentById: async (student_id) => {
+    try {
+      const response = await axios.get(`${API_URL}/students/${student_id}`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching student:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;

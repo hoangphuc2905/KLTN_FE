@@ -5,7 +5,7 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import userApi from "../../../api/api";
@@ -14,11 +14,30 @@ const { Option } = Select;
 
 const AddScientificPaperPage = () => {
   const [authors, setAuthors] = useState([
-    { id: 1, mssvMsgv: "", name: "", role: "", institution: "" },
-    { id: 2, mssvMsgv: "", name: "", role: "", institution: "" },
+    { id: 1, mssvMsgv: "", full_name: "", role: "", institution: "" },
+    { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
   ]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
+  const [paperTypes, setPaperTypes] = useState([]);
+  const [paperGroups, setPaperGroups] = useState([]);
+
+  useEffect(() => {
+    const fetchPaperData = async () => {
+      try {
+        const types = await userApi.getAllPaperTypes();
+        const groups = await userApi.getAllPaperGroups();
+
+        setPaperTypes(types);
+        setPaperGroups(groups);
+      } catch (error) {
+        console.error("Error fetching paper types or groups:", error);
+        message.error("Không thể tải dữ liệu loại bài báo hoặc nhóm bài báo.");
+      }
+    };
+
+    fetchPaperData();
+  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -34,7 +53,7 @@ const AddScientificPaperPage = () => {
   const handleFileChange = () => {
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "application";
+    input.accept = "application/pdf";
     input.onchange = (e) => {
       const file = e.target.files[0];
       setSelectedFile(file.name);
@@ -52,7 +71,7 @@ const AddScientificPaperPage = () => {
       {
         id: authors.length + 1,
         mssvMsgv: "",
-        name: "",
+        full_name: "",
         role: "",
         institution: "",
       },
@@ -70,21 +89,42 @@ const AddScientificPaperPage = () => {
 
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
-        const userData = await userApi.getUserInfo(value);
-        updatedAuthors[index].full_name = userData.full_name || ""; 
+        let userData;
+
+        if (value.startsWith("GV") || value.length === 8) {
+          userData = await userApi.getLecturerById(value);
+        } else {
+          userData = await userApi.getStudentById(value);
+        }
+
+        updatedAuthors[index].full_name =
+          userData.full_name || userData.name || "";
+        updatedAuthors[index].institution =
+          userData.department || "Không xác định";
       } catch (error) {
         console.error("Không tìm thấy thông tin:", error);
-        updatedAuthors[index].full_name = ""; 
+        updatedAuthors[index].full_name = "";
+        updatedAuthors[index].institution = "";
       }
     }
 
     setAuthors(updatedAuthors);
   };
 
-  // xóa trắng
-  const handleClear = () => {};
+  const handleClear = () => {
+    setAuthors([
+      { id: 1, mssvMsgv: "", full_name: "", role: "", institution: "" },
+      { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
+    ]);
+    setSelectedFile(null);
+    setCoverImage(null);
+    message.info("Đã xóa trắng thông tin.");
+  };
+
   const handleSave = () => {
-    message.success("Lưu thành công");
+    console.log("Danh sách tác giả:", authors);
+    console.log("File đã chọn:", selectedFile);
+    message.success("Lưu thành công!");
   };
 
   return (
@@ -155,16 +195,23 @@ const AddScientificPaperPage = () => {
                       placeholder="Loại bài báo"
                       required
                     >
-                      <Option value="type1">Type 1</Option>
-                      <Option value="type2">Type 2</Option>
+                      {paperTypes.map((type) => (
+                        <Option key={type.id} value={type.id}>
+                          {type.type_name}
+                        </Option>
+                      ))}
                     </Select>
+
                     <Select
                       className="w-full h-10"
                       placeholder="Thuộc nhóm"
                       required
                     >
-                      <Option value="group1">Group 1</Option>
-                      <Option value="group2">Group 2</Option>
+                      {paperGroups.map((group) => (
+                        <Option key={group.id} value={group.id}>
+                          {group.group_name}
+                        </Option>
+                      ))}
                     </Select>
                     <Input
                       className="w-full h-10"
@@ -248,12 +295,12 @@ const AddScientificPaperPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   {authors.map((author, index) => (
                     <div
-                      key={author.user_id}
+                      key={author.id}
                       className="grid grid-cols-6 gap-4 col-span-2"
                     >
                       <Input
                         placeholder="MSSV/MSGV"
-                        value={author.user_id}
+                        value={author.mssvMsgv}
                         onChange={(e) =>
                           handleAuthorChange(index, "mssvMsgv", e.target.value)
                         }
@@ -263,6 +310,7 @@ const AddScientificPaperPage = () => {
                         className="col-span-2"
                         placeholder="Tên sinh viên / giảng viên"
                         value={author.full_name}
+                        readOnly
                       />
 
                       <Select
@@ -283,14 +331,7 @@ const AddScientificPaperPage = () => {
                       <Input
                         placeholder="CQ công tác"
                         value={author.institution}
-                        onChange={(e) =>
-                          handleAuthorChange(
-                            index,
-                            "institution",
-                            e.target.value
-                          )
-                        }
-                        required
+                        readOnly
                       />
                       <Button
                         icon={<MinusOutlined />}
