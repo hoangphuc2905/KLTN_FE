@@ -3,6 +3,7 @@ import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Button, Table, Input, Form, Modal, message } from "antd";
 import userApi from "../../../api/api";
+import { useNavigate } from "react-router-dom";
 
 const ManagementData = () => {
   const [activeTab, setActiveTab] = useState("type");
@@ -17,6 +18,7 @@ const ManagementData = () => {
   const [filterGroup, setFilterGroup] = useState("");
   const filterRef = useRef(null);
   const [sortedInfo, setSortedInfo] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -255,7 +257,12 @@ const ManagementData = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Quản lý dữ liệu

@@ -4,6 +4,7 @@ import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Tooltip, Modal } from "antd"; // Added Tooltip and Modal import
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
+import { useNavigate } from "react-router-dom";
 
 const ManagementPoint = () => {
   const papers = [
@@ -93,7 +94,7 @@ const ManagementPoint = () => {
   const handleColumnVisibilityChange = (checkedValues) => {
     setVisibleColumns(checkedValues);
   };
-
+  const navigate = useNavigate();
   const [filterRole, setFilterRole] = useState(["Tất cả"]); // Updated state
   const [showRoleFilter, setShowRoleFilter] = useState(false); // Added state
   const [filterInstitution, setFilterInstitution] = useState(["Tất cả"]); // Updated state
@@ -308,9 +309,19 @@ const ManagementPoint = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">Thống kê</span>
+            <span
+              onClick={() => navigate("/statistics-chart")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Thống kê
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Thống kê điểm đóng góp

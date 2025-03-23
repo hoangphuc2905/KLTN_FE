@@ -12,6 +12,7 @@ import {
 } from "antd";
 import Header from "../../../components/header";
 import userApi from "../../../api/api";
+import { useNavigate } from "react-router-dom";
 
 const ManagementUsers = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
@@ -37,6 +38,7 @@ const ManagementUsers = () => {
   const departmentFilterRef = useRef(null);
   const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -573,7 +575,12 @@ const ManagementUsers = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Quản lý người dùng

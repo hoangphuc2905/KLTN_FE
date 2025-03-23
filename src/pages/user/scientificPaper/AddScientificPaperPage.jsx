@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import userApi from "../../../api/api";
+import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
@@ -21,6 +22,7 @@ const AddScientificPaperPage = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [paperTypes, setPaperTypes] = useState([]);
   const [paperGroups, setPaperGroups] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPaperData = async () => {
@@ -138,7 +140,12 @@ const AddScientificPaperPage = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
               Thêm bài báo nghiên cứu khoa học

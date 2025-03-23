@@ -11,6 +11,7 @@ import {
 } from "chart.js";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Table } from "antd";
+import { useNavigate } from "react-router-dom";
 
 ChartJS.register(
   CategoryScale,
@@ -63,7 +64,7 @@ const Dashboard = () => {
 
   const chartOptions = {
     responsive: false,
-    maintainAspectRatio: false, 
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: false,
@@ -114,7 +115,7 @@ const Dashboard = () => {
   };
 
   const donutOptions = {
-    responsive: false, 
+    responsive: false,
     maintainAspectRatio: false,
     plugins: {
       legend: {
@@ -123,7 +124,7 @@ const Dashboard = () => {
         labels: {
           usePointStyle: true,
           padding: 20,
-          boxWidth: 10, 
+          boxWidth: 10,
         },
       },
     },
@@ -182,6 +183,8 @@ const Dashboard = () => {
     },
   ];
 
+  const navigate = useNavigate();
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -195,7 +198,12 @@ const Dashboard = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">Thống kê</span>
             <span className="text-gray-400"> &gt; </span>
@@ -225,7 +233,9 @@ const Dashboard = () => {
                 <div className="text-lg font-bold text-gray-700">
                   {stats.totalPoints}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng điểm đóng góp</div>
+                <div className="text-gray-500 mt-1 text-sm">
+                  Tổng điểm đóng góp
+                </div>
               </div>
               <div
                 className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"

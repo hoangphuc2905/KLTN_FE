@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Header from "../../../components/header";
 import { Home, ChevronRight } from "lucide-react";
-import Footer from "../../../components/Footer";
+import Footer from "../../../components/footer";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,6 +14,7 @@ import {
 } from "chart.js";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Table } from "antd";
+import { useNavigate } from "react-router-dom";
 
 ChartJS.register(
   CategoryScale,
@@ -193,6 +194,7 @@ const Dashboard = () => {
   const filterRef = useRef(null);
   const roleFilterRef = useRef(null);
   const fieldFilterRef = useRef(null);
+  const navigate = useNavigate();
 
   const handleQuarterChange = (event) => {
     const value = event.target.value;
@@ -298,8 +300,13 @@ const Dashboard = () => {
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div className="flex items-center gap-2 text-gray-600">
             <Home className="w-5 h-5 text-[#00A3FF]" />
-            <span>Trang chủ</span>
-            <ChevronRight className="w-4 h-4" />
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
+            <span className="text-gray-400"> &gt; </span>
             <span>Thống kê</span>
             <ChevronRight className="w-4 h-4" />
             <span className="font-semibold text-[#00A3FF]">Dạng biểu đồ</span>
