@@ -1,16 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import {
-  Modal,
-  Input,
-  Select,
-  Table,
-  message,
-  Radio,
-  Form,
-  Button,
-  Checkbox,
-} from "antd";
-import Header from "../../../components/header";
+import { Modal, Input, Select, Table, message, Radio, Checkbox } from "antd";
+import Header from "../../../components/Header";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 
@@ -32,13 +22,21 @@ const ManagementUsers = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState("");
-  const [newRole, setNewRole] = useState("");
+  const [newRole, setNewRole] = useState([]);
 
   const filterRef = useRef(null);
   const departmentFilterRef = useRef(null);
   const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const navigate = useNavigate();
+
+  const roleOptions = [
+    { label: "Quản trị viên", value: "admin" },
+    { label: "Giảng viên", value: "lecturer" },
+    { label: "Trưởng khoa", value: "head_of_department" },
+    { label: "Phó trưởng khoa", value: "deputy_head_of_department" },
+    { label: "Cán bộ phụ trách khoa", value: "department_in_charge" },
+  ];
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -145,7 +143,10 @@ const ManagementUsers = () => {
   const handleEditClick = (user) => {
     setSelectedUser(user);
     setNewStatus(user.isActive ? "Hoạt động" : "Không hoạt động");
-    setNewRole(user.role);
+    if (user.roles) {
+      setNewRole(user.roles.map((role) => role.role_name));
+    }
+
     setIsModalVisible(true);
   };
 
@@ -173,7 +174,7 @@ const ManagementUsers = () => {
           setLecturers((prevLecturers) =>
             prevLecturers.map((lecturer) =>
               lecturer.lecturer_id === selectedUser.lecturer_id
-                ? { ...lecturer, isActive: updatedStatus, role: newRole }
+                ? { ...lecturer, isActive: updatedStatus, roles: newRole }
                 : lecturer
             )
           );
@@ -197,6 +198,10 @@ const ManagementUsers = () => {
 
   const handleSearchById = (e) => {
     setFilterId(e.target.value);
+  };
+
+  const handleRoleChange = (checkedValues) => {
+    setNewRole(checkedValues);
   };
 
   const displayedUsers = activeTab === "user" ? users : lecturers;
@@ -237,6 +242,23 @@ const ManagementUsers = () => {
         filterStatus.includes(user.isActive ? "Hoạt động" : "Không hoạt động"))
     );
   });
+
+  const degreeMapping = {
+    Bachelor: "Cử nhân",
+    Master: "Thạc sĩ",
+    Doctor: "Tiến sĩ",
+    Egineer: "Kỹ sư",
+    Professor: "Giáo sư",
+    Ossociate_Professor: "Phó giáo sư",
+  };
+
+  const roleMapping = {
+    admin: "Quản trị viên",
+    lecturer: "Giảng viên",
+    head_of_department: "Trưởng khoa",
+    deputy_head_of_department: "Phó trưởng khoa",
+    department_in_charge: "Cán bộ phụ trách khoa",
+  };
 
   const columns =
     activeTab === "user"
@@ -318,11 +340,15 @@ const ManagementUsers = () => {
             render: (text, record, index) => index + 1,
           },
           {
+            title: "MSGV",
+            dataIndex: "lecturer_id",
+            key: "lecturer_id",
+          },
+          {
             title: "HỌ VÀ TÊN",
             dataIndex: "full_name",
             key: "full_name",
           },
-
           {
             title: "KHOA",
             dataIndex: "department",
@@ -339,13 +365,26 @@ const ManagementUsers = () => {
           },
           {
             title: "CHỨC VỤ",
-            dataIndex: "position",
-            key: "position",
+            dataIndex: "roles",
+            key: "roles",
+            render: (roles) =>
+              Array.isArray(roles)
+                ? roles
+                    .filter(
+                      (role) =>
+                        !(roles.length > 1 && role.role_name === "lecturer")
+                    )
+                    .map(
+                      (role) => roleMapping[role.role_name] || role.role_name
+                    )
+                    .join(", ")
+                : "Không xác định",
           },
           {
-            title: "MSGV",
-            dataIndex: "lecturer_id",
-            key: "lecturer_id",
+            title: "CHỨC DANH",
+            dataIndex: "degree",
+            key: "degree",
+            render: (degree) => degreeMapping[degree] || "Không xác định",
           },
           {
             title: "TRẠNG THÁI",
@@ -360,11 +399,6 @@ const ManagementUsers = () => {
                 {isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             ),
-          },
-          {
-            title: "QUYỀN",
-            dataIndex: "role",
-            key: "role",
           },
           {
             title: "CHỈNH SỬA",
@@ -676,18 +710,13 @@ const ManagementUsers = () => {
         </div>
         {activeTab === "lecturer" && (
           <div className="mb-3">
-            <label className="block text-gray-700 text-sm">Quyền:</label>
-            <Select
+            <label className="block text-gray-700 text-sm">Chức vụ:</label>
+            <Checkbox.Group
+              options={roleOptions}
               value={newRole}
-              onChange={(value) => setNewRole(value)}
-              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-full text-sm"
-            >
-              {uniqueRoles.map((role) => (
-                <Select.Option key={role} value={role}>
-                  {role}
-                </Select.Option>
-              ))}
-            </Select>
+              onChange={handleRoleChange}
+              className="flex flex-col gap-2"
+            />
           </div>
         )}
       </Modal>
