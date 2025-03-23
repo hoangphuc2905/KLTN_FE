@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
+import { useNavigate } from "react-router-dom";
 
 const ScientificPaperPage = () => {
   const papers = [
@@ -209,6 +210,7 @@ const ScientificPaperPage = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
+  const [sortedInfo, setSortedInfo] = useState({});
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -277,6 +279,7 @@ const ScientificPaperPage = () => {
     showPaperTypeFilter,
   ]);
 
+  const navigate = useNavigate();
   const uniquePaperTypes = [
     "Tất cả",
     ...new Set(papers.map((paper) => paper.paperType)),
@@ -318,6 +321,10 @@ const ScientificPaperPage = () => {
     setIsModalVisible(true);
   };
 
+  const handleChange = (pagination, filters, sorter) => {
+    setSortedInfo(sorter);
+  };
+
   const columns = [
     {
       title: "STT",
@@ -325,11 +332,14 @@ const ScientificPaperPage = () => {
       key: "id",
       render: (text, record, index) => index + 1,
       width: 65,
+      fixed: "left", // Fix this column to the left
     },
     {
       title: "LOẠI BÀI BÁO",
       dataIndex: "paperType",
       key: "paperType",
+      sorter: (a, b) => a.paperType.localeCompare(b.paperType),
+      sortOrder: sortedInfo.columnKey === "paperType" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -344,6 +354,8 @@ const ScientificPaperPage = () => {
       title: "THUỘC NHÓM",
       dataIndex: "group",
       key: "group",
+      sorter: (a, b) => a.group.localeCompare(b.group),
+      sortOrder: sortedInfo.columnKey === "group" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -358,6 +370,8 @@ const ScientificPaperPage = () => {
       title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
       dataIndex: "title",
       key: "title",
+      sorter: (a, b) => a.title.localeCompare(b.title),
+      sortOrder: sortedInfo.columnKey === "title" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -372,6 +386,8 @@ const ScientificPaperPage = () => {
       title: "TÁC GIẢ",
       dataIndex: "authors",
       key: "authors",
+      sorter: (a, b) => a.authors.localeCompare(b.authors),
+      sortOrder: sortedInfo.columnKey === "authors" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -386,6 +402,9 @@ const ScientificPaperPage = () => {
       title: "SỐ T/GIẢ",
       dataIndex: "authorCount",
       key: "authorCount",
+      sorter: (a, b) => parseInt(a.authorCount) - parseInt(b.authorCount),
+      sortOrder:
+        sortedInfo.columnKey === "authorCount" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -400,6 +419,8 @@ const ScientificPaperPage = () => {
       title: "VAI TRÒ",
       dataIndex: "role",
       key: "role",
+      sorter: (a, b) => a.role.localeCompare(b.role),
+      sortOrder: sortedInfo.columnKey === "role" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -414,6 +435,9 @@ const ScientificPaperPage = () => {
       title: "CQ ĐỨNG TÊN",
       dataIndex: "institution",
       key: "institution",
+      sorter: (a, b) => a.institution.localeCompare(b.institution),
+      sortOrder:
+        sortedInfo.columnKey === "institution" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -428,6 +452,10 @@ const ScientificPaperPage = () => {
       title: "NGÀY CÔNG BỐ",
       dataIndex: "publicationDate",
       key: "publicationDate",
+      sorter: (a, b) =>
+        new Date(a.publicationDate) - new Date(b.publicationDate),
+      sortOrder:
+        sortedInfo.columnKey === "publicationDate" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -453,6 +481,8 @@ const ScientificPaperPage = () => {
       title: "TRẠNG THÁI",
       dataIndex: "status",
       key: "status",
+      sorter: (a, b) => a.status.localeCompare(b.status),
+      sortOrder: sortedInfo.columnKey === "status" ? sortedInfo.order : null,
       render: (status) => (
         <span className={`${getStatusColor(status)}`}>{status}</span>
       ),
@@ -465,6 +495,8 @@ const ScientificPaperPage = () => {
       title: "NGÀY THÊM",
       dataIndex: "dateAdded",
       key: "dateAdded",
+      sorter: (a, b) => new Date(a.dateAdded) - new Date(b.dateAdded),
+      sortOrder: sortedInfo.columnKey === "dateAdded" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -497,7 +529,8 @@ const ScientificPaperPage = () => {
           </svg>
         </button>
       ),
-      width: 100,
+      width: 120,
+      align: "center",
     },
     {
       title: "GHI CHÚ",
@@ -554,7 +587,12 @@ const ScientificPaperPage = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Bài báo nghiên cứu khoa học
@@ -643,7 +681,7 @@ const ScientificPaperPage = () => {
                             onClick={() =>
                               setShowPaperTypeFilter(!showPaperTypeFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn loại bài báo
                           </button>
@@ -698,7 +736,7 @@ const ScientificPaperPage = () => {
                           <button
                             type="button"
                             onClick={() => setShowGroupFilter(!showGroupFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn nhóm
                           </button>
@@ -751,7 +789,7 @@ const ScientificPaperPage = () => {
                           type="text"
                           value={filterPaperTitle}
                           onChange={(e) => setFilterPaperTitle(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
 
@@ -763,7 +801,7 @@ const ScientificPaperPage = () => {
                           type="text"
                           value={filterAuthorName}
                           onChange={(e) => setFilterAuthorName(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
 
@@ -782,7 +820,7 @@ const ScientificPaperPage = () => {
                                   Math.max(0, e.target.value)
                                 )
                               }
-                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                               min={0}
                             />
                           </div>
@@ -796,7 +834,7 @@ const ScientificPaperPage = () => {
                                   Math.max(0, e.target.value)
                                 )
                               }
-                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                               min={0}
                             />
                           </div>
@@ -811,7 +849,7 @@ const ScientificPaperPage = () => {
                           <button
                             type="button"
                             onClick={() => setShowRoleFilter(!showRoleFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn vai trò
                           </button>
@@ -866,7 +904,7 @@ const ScientificPaperPage = () => {
                             onClick={() =>
                               setShowInstitutionFilter(!showInstitutionFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn CQ đứng tên
                           </button>
@@ -925,7 +963,7 @@ const ScientificPaperPage = () => {
                             onClick={() =>
                               setShowStatusFilter(!showStatusFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn trạng thái
                           </button>
@@ -1028,6 +1066,7 @@ const ScientificPaperPage = () => {
               <Table
                 columns={newColumns}
                 dataSource={filteredPapers}
+                onChange={handleChange}
                 pagination={{
                   current: currentPage,
                   pageSize: itemsPerPage,

@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
 
 const ManagementAriticle = () => {
+  const navigate = useNavigate();
   const papers = [
     {
       id: 1,
@@ -314,8 +316,8 @@ const ManagementAriticle = () => {
   });
 
   const handleRowClick = (record) => {
-    setModalContent(record);
-    setIsModalVisible(true);
+    // navigate(`/admin/management/ariticle/detail/${record.id}`);
+    navigate(`/admin/management/ariticle/detail`);
   };
 
   const columns = [
@@ -554,7 +556,12 @@ const ManagementAriticle = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Bài báo nghiên cứu khoa học
@@ -643,7 +650,7 @@ const ManagementAriticle = () => {
                             onClick={() =>
                               setShowPaperTypeFilter(!showPaperTypeFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn loại bài báo
                           </button>
@@ -698,7 +705,7 @@ const ManagementAriticle = () => {
                           <button
                             type="button"
                             onClick={() => setShowGroupFilter(!showGroupFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn nhóm
                           </button>
@@ -751,7 +758,7 @@ const ManagementAriticle = () => {
                           type="text"
                           value={filterPaperTitle}
                           onChange={(e) => setFilterPaperTitle(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
 
@@ -763,7 +770,7 @@ const ManagementAriticle = () => {
                           type="text"
                           value={filterAuthorName}
                           onChange={(e) => setFilterAuthorName(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
 
@@ -782,7 +789,7 @@ const ManagementAriticle = () => {
                                   Math.max(0, e.target.value)
                                 )
                               }
-                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                               min={0}
                             />
                           </div>
@@ -796,7 +803,7 @@ const ManagementAriticle = () => {
                                   Math.max(0, e.target.value)
                                 )
                               }
-                              className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                               min={0}
                             />
                           </div>
@@ -811,7 +818,7 @@ const ManagementAriticle = () => {
                           <button
                             type="button"
                             onClick={() => setShowRoleFilter(!showRoleFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn vai trò
                           </button>
@@ -866,7 +873,7 @@ const ManagementAriticle = () => {
                             onClick={() =>
                               setShowInstitutionFilter(!showInstitutionFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn CQ đứng tên
                           </button>
@@ -925,7 +932,7 @@ const ManagementAriticle = () => {
                             onClick={() =>
                               setShowStatusFilter(!showStatusFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn trạng thái
                           </button>
@@ -1041,7 +1048,7 @@ const ManagementAriticle = () => {
                     (total, col) => total + (col.width || 0),
                     0
                   ),
-                }} // Thêm dòng này để tạo thanh kéo ngang
+                }}
                 onRow={(record) => ({
                   onClick: () => handleRowClick(record),
                 })}
@@ -1050,65 +1057,6 @@ const ManagementAriticle = () => {
           </div>
         </div>
       </div>
-      <Modal
-        title="Chi tiết"
-        visible={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={null}
-      >
-        <p>
-          <strong>Loại bài báo:</strong> {modalContent.paperType}
-        </p>
-        <p>
-          <strong>Thuộc nhóm:</strong> {modalContent.group}
-        </p>
-        <p>
-          <strong>Tên bài báo nghiên cứu khoa học:</strong> {modalContent.title}
-        </p>
-        <p>
-          <strong>Tác giả:</strong> {modalContent.authors}
-        </p>
-        <p>
-          <strong>Số tác giả:</strong> {modalContent.authorCount}
-        </p>
-        <p>
-          <strong>Vai trò:</strong> {modalContent.role}
-        </p>
-        <p>
-          <strong>CQ đứng tên:</strong> {modalContent.institution}
-        </p>
-        <p>
-          <strong>Ngày công bố:</strong> {modalContent.publicationDate}
-        </p>
-        <p>
-          <strong>Ngày thêm:</strong> {modalContent.dateAdded}
-        </p>
-        <p>
-          <strong>Trạng thái:</strong> {modalContent.status}
-        </p>
-        {modalContent.note && (
-          <p>
-            <strong>Ghi chú:</strong> {modalContent.note}
-          </p>
-        )}
-        {modalContent.status === "Đang chờ" && (
-          <button className="text-[#00A3FF] mt-4">
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                fill="currentColor"
-              />
-            </svg>
-            Chỉnh sửa
-          </button>
-        )}
-      </Modal>
     </div>
   );
 };

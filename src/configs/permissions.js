@@ -5,6 +5,7 @@ const permissions = {
     "/admin/search",
     "/admin/management/account",
     "/admin/management/ariticle",
+    "/admin/management/ariticle/detail",
     "/admin/management/data",
     "/admin/management/scoringformulas",
     "/admin/management/point",
@@ -15,7 +16,7 @@ const permissions = {
     "/work-process",
     "/notifications",
   ],
-  student: [
+  Student: [
     "/home",
     "/profile",
     "/update-profile",

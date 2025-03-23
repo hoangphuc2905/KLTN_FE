@@ -1,45 +1,41 @@
-import { Button, Input, Select, DatePicker, InputNumber, message } from "antd";
+import {
+  Button,
+  Input,
+  Select,
+  DatePicker,
+  InputNumber,
+  message,
+  Table,
+  Modal,
+} from "antd";
 import {
   CloseCircleOutlined,
   MinusOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
-import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 
-const AddScientificPaperPage = () => {
+const DetailArticlePage = () => {
   const [authors, setAuthors] = useState([
     { id: 1, mssvMsgv: "", full_name: "", role: "", institution: "" },
     { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
+    { id: 3, mssvMsgv: "", full_name: "", role: "", institution: "" },
   ]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
   const [paperTypes, setPaperTypes] = useState([]);
   const [paperGroups, setPaperGroups] = useState([]);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
+  const [requestContent, setRequestContent] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchPaperData = async () => {
-      try {
-        const types = await userApi.getAllPaperTypes();
-        const groups = await userApi.getAllPaperGroups();
-
-        setPaperTypes(types);
-        setPaperGroups(groups);
-      } catch (error) {
-        console.error("Error fetching paper types or groups:", error);
-        message.error("Không thể tải dữ liệu loại bài báo hoặc nhóm bài báo.");
-      }
-    };
-
-    fetchPaperData();
-  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -85,48 +81,67 @@ const AddScientificPaperPage = () => {
     setAuthors(newAuthors);
   };
 
-  const handleAuthorChange = async (index, field, value) => {
+  const handleAuthorChange = (index, field, value) => {
     const updatedAuthors = [...authors];
     updatedAuthors[index][field] = value;
-
-    if (field === "mssvMsgv" && value.trim() !== "") {
-      try {
-        let userData;
-
-        if (value.startsWith("GV") || value.length === 8) {
-          userData = await userApi.getLecturerById(value);
-        } else {
-          userData = await userApi.getStudentById(value);
-        }
-
-        updatedAuthors[index].full_name =
-          userData.full_name || userData.name || "";
-        updatedAuthors[index].institution =
-          userData.department || "Không xác định";
-      } catch (error) {
-        console.error("Không tìm thấy thông tin:", error);
-        updatedAuthors[index].full_name = "";
-        updatedAuthors[index].institution = "";
-      }
-    }
-
     setAuthors(updatedAuthors);
   };
 
-  const handleClear = () => {
-    setAuthors([
-      { id: 1, mssvMsgv: "", full_name: "", role: "", institution: "" },
-      { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
-    ]);
-    setSelectedFile(null);
-    setCoverImage(null);
-    message.info("Đã xóa trắng thông tin.");
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+      render: (text, record, index) => index + 1,
+    },
+    {
+      title: "MSSV/MSGV",
+      dataIndex: "mssvMsgv",
+      key: "mssvMsgv",
+    },
+    {
+      title: "Tên SV/GV",
+      dataIndex: "full_name",
+      key: "full_name",
+    },
+    {
+      title: "Vai trò",
+      dataIndex: "role",
+      key: "role",
+    },
+    {
+      title: "CQ công tác",
+      dataIndex: "institution",
+      key: "institution",
+    },
+  ];
+
+  const showEditModal = () => {
+    setIsEditModalVisible(true);
   };
 
-  const handleSave = () => {
-    console.log("Danh sách tác giả:", authors);
-    console.log("File đã chọn:", selectedFile);
-    message.success("Lưu thành công!");
+  const handleEditCancel = () => {
+    setIsEditModalVisible(false);
+  };
+
+  const handleEditSend = () => {
+    // Handle send request logic here
+    console.log("Request content:", requestContent);
+    setIsEditModalVisible(false);
+  };
+
+  const showRejectModal = () => {
+    setIsRejectModalVisible(true);
+  };
+
+  const handleRejectCancel = () => {
+    setIsRejectModalVisible(false);
+  };
+
+  const handleRejectSend = () => {
+    // Handle send rejection logic here
+    console.log("Reject reason:", rejectReason);
+    setIsRejectModalVisible(false);
   };
 
   return (
@@ -175,81 +190,72 @@ const AddScientificPaperPage = () => {
                           "https://via.placeholder.com/180x200?text=Bìa+Bài+Báo"
                         }
                         alt="Bìa bài báo"
-                        className="w-[180px] h-[200px] object-cover border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
+                        className="w-[180px] h-[200px] object-cover border border-gray-300 rounded-lg shadow-md"
                       />
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 text-white font-semibold text-sm rounded-lg transition duration-300">
-                        Chọn ảnh
-                      </div>
                     </label>
                     <input
                       id="cover-upload"
                       type="file"
                       accept="image/*"
-                      onChange={handleImageChange}
+                      disabled
                       className="hidden"
                     />
                   </div>
 
                   <div className="w-2/3 grid grid-cols-1">
                     <Input
-                      className="w-full h-10 bg-gray-200"
+                      className="w-full h-10"
                       placeholder="ID"
                       required
                       readOnly
                     />
-                    <Select
+                    <Input
                       className="w-full h-10"
                       placeholder="Loại bài báo"
                       required
-                    >
-                      {paperTypes.map((type) => (
-                        <Option key={type.id} value={type.id}>
-                          {type.type_name}
-                        </Option>
-                      ))}
-                    </Select>
-
-                    <Select
+                      readOnly
+                    />
+                    <Input
                       className="w-full h-10"
                       placeholder="Thuộc nhóm"
                       required
-                    >
-                      {paperGroups.map((group) => (
-                        <Option key={group.id} value={group.id}>
-                          {group.group_name}
-                        </Option>
-                      ))}
-                    </Select>
+                      readOnly
+                    />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên bài báo (Tiếng Việt)"
                       required
+                      readOnly
                     />
                   </div>
                 </div>
                 <div className="flex gap-4 mt-4 ml-3">
                   {/* Bên dưới ảnh: 4 input xếp dọc (bằng ảnh) */}
                   <div className="flex flex-col w-[180px] gap-4">
-                    <DatePicker
+                    <Input
                       className="w-full h-10"
                       placeholder="Ngày công bố"
+                      readOnly
                     />
 
                     <InputNumber
                       className="w-full h-10"
                       placeholder="Số trang"
                       min={1}
+                      readOnly
                     />
 
                     <InputNumber
                       className="w-full h-10"
                       placeholder="Thứ tự"
                       min={1}
+                      readOnly
                     />
 
                     <Input
                       className="w-full h-10"
                       placeholder="Số ISSN / ISBN"
+                      readOnly
                     />
                   </div>
 
@@ -258,19 +264,23 @@ const AddScientificPaperPage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="Tên bài báo (Tiếng Anh)"
+                      readOnly
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt) "
+                      readOnly
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên tạp chí / kỷ yếu (Tiếng Anh) "
+                      readOnly
                     />
 
                     <Input
                       className="w-full h-10"
                       placeholder="Tập / quyển (nếu có)"
+                      readOnly
                     />
                   </div>
                 </div>
@@ -287,7 +297,7 @@ const AddScientificPaperPage = () => {
                 </div>
 
                 <div className="mt-4 ml-3">
-                  <TextArea placeholder="Tóm tắt" rows={4} />
+                  <TextArea placeholder="Tóm tắt" rows={4} readOnly />
                 </div>
               </section>
             </div>
@@ -295,69 +305,27 @@ const AddScientificPaperPage = () => {
             {/* Right Column */}
             <div className="w-1/2">
               {/* Khối "Nhập thông tin tác giả" */}
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-4 h-[370px]">
+              <section className="flex flex-col bg-white rounded-lg p-6 mb-4">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
-                  Nhập thông tin TÁC GIẢ
+                  Thông tin tác giả
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  {authors.map((author, index) => (
-                    <div
-                      key={author.id}
-                      className="grid grid-cols-6 gap-4 col-span-2"
-                    >
-                      <Input
-                        placeholder="MSSV/MSGV"
-                        value={author.mssvMsgv}
-                        onChange={(e) =>
-                          handleAuthorChange(index, "mssvMsgv", e.target.value)
-                        }
-                        required
-                      />
-                      <Input
-                        className="col-span-2"
-                        placeholder="Tên sinh viên / giảng viên"
-                        value={author.full_name}
-                        readOnly
-                      />
-
-                      <Select
-                        placeholder="Vai trò"
-                        value={author.role}
-                        onChange={(value) =>
-                          handleAuthorChange(index, "role", value)
-                        }
-                        required
-                      >
-                        <Option value="primary">Chính</Option>
-                        <Option value="corresponding">Liên hệ</Option>
-                        <Option value="primaryCorresponding">
-                          Vừa chính vừa liên hệ
-                        </Option>
-                        <Option value="contributor">Tham gia</Option>
-                      </Select>
-                      <Input
-                        placeholder="CQ công tác"
-                        value={author.institution}
-                        readOnly
-                      />
-                      <Button
-                        icon={<MinusOutlined />}
-                        onClick={() => handleRemoveAuthor(index)}
-                        size="small"
-                      />
-                    </div>
-                  ))}
-                  <h2 className="col-span-2 text-xs text-red-700 italic">
-                    (Nếu tác giả không có MSSV/MSGV, vui lòng điền CCCD)
-                  </h2>
-                  <Button icon={<PlusOutlined />} onClick={handleAddAuthor}>
-                    Thêm tác giả
-                  </Button>
+                <div className="mb-4">
+                  <Input
+                    value={`Số lượng tác giả: ${authors.length}`}
+                    readOnly
+                    className="w-[200px]"
+                  />
                 </div>
+                <Table
+                  columns={columns}
+                  dataSource={authors}
+                  pagination={false}
+                  rowKey="id"
+                />
               </section>
 
               {/* Khối "Nhập thông tin minh chứng" */}
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-4">
+              <section className="flex flex-col bg-white rounded-lg p-9 mb-4 ">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin Minh chứng
                 </h2>
@@ -367,14 +335,12 @@ const AddScientificPaperPage = () => {
                     value={selectedFile || ""}
                     readOnly
                   />
-                  <Button type="primary" onClick={handleFileChange}>
-                    Choose
-                  </Button>
                   {selectedFile && (
                     <Button
                       icon={<CloseCircleOutlined />}
                       onClick={handleRemoveFile}
                       danger
+                      disabled
                     />
                   )}
                 </div>
@@ -382,8 +348,12 @@ const AddScientificPaperPage = () => {
                   <Input
                     placeholder="Link công bố bài báo (http://...)"
                     required
+                    readOnly
                   />
-                  <Input placeholder="Số DOI (vd: http://doi.org/10.1155.2019)" />
+                  <Input
+                    placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
+                    readOnly
+                  />
                 </div>
                 <p className="mt-4 text-xs leading-5 text-black">
                   Minh chứng cần file upload full bài báo và link bài báo. Hệ
@@ -392,11 +362,22 @@ const AddScientificPaperPage = () => {
                   file Rar trước khi upload.
                 </p>
                 <div className="flex justify-end space-x-4 mt-6">
-                  <Button type="primary" onClick={handleClear}>
-                    Xóa trắng
+                  <Button
+                    style={{ backgroundColor: "#FFD700", color: "black" }}
+                    onClick={showEditModal}
+                  >
+                    Yêu cầu chỉnh sửa
                   </Button>
-                  <Button type="primary" onClick={handleSave}>
-                    Lưu
+                  <Button
+                    style={{ backgroundColor: "#FF0000", color: "white" }}
+                    onClick={showRejectModal}
+                  >
+                    Từ chối
+                  </Button>
+                  <Button
+                    style={{ backgroundColor: "#008000", color: "white" }}
+                  >
+                    Duyệt bài
                   </Button>
                 </div>
               </section>
@@ -405,8 +386,68 @@ const AddScientificPaperPage = () => {
         </div>
       </div>
       <Footer />
+
+      <Modal
+        title={<div style={{ textAlign: "center" }}>Yêu cầu chỉnh sửa</div>}
+        visible={isEditModalVisible}
+        onCancel={handleEditCancel}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleEditCancel}
+            style={{ backgroundColor: "#FF0000", color: "white" }}
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleEditSend}
+            style={{ backgroundColor: "#008000", color: "white" }}
+          >
+            Gửi
+          </Button>,
+        ]}
+      >
+        <TextArea
+          placeholder="Nội dung yêu cầu chỉnh sửa"
+          rows={4}
+          value={requestContent}
+          onChange={(e) => setRequestContent(e.target.value)}
+        />
+      </Modal>
+
+      <Modal
+        title={<div style={{ textAlign: "center" }}>Yêu cầu từ chối</div>}
+        visible={isRejectModalVisible}
+        onCancel={handleRejectCancel}
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleRejectCancel}
+            style={{ backgroundColor: "#FF0000", color: "white" }}
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleRejectSend}
+            style={{ backgroundColor: "#008000", color: "white" }}
+          >
+            Gửi
+          </Button>,
+        ]}
+      >
+        <TextArea
+          placeholder="Lý do từ chối"
+          rows={4}
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 };
 
-export default AddScientificPaperPage;
+export default DetailArticlePage;

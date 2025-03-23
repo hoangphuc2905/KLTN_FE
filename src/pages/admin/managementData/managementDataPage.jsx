@@ -3,6 +3,7 @@ import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Button, Table, Input, Form, Modal, message } from "antd";
 import userApi from "../../../api/api";
+import { useNavigate } from "react-router-dom";
 
 const ManagementData = () => {
   const [activeTab, setActiveTab] = useState("type");
@@ -17,6 +18,7 @@ const ManagementData = () => {
   const [filterGroup, setFilterGroup] = useState("");
   const filterRef = useRef(null);
   const [sortedInfo, setSortedInfo] = useState({});
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -157,6 +159,7 @@ const ManagementData = () => {
       dataIndex: "stt",
       key: "stt",
       render: (text, record, index) => index + 1,
+      width: 80,
     },
     {
       title: "TÊN LOẠI BÀI BÁO/TẠP CHÍ",
@@ -170,14 +173,22 @@ const ManagementData = () => {
       key: "edit",
       render: (text, record) => (
         <button className="text-blue-500" onClick={() => handleEdit(record)}>
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-            alt="Edit"
-            className="w-5 h-5"
-          />
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+              fill="currentColor"
+            />
+          </svg>
         </button>
       ),
-      align: "right",
+      width: 120,
+      align: "center",
     },
   ];
 
@@ -187,6 +198,7 @@ const ManagementData = () => {
       dataIndex: "stt",
       key: "stt",
       render: (text, record, index) => index + 1,
+      width: 80,
     },
     {
       title: "TÊN NHÓM BÀI BÁO",
@@ -201,14 +213,22 @@ const ManagementData = () => {
       key: "edit",
       render: (text, record) => (
         <button className="text-blue-500" onClick={() => handleEdit(record)}>
-          <img
-            src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-            alt="Edit"
-            className="w-5 h-5"
-          />
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+              fill="currentColor"
+            />
+          </svg>
         </button>
       ),
-      align: "right",
+      width: 120,
+      align: "center",
     },
   ];
 
@@ -237,7 +257,12 @@ const ManagementData = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Quản lý dữ liệu

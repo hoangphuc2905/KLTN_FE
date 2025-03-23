@@ -1,7 +1,18 @@
-import { useState, useEffect } from "react";
-import { Modal, Input, Select, Table, message, Radio } from "antd";
+import { useState, useEffect, useRef } from "react";
+import {
+  Modal,
+  Input,
+  Select,
+  Table,
+  message,
+  Radio,
+  Form,
+  Button,
+  Checkbox,
+} from "antd";
 import Header from "../../../components/header";
 import userApi from "../../../api/api";
+import { useNavigate } from "react-router-dom";
 
 const ManagementUsers = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
@@ -12,9 +23,9 @@ const ManagementUsers = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [filterId, setFilterId] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("Tất cả");
+  const [filterDepartment, setFilterDepartment] = useState(["Tất cả"]);
   const [filterPosition, setFilterPosition] = useState("Tất cả");
-  const [filterStatus, setFilterStatus] = useState("Tất cả");
+  const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
@@ -22,6 +33,43 @@ const ManagementUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [newRole, setNewRole] = useState("");
+
+  const filterRef = useRef(null);
+  const departmentFilterRef = useRef(null);
+  const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showFilter &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setShowFilter(false);
+      }
+      if (
+        showDepartmentFilter &&
+        departmentFilterRef.current &&
+        !departmentFilterRef.current.contains(event.target)
+      ) {
+        setShowDepartmentFilter(false);
+      }
+      if (
+        showStatusFilter &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setShowStatusFilter(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFilter, showDepartmentFilter, showStatusFilter]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -115,7 +163,7 @@ const ManagementUsers = () => {
               user.student_id === selectedUser.student_id
                 ? { ...user, isActive: updatedStatus }
                 : user
-            ) 
+            )
           );
         } else if (activeTab === "lecturer") {
           await userApi.updateStatusLecturerById(
@@ -143,6 +191,14 @@ const ManagementUsers = () => {
     setIsModalVisible(false);
   };
 
+  const handleSearchByName = (e) => {
+    setFilterName(e.target.value);
+  };
+
+  const handleSearchById = (e) => {
+    setFilterId(e.target.value);
+  };
+
   const displayedUsers = activeTab === "user" ? users : lecturers;
 
   const uniquePositions = [
@@ -150,19 +206,35 @@ const ManagementUsers = () => {
     ...new Set(displayedUsers.map((user) => user.position)),
   ];
   const uniqueDepartments = [
-    "Tất cả",
-    ...new Set(displayedUsers.map((user) => user.department)),
+    ...new Set(
+      displayedUsers.map((user) => {
+        if (typeof user.department === "object" && user.department._id) {
+          return user.department._id;
+        }
+        return user.department;
+      })
+    ),
   ];
+
   const uniqueStatuses = ["Hoạt động", "Không hoạt động"];
   const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
 
   const filteredUsers = displayedUsers.filter((user) => {
+    const userDepartmentId =
+      typeof user.department === "object" && user.department._id
+        ? user.department._id
+        : user.department;
+
     return (
-      (filterName === "" || user.name.includes(filterName)) &&
-      (filterId === "" || user.studentId.includes(filterId)) &&
-      (filterDepartment === "Tất cả" || user.department === filterDepartment) &&
+      (filterName === "" || user.full_name.includes(filterName)) &&
+      (filterId === "" ||
+        (activeTab === "user" && user.student_id.includes(filterId)) ||
+        (activeTab === "lecturer" && user.lecturer_id.includes(filterId))) &&
+      (filterDepartment.includes("Tất cả") ||
+        filterDepartment.includes(userDepartmentId)) &&
       (filterPosition === "Tất cả" || user.position === filterPosition) &&
-      (filterStatus === "Tất cả" || user.isActive === filterStatus)
+      (filterStatus.includes("Tất cả") ||
+        filterStatus.includes(user.isActive ? "Hoạt động" : "Không hoạt động"))
     );
   });
 
@@ -221,13 +293,21 @@ const ManagementUsers = () => {
                 className="text-blue-500"
                 onClick={() => handleEditClick(record)}
               >
-                <img
-                  src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-                  alt="Edit"
-                  className="w-5 h-5"
-                />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+                    fill="currentColor"
+                  />
+                </svg>
               </button>
             ),
+            align: "center",
           },
         ]
       : [
@@ -294,85 +374,176 @@ const ManagementUsers = () => {
                 className="text-blue-500"
                 onClick={() => handleEditClick(record)}
               >
-                <img
-                  src="https://cdn-icons-png.flaticon.com/512/1159/1159633.png"
-                  alt="Edit"
-                  className="w-5 h-5"
-                />
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+                    fill="currentColor"
+                  />
+                </svg>
               </button>
             ),
+            align: "center",
           },
         ];
 
   const filterForm = (
-    <form className="relative px-4 py-5 w-full bg-white max-w-[500px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+    <form
+      ref={filterRef}
+      className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3"
+    >
       <div className="mb-3">
-        <label className="block text-gray-700 text-sm">Họ và tên:</label>
+        <label className="block text-gray-700 text-xs">Họ và tên:</label>
         <Input
-          type="text"
           value={filterName}
-          onChange={(e) => setFilterName(e.target.value)}
-          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          onChange={handleSearchByName}
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
         />
       </div>
 
       <div className="mb-3">
-        <label className="block text-gray-700 text-sm">
+        <label className="block text-gray-700 text-xs">
           {activeTab === "user" ? "MSSV" : "MSGV"}:
         </label>
         <Input
-          type="text"
           value={filterId}
-          onChange={(e) => setFilterId(e.target.value)}
-          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+          onChange={handleSearchById}
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
         />
       </div>
 
       <div className="mb-3">
-        <label className="block text-gray-700 text-sm">Khoa:</label>
-        <Select
-          value={filterDepartment}
-          onChange={(value) => setFilterDepartment(value)}
-          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-        >
-          {uniqueDepartments.map((department) => (
-            <option key={department} value={department}>
-              {department}
-            </option>
-          ))}
-        </Select>
+        <label className="block text-gray-700 text-xs">Khoa:</label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowDepartmentFilter(!showDepartmentFilter)}
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+          >
+            {filterDepartment.length === 0
+              ? "Chọn khoa"
+              : filterDepartment.length === uniqueDepartments.length
+              ? "Tất cả"
+              : filterDepartment
+                  .map((dept) => departmentNames[dept] || dept)
+                  .join(", ")}
+          </button>
+          {showDepartmentFilter && (
+            <div
+              ref={departmentFilterRef}
+              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+            >
+              <Checkbox
+                indeterminate={
+                  filterDepartment.length > 0 &&
+                  filterDepartment.length < uniqueDepartments.length
+                }
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFilterDepartment(uniqueDepartments);
+                  } else {
+                    setFilterDepartment([]);
+                  }
+                }}
+                checked={filterDepartment.length === uniqueDepartments.length}
+              >
+                Tất cả
+              </Checkbox>
+              <Checkbox.Group
+                options={uniqueDepartments.map((department) => ({
+                  label: departmentNames[department] || department,
+                  value: department,
+                }))}
+                value={filterDepartment}
+                onChange={(checkedValues) => {
+                  if (checkedValues.length === 0) {
+                    setFilterDepartment([]); // Khi không chọn gì, dữ liệu sẽ trống
+                  } else if (
+                    checkedValues.length === uniqueDepartments.length
+                  ) {
+                    setFilterDepartment(uniqueDepartments); // Chọn lại tất cả
+                  } else {
+                    setFilterDepartment(checkedValues);
+                  }
+                }}
+                className="flex flex-col gap-2 mt-2"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       {activeTab === "lecturer" && (
         <div className="mb-3">
-          <label className="block text-gray-700 text-sm">Chức vụ:</label>
+          <label className="block text-gray-700 text-xs">Chức vụ:</label>
           <Select
             value={filterPosition}
             onChange={(value) => setFilterPosition(value)}
-            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
           >
             {uniquePositions.map((position) => (
-              <option key={position} value={position}>
+              <Select.Option key={position} value={position}>
                 {position}
-              </option>
+              </Select.Option>
             ))}
           </Select>
         </div>
       )}
 
       <div className="mb-3">
-        <label className="block text-gray-700 text-sm">Trạng thái:</label>
-        <Select
-          value={filterStatus}
-          onChange={(value) => setFilterStatus(value)}
-          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[35px] w-[350px] max-md:w-full max-md:max-w-[350px] max-sm:w-full text-sm"
-        >
-          {uniqueStatuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
-          ))}
-        </Select>
+        <label className="block text-gray-700 text-xs">Trạng thái:</label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowStatusFilter(!showStatusFilter)}
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+          >
+            {filterStatus.length === 0
+              ? "Chọn trạng thái"
+              : filterStatus.length === uniqueStatuses.length
+              ? "Tất cả"
+              : filterStatus.join(", ")}
+          </button>
+          {showStatusFilter && (
+            <div className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2">
+              <Checkbox
+                indeterminate={
+                  filterStatus.length > 0 &&
+                  filterStatus.length < uniqueStatuses.length
+                }
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setFilterStatus(uniqueStatuses);
+                  } else {
+                    setFilterStatus([]);
+                  }
+                }}
+                checked={filterStatus.length === uniqueStatuses.length}
+              >
+                Tất cả
+              </Checkbox>
+              <Checkbox.Group
+                options={uniqueStatuses}
+                value={filterStatus}
+                onChange={(checkedValues) => {
+                  if (checkedValues.length === 0) {
+                    setFilterStatus([]); // Khi không chọn gì, dữ liệu sẽ trống
+                  } else if (checkedValues.length === uniqueStatuses.length) {
+                    setFilterStatus(uniqueStatuses); // Chọn lại tất cả
+                  } else {
+                    setFilterStatus(checkedValues);
+                  }
+                }}
+                className="flex flex-col gap-2 mt-2"
+              />
+            </div>
+          )}
+        </div>
       </div>
 
       <button
@@ -380,11 +551,11 @@ const ManagementUsers = () => {
         onClick={() => {
           setFilterName("");
           setFilterId("");
-          setFilterDepartment("Tất cả");
+          setFilterDepartment(["Tất cả"]);
           setFilterPosition("Tất cả");
-          setFilterStatus("Tất cả");
+          setFilterStatus(["Tất cả"]);
         }}
-        className="w-full mt-4 bg-blue-500 text-white py-2 rounded-md text-sm"
+        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
       >
         Bỏ lọc tất cả
       </button>
@@ -404,7 +575,12 @@ const ManagementUsers = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Quản lý người dùng
@@ -445,7 +621,7 @@ const ManagementUsers = () => {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-4 py-2 rounded-lg border"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                   onClick={() => setShowFilter(!showFilter)}
                 >
                   <img
@@ -453,7 +629,7 @@ const ManagementUsers = () => {
                     alt="Filter Icon"
                     className="w-4 h-4"
                   />
-                  <span className="text-sm">Bộ lọc</span>
+                  <span className="text-xs">Bộ lọc</span>
                 </button>
                 {showFilter && (
                   <div className="absolute top-full mt-2 z-50 shadow-lg">

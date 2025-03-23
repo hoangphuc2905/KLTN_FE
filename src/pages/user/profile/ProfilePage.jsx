@@ -6,7 +6,7 @@ import Footer from "../../../components/footer";
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [selectedYear, setSelectedYear] = useState("2024");
-  const [departmentName, setDepartmentName] = useState(""); 
+  const [departmentName, setDepartmentName] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -86,7 +86,7 @@ const ProfilePage = () => {
               <div className="flex items-start gap-10 flex-nowrap max-md:flex-wrap">
                 <img
                   src={user?.avatar}
-                  className="object-contain shrink-0 self-start max-w-full aspect-[0.8] rounded-full w-[150px]"
+                  className="object-contain shrink-0 self-end rounded-full w-[150px] h-[150px]"
                   alt="Profile photo"
                 />
 
@@ -161,7 +161,7 @@ const ProfilePage = () => {
                 </div>
               </div>
 
-              <h2 className="self-center mt-4 text-sm font-medium leading-none text-black">
+              <h2 className="self-center mt-6 text-sm font-medium leading-none text-black">
                 TRAO ĐỔI GẦN ĐÂY
               </h2>
               <hr className="object-contain self-stretch mt-3 w-full max-md:max-w-full" />
