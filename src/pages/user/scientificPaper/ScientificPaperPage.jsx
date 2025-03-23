@@ -209,6 +209,7 @@ const ScientificPaperPage = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
+  const [sortedInfo, setSortedInfo] = useState({});
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -318,6 +319,10 @@ const ScientificPaperPage = () => {
     setIsModalVisible(true);
   };
 
+  const handleChange = (pagination, filters, sorter) => {
+    setSortedInfo(sorter);
+  };
+
   const columns = [
     {
       title: "STT",
@@ -325,11 +330,14 @@ const ScientificPaperPage = () => {
       key: "id",
       render: (text, record, index) => index + 1,
       width: 65,
+      fixed: "left", // Fix this column to the left
     },
     {
       title: "LOẠI BÀI BÁO",
       dataIndex: "paperType",
       key: "paperType",
+      sorter: (a, b) => a.paperType.localeCompare(b.paperType),
+      sortOrder: sortedInfo.columnKey === "paperType" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -344,6 +352,8 @@ const ScientificPaperPage = () => {
       title: "THUỘC NHÓM",
       dataIndex: "group",
       key: "group",
+      sorter: (a, b) => a.group.localeCompare(b.group),
+      sortOrder: sortedInfo.columnKey === "group" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -358,6 +368,8 @@ const ScientificPaperPage = () => {
       title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
       dataIndex: "title",
       key: "title",
+      sorter: (a, b) => a.title.localeCompare(b.title),
+      sortOrder: sortedInfo.columnKey === "title" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -372,6 +384,8 @@ const ScientificPaperPage = () => {
       title: "TÁC GIẢ",
       dataIndex: "authors",
       key: "authors",
+      sorter: (a, b) => a.authors.localeCompare(b.authors),
+      sortOrder: sortedInfo.columnKey === "authors" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -386,6 +400,9 @@ const ScientificPaperPage = () => {
       title: "SỐ T/GIẢ",
       dataIndex: "authorCount",
       key: "authorCount",
+      sorter: (a, b) => parseInt(a.authorCount) - parseInt(b.authorCount),
+      sortOrder:
+        sortedInfo.columnKey === "authorCount" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -400,6 +417,8 @@ const ScientificPaperPage = () => {
       title: "VAI TRÒ",
       dataIndex: "role",
       key: "role",
+      sorter: (a, b) => a.role.localeCompare(b.role),
+      sortOrder: sortedInfo.columnKey === "role" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -414,6 +433,9 @@ const ScientificPaperPage = () => {
       title: "CQ ĐỨNG TÊN",
       dataIndex: "institution",
       key: "institution",
+      sorter: (a, b) => a.institution.localeCompare(b.institution),
+      sortOrder:
+        sortedInfo.columnKey === "institution" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -428,6 +450,10 @@ const ScientificPaperPage = () => {
       title: "NGÀY CÔNG BỐ",
       dataIndex: "publicationDate",
       key: "publicationDate",
+      sorter: (a, b) =>
+        new Date(a.publicationDate) - new Date(b.publicationDate),
+      sortOrder:
+        sortedInfo.columnKey === "publicationDate" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -453,6 +479,8 @@ const ScientificPaperPage = () => {
       title: "TRẠNG THÁI",
       dataIndex: "status",
       key: "status",
+      sorter: (a, b) => a.status.localeCompare(b.status),
+      sortOrder: sortedInfo.columnKey === "status" ? sortedInfo.order : null,
       render: (status) => (
         <span className={`${getStatusColor(status)}`}>{status}</span>
       ),
@@ -465,6 +493,8 @@ const ScientificPaperPage = () => {
       title: "NGÀY THÊM",
       dataIndex: "dateAdded",
       key: "dateAdded",
+      sorter: (a, b) => new Date(a.dateAdded) - new Date(b.dateAdded),
+      sortOrder: sortedInfo.columnKey === "dateAdded" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
@@ -498,6 +528,7 @@ const ScientificPaperPage = () => {
         </button>
       ),
       width: 100,
+      fixed: "right", // Fix this column to the right
     },
     {
       title: "GHI CHÚ",
@@ -1028,6 +1059,7 @@ const ScientificPaperPage = () => {
               <Table
                 columns={newColumns}
                 dataSource={filteredPapers}
+                onChange={handleChange}
                 pagination={{
                   current: currentPage,
                   pageSize: itemsPerPage,

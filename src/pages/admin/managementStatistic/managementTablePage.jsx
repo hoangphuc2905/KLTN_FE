@@ -643,7 +643,7 @@ const ManagementTable = () => {
                         <select
                           value={filterPaperType}
                           onChange={(e) => setFilterPaperType(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         >
                           {uniquePaperTypes.map((type) => (
                             <option key={type} value={type}>
@@ -661,7 +661,7 @@ const ManagementTable = () => {
                           <button
                             type="button"
                             onClick={() => setShowGroupFilter(!showGroupFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn nhóm
                           </button>
@@ -712,7 +712,7 @@ const ManagementTable = () => {
                           type="text"
                           value={filterPaperTitle}
                           onChange={(e) => setFilterPaperTitle(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
 
@@ -724,7 +724,7 @@ const ManagementTable = () => {
                           type="text"
                           value={filterAuthorName}
                           onChange={(e) => setFilterAuthorName(e.target.value)}
-                          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
 
@@ -741,7 +741,7 @@ const ManagementTable = () => {
                             }
                             placeholder="Từ"
                             min={0}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                           />
                           <Input
                             type="number"
@@ -751,7 +751,7 @@ const ManagementTable = () => {
                             }
                             placeholder="Đến"
                             min={0}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                           />
                         </div>
                       </div>
@@ -764,7 +764,7 @@ const ManagementTable = () => {
                           <button
                             type="button"
                             onClick={() => setShowRoleFilter(!showRoleFilter)}
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn vai trò
                           </button>
@@ -817,7 +817,7 @@ const ManagementTable = () => {
                             onClick={() =>
                               setShowInstitutionFilter(!showInstitutionFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn CQ đứng tên
                           </button>
@@ -883,7 +883,7 @@ const ManagementTable = () => {
                             onClick={() =>
                               setShowStatusFilter(!showStatusFilter)
                             }
-                            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn trạng thái
                           </button>
