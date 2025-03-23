@@ -9,6 +9,11 @@ import {
   FaClipboardList,
   FaNewspaper,
   FaChevronDown,
+  FaUser,
+  FaDatabase,
+  FaCalculator,
+  FaFileAlt,
+  FaChartPie,
 } from "react-icons/fa";
 import "./Sidebar.scss";
 import PropTypes from "prop-types";
@@ -54,7 +59,7 @@ const AdminMenu = ({ currentRole }) => {
             className="menu-item"
             onClick={toggleMenu}
           >
-            <FaNewspaper /> <span>Bài Báo</span>
+            <FaFileAlt /> <span>Bài Báo</span>
           </Link>
 
           <Link
@@ -62,7 +67,7 @@ const AdminMenu = ({ currentRole }) => {
             className="menu-item"
             onClick={toggleMenu}
           >
-            <FaNewspaper /> <span>Quản lý người dùng</span>
+            <FaUser /> <span>Quản lý người dùng</span>
           </Link>
 
           <Link
@@ -70,7 +75,7 @@ const AdminMenu = ({ currentRole }) => {
             className="menu-item"
             onClick={toggleMenu}
           >
-            <FaNewspaper /> <span>Quản lý dữ liệu</span>
+            <FaDatabase /> <span>Quản lý dữ liệu</span>
           </Link>
 
           {currentRole === "admin" && (
@@ -79,7 +84,7 @@ const AdminMenu = ({ currentRole }) => {
               className="menu-item"
               onClick={toggleMenu}
             >
-              <FaNewspaper /> <span>Công thức điểm</span>
+              <FaCalculator /> <span>Công thức điểm</span>
             </Link>
           )}
 
@@ -96,7 +101,7 @@ const AdminMenu = ({ currentRole }) => {
                 className="submenu-item"
                 onClick={toggleMenu}
               >
-                <FaChartBar /> Dạng Biểu Đồ
+                <FaChartPie /> Dạng Biểu Đồ
               </Link>
               <Link
                 to="/admin/management/table"
