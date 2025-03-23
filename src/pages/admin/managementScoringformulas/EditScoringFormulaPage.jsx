@@ -1,13 +1,16 @@
-import { Select, Input, Button, Form, message } from "antd";
+import { Select, Input, Button, Form, message, DatePicker } from "antd";
 import { useState, useEffect } from "react";
 import { CloseOutlined, PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import userApi from "../../../api/api"; // Import API
+import moment from "moment";
 
 const { Option } = Select;
 
 const ShowScoringFormulaPage = ({ onClose, data }) => {
   const [formData, setFormData] = useState({
     name: "",
+    startDate: "", // Add startDate
+    endDate: "", // Add endDate
   });
 
   const [additionalFields, setAdditionalFields] = useState([]);
@@ -17,6 +20,8 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
     if (data) {
       setFormData({
         name: data.name || "",
+        startDate: data.startDate || "", // Initialize startDate
+        endDate: data.endDate || "", // Initialize endDate
       });
       setAdditionalFields(
         Object.entries(data.values || {}).map(([key, value]) => ({
@@ -48,6 +53,10 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
     const newFields = [...additionalFields];
     newFields[index][e.target.name] = e.target.value;
     setAdditionalFields(newFields);
+  };
+
+  const handleDateChange = (name, date) => {
+    setFormData({ ...formData, [name]: date });
   };
 
   const handleSubmit = async () => {
@@ -84,6 +93,32 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
 
         <Form onFinish={handleSubmit}>
           <div className="space-y-4 pt-4">
+            {/* Ngày bắt đầu */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Ngày bắt đầu <span className="text-red-500">(*)</span>
+              </label>
+              <DatePicker
+                value={formData.startDate ? moment(formData.startDate) : null}
+                disabled
+                className="w-full"
+              />
+            </div>
+
+            {/* Ngày kết thúc */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Ngày kết thúc <span className="text-red-500">(*)</span>
+              </label>
+              <DatePicker
+                value={formData.endDate ? moment(formData.endDate) : null}
+                onChange={(date, dateString) =>
+                  handleDateChange("endDate", dateString)
+                }
+                className="w-full"
+              />
+            </div>
+
             {/* Tên tiêu chí */}
             <div className="space-y-2">
               <label className="text-sm font-medium">

@@ -43,11 +43,9 @@ const App = () => {
         console.log("Vai trò hiện tại:", currentRole);
 
         if (currentRole) {
-          // Nếu có current_role, chỉ sử dụng vai trò này
           setUserRoles([currentRole]);
         } else if (roles) {
-          // Nếu không có current_role, sử dụng toàn bộ danh sách roles
-          const parsedRoles = JSON.parse(roles);
+          const parsedRoles = roles ? JSON.parse(roles) : [];
           setUserRoles(
             Array.isArray(parsedRoles) ? parsedRoles : [parsedRoles]
           );

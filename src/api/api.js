@@ -71,10 +71,11 @@ const userApi = {
     }
   },
 
-  updateFormula: async (year, formulaData) => {
+  // Cập nhật công thức theo khoảng thời gian
+  updateFormula: async (startDate, endDate, formulaData) => {
     try {
       const response = await axios.put(
-        `${API_URL}/formulas/${year}`,
+        `${API_URL}/formulas/update-by-date-range?startDate=${startDate}&endDate=${endDate}`,
         formulaData
       );
       console.log("API Response:", response.data);
@@ -85,17 +86,37 @@ const userApi = {
     }
   },
 
-  getAttributeByYear: async (year) => {
+  // Lấy công thức theo khoảng thời gian
+  getFormulaByDateRange: async (startDate, endDate) => {
     try {
-      const response = await axios.get(`${API_URL}/attributes/${year}`);
+      const response = await axios.post(
+        `${API_URL}/formulas/get-by-date-range`,
+        {
+          startDate,
+          endDate,
+        }
+      );
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error fetching attributes:", error);
+      console.error("Error fetching formulas:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
 
+  // Lấy tất cả
+  getAllFormula: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/formulas`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching date ranges:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  // Tạo mới một Attribute
   createAttribute: async (attributeData) => {
     try {
       const response = await axios.post(`${API_URL}/attributes`, attributeData);
@@ -107,10 +128,11 @@ const userApi = {
     }
   },
 
-  updateAttribute: async (year, attributeData) => {
+  // Cập nhật Attribute theo tên
+  updateAttribute: async (name, attributeData) => {
     try {
       const response = await axios.put(
-        `${API_URL}/attributes/${year}`,
+        `${API_URL}/attributes/${name}`,
         attributeData
       );
       console.log("API Response:", response.data);
@@ -121,9 +143,36 @@ const userApi = {
     }
   },
 
-  deleteAttributeByYear: async (year) => {
+  // Lấy tất cả Attribute
+  getAllAttributes: async () => {
     try {
-      const response = await axios.delete(`${API_URL}/attributes/${year}`);
+      const response = await axios.get(`${API_URL}/attributes`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching attributes:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  // Lấy Attribute theo ID
+  getAttributeById: async (id) => {
+    try {
+      const response = await axios.post(`${API_URL}/attributes/id`, { id });
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error fetching attribute by ID:",
+        error.response?.data || error.message
+      );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  // Xóa Attribute theo tên
+  deleteAttributeByName: async (name) => {
+    try {
+      const response = await axios.delete(`${API_URL}/attributes/${name}`);
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
@@ -132,24 +181,16 @@ const userApi = {
     }
   },
 
-  getFormulaByYear: async (year) => {
+  // Xóa công thức theo khoảng thời gian
+  deleteFormulaByDateRange: async (startDate, endDate) => {
     try {
-      const response = await axios.get(`${API_URL}/formulas/${year}`);
+      const response = await axios.delete(
+        `${API_URL}/formulas?startDate=${startDate}&endDate=${endDate}`
+      );
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error fetching formulas:", error);
-      throw error.response?.data || "Lỗi kết nối đến server";
-    }
-  },
-
-  getAllYearsByFormula: async () => {
-    try {
-      const response = await axios.get(`${API_URL}/formulas/years`);
-      console.log("API Response:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error("Error fetching years:", error);
+      console.error("Error deleting formula:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },

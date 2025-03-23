@@ -2,7 +2,15 @@ import { useState, useEffect } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Settings, X } from "lucide-react";
-import { Button, Modal, message, InputNumber, Input } from "antd";
+import {
+  Button,
+  Modal,
+  message,
+  InputNumber,
+  Input,
+  DatePicker,
+  Table,
+} from "antd";
 import { MathJaxContext } from "better-react-mathjax";
 import EditScoringFormulaPage from "./EditScoringFormulaPage";
 import userApi from "../../../api/api";
@@ -212,107 +220,43 @@ const DroppableFormulaArea = ({ formula, setFormula, isEditing }) => {
 
 const ManagementFormulas = () => {
   const [showAddFormulasPopup, setShowAddFormulasPopup] = useState(false);
-  const [selectedData, setSelectedData] = useState(null);
   const [attributes, setAttributes] = useState([]);
-  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [recentFormulas, setRecentFormulas] = useState([]);
   const [currentFormula, setCurrentFormula] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [settingsModalVisible, setSettingsModalVisible] = useState(false);
   const [selectedAttribute, setSelectedAttribute] = useState(null);
-  const [years, setYears] = useState([]);
-  const [newYear, setNewYear] = useState("");
+  const [startDate, setStartDate] = useState(null);
+  const [endDate, setEndDate] = useState(null);
+  const [addAttributeModalVisible, setAddAttributeModalVisible] =
+    useState(false); // State for modal visibility
 
-  const getFormulas = async (year) => {
+  const getFormulas = async (startDate, endDate) => {
     try {
-      const response = await userApi.getFormulaByYear(year);
+      const response = await userApi.getFormulaByDateRange(startDate, endDate);
       console.log("API Response:", response);
       return response;
     } catch (error) {
       console.error("Error fetching formulas:", error);
-      return null; // Return null if there's an error
+      return null;
     }
   };
-
-  const getAttributes = async (year) => {
-    try {
-      const response = await userApi.getAttributeByYear(year);
-      console.log("API Response:", response);
-      return response;
-    } catch (error) {
-      console.error("Error fetching attributes:", error);
-      return []; // Return empty array if there's an error
-    }
-  };
-
-  const getAllYears = async () => {
-    try {
-      const response = await userApi.getAllYearsByFormula();
-      console.log("API Response:", response);
-      return response;
-    } catch (error) {
-      console.error("Error fetching years:", error);
-      return []; // Return empty array if there's an error
-    }
-  };
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const attributesData = await getAttributes(selectedYear);
-        const formulasData = await getFormulas(selectedYear);
-        const yearsData = await getAllYears();
-        setAttributes(
-          Array.isArray(attributesData) ? attributesData : [attributesData]
-        );
-        setRecentFormulas(
-          Array.isArray(formulasData) ? formulasData : [formulasData]
-        ); // Ensure recentFormulas is always an array
-        setCurrentFormula(formulasData?.formula || []); // Initialize with weights from the API
-        setYears(yearsData);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setAttributes([]);
-        setRecentFormulas([]);
-        setCurrentFormula([]);
-        setYears([]);
-      }
-    };
-
-    fetchData();
-  }, [selectedYear]);
-
   const handleSettingsClick = (attribute) => {
     setSelectedAttribute(attribute);
     setSettingsModalVisible(true);
   };
 
-  const handleYearChange = (event) => {
-    setSelectedYear(event.target.value);
-  };
-
-  const handleAddYear = async () => {
-    const year = parseInt(newYear, 10);
-    if (!isNaN(year) && !years.includes(year)) {
-      try {
-        await userApi.addNewYear(year);
-        setYears([...years, year].sort((a, b) => b - a));
-        setSelectedYear(year);
-        setNewYear("");
-        setAttributes([]);
-        setRecentFormulas([]);
-        setCurrentFormula([]);
-        message.success("Thêm năm mới thành công!");
-      } catch (error) {
-        message.error("Lỗi khi thêm năm mới.");
-      }
-    } else {
-      message.error("Năm không hợp lệ hoặc đã tồn tại.");
-    }
-  };
-
   const toggleEditMode = () => {
     setIsEditing(!isEditing);
+    if (!isEditing) {
+      const defaultFormula = recentFormulas.find(
+        (formula) => formula.endDate === null
+      );
+      if (defaultFormula) {
+        setStartDate(defaultFormula.startDate);
+        setEndDate(defaultFormula.endDate);
+      }
+    }
   };
 
   const handleSaveAttribute = (updatedAttribute) => {
@@ -323,8 +267,15 @@ const ManagementFormulas = () => {
     );
   };
 
-  const handleAddAttribute = (newAttribute) => {
-    setAttributes((prevAttributes) => [...prevAttributes, newAttribute]);
+  const handleAddAttribute = async (newAttribute) => {
+    try {
+      const response = await userApi.createAttribute(newAttribute);
+      setAttributes((prevAttributes) => [...prevAttributes, response]);
+      message.success("Thêm thuộc tính thành công!");
+    } catch (error) {
+      console.error("Error adding attribute:", error);
+      message.error("Lỗi khi thêm thuộc tính.");
+    }
   };
 
   const handleSaveFormula = async () => {
@@ -340,28 +291,167 @@ const ManagementFormulas = () => {
     try {
       const formulaData = {
         formula: currentFormula,
+        startDate: new Date().toISOString(), // Set start date to current date
+        endDate: null, // Set end date to null
       };
-      const existingFormula = await getFormulas(selectedYear);
-      let response;
-      if (existingFormula) {
-        response = await userApi.updateFormula(selectedYear, formulaData);
-      } else {
-        response = await userApi.createFormula({
-          year: selectedYear,
-          ...formulaData,
-        });
-      }
+
+      const response = await userApi.createFormula(formulaData);
       console.log("Saved Formula:", response);
       message.success("Lưu công thức thành công!");
-      setRecentFormulas((prevFormulas) =>
-        prevFormulas.map((f) => (f.year === selectedYear ? response : f))
-      );
+      setRecentFormulas((prevFormulas) => [...prevFormulas, response]);
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving formula:", error);
       message.error("Lỗi khi lưu công thức.");
     }
   };
+
+  const formatDate = (isoDate) => {
+    const date = new Date(isoDate);
+    return `${date.getDate().toString().padStart(2, "0")}-${(
+      date.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}-${date.getFullYear()}`;
+  };
+
+  const getAttributeNameById = async (attributeId) => {
+    try {
+      const response = await userApi.getAttributeById(attributeId); // Pass the ID directly
+      console.log("Attribute Name Response:", response);
+      return response.name;
+    } catch (error) {
+      console.error(
+        `Error fetching attribute name for ID ${attributeId}:`,
+        error.response?.data || error.message
+      );
+      return "Unknown";
+    }
+  };
+
+  const attachAttributeNames = async (formulas) => {
+    const updatedFormulas = await Promise.all(
+      formulas.map(async (formula) => {
+        const updatedFormula = await Promise.all(
+          formula.formula.map(async (slot) => {
+            const attributeName = await getAttributeNameById(slot.attribute);
+            return {
+              ...slot,
+              attribute: {
+                _id: slot.attribute,
+                name: attributeName,
+              },
+            };
+          })
+        );
+        return { ...formula, formula: updatedFormula };
+      })
+    );
+    return updatedFormulas;
+  };
+
+  useEffect(() => {
+    const fetchAllFormulas = async () => {
+      try {
+        const response = await userApi.getAllFormula();
+        const formulasWithNames = await attachAttributeNames(response || []);
+        setRecentFormulas(formulasWithNames);
+      } catch (error) {
+        console.error("Error fetching all formulas:", error);
+        setRecentFormulas([]);
+      }
+    };
+
+    fetchAllFormulas();
+  }, []);
+
+  useEffect(() => {
+    const fetchDefaultFormula = async () => {
+      try {
+        const response = await userApi.getAllFormula();
+        const formulasWithNames = await attachAttributeNames(response || []);
+        const defaultFormula = formulasWithNames.find(
+          (formula) => formula.endDate === null
+        );
+        setCurrentFormula(defaultFormula?.formula || []);
+      } catch (error) {
+        console.error("Error fetching default formula:", error);
+        setCurrentFormula([]);
+      }
+    };
+
+    fetchDefaultFormula();
+  }, []);
+
+  useEffect(() => {
+    const fetchAllAttributes = async () => {
+      try {
+        const response = await userApi.getAllAttributes(); // Fetch all attributes
+        setAttributes(response || []);
+      } catch (error) {
+        console.error("Error fetching attributes:", error);
+        setAttributes([]); // Clear attributes on error
+      }
+    };
+
+    fetchAllAttributes();
+  }, []);
+
+  const defaultFormula = recentFormulas.find(
+    (formula) => formula.endDate === null
+  );
+  useEffect(() => {
+    if (defaultFormula) {
+      setStartDate(defaultFormula.startDate);
+      setEndDate(defaultFormula.endDate);
+    }
+  }, [recentFormulas]);
+
+  const columns = [
+    {
+      title: "NGÀY BẮT ĐẦU",
+      dataIndex: "startDate",
+      key: "startDate",
+      render: (text) => formatDate(text),
+    },
+    {
+      title: "NGÀY KẾT THÚC",
+      dataIndex: "endDate",
+      key: "endDate",
+      render: (text) => (text ? formatDate(text) : "Đến nay"),
+    },
+    {
+      title: "CÔNG THỨC",
+      dataIndex: "formula",
+      key: "formula",
+      render: (formula) => (
+        <div className="flex flex-wrap items-center space-x-2">
+          <span className="text-base font-semibold text-cyan-500">
+            Điểm đóng góp =
+          </span>
+          {formula.map((slot, index) => (
+            <div key={index} className="flex items-center space-x-2">
+              <span className="text-sm font-medium">
+                {attributeNames[slot?.attribute?.name] || slot?.attribute?.name}
+              </span>
+              <span className="text-lg font-semibold">×</span>
+              <span className="text-sm font-medium">{slot?.weight}</span>
+              {index < formula.length - 1 && (
+                <span className="text-lg font-semibold">+</span>
+              )}
+            </div>
+          ))}
+        </div>
+      ),
+    },
+  ];
+
+  const dataSource = recentFormulas.map((item, index) => ({
+    key: index,
+    startDate: item.startDate,
+    endDate: item.endDate,
+    formula: item.formula,
+  }));
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -387,99 +477,8 @@ const ManagementFormulas = () => {
               </div>
             </div>
 
-            <div className="self-center w-full max-w-[1563px] px-6 mt-6">
-              <div className="flex justify-end mb-4 gap-2">
-                <select
-                  className="p-2 px-4 border rounded-lg bg-blue-500 text-white hover:bg-blue-600"
-                  value={selectedYear}
-                  onChange={handleYearChange}
-                >
-                  {years.map((year) => (
-                    <option key={year} value={year}>
-                      {year}
-                    </option>
-                  ))}
-                </select>
-                <Input
-                  placeholder="Thêm năm mới"
-                  value={newYear}
-                  onChange={(e) => setNewYear(e.target.value)}
-                  className="w-32"
-                />
-                <Button
-                  className="bg-blue-500 text-white hover:bg-blue-600"
-                  onClick={handleAddYear}
-                >
-                  Thêm năm
-                </Button>
-              </div>
-
+            <div className="self-center w-full max-w-[1563px] px-6 mt-4">
               <div className="grid grid-cols-3 gap-6">
-                {/* Formula Section */}
-                <div className="col-span-2 space-y-6">
-                  <div className="bg-white rounded-xl p-6 shadow-md">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="font-semibold text-gray-700">
-                        CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP
-                      </h2>
-                      <Button
-                        className="bg-blue-500 text-white hover:bg-blue-600"
-                        onClick={isEditing ? handleSaveFormula : toggleEditMode}
-                      >
-                        {isEditing ? "Lưu" : "Chỉnh sửa"}
-                      </Button>
-                    </div>
-                    <DroppableFormulaArea
-                      formula={currentFormula}
-                      setFormula={setCurrentFormula}
-                      isEditing={isEditing}
-                    />
-                  </div>
-                  <div className="bg-white rounded-xl p-6 shadow-md">
-                    <h2 className="font-semibold text-gray-700 mb-4">
-                      CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP GẦN ĐÂY
-                    </h2>
-                    <table className="w-full">
-                      <thead>
-                        <tr className="bg-[#F5F7FB]">
-                          <th className="px-4 py-3 text-left text-gray-700">
-                            NĂM (HỌC KÌ)
-                          </th>
-                          <th className="px-4 py-3 text-left text-gray-700">
-                            CÔNG THỨC
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentFormulas.map(
-                          (item) =>
-                            item && (
-                              <tr key={item.year} className="border-t">
-                                <td className="px-4 py-3">{item.year}</td>
-                                <td className="px-4 py-3 font-mono text-sm">
-                                  <div className="flex flex-wrap gap-1">
-                                    {item.formula.map((f, index) => (
-                                      <span key={f.attribute._id}>
-                                        <strong>
-                                          {attributeNames[f.attribute.name] ||
-                                            f.attribute.name}
-                                        </strong>
-                                        : {f.weight}
-                                        {index < item.formula.length - 1 && (
-                                          <span className="mx-1">+</span>
-                                        )}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </td>
-                              </tr>
-                            )
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
                 {/* Attributes Section */}
                 <div className="bg-white rounded-xl p-6 shadow-md">
                   <div className="flex justify-between items-center mb-6">
@@ -488,7 +487,7 @@ const ManagementFormulas = () => {
                     </h2>
                     <Button
                       className="bg-blue-500 text-white hover:bg-blue-600"
-                      onClick={() => setShowAddFormulasPopup(true)}
+                      onClick={() => setAddAttributeModalVisible(true)}
                     >
                       Thêm
                     </Button>
@@ -506,6 +505,46 @@ const ManagementFormulas = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Formula Section */}
+                <div className="col-span-2 space-y-6">
+                  <div className="bg-white rounded-xl p-6 shadow-md">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="font-semibold text-gray-700">
+                        CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP
+                        {startDate && (
+                          <span className="text-sm text-gray-500 ml-2">
+                            ({formatDate(startDate)} -{" "}
+                            {endDate ? formatDate(endDate) : "Đến nay"})
+                          </span>
+                        )}
+                      </h2>
+                      <Button
+                        className="bg-blue-500 text-white hover:bg-blue-600"
+                        onClick={isEditing ? handleSaveFormula : toggleEditMode}
+                      >
+                        {isEditing ? "Lưu" : "Chỉnh sửa"}
+                      </Button>
+                    </div>
+                    <DroppableFormulaArea
+                      formula={currentFormula}
+                      setFormula={setCurrentFormula}
+                      isEditing={isEditing}
+                    />
+                  </div>
+
+                  <div className="bg-white rounded-xl p-6 shadow-md">
+                    <h2 className="font-semibold text-gray-700 mb-4">
+                      TẤT CẢ CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP QUA CÁC KỲ
+                    </h2>
+                    <Table
+                      columns={columns}
+                      dataSource={dataSource}
+                      scroll={{ x: "max-content" }} // Enable horizontal scrolling
+                      pagination={{ pageSize: 5 }} // Enable pagination with 5 rows per page
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -521,7 +560,7 @@ const ManagementFormulas = () => {
           >
             <AddScoringFormulaPage
               onClose={() => setShowAddFormulasPopup(false)}
-              selectedYear={selectedYear}
+              selectedYear={null}
               onAddAttribute={handleAddAttribute}
             />
           </Modal>
@@ -538,6 +577,22 @@ const ManagementFormulas = () => {
             <EditScoringFormulaPage
               onClose={() => setSettingsModalVisible(false)}
               data={selectedAttribute}
+            />
+          </Modal>
+
+          <Modal
+            title="Thêm thuộc tính"
+            open={addAttributeModalVisible}
+            onCancel={() => setAddAttributeModalVisible(false)}
+            footer={null}
+            centered
+            width={600}
+            closable={false}
+          >
+            <AddScoringFormulaPage
+              onClose={() => setAddAttributeModalVisible(false)}
+              selectedYear={null}
+              onAddAttribute={handleAddAttribute}
             />
           </Modal>
 
