@@ -28,7 +28,6 @@ const LoginPage = () => {
       if (data.roles.length > 1) {
         window.location.href = "/role-selection";
       } else {
-        // Nếu chỉ có một quyền, chuyển hướng đến trang mặc định
         const defaultPath = defaultRoutes[data.roles[0]] || "/home";
         window.location.href = defaultPath;
       }

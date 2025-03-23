@@ -1,4 +1,4 @@
-import { Select, Input, Button, Form, message } from "antd";
+import { Select, Input, Button, Form, message, DatePicker } from "antd";
 import { useState } from "react";
 import { CloseOutlined, PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import userApi from "../../../api/api";
@@ -8,6 +8,8 @@ const { Option } = Select;
 const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
   const [formData, setFormData] = useState({
     name: "",
+    startDate: null,
+    endDate: null,
   });
 
   const [additionalFields, setAdditionalFields] = useState([
@@ -20,6 +22,10 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
 
   const handleSelectChange = (value) => {
     setFormData({ ...formData, name: value });
+  };
+
+  const handleDateChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
   };
 
   const handleAddField = () => {
@@ -39,17 +45,31 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
 
   const handleSubmit = async () => {
     try {
+      if (
+        !formData.startDate ||
+        formData.startDate.isBefore(new Date(), "day")
+      ) {
+        message.error("Ngày bắt đầu phải lớn hơn hoặc bằng ngày hiện tại!");
+        return;
+      }
+
       const values = additionalFields.reduce((acc, field) => {
         if (field.key && field.value) {
           acc[field.key] = parseFloat(field.value);
         }
         return acc;
       }, {});
+
       const attributeData = {
         year: selectedYear,
         name: formData.name,
+        startDate: formData.startDate.format("YYYY-MM-DD"),
+        endDate: formData.endDate
+          ? formData.endDate.format("YYYY-MM-DD")
+          : null,
         values: values,
       };
+
       console.log("Submitting Data:", attributeData); // Log the data being sent
 
       // Create a new attribute
@@ -104,6 +124,30 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
               </Select>
             </div>
 
+            {/* Ngày bắt đầu */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">
+                Ngày bắt đầu <span className="text-red-500">(*)</span>
+              </label>
+              <DatePicker
+                value={formData.startDate}
+                onChange={(date) => handleDateChange("startDate", date)}
+                className="w-full"
+                format="YYYY-MM-DD"
+              />
+            </div>
+
+            {/* Ngày kết thúc */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Ngày kết thúc</label>
+              <DatePicker
+                value={formData.endDate}
+                onChange={(date) => handleDateChange("endDate", date)}
+                className="w-full"
+                format="YYYY-MM-DD"
+              />
+            </div>
+
             {/* Cặp giá trị Thành phần - Hệ số */}
             {additionalFields.map((field, index) => (
               <div key={index} className="space-y-2">
@@ -152,6 +196,8 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
                 onClick={() =>
                   setFormData({
                     name: "",
+                    startDate: null,
+                    endDate: null,
                   })
                 }
               >
