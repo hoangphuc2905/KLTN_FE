@@ -25,6 +25,7 @@ import ManagementFormulas from "./pages/admin/managementScoringformulas/manageme
 import ManagementData from "./pages/admin/managementData/managementDataPage";
 import RoleSelectionPage from "./components/RoleSelectionPage";
 import ErrorPage from "./components/ErrorPage";
+import DetailArticlePage from "./pages/admin/managementArticle/detailArticlePage";
 
 const App = () => {
   const [userRoles, setUserRoles] = useState([]);
@@ -229,6 +230,17 @@ const App = () => {
                   path="/admin/management/ariticle"
                 >
                   <ManagementAriticle />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/ariticle/detail"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/ariticle/detail"
+                >
+                  <DetailArticlePage />
                 </ProtectedRoute>
               }
             />

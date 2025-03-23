@@ -386,7 +386,7 @@ const ManagementUsers = () => {
                 </svg>
               </button>
             ),
-            align: "center",  
+            align: "center",
           },
         ];
 
@@ -400,7 +400,7 @@ const ManagementUsers = () => {
         <Input
           value={filterName}
           onChange={handleSearchByName}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
         />
       </div>
 
@@ -411,7 +411,7 @@ const ManagementUsers = () => {
         <Input
           value={filterId}
           onChange={handleSearchById}
-          className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
         />
       </div>
 
@@ -421,7 +421,7 @@ const ManagementUsers = () => {
           <button
             type="button"
             onClick={() => setShowDepartmentFilter(!showDepartmentFilter)}
-            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
           >
             {filterDepartment.length === 0
               ? "Chọn khoa"
@@ -482,7 +482,7 @@ const ManagementUsers = () => {
           <Select
             value={filterPosition}
             onChange={(value) => setFilterPosition(value)}
-            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
           >
             {uniquePositions.map((position) => (
               <Select.Option key={position} value={position}>
@@ -499,7 +499,7 @@ const ManagementUsers = () => {
           <button
             type="button"
             onClick={() => setShowStatusFilter(!showStatusFilter)}
-            className="px-2 py-1 text-base bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
           >
             {filterStatus.length === 0
               ? "Chọn trạng thái"
