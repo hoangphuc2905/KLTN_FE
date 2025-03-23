@@ -4,11 +4,14 @@ import {
   FaBars,
   FaTimes,
   FaHome,
-  FaNewspaper,
   FaChevronDown,
   FaClipboardList,
   FaTable,
   FaChartBar,
+  FaFileAlt,
+  FaChartPie,
+  FaFileUpload,
+  FaListAlt,
 } from "react-icons/fa";
 import "./Sidebar.scss";
 
@@ -42,7 +45,7 @@ const UserMenu = () => {
           </Link>
 
           <div className="menu-item" onClick={toggleSubMenu}>
-            <FaNewspaper /> <span>Bài Báo</span>
+            <FaFileAlt /> <span>Bài Báo</span>
             <FaChevronDown
               className={`submenu-toggle ${isSubMenuOpen ? "open" : ""}`}
             />
@@ -54,14 +57,14 @@ const UserMenu = () => {
                 className="submenu-item"
                 onClick={toggleMenu}
               >
-                <span>Danh sách bài báo</span>
+                <FaListAlt /> <span>Danh sách bài báo</span>
               </Link>
               <Link
                 to="/add-scientific-paper"
                 className="submenu-item"
                 onClick={toggleMenu}
               >
-                <span>Thêm bài báo</span>
+                <FaFileUpload /> <span>Thêm bài báo</span>
               </Link>
             </div>
           )}
@@ -79,7 +82,7 @@ const UserMenu = () => {
                 className="submenu-item"
                 onClick={toggleMenu}
               >
-                <FaChartBar /> Dạng Biểu Đồ
+                <FaChartPie /> Dạng Biểu Đồ
               </Link>
               <Link
                 to="statistics-table"

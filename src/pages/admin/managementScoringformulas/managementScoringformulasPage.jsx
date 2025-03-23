@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
-import { Settings, X } from "lucide-react";
+import { Settings, X, Filter } from "lucide-react";
 import {
   Button,
   Modal,
@@ -230,6 +230,37 @@ const ManagementFormulas = () => {
   const [endDate, setEndDate] = useState(null);
   const [addAttributeModalVisible, setAddAttributeModalVisible] =
     useState(false); // State for modal visibility
+  const [showFilter, setShowFilter] = useState(false);
+  const [filterStartDate, setFilterStartDate] = useState(null);
+  const [filterEndDate, setFilterEndDate] = useState(null);
+
+  const filterRef = useRef(null);
+
+  const filteredFormulas = recentFormulas.filter((formula) => {
+    const startDateMatch =
+      !filterStartDate || new Date(formula.startDate) >= filterStartDate;
+    const endDateMatch =
+      !filterEndDate ||
+      (formula.endDate && new Date(formula.endDate) <= filterEndDate);
+    return startDateMatch && endDateMatch;
+  });
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showFilter &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setShowFilter(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showFilter]);
 
   const getFormulas = async (startDate, endDate) => {
     try {
@@ -534,12 +565,62 @@ const ManagementFormulas = () => {
                   </div>
 
                   <div className="bg-white rounded-xl p-6 shadow-md">
-                    <h2 className="font-semibold text-gray-700 mb-4">
-                      TẤT CẢ CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP QUA CÁC KỲ
-                    </h2>
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="font-semibold text-gray-700">
+                        TẤT CẢ CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP QUA CÁC KỲ
+                      </h2>
+                      <div className="relative">
+                        <button
+                          className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                          onClick={() => setShowFilter(!showFilter)}
+                        >
+                          <Filter className="w-4 h-4" />
+                          <span className="text-xs">Bộ lọc</span>
+                        </button>
+                        {showFilter && (
+                          <div
+                            ref={filterRef}
+                            className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg right-0"
+                          >
+                            <form className="relative px-4 py-5 bg-white w-[200px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                              <div className="mb-3">
+                                <label className="block text-gray-700 text-xs">
+                                  Ngày bắt đầu:
+                                </label>
+                                <DatePicker
+                                  value={filterStartDate}
+                                  onChange={(date) => setFilterStartDate(date)}
+                                  className="w-full"
+                                />
+                              </div>
+                              <div className="mb-2">
+                                <label className="block text-gray-700 text-xs">
+                                  Ngày kết thúc:
+                                </label>
+                                <DatePicker
+                                  value={filterEndDate}
+                                  onChange={(date) => setFilterEndDate(date)}
+                                  className="w-full"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFilterStartDate(null);
+                                  setFilterEndDate(null);
+                                }}
+                                className="w-full mt-2 bg-blue-500 text-white py-1 rounded-md text-xs"
+                              >
+                                Bỏ lọc tất cả
+                              </button>
+                            </form>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     <Table
                       columns={columns}
-                      dataSource={dataSource}
+                      dataSource={filteredFormulas}
                       scroll={{ x: "max-content" }} // Enable horizontal scrolling
                       pagination={false}
                     />
