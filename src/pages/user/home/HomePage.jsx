@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
@@ -39,6 +39,58 @@ const HomePage = () => {
     },
     {
       id: "3",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "4",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "5",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "6",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "7",
       title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
       author: "Nguyễn Văn B",
       department: "Khoa CNTT",
@@ -123,6 +175,17 @@ const HomePage = () => {
   ];
 
   const [activeTab, setActiveTab] = React.useState("recent");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const indexOfLastPaper = currentPage * itemsPerPage;
+  const indexOfFirstPaper = indexOfLastPaper - itemsPerPage;
+  const currentPapers = researchPapers.slice(
+    indexOfFirstPaper,
+    indexOfLastPaper
+  );
+
+  const totalPages = Math.ceil(researchPapers.length / itemsPerPage);
 
   const displayedPapers =
     activeTab === "recent" ? recentPapers : featuredPapers;
@@ -134,7 +197,7 @@ const HomePage = () => {
           <Header user={user} />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 sticky top-[70px] bg-[#E7ECF0] z-10">
           <div className="flex items-center gap-2 text-gray-600">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -145,16 +208,14 @@ const HomePage = () => {
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">Tìm kiếm</span>
           </div>
-        </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex gap-4 rounded-lg items-center">
-            <select className="p-2 border rounded-lg w-48 text-sm">
+          <div className="flex gap-4 rounded-lg items-center mt-4">
+            <select className="p-2 border rounded-lg w-60 text-sm">
               <option value="">Chọn danh mục</option>
               <option value="cnnt">Công nghệ thông tin</option>
               <option value="hoa-hoc">Hóa học</option>
             </select>
-            <select className="p-2 border rounded-lg w-48 text-sm">
+            <select className="p-2 border rounded-lg w-60 text-sm">
               <option value="">Chọn loại tài liệu</option>
               <option value="luan-van">Luận văn</option>
               <option value="bai-bao">Bài báo</option>
@@ -176,7 +237,7 @@ const HomePage = () => {
           <div className="flex gap-5 max-md:flex-col">
             <section className="w-[71%] max-md:ml-0 max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
-                {researchPapers.map((paper, index) => (
+                {currentPapers.map((paper, index) => (
                   <Link to={`/scientific-paper/${paper.id}`} key={paper.id}>
                     <article
                       key={paper.id}
@@ -194,14 +255,14 @@ const HomePage = () => {
 
                       <div className="grid grid-cols-1 gap-2 w-full">
                         {/* Hàng 1: Tiêu đề + Thông tin lượt xem */}
-                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-fit">
+                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
                           {/* Tiêu đề */}
-                          <h2 className="text-sm font-bold break-words max-w-[100%] w-[500px] line-clamp-2">
+                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
                             {paper.title}
                           </h2>
 
                           {/* Lượt xem + Bình luận */}
-                          <div className="flex flex-col items-center ml-[50px]">
+                          <div className="flex flex-col items-center ml-auto">
                             <div className="flex items-center gap-2 text-orange-500">
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
@@ -220,7 +281,7 @@ const HomePage = () => {
                             </div>
 
                             {/* Ngày đăng */}
-                            <div className="text-xs text-neutral-500 mt-[5%]">
+                            <div className="text-xs text-neutral-500 mt-1">
                               {paper.publishDate}
                             </div>
                           </div>
@@ -232,7 +293,7 @@ const HomePage = () => {
                         </div>
 
                         {/* Hàng 3: Mô tả */}
-                        <p className="text-sm text-neutral-800 break-words max-w-[100%] line-clamp-2">
+                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
                           {paper.description}
                         </p>
 
@@ -245,27 +306,31 @@ const HomePage = () => {
                   </Link>
                 ))}
 
-                <div className="flex gap-6 self-end mt-4 text-xs font-semibold tracking-wide text-slate-500 max-md:mr-2.5">
-                  <div className="basis-auto">Rows per page: 5</div>
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/8e29a0ad94996b532b19cd0e968585b8ceb69861260ed667891dc4df2486e74d?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                    className="object-contain shrink-0 my-auto w-2 aspect-[1.6] fill-slate-500"
-                    alt="Dropdown icon"
-                  />
-                  <div className="flex gap-4 items-start">
-                    <div className="self-stretch">1-2 of 250</div>
-                    <img
-                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/50a83fa7ebc907e098614dc0c26babcadb79777ed3870782579f5c757a43f365?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                      className="object-contain shrink-0 w-1.5 aspect-[0.6] fill-slate-500"
-                      alt="Previous page"
-                    />
-                    <img
-                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/1422d2fb88e649dbd9e98e5e0ae1f3d31fe1cf5c52730537f0c558eb14410c87?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                      className="object-contain shrink-0 w-1.5 aspect-[0.6] fill-slate-500"
-                      alt="Next page"
-                    />
+                {researchPapers.length > itemsPerPage && (
+                  <div className="flex justify-end mt-4">
+                    <button
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      }
+                      disabled={currentPage === 1}
+                    >
+                      Previous
+                    </button>
+                    <span className="px-4 py-2 text-sm">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
+                      onClick={() =>
+                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      }
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                    </button>
                   </div>
-                </div>
+                )}
               </div>
             </section>
 
