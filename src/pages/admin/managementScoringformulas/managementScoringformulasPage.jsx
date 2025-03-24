@@ -17,6 +17,7 @@ import userApi from "../../../api/api";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AddScoringFormulaPage from "./AddScoringFormulaPage";
+import { useNavigate } from "react-router-dom";
 
 const ItemTypes = {
   ATTRIBUTE: "attribute",
@@ -233,6 +234,7 @@ const ManagementFormulas = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState(null);
   const [filterEndDate, setFilterEndDate] = useState(null);
+  const navigate = useNavigate();
 
   const filterRef = useRef(null);
 
@@ -250,7 +252,8 @@ const ManagementFormulas = () => {
       if (
         showFilter &&
         filterRef.current &&
-        !filterRef.current.contains(event.target)
+        !filterRef.current.contains(event.target) &&
+        !event.target.closest(".ant-picker-dropdown")
       ) {
         setShowFilter(false);
       }
@@ -438,6 +441,21 @@ const ManagementFormulas = () => {
     }
   }, [recentFormulas]);
 
+  const handleFilterStartDateChange = (date) => {
+    setFilterStartDate(date);
+    if (filterEndDate && date && date >= filterEndDate) {
+      setFilterEndDate(null);
+    }
+  };
+
+  const handleFilterEndDateChange = (date) => {
+    if (filterStartDate && date && date <= filterStartDate) {
+      message.error("Ngày kết thúc phải sau ngày bắt đầu.");
+      return;
+    }
+    setFilterEndDate(date);
+  };
+
   const columns = [
     {
       title: "NGÀY BẮT ĐẦU",
@@ -500,7 +518,12 @@ const ManagementFormulas = () => {
                   alt="Home Icon"
                   className="w-5 h-5"
                 />
-                <span>Trang chủ</span>
+                <span
+                  onClick={() => navigate("/home")}
+                  className="cursor-pointer hover:text-blue-500"
+                >
+                  Trang chủ
+                </span>
                 <span className="text-gray-400"> &gt; </span>
                 <span className="font-semibold text-sky-900">
                   Quản lý công thức điểm
@@ -589,18 +612,27 @@ const ManagementFormulas = () => {
                                 </label>
                                 <DatePicker
                                   value={filterStartDate}
-                                  onChange={(date) => setFilterStartDate(date)}
-                                  className="w-full"
+                                  onChange={handleFilterStartDateChange}
+                                  className="w-full date-picker"
+                                  getPopupContainer={(triggerNode) =>
+                                    triggerNode.parentNode
+                                  }
                                 />
-                              </div>
-                              <div className="mb-2">
                                 <label className="block text-gray-700 text-xs">
                                   Ngày kết thúc:
                                 </label>
                                 <DatePicker
                                   value={filterEndDate}
-                                  onChange={(date) => setFilterEndDate(date)}
-                                  className="w-full"
+                                  onChange={handleFilterEndDateChange}
+                                  className="w-full date-picker"
+                                  disabledDate={(current) =>
+                                    filterStartDate &&
+                                    current &&
+                                    current <= filterStartDate
+                                  }
+                                  getPopupContainer={(triggerNode) =>
+                                    triggerNode.parentNode
+                                  }
                                 />
                               </div>
                               <button
