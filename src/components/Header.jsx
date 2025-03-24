@@ -55,7 +55,7 @@ const Header = () => {
 
     fetchUserData();
     const role = localStorage.getItem("current_role");
-    const roleInVietnamese = roleMapping[role] || "Không xác định";
+    const roleInVietnamese = roleMapping[role] || "Sinh viên";
     setCurrentRole(roleInVietnamese);
   }, []);
 
@@ -129,7 +129,7 @@ const Header = () => {
               <div className="text-gray-700 font-semibold flex flex-col items-start">
                 <span>{user.full_name}</span>
                 <span className="text-sm text-gray-500">
-                  {currentRole ? `${currentRole}` : "Không xác định"}
+                  {currentRole ? `${currentRole}` : "Sinh viên"}
                 </span>
               </div>
               <FaChevronDown className="text-gray-500 text-xs" />
