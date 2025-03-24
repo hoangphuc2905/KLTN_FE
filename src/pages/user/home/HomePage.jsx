@@ -3,6 +3,7 @@ import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
 import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
+import { Modal, Button, Input } from "antd"; // Import Modal, Button, and Input from antd
 
 const HomePage = () => {
   const user = {
@@ -362,6 +363,14 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState(currentPage);
+  const [isModalVisible, setIsModalVisible] = useState(false); // State for modal visibility
+  const [selectedPaper, setSelectedPaper] = useState(null); // State for selected paper
+  const [archivedPapers, setArchivedPapers] = useState([]); // State for archived papers
+  const [newCategory, setNewCategory] = useState(""); // State for new category
+  const [isAddingCategory, setIsAddingCategory] = useState(false); // State to toggle input field
+  const [selectedCategory, setSelectedCategory] = useState(""); // State for selected category
+  const [categories, setCategories] = useState(["Khoa học", "Sinh học"]); // Initial categories
+
   const itemsPerPage = 10;
 
   const indexOfLastPaper = currentPage * itemsPerPage;
@@ -387,6 +396,34 @@ const HomePage = () => {
   useEffect(() => {
     setInputPage(currentPage);
   }, [currentPage]);
+
+  const showModal = (paper) => {
+    setSelectedPaper(paper);
+    setIsModalVisible(true);
+    setNewCategory(""); // Reset new category state
+    setSelectedCategory(""); // Reset selected category state
+    setIsAddingCategory(false); // Reset adding category state
+  };
+
+  const handleOk = () => {
+    if (selectedPaper) {
+      setArchivedPapers((prev) => [...prev, selectedPaper.id]);
+    }
+    if (newCategory.trim() && !categories.includes(newCategory)) {
+      setCategories([...categories, newCategory]);
+    }
+    setIsModalVisible(false);
+    setNewCategory(""); // Reset new category state
+    setIsAddingCategory(false); // Reset adding category state
+  };
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
+
+  const handleAddCategoryClick = () => {
+    setIsAddingCategory(true);
+  };
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -519,6 +556,23 @@ const HomePage = () => {
                         <div className="text-sm text-sky-900">
                           {paper.department}
                         </div>
+
+                        {/* Ngôi sao thêm vào lưu trữ */}
+                        <div className="flex justify-end">
+                          <img
+                            src={
+                              archivedPapers.includes(paper.id)
+                                ? "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
+                                : "https://cdn-icons-png.flaticon.com/512/1828/1828970.png"
+                            }
+                            alt="Add to Archive"
+                            className="w-5 h-5 cursor-pointer"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              showModal(paper);
+                            }}
+                          />
+                        </div>
                       </div>
                     </article>
                   </Link>
@@ -645,6 +699,54 @@ const HomePage = () => {
         </div>
       </div>
       <Footer />
+
+      {/* Modal for adding to archive */}
+      <Modal
+        title="Thêm vào Lưu trữ"
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        footer={[
+          <Button key="back" onClick={handleCancel}>
+            Hủy
+          </Button>,
+          <Button key="submit" type="primary" onClick={handleOk}>
+            Thêm vào mục lưu
+          </Button>,
+        ]}
+      >
+        <p>Title: {selectedPaper?.title}</p>
+        <p>Các danh mục lưu trữ:</p>
+        <select
+          className="p-2 border rounded-lg w-full text-sm"
+          value={selectedCategory}
+          onChange={(e) => setSelectedCategory(e.target.value)}
+        >
+          <option value="">Chọn danh mục</option>
+          {categories.map((category, index) => (
+            <option key={index} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+        <div className="mt-4">
+          {isAddingCategory ? (
+            <Input
+              placeholder="Nhập tên danh mục mới"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+            />
+          ) : (
+            <Button
+              type="primary"
+              className="mt-2"
+              onClick={handleAddCategoryClick}
+            >
+              Thêm danh mục mới
+            </Button>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };

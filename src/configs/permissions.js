@@ -29,6 +29,7 @@ const permissions = {
     "/statistics-chart",
     "/statistics-point",
     "/notifications",
+    "/storage-scientific-paper",
   ],
   lecturer: [
     "/admin/management/chart",
@@ -47,6 +48,7 @@ const permissions = {
     "/statistics-table",
     "/statistics-point",
     "/notifications",
+    "/storage-scientific-paper",
   ],
   head_of_department: [
     "/admin/management/chart",

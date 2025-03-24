@@ -12,6 +12,7 @@ import {
   FaChartPie,
   FaFileUpload,
   FaListAlt,
+  FaFolderOpen, // Add this import
 } from "react-icons/fa";
 import "./Sidebar.scss";
 
@@ -42,6 +43,14 @@ const UserMenu = () => {
         <nav className="menu-list">
           <Link to="/home" className="menu-item" onClick={toggleMenu}>
             <FaHome /> <span>Trang Chủ</span>
+          </Link>
+
+          <Link
+            to="/storage-scientific-paper"
+            className="menu-item"
+            onClick={toggleMenu}
+          >
+            <FaFolderOpen /> <span>Danh mục lưu trữ</span>
           </Link>
 
           <div className="menu-item" onClick={toggleSubMenu}>
