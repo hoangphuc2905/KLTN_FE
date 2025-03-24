@@ -25,6 +25,7 @@ import ManagementData from "./pages/admin/managementData/managementDataPage";
 import RoleSelectionPage from "./components/RoleSelectionPage";
 import ErrorPage from "./components/ErrorPage";
 import DetailArticlePage from "./pages/admin/managementArticle/detailArticlePage";
+import StorageScientificPage from "./pages/user/storage/StorageScientificPage";
 
 const App = () => {
   const [userRoles, setUserRoles] = useState([]);
@@ -195,6 +196,17 @@ const App = () => {
               element={
                 <ProtectedRoute roles={userRoles} path="/notifications">
                   <NotificationPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/storage-scientific-paper"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/storage-scientific-paper"
+                >
+                  <StorageScientificPage />
                 </ProtectedRoute>
               }
             />
