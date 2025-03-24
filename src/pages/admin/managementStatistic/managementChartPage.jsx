@@ -299,17 +299,24 @@ const Dashboard = () => {
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div className="flex items-center gap-2 text-gray-600">
-            <Home className="w-5 h-5 text-[#00A3FF]" />
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
+              alt="Home Icon"
+              className="w-5 h-5"
+            />
             <span
               onClick={() => navigate("/home")}
               className="cursor-pointer hover:text-blue-500"
             >
               Trang chủ
             </span>
+
             <span className="text-gray-400"> &gt; </span>
-            <span>Thống kê</span>
-            <ChevronRight className="w-4 h-4" />
-            <span className="font-semibold text-[#00A3FF]">Dạng biểu đồ</span>
+            <span className="cursor-pointer hover:text-blue-500">Thống kê</span>
+            <span className="text-gray-400"> &gt; </span>
+            <span className="font-semibold text-sm text-sky-900">
+              Dạng biểu đồ
+            </span>
           </div>
         </div>
 
