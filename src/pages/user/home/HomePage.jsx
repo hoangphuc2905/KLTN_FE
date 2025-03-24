@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
-import { LeftOutlined, RightOutlined } from "@ant-design/icons";
+import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
 
 const HomePage = () => {
   const user = {
@@ -359,8 +359,9 @@ const HomePage = () => {
     },
   ];
 
-  const [activeTab, setActiveTab] = React.useState("recent");
+  const [activeTab, setActiveTab] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
+  const [inputPage, setInputPage] = useState(currentPage);
   const itemsPerPage = 10;
 
   const indexOfLastPaper = currentPage * itemsPerPage;
@@ -375,8 +376,40 @@ const HomePage = () => {
   const displayedPapers =
     activeTab === "recent" ? recentPapers : featuredPapers;
 
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    setInputPage(currentPage);
+  }, [currentPage]);
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
+      <style>
+        {`
+          .custom-scrollbar {
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* Internet Explorer 10+ */
+          }
+
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 0; /* Safari and Chrome */
+          }
+
+          .custom-scrollbar:hover {
+            scrollbar-width: thin; /* Firefox */
+          }
+
+          .custom-scrollbar:hover::-webkit-scrollbar {
+            width: 8px; /* Safari and Chrome */
+          }
+        `}
+      </style>
       <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto">
         <div className="w-full bg-white">
           <Header user={user} />
@@ -493,31 +526,54 @@ const HomePage = () => {
 
                 {researchPapers.length > itemsPerPage && (
                   <div className="flex justify-end mt-4">
-                    <button
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
+                    <StepBackwardOutlined
+                      className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
+                        currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                      }`}
                       onClick={() => {
-                        setCurrentPage((prev) => Math.max(prev - 1, 1));
-                        window.scrollTo(0, 0); // Cuộn lên đầu trang
+                        if (currentPage > 1) {
+                          setCurrentPage((prev) => Math.max(prev - 1, 1));
+                          window.scrollTo(0, 0); // Cuộn lên đầu trang
+                        }
                       }}
-                      disabled={currentPage === 1}
-                    >
-                      <LeftOutlined />
-                    </button>
-                    <span className="px-4 py-2 text-sm">
-                      Page {currentPage} of {totalPages}
-                    </span>
-                    <button
-                      className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
+                    />
+                    <input
+                      type="text"
+                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center"
+                      value={inputPage}
+                      onChange={(e) => setInputPage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          const value = e.target.value;
+                          const page =
+                            value === ""
+                              ? 1
+                              : Math.max(
+                                  1,
+                                  Math.min(totalPages, Number(value))
+                                );
+                          setCurrentPage(page);
+                          setInputPage(page);
+                          window.scrollTo(0, 0); // Scroll to top
+                        }
+                      }}
+                    />
+                    <span className="px-4 py-2 text-sm">/ {totalPages}</span>
+                    <StepForwardOutlined
+                      className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
+                        currentPage === totalPages
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      }`}
                       onClick={() => {
-                        setCurrentPage((prev) =>
-                          Math.min(prev + 1, totalPages)
-                        );
-                        window.scrollTo(0, 0); // Cuộn lên đầu trang
+                        if (currentPage < totalPages) {
+                          setCurrentPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          );
+                          window.scrollTo(0, 0); // Cuộn lên đầu trang
+                        }
                       }}
-                      disabled={currentPage === totalPages}
-                    >
-                      <RightOutlined />
-                    </button>
+                    />
                   </div>
                 )}
               </div>
@@ -549,7 +605,10 @@ const HomePage = () => {
                     </button>
                   </div>
 
-                  <div className="flex gap-4 mt-5">
+                  <div
+                    className="flex gap-4 mt-5 overflow-y-auto max-h-[400px] custom-scrollbar"
+                    ref={scrollRef}
+                  >
                     <div className="max-md:hidden">
                       {displayedPapers.map((paper, index) => (
                         <img
