@@ -4,7 +4,6 @@ import AdminMenu from "./components/AdminMenu";
 import UserMenu from "./components/UserMenu";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotificationPage from "./components/NotificationPage";
-import Search from "./pages/admin/search/page";
 import LoginPage from "./app/auth/login/LoginPage";
 import UserHomePage from "./pages/user/home/HomePage";
 import ProfilePage from "./pages/user/profile/ProfilePage";
@@ -201,14 +200,6 @@ const App = () => {
             />
 
             {/* Admin Routes */}
-            <Route
-              path="/admin/search"
-              element={
-                <ProtectedRoute roles={userRoles} path="/admin/search">
-                  <Search />
-                </ProtectedRoute>
-              }
-            />
             <Route
               path="/admin/management/account"
               element={
