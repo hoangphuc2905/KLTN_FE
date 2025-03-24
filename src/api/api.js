@@ -358,6 +358,35 @@ const userApi = {
     }
   },
 
+  assignRole: async (adminId, lecturerId, newRole) => {
+    try {
+      const response = await axios.post(`${API_URL}/lecturers/assign-role`, {
+        adminId,
+        lecturerId,
+        newRole,
+      });
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error assigning role:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  // deleteRole: async (adminId, lecturerId, role) => {
+  //   try { 
+
+  getAllRoles: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/roles`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   getLecturerById: async (lecturer_id) => {
     try {
       const response = await axios.get(`${API_URL}/lecturers/${lecturer_id}`);

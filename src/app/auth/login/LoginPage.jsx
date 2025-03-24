@@ -17,12 +17,23 @@ const LoginPage = () => {
     try {
       const data = await authApi.login({ user_id, password });
 
+      console.log("Login response:", data);
+
+      const userId = data.userId;
+      const userType = data.userType;
+
+      if (!userId) {
+        throw new Error("User ID is missing in the response");
+      }
+
       localStorage.setItem("token", data.token);
-      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("user_id", userId);
       localStorage.setItem(
         "roles",
         JSON.stringify(Array.isArray(data.roles) ? data.roles : [data.roles])
       );
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("user_type", userType);
       localStorage.setItem("department", data.department);
 
       if (data.roles.length > 1) {
