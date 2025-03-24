@@ -7,7 +7,6 @@ import {
   FaChartBar,
   FaTable,
   FaClipboardList,
-  FaNewspaper,
   FaChevronDown,
   FaUser,
   FaDatabase,

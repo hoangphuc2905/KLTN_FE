@@ -30,13 +30,38 @@ const ManagementUsers = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const navigate = useNavigate();
 
-  const roleOptions = [
-    { label: "Quản trị viên", value: "admin" },
-    { label: "Giảng viên", value: "lecturer" },
-    { label: "Trưởng khoa", value: "head_of_department" },
-    { label: "Phó trưởng khoa", value: "deputy_head_of_department" },
-    { label: "Cán bộ phụ trách khoa", value: "department_in_charge" },
-  ];
+  const [roleOptions, setRoleOptions] = useState([]);
+
+  const roleMapping = {
+    admin: "Quản trị viên",
+    lecturer: "Giảng viên",
+    head_of_department: "Trưởng khoa",
+    deputy_head_of_department: "Phó khoa",
+    department_in_charge: "Cán bộ phụ trách khoa",
+  };
+
+  useEffect(() => {
+    const fetchRoles = async () => {
+      try {
+        const roles = await userApi.getAllRoles();
+        setRoleOptions(
+          roles
+            .filter((role) => role.role_name) // Ensure valid roles
+            .map((role) => ({
+              label: roleMapping[role.role_name] || role.role_name, // Map to Vietnamese
+              value: role.role_name, // Use role_name as value
+            }))
+        );
+      } catch (error) {
+        console.error("Error fetching roles:", error);
+        setRoleOptions([]); // Fallback to an empty array
+      }
+    };
+
+    if (isModalVisible) {
+      fetchRoles();
+    }
+  }, [isModalVisible]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -154,35 +179,91 @@ const ManagementUsers = () => {
     if (selectedUser) {
       try {
         const updatedStatus = newStatus === "Hoạt động";
+
         if (activeTab === "user") {
+          // Update student status
           await userApi.updateStatusStudentById(
             selectedUser.student_id,
             updatedStatus
           );
-          setUsers((prevUsers) =>
-            prevUsers.map((user) =>
-              user.student_id === selectedUser.student_id
-                ? { ...user, isActive: updatedStatus }
-                : user
-            )
-          );
         } else if (activeTab === "lecturer") {
+          // Update lecturer status
           await userApi.updateStatusLecturerById(
             selectedUser.lecturer_id,
             updatedStatus
           );
-          setLecturers((prevLecturers) =>
-            prevLecturers.map((lecturer) =>
-              lecturer.lecturer_id === selectedUser.lecturer_id
-                ? { ...lecturer, isActive: updatedStatus, roles: newRole }
-                : lecturer
-            )
-          );
+
+          const adminId = localStorage.getItem("user_id");
+          if (!adminId) {
+            console.error("Admin ID is missing in localStorage");
+            throw new Error("Admin ID is missing in localStorage");
+          }
+          if (!selectedUser.lecturer_id) {
+            console.error("Lecturer ID is missing");
+            throw new Error("Lecturer ID is missing");
+          }
+          if (newRole.length === 0) {
+            console.error("No roles selected for assignment");
+            throw new Error("No roles selected for assignment");
+          }
+
+          // Assign roles to the lecturer
+          for (const role of newRole) {
+            try {
+              await userApi.assignRole(adminId, selectedUser.lecturer_id, role);
+            } catch (error) {
+              console.error(
+                "Error assigning role:",
+                error.response?.data || error
+              );
+              throw new Error(
+                error.response?.data?.message || "Failed to assign role"
+              );
+            }
+          }
         }
-        message.success("Cập nhật trạng thái thành công!");
+
+        message.success("Cập nhật trạng thái và chức vụ thành công!");
+        // Reload table data
+        const fetchData = async () => {
+          try {
+            const departmentId = localStorage.getItem("department");
+
+            if (userRole === "admin") {
+              const lecturersData = await userApi.getAllLecturers();
+              const students = await userApi.getAllStudents();
+
+              setUsers(students);
+              setLecturers(lecturersData);
+            } else if (
+              [
+                "head_of_department",
+                "deputy_head_of_department",
+                "department_in_charge",
+              ].includes(userRole)
+            ) {
+              if (!departmentId) {
+                console.error("Department ID is missing in localStorage");
+                return;
+              }
+
+              const data = await userApi.getLecturerAndStudentByDepartment(
+                departmentId
+              );
+              setUsers(data.students || []);
+              setLecturers(data.lecturers || []);
+            }
+          } catch (error) {
+            console.error("Error fetching data:", error);
+          }
+        };
+
+        fetchData();
       } catch (error) {
-        console.error("Error updating status:", error);
-        message.error("Cập nhật trạng thái thất bại!");
+        console.error("Error updating status or roles:", error);
+        message.error(
+          error.message || "Cập nhật trạng thái hoặc chức vụ thất bại!"
+        );
       }
     }
     setIsModalVisible(false);
@@ -201,7 +282,56 @@ const ManagementUsers = () => {
   };
 
   const handleRoleChange = (checkedValues) => {
-    setNewRole(checkedValues);
+    // Ensure "Giảng viên" is always selected
+    if (!checkedValues.includes("lecturer")) {
+      checkedValues.push("lecturer");
+    }
+
+    // Enforce a maximum of two roles
+    const allowedRoles = [
+      "head_of_department",
+      "deputy_head_of_department",
+      "department_in_charge",
+      "admin",
+    ];
+
+    const selectedAllowedRole = checkedValues.find((role) =>
+      allowedRoles.includes(role)
+    );
+
+    // Role-based restrictions
+    if (userRole === "head_of_department" && selectedAllowedRole === "admin") {
+      message.error("Trưởng khoa không được sửa quyền của quản trị viên.");
+      return;
+    }
+    if (
+      userRole === "deputy_head_of_department" &&
+      ["head_of_department", "admin"].includes(selectedAllowedRole)
+    ) {
+      message.error(
+        "Phó khoa không được sửa quyền của trưởng khoa hoặc quản trị viên."
+      );
+      return;
+    }
+    if (
+      userRole === "department_in_charge" &&
+      ["head_of_department", "deputy_head_of_department", "admin"].includes(
+        selectedAllowedRole
+      )
+    ) {
+      message.error(
+        "Cán bộ phụ trách không được sửa quyền của trưởng khoa, phó khoa hoặc quản trị viên."
+      );
+      return;
+    }
+
+    if (selectedAllowedRole) {
+      // Keep only "lecturer" and the newly selected role
+      setNewRole(["lecturer", selectedAllowedRole]);
+    } else {
+      // If no additional role is selected, keep only "lecturer"
+      setNewRole(["lecturer"]);
+    }
   };
 
   const displayedUsers = activeTab === "user" ? users : lecturers;
@@ -222,7 +352,7 @@ const ManagementUsers = () => {
   ];
 
   const uniqueStatuses = ["Hoạt động", "Không hoạt động"];
-  const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
+  // const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
 
   const filteredUsers = displayedUsers.filter((user) => {
     const userDepartmentId =
@@ -250,14 +380,6 @@ const ManagementUsers = () => {
     Egineer: "Kỹ sư",
     Professor: "Giáo sư",
     Ossociate_Professor: "Phó giáo sư",
-  };
-
-  const roleMapping = {
-    admin: "Quản trị viên",
-    lecturer: "Giảng viên",
-    head_of_department: "Trưởng khoa",
-    deputy_head_of_department: "Phó trưởng khoa",
-    department_in_charge: "Cán bộ phụ trách khoa",
   };
 
   const columns =
@@ -403,25 +525,43 @@ const ManagementUsers = () => {
           {
             title: "CHỈNH SỬA",
             key: "edit",
-            render: (text, record) => (
-              <button
-                className="text-blue-500"
-                onClick={() => handleEditClick(record)}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
+            render: (text, record) => {
+              const isHeadOfDepartment = record.roles.some(
+                (role) => role.role_name === "head_of_department"
+              );
+              const isDeputyHeadOfDepartment = record.roles.some(
+                (role) => role.role_name === "deputy_head_of_department"
+              );
+
+              if (
+                (userRole === "deputy_head_of_department" &&
+                  isHeadOfDepartment) ||
+                (userRole === "department_in_charge" &&
+                  (isHeadOfDepartment || isDeputyHeadOfDepartment))
+              ) {
+                return null; // Hide the button
+              }
+
+              return (
+                <button
+                  className="text-blue-500"
+                  onClick={() => handleEditClick(record)}
                 >
-                  <path
-                    d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
-            ),
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 20 20"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+                      fill="currentColor"
+                    />
+                  </svg>
+                </button>
+              );
+            },
             align: "center",
           },
         ];
@@ -712,7 +852,10 @@ const ManagementUsers = () => {
           <div className="mb-3">
             <label className="block text-gray-700 text-sm">Chức vụ:</label>
             <Checkbox.Group
-              options={roleOptions}
+              options={roleOptions.map((role) => ({
+                ...role,
+                key: role.value, // Add a unique key for each role
+              }))}
               value={newRole}
               onChange={handleRoleChange}
               className="flex flex-col gap-2"
