@@ -201,7 +201,7 @@ const ManagementAriticle = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusFilterRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
+  const itemsPerPage = 10;
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);

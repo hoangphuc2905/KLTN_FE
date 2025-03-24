@@ -15,6 +15,7 @@ const permissions = {
     "/update-profile",
     "/work-process",
     "/notifications",
+    "/scientific-paper/:id",
   ],
   Student: [
     "/home",

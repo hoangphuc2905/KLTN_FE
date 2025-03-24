@@ -654,7 +654,7 @@ const ManagementFormulas = () => {
                       columns={columns}
                       dataSource={filteredFormulas}
                       scroll={{ x: "max-content" }} // Enable horizontal scrolling
-                      pagination={false}
+                      pagination={{ pageSize: 5 }} // Enable pagination with 5 rows per page
                     />
                   </div>
                 </div>

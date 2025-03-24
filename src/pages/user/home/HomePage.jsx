@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
+import { LeftOutlined, RightOutlined } from "@ant-design/icons";
 
 const HomePage = () => {
   const user = {
@@ -91,6 +92,190 @@ const HomePage = () => {
     },
     {
       id: "7",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "8",
+      title:
+        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
+      author: "Đoàn Văn Đạt",
+      department: "Khoa CNHH",
+      publishDate: "20/02/2025",
+      description:
+        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 100,
+      commentCount: 27,
+    },
+    {
+      id: "9",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "10",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "11",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "12",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "13",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "14",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "15",
+      title:
+        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
+      author: "Đoàn Văn Đạt",
+      department: "Khoa CNHH",
+      publishDate: "20/02/2025",
+      description:
+        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 100,
+      commentCount: 27,
+    },
+    {
+      id: "16",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "17",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "18",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "19",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "20",
+      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
+      author: "Nguyễn Văn B",
+      department: "Khoa CNTT",
+      publishDate: "15/01/2025",
+      description:
+        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
+      thumbnailUrl:
+        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
+      viewCount: 150,
+      commentCount: 35,
+    },
+    {
+      id: "21",
       title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
       author: "Nguyễn Văn B",
       department: "Khoa CNTT",
@@ -192,12 +377,12 @@ const HomePage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto">
         <div className="w-full bg-white">
           <Header user={user} />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4 sticky top-[70px] bg-[#E7ECF0] z-10">
+        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-3 bg-[#E7ECF0] z-10">
           <div className="flex items-center gap-2 text-gray-600">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -209,7 +394,7 @@ const HomePage = () => {
             <span className="font-semibold text-sky-900">Tìm kiếm</span>
           </div>
 
-          <div className="flex gap-4 rounded-lg items-center mt-4">
+          <div className="flex gap-4 rounded-lg items-center mt-4 mb-3">
             <select className="p-2 border rounded-lg w-60 text-sm">
               <option value="">Chọn danh mục</option>
               <option value="cnnt">Công nghệ thông tin</option>
@@ -310,87 +495,93 @@ const HomePage = () => {
                   <div className="flex justify-end mt-4">
                     <button
                       className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.max(prev - 1, 1))
-                      }
+                      onClick={() => {
+                        setCurrentPage((prev) => Math.max(prev - 1, 1));
+                        window.scrollTo(0, 0); // Cuộn lên đầu trang
+                      }}
                       disabled={currentPage === 1}
                     >
-                      Previous
+                      <LeftOutlined />
                     </button>
                     <span className="px-4 py-2 text-sm">
                       Page {currentPage} of {totalPages}
                     </span>
                     <button
                       className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm"
-                      onClick={() =>
-                        setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                      }
+                      onClick={() => {
+                        setCurrentPage((prev) =>
+                          Math.min(prev + 1, totalPages)
+                        );
+                        window.scrollTo(0, 0); // Cuộn lên đầu trang
+                      }}
                       disabled={currentPage === totalPages}
                     >
-                      Next
+                      <RightOutlined />
                     </button>
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
-              <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl max-md:px-5 max-md:mt-4 max-md:max-w-full">
-                <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
-                  <button
-                    className={`px-4 pt-1.5 pb-3.5 rounded-lg ${
-                      activeTab === "recent"
-                        ? "text-white bg-sky-500"
-                        : "bg-white text-neutral-500"
-                    }`}
-                    onClick={() => setActiveTab("recent")}
-                  >
-                    Bài nghiên cứu mới đăng
-                  </button>
-                  <button
-                    className={`px-1.5 pt-1 pb-3.5 rounded-lg ${
-                      activeTab === "featured"
-                        ? "text-white bg-sky-500"
-                        : "bg-white text-neutral-500"
-                    }`}
-                    onClick={() => setActiveTab("featured")}
-                  >
-                    Bài nghiên cứu nổi bật
-                  </button>
-                </div>
-
-                <div className="flex gap-4 mt-5">
-                  <div className="max-md:hidden">
-                    {displayedPapers.map((paper, index) => (
-                      <img
-                        key={index}
-                        src={paper.thumbnailUrl}
-                        className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
-                          index > 0 ? "mt-5" : ""
-                        }`}
-                        alt={paper.title}
-                      />
-                    ))}
+            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
+              <section className="sticky top-[195px] z-9">
+                <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl max-md:px-5 max-md:mt-4 max-md:max-w-full">
+                  <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
+                    <button
+                      className={`px-4 pt-1.5 pb-3.5 rounded-lg ${
+                        activeTab === "recent"
+                          ? "text-white bg-sky-500"
+                          : "bg-white text-neutral-500"
+                      }`}
+                      onClick={() => setActiveTab("recent")}
+                    >
+                      Bài nghiên cứu mới đăng
+                    </button>
+                    <button
+                      className={`px-1.5 pt-1 pb-3.5 rounded-lg ${
+                        activeTab === "featured"
+                          ? "text-white bg-sky-500"
+                          : "bg-white text-neutral-500"
+                      }`}
+                      onClick={() => setActiveTab("featured")}
+                    >
+                      Bài nghiên cứu nổi bật
+                    </button>
                   </div>
 
-                  <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
-                    {displayedPapers.map((paper, index) => (
-                      <React.Fragment key={index}>
-                        <h3
-                          className={`self-stretch text-sm font-bold tracking-tight leading-4 text-blue-950 ${
-                            index > 0 ? "mt-8" : ""
+                  <div className="flex gap-4 mt-5">
+                    <div className="max-md:hidden">
+                      {displayedPapers.map((paper, index) => (
+                        <img
+                          key={index}
+                          src={paper.thumbnailUrl}
+                          className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
+                            index > 0 ? "mt-5" : ""
                           }`}
-                        >
-                          {paper.title}
-                        </h3>
-                        <div className="mt-3">{paper.author}</div>
-                        <div className="mt-6">{paper.department}</div>
-                      </React.Fragment>
-                    ))}
+                          alt={paper.title}
+                        />
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
+                      {displayedPapers.map((paper, index) => (
+                        <React.Fragment key={index}>
+                          <h3
+                            className={`self-stretch text-sm font-bold tracking-tight leading-4 text-blue-950 ${
+                              index > 0 ? "mt-8" : ""
+                            }`}
+                          >
+                            {paper.title}
+                          </h3>
+                          <div className="mt-3">{paper.author}</div>
+                          <div className="mt-6">{paper.department}</div>
+                        </React.Fragment>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </aside>
-            </section>
+                </aside>
+              </section>
+            </div>
           </div>
         </div>
       </div>
