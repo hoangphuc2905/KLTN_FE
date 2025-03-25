@@ -1,8 +1,19 @@
-import { Button, Input, Select, DatePicker, InputNumber, message } from "antd";
+import {
+  Button,
+  Input,
+  Select,
+  DatePicker,
+  InputNumber,
+  message,
+  Modal,
+  Tabs,
+  Upload,
+} from "antd";
 import {
   CloseCircleOutlined,
   MinusOutlined,
   PlusOutlined,
+  UploadOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import { useEffect, useState } from "react";
@@ -12,6 +23,7 @@ import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 
 const { Option } = Select;
+const { TabPane } = Tabs;
 
 const AddScientificPaperPage = () => {
   const [authors, setAuthors] = useState([
@@ -22,6 +34,10 @@ const AddScientificPaperPage = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [paperTypes, setPaperTypes] = useState([]);
   const [paperGroups, setPaperGroups] = useState([]);
+  const [isIconModalVisible, setIsIconModalVisible] = useState(false); // State for icon modal visibility
+  const [link, setLink] = useState(""); // State for link input
+  const [uploadedImage, setUploadedImage] = useState(null); // State for uploaded image
+  const [isHelpModalVisible, setIsHelpModalVisible] = useState(false); // State for help modal visibility
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -129,6 +145,43 @@ const AddScientificPaperPage = () => {
     message.success("Lưu thành công!");
   };
 
+  const showIconModal = () => {
+    setIsIconModalVisible(true);
+  };
+
+  const handleIconModalOk = () => {
+    setIsIconModalVisible(false);
+  };
+
+  const handleIconModalCancel = () => {
+    setIsIconModalVisible(false);
+  };
+
+  const handleLinkChange = (e) => {
+    setLink(e.target.value);
+  };
+
+  const handleImageUpload = (info) => {
+    if (info.file.status === "done") {
+      setUploadedImage(info.file.originFileObj);
+      message.success(`${info.file.name} file uploaded successfully`);
+    } else if (info.file.status === "error") {
+      message.error(`${info.file.name} file upload failed.`);
+    }
+  };
+
+  const showHelpModal = () => {
+    setIsHelpModalVisible(true);
+  };
+
+  const handleHelpModalOk = () => {
+    setIsHelpModalVisible(false);
+  };
+
+  const handleHelpModalCancel = () => {
+    setIsHelpModalVisible(false);
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <Header />
@@ -156,7 +209,14 @@ const AddScientificPaperPage = () => {
         <div className="self-center w-full max-w-[1563px] px-4 mt-4">
           <div className="flex gap-4">
             {/* Left Column */}
-            <div className="w-1/2">
+            <div className="w-1/2 relative">
+              {/* Icon */}
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/16921/16921785.png"
+                alt="AI Technology Icon"
+                className="absolute top-0 right-0 w-5 h-5 m-3 cursor-pointer"
+                onClick={showIconModal}
+              />
               {/* Khối "Nhập thông tin" */}
               <section className="flex flex-col bg-white rounded-lg p-4 mb-4">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4 pl-[210px]">
@@ -273,6 +333,9 @@ const AddScientificPaperPage = () => {
                       placeholder="Tập / quyển (nếu có)"
                     />
                   </div>
+                </div>
+                <div className="mt-4 ml-3">
+                  <TextArea placeholder="Từ khóa" rows={1} />
                 </div>
 
                 {/* Lưu ý */}
@@ -405,6 +468,85 @@ const AddScientificPaperPage = () => {
         </div>
       </div>
       <Footer />
+
+      {/* Modal for icon click */}
+      <Modal
+        title="Sử dụng AI để nhận diện thông tin"
+        visible={isIconModalVisible}
+        onOk={handleIconModalOk}
+        onCancel={handleIconModalCancel}
+        footer={[
+          <Button key="confirm" type="primary" onClick={handleIconModalOk}>
+            Xác nhận
+          </Button>,
+        ]}
+      >
+        <div className="relative">
+          <Tabs defaultActiveKey="1">
+            <TabPane tab="Upload hình ảnh" key="1">
+              <Upload
+                name="image"
+                listType="picture"
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    setUploadedImage(event.target.result);
+                  };
+                  reader.readAsDataURL(file);
+                  return false; // Prevent upload
+                }}
+              >
+                <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
+              </Upload>
+              {uploadedImage && (
+                <img
+                  src={uploadedImage}
+                  alt="Uploaded"
+                  style={{ marginTop: 16, width: "100%" }}
+                />
+              )}
+              <div className="mt-4 text-xs text-red-700">
+                <span className="font-bold">LƯU Ý:</span> Hệ thống chỉ hỗ trợ
+                file hình ảnh có định dạng JPG, PNG và kích thước nhỏ hơn 5MB.
+              </div>
+            </TabPane>
+            <TabPane tab="Nhập link" key="2">
+              <Input
+                placeholder="Nhập link"
+                value={link}
+                onChange={handleLinkChange}
+              />
+              <div className="mt-4 text-xs text-red-700">
+                <span className="font-bold">LƯU Ý:</span> Hệ thống chỉ hỗ trợ
+                khi bạn truyền, nhập đúng đường dẫn bài nghiên cứu.
+              </div>
+            </TabPane>
+          </Tabs>
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/3409/3409542.png"
+            alt="Help Icon"
+            className="absolute top-0 right-0 w-6 h-6 m-2 cursor-pointer"
+            onClick={showHelpModal}
+          />
+        </div>
+      </Modal>
+
+      <Modal
+        title="Hướng dẫn"
+        visible={isHelpModalVisible}
+        onOk={handleHelpModalOk}
+        onCancel={handleHelpModalCancel}
+        footer={[
+          <Button key="confirm" type="primary" onClick={handleHelpModalOk}>
+            Đóng
+          </Button>,
+        ]}
+      >
+        <p>Đây là hướng dẫn sử dụng hệ thống.</p>
+        <p>Vui lòng làm theo các bước sau để hoàn thành việc nhập thông tin.</p>
+        {/* Add more instructions as needed */}
+      </Modal>
     </div>
   );
 };
