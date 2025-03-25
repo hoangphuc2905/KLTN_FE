@@ -518,13 +518,15 @@ const HomePage = () => {
 
                           {/* Lượt xem + Bình luận */}
                           <div className="flex flex-col items-center ml-auto">
-                            <div className="flex items-center gap-2 text-orange-500">
+                            <div className="flex items-center gap-2">
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
                                 className="object-contain w-4 aspect-square"
                                 alt="Views icon"
                               />
-                              <div className="text-xs">{paper.viewCount}</div>
+                              <div className="text-xs text-orange-500">
+                                {paper.viewCount}
+                              </div>
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
                                 className="object-contain w-4 aspect-[1.2]"

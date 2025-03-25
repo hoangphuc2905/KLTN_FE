@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
-import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
-import { Modal, Button, Input } from "antd";
+import {
+  StepBackwardOutlined,
+  StepForwardOutlined,
+  MoreOutlined,
+} from "@ant-design/icons";
+import { Modal, Button, Input, Dropdown, Menu } from "antd";
 import { useSwipeable } from "react-swipeable";
 
 const StorageScientificPage = () => {
@@ -56,7 +60,8 @@ const StorageScientificPage = () => {
     },
     {
       id: "4",
-      title: "Phát triển hệ thống điều khiển tự động",
+      title:
+        "Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động",
       author: "Lê Văn D",
       department: "Kỹ thuật",
       publishDate: "05/04/2025",
@@ -199,7 +204,6 @@ const StorageScientificPage = () => {
       commentCount: 35,
     },
   ];
-
   const initialCategories = ["Khoa học", "Kỹ thuật"];
   const [categories, setCategories] = useState(initialCategories);
   const [selectedCategory, setSelectedCategory] = useState("");
@@ -265,19 +269,18 @@ const StorageScientificPage = () => {
     });
   };
 
-  const handleMouseEnter = (event) => {
-    const element = event.target.closest(".swipeable");
-    if (element) {
-      element.style.transform = "translateX(-100px)";
+  const handleMenuClick = (e, paperId) => {
+    e.domEvent.stopPropagation(); // Prevent event propagation
+    if (e.key === "1") {
+      handleDelete(paperId); // Call handleDelete to remove the paper
     }
   };
 
-  const handleMouseLeave = (event) => {
-    const element = event.target.closest(".swipeable");
-    if (element) {
-      element.style.transform = "translateX(0)";
-    }
-  };
+  const menu = (paperId) => (
+    <Menu onClick={(e) => handleMenuClick(e, paperId)}>
+      <Menu.Item key="1">Hủy lưu</Menu.Item>
+    </Menu>
+  );
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -377,21 +380,12 @@ const StorageScientificPage = () => {
                       index > 0 ? "mt-3" : ""
                     }`}
                     style={{ transition: "transform 0.3s ease" }}
-                    onClick={() => navigate(`/scientific-paper/${paper.id}`)} // Add onClick event
-                    onMouseEnter={handleMouseEnter} // Add onMouseEnter event
-                    onMouseLeave={handleMouseLeave} // Add onMouseLeave event
+                    onClick={(e) => {
+                      if (!e.target.closest(".three-dots-icon")) {
+                        navigate(`/scientific-paper/${paper.id}`);
+                      }
+                    }} // Modify onClick event
                   >
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent parent div click event
-                        handleDelete(paper.id);
-                      }}
-                      className="absolute right-0 top-0 bottom-0 bg-red-500 text-white px-4 py-2 rounded-l-xl transition-transform duration-200"
-                      style={{ transform: "translateX(100%)" }}
-                    >
-                      Hủy lưu
-                    </button>
-
                     <div className="flex justify-center w-fit">
                       <img
                         src={paper.thumbnailUrl}
@@ -404,19 +398,21 @@ const StorageScientificPage = () => {
                       {/* Hàng 1: Tiêu đề + Thông tin lượt xem */}
                       <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
                         {/* Tiêu đề */}
-                        <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
+                        <h2 className="text-sm font-bold break-words max-w-[900px] line-clamp-2">
                           {paper.title}
                         </h2>
 
                         {/* Lượt xem + Bình luận */}
                         <div className="flex flex-col items-center ml-auto">
-                          <div className="flex items-center gap-2 text-orange-500">
+                          <div className="flex items-center gap-2">
                             <img
                               src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
                               className="object-contain w-4 aspect-square"
                               alt="Views icon"
                             />
-                            <div className="text-xs">{paper.viewCount}</div>
+                            <div className="text-xs text-orange-500">
+                              {paper.viewCount}
+                            </div>
                             <img
                               src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
                               className="object-contain w-4 aspect-[1.2]"
@@ -445,6 +441,15 @@ const StorageScientificPage = () => {
                         {paper.department}
                       </div>
                     </div>
+
+                    {/* Three dots icon with menu */}
+                    <Dropdown overlay={menu(paper.id)} trigger={["click"]}>
+                      <MoreOutlined
+                        className="absolute top-2 right-2 text-lg cursor-pointer three-dots-icon" // Add className
+                        style={{ fontSize: "16px", right: "1px" }} // Adjust the size here
+                        onClick={(e) => e.stopPropagation()} // Prevent event propagation
+                      />
+                    </Dropdown>
                   </div>
                 ))}
 
