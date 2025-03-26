@@ -432,6 +432,19 @@ const userApi = {
     }
   },
 
+  getScientificPapersByAuthorId: async (user_id) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/author/${user_id}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   getAuthorsByPaperId: async (paper_id) => {
     try {
       const response = await axios.get(
