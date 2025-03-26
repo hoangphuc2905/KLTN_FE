@@ -3,10 +3,12 @@ import { Download, Eye, MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
 import { useParams } from "react-router-dom"; // Import useParams
+import { useNavigate } from "react-router-dom";
 
 const ScientificPaperDetailPage = () => {
   const { id } = useParams(); // Extract the _id from the URL
   const [paper, setPaper] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchPaper = async () => {
@@ -89,7 +91,12 @@ const ScientificPaperDetailPage = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
               Chi tiết bài báo nghiên cứu khoa học
@@ -107,7 +114,7 @@ const ScientificPaperDetailPage = () => {
                     <img
                       src={paper.cover_image}
                       alt="Form illustration"
-                      className="w-[180px] h-[200px] max-w-[180px] max-h-[250px] pl-4"
+                      className="w-[160px] h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
                     />
 
                     <button className="flex items-center gap-2 bg-[#00A3FF] text-white px-4 py-2 rounded-lg">
@@ -119,10 +126,10 @@ const ScientificPaperDetailPage = () => {
                   <div className="flex-1">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h1 className="text-xl font-bold text-[#2B3674] mb-4">
+                        <h1 className="text-xl font-bold text-sky-900 mb-4">
                           {paper.title || "Không có tiêu đề"}
                         </h1>
-                        <p className="text-gray-600 mb-4 text-sm">
+                        <p className="text-gray-600 mb-4 text-sm w-[96%] text-justify">
                           {paper.description || "Không có mô tả"}
                         </p>
                         <div className="grid grid-cols-2 gap-4 mt-6">
@@ -283,7 +290,7 @@ const ScientificPaperDetailPage = () => {
 
         {/* Related Papers */}
         <div className="self-center w-full max-w-[1563px] px-6 mt-6">
-          <h2 className="text-lg font-semibold text-[#2B3674] mb-4">
+          <h2 className="text-lg font-semibold text-sky-900 mb-4">
             Các bài nghiên cứu liên quan
           </h2>
           <div className="space-y-4">
@@ -296,24 +303,34 @@ const ScientificPaperDetailPage = () => {
                     className="w-[100px] h-[150px] object-cover rounded-lg"
                   />
                   <div className="flex-1">
-                    <h3 className="font-medium text-[#2B3674] mb-2">
+                    <h3 className="font-medium text-sky-900 mb-2">
                       {paper.title}
                     </h3>
                     <p className="text-sm text-gray-600 mb-2">{paper.author}</p>
                     <p className="text-sm text-gray-600 mb-4">
                       {paper.description}
                     </p>
-                    <p className="text-sm text-[#00A3FF]">{paper.department}</p>
+                    <p className="text-sm  text-sky-900">{paper.department}</p>
                   </div>
                   <div className="flex flex-col items-end justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1">
-                        <Eye className="w-4 h-4 text-[#00A3FF]" />
-                        <span className="text-sm">{paper.views}</span>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                        className="object-contain w-4 aspect-square"
+                        alt="Views icon"
+                      />
+                      <div className="text-xs text-orange-500">
+                        {typeof paper.views === "number" ? paper.views : 0}
                       </div>
-                      <div className="flex items-center gap-1">
-                        <MessageCircle className="w-4 h-4 text-[#00A3FF]" />
-                        <span className="text-sm">{paper.comments}</span>
+                      <img
+                        src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                        className="object-contain w-4 aspect-[1.2]"
+                        alt="Downloads icon"
+                      />
+                      <div className="text-xs">
+                        {typeof paper.downloads === "number"
+                          ? paper.downloads
+                          : 0}
                       </div>
                     </div>
                     <p className="text-sm text-gray-500">

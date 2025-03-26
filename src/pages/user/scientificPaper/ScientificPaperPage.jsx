@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import userApi from "../../../api/api";
 
 const ScientificPaperPage = () => {
-  const [papers, setPapers] = useState([]); // Ensure papers is initialized as an empty array
+  const [papers, setPapers] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnFilter, setShowColumnFilter] = useState(false);
