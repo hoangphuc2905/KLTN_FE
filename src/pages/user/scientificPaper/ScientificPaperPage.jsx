@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Select, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
+import { Input, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
+import userApi from "../../../api/api";
 
 const ScientificPaperPage = () => {
+  const [papers, setPapers] = useState([]);
   const [activeTab, setActiveTab] = useState("all");
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnFilter, setShowColumnFilter] = useState(false);
@@ -104,24 +106,54 @@ const ScientificPaperPage = () => {
     showPaperTypeFilter,
   ]);
 
+  useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        const user_id = localStorage.getItem("user_id");
+        if (!user_id) {
+          console.error("Missing user_id");
+          return;
+        }
+        const response = await userApi.getScientificPapersByAuthorId(user_id);
+        console.log("Full API Response:", response); // Log the full response for debugging
+
+        if (Array.isArray(response)) {
+          console.log("API Response is an array:", response); // Log the array response
+          setPapers(response); // Directly set the response as papers
+        } else {
+          console.error("Unexpected API response structure:", response);
+          setPapers([]); // Fallback to an empty array
+        }
+      } catch (error) {
+        console.error("Error fetching scientific papers:", error);
+        setPapers([]); // Fallback to an empty array on error
+      }
+    };
+
+    fetchPapers();
+  }, []);
+
   const navigate = useNavigate();
   const uniquePaperTypes = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.paperType)),
+    ...new Set((papers || []).map((paper) => paper.paperType)), // Add fallback to empty array
   ];
   const uniqueGroups = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.group)),
+    ...new Set((papers || []).map((paper) => paper.group)),
   ];
-  const uniqueRoles = ["Tất cả", ...new Set(papers.map((paper) => paper.role))];
+  const uniqueRoles = [
+    "Tất cả",
+    ...new Set((papers || []).map((paper) => paper.role)),
+  ];
   const uniqueInstitutions = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.institution)),
+    ...new Set((papers || []).map((paper) => paper.institution)),
   ];
   const uniqueStatuses = ["Tất cả", "Đã duyệt", "Đang chờ", "Từ chối"];
 
-  const filteredPapers = papers.filter((paper) => {
-    const authorCount = parseInt(paper.authorCount.split(" ")[0]);
+  const filteredPapers = (papers || []).filter((paper) => {
+    const authorCount = parseInt(paper.authorCount?.split(" ")[0] || 0); // Handle undefined authorCount
     return (
       (filterPaperType.includes("Tất cả") ||
         filterPaperType.includes(paper.paperType)) &&
@@ -161,39 +193,41 @@ const ScientificPaperPage = () => {
     },
     {
       title: "LOẠI BÀI BÁO",
-      dataIndex: "paperType",
+      dataIndex: "article_type", // Truy cập vào article_type
       key: "paperType",
-      sorter: (a, b) => a.paperType.localeCompare(b.paperType),
+      sorter: (a, b) =>
+        a.article_type?.type_name.localeCompare(b.article_type?.type_name),
       sortOrder: sortedInfo.columnKey === "paperType" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (paperType) => (
-        <Tooltip placement="topLeft" title={paperType}>
-          {paperType}
+      render: (article_type) => (
+        <Tooltip placement="topLeft" title={article_type?.type_name}>
+          {article_type?.type_name || "Không có dữ liệu"}
         </Tooltip>
       ),
       width: 150,
     },
     {
       title: "THUỘC NHÓM",
-      dataIndex: "group",
+      dataIndex: "article_group", // Truy cập vào article_group
       key: "group",
-      sorter: (a, b) => a.group.localeCompare(b.group),
+      sorter: (a, b) =>
+        a.article_group?.group_name.localeCompare(b.article_group?.group_name),
       sortOrder: sortedInfo.columnKey === "group" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (group) => (
-        <Tooltip placement="topLeft" title={group}>
-          {group}
+      render: (article_group) => (
+        <Tooltip placement="topLeft" title={article_group?.group_name}>
+          {article_group?.group_name || "Không có dữ liệu"}
         </Tooltip>
       ),
       width: 150,
     },
     {
       title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
-      dataIndex: "title",
+      dataIndex: "title_vn",
       key: "title",
       sorter: (a, b) => a.title.localeCompare(b.title),
       sortOrder: sortedInfo.columnKey === "title" ? sortedInfo.order : null,
@@ -209,86 +243,140 @@ const ScientificPaperPage = () => {
     },
     {
       title: "TÁC GIẢ",
-      dataIndex: "authors",
+      dataIndex: "author",
       key: "authors",
-      sorter: (a, b) => a.authors.localeCompare(b.authors),
+      sorter: (a, b) =>
+        a.authors
+          ?.map((author) => author.author_name_vi)
+          .join(", ")
+          .localeCompare(
+            b.authors?.map((author) => author.author_name_vi).join(", ")
+          ),
       sortOrder: sortedInfo.columnKey === "authors" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (authors) => (
-        <Tooltip placement="topLeft" title={authors}>
-          {authors}
-        </Tooltip>
-      ),
+      render: (authors) => {
+        if (!authors || authors.length === 0) {
+          return "Không có dữ liệu"; // Xử lý trường hợp authors không có dữ liệu
+        }
+        const authorNames = authors
+          ?.map((author) => author.author_name_vi)
+          .join(", "); // Lấy danh sách tên tác giả
+        return (
+          <Tooltip placement="topLeft" title={authorNames}>
+            {authorNames}
+          </Tooltip>
+        );
+      },
       width: 200,
     },
     {
       title: "SỐ T/GIẢ",
-      dataIndex: "authorCount",
+      dataIndex: "author_count",
       key: "authorCount",
-      sorter: (a, b) => parseInt(a.authorCount) - parseInt(b.authorCount),
+      sorter: (a, b) => {
+        const countA = parseInt(a.author_count?.split("(")[0] || 0);
+        const countB = parseInt(b.author_count?.split("(")[0] || 0);
+        return countA - countB;
+      },
       sortOrder:
         sortedInfo.columnKey === "authorCount" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (authorCount) => (
-        <Tooltip placement="topLeft" title={authorCount}>
-          {authorCount}
-        </Tooltip>
-      ),
+      render: (author_count) => {
+        if (!author_count) {
+          return "Không có dữ liệu";
+        }
+        return (
+          <Tooltip placement="topLeft" title={author_count}>
+            {author_count}
+          </Tooltip>
+        );
+      },
       width: 100,
     },
     {
       title: "VAI TRÒ",
-      dataIndex: "role",
+      dataIndex: "author", // Truy cập vào mảng author
       key: "role",
-      sorter: (a, b) => a.role.localeCompare(b.role),
+      sorter: (a, b) => {
+        const userId = localStorage.getItem("user_id");
+        const roleA =
+          a.author?.find((auth) => auth.user_id === userId)?.role || "";
+        const roleB =
+          b.author?.find((auth) => auth.user_id === userId)?.role || "";
+        return roleA.localeCompare(roleB);
+      },
       sortOrder: sortedInfo.columnKey === "role" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (role) => (
-        <Tooltip placement="topLeft" title={role}>
-          {role}
-        </Tooltip>
-      ),
+      render: (author) => {
+        const userId = localStorage.getItem("user_id"); // Lấy user_id từ localStorage
+        const userRole = author?.find((auth) => auth.user_id === userId)?.role; // Tìm role của user_id
+        if (!userRole) {
+          return "Không có dữ liệu"; // Xử lý trường hợp không có dữ liệu
+        }
+        return (
+          <Tooltip placement="topLeft" title={userRole}>
+            {userRole}
+          </Tooltip>
+        );
+      },
       width: 150,
     },
     {
       title: "CQ ĐỨNG TÊN",
-      dataIndex: "institution",
+      dataIndex: "author", // Truy cập vào mảng author
       key: "institution",
-      sorter: (a, b) => a.institution.localeCompare(b.institution),
+      sorter: (a, b) => {
+        const nameA = a.author?.[0]?.work_unit_id?.name_vi || ""; // Lấy name_vi từ author đầu tiên
+        const nameB = b.author?.[0]?.work_unit_id?.name_vi || "";
+        return nameA.localeCompare(nameB);
+      },
       sortOrder:
         sortedInfo.columnKey === "institution" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (institution) => (
-        <Tooltip placement="topLeft" title={institution}>
-          {institution}
-        </Tooltip>
-      ),
+      render: (author) => {
+        const nameVi = author?.[0]?.work_unit_id?.name_vi; // Lấy name_vi từ author đầu tiên
+        if (!nameVi) {
+          return "Không có dữ liệu"; // Xử lý trường hợp không có dữ liệu
+        }
+        return (
+          <Tooltip placement="topLeft" title={nameVi}>
+            {nameVi}
+          </Tooltip>
+        );
+      },
       width: 150,
     },
     {
       title: "NGÀY CÔNG BỐ",
-      dataIndex: "publicationDate",
+      dataIndex: "publish_date", // Truy cập vào trường publish_date
       key: "publicationDate",
-      sorter: (a, b) =>
-        new Date(a.publicationDate) - new Date(b.publicationDate),
+      sorter: (a, b) => new Date(a.publish_date) - new Date(b.publish_date),
       sortOrder:
         sortedInfo.columnKey === "publicationDate" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (publicationDate) => (
-        <Tooltip placement="topLeft" title={publicationDate}>
-          {publicationDate}
-        </Tooltip>
-      ),
+      render: (publish_date) => {
+        if (!publish_date) {
+          return "Không có dữ liệu"; // Xử lý trường hợp không có ngày công bố
+        }
+        const formattedDate = new Date(publish_date).toLocaleDateString(
+          "vi-VN"
+        ); // Định dạng ngày theo kiểu dd/mm/yyyy
+        return (
+          <Tooltip placement="topLeft" title={formattedDate}>
+            {formattedDate}
+          </Tooltip>
+        );
+      },
       width: 150,
     },
     {
@@ -318,18 +406,24 @@ const ScientificPaperPage = () => {
     },
     {
       title: "NGÀY THÊM",
-      dataIndex: "dateAdded",
+      dataIndex: "createdAt", // Truy cập vào trường createdAt
       key: "dateAdded",
-      sorter: (a, b) => new Date(a.dateAdded) - new Date(b.dateAdded),
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
       sortOrder: sortedInfo.columnKey === "dateAdded" ? sortedInfo.order : null,
       ellipsis: {
         showTitle: false,
       },
-      render: (dateAdded) => (
-        <Tooltip placement="topLeft" title={dateAdded}>
-          {dateAdded}
-        </Tooltip>
-      ),
+      render: (createdAt) => {
+        if (!createdAt) {
+          return "Không có dữ liệu"; // Xử lý trường hợp không có ngày thêm
+        }
+        const formattedDate = new Date(createdAt).toLocaleDateString("vi-VN"); // Định dạng ngày theo kiểu dd/mm/yyyy
+        return (
+          <Tooltip placement="topLeft" title={formattedDate}>
+            {formattedDate}
+          </Tooltip>
+        );
+      },
       width: 150,
     },
     {
@@ -888,28 +982,32 @@ const ScientificPaperPage = () => {
                   </div>
                 )}
               </div>
-              <Table
-                columns={newColumns}
-                dataSource={filteredPapers}
-                onChange={handleChange}
-                pagination={{
-                  current: currentPage,
-                  pageSize: itemsPerPage,
-                  total: filteredPapers.length,
-                  onChange: (page) => setCurrentPage(page),
-                }}
-                rowKey="id"
-                className="text-sm"
-                scroll={{
-                  x: newColumns.reduce(
-                    (total, col) => total + (col.width || 0),
-                    0
-                  ),
-                }} // Thêm dòng này để tạo thanh kéo ngang
-                onRow={(record) => ({
-                  onClick: () => handleRowClick(record),
-                })}
-              />
+              {papers.length === 0 ? (
+                <p>Loading or no data available...</p> // Add a fallback UI for empty data
+              ) : (
+                <Table
+                  columns={newColumns}
+                  dataSource={filteredPapers}
+                  onChange={handleChange}
+                  pagination={{
+                    current: currentPage,
+                    pageSize: itemsPerPage,
+                    total: filteredPapers.length,
+                    onChange: (page) => setCurrentPage(page),
+                  }}
+                  rowKey="id"
+                  className="text-sm"
+                  scroll={{
+                    x: newColumns.reduce(
+                      (total, col) => total + (col.width || 0),
+                      0
+                    ),
+                  }} // Thêm dòng này để tạo thanh kéo ngang
+                  onRow={(record) => ({
+                    onClick: () => handleRowClick(record),
+                  })}
+                />
+              )}
             </div>
           </div>
         </div>
