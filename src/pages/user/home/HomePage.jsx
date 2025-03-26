@@ -376,11 +376,15 @@ const HomePage = () => {
                           <img
                             src={
                               archivedPapers.includes(paper._id)
-                                ? "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
-                                : "https://cdn-icons-png.flaticon.com/512/1828/1828970.png"
+                                ? "https://cdn-icons-png.flaticon.com/512/5668/5668020.png"
+                                : "https://cdn-icons-png.flaticon.com/512/5662/5662990.png"
                             }
-                            alt="Add to Archive"
-                            className="w-5 h-5 cursor-pointer"
+                            alt="Save to Archive"
+                            className={`w-5 h-5 cursor-pointer ${
+                              archivedPapers.includes(paper._id)
+                                ? "text-blue-500"
+                                : ""
+                            }`}
                             onClick={(e) => {
                               e.preventDefault();
                               showModal(paper);
