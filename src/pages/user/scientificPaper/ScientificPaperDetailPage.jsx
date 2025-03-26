@@ -1,27 +1,61 @@
 import Header from "../../../components/header";
 import { Download, Eye, MessageCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import userApi from "../../../api/api";
+import { useParams } from "react-router-dom"; // Import useParams
 
 const ScientificPaperDetailPage = () => {
-  const paper = {
-    title:
-      "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-    description:
-      "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols. Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-    type: "Công nghiệp",
-    group: "Q1",
-    authors: ["Huỳnh Hoàng Phúc", "Nguyễn Duy Thanh"],
-    authorCount: "2 (1,0,0,1)",
-    publishDate: "20/02/2025",
-    pageCount: "55",
-    keywords: ["nano", "kim loại", "thực vật"],
-    researchArea: "Công nghiệp",
-    journal: "Tạp chí Khoa học Đại học Cần Thơ",
-    thumbnail: "/placeholder.svg?height=300&width=200",
-    views: 999,
-    downloads: 12,
-    submitter: "Nguyễn Duy Thanh",
-    institution: "IUH",
-  };
+  const { id } = useParams(); // Extract the _id from the URL
+  const [paper, setPaper] = useState(null);
+
+  useEffect(() => {
+    const fetchPaper = async () => {
+      try {
+        const data = await userApi.getScientificPaperById(id); // Fetch data from API
+
+        let departmentName = "Không có dữ liệu";
+        if (data.department) {
+          try {
+            const departmentData = await userApi.getDepartmentById(
+              data.department
+            ); // Call API to get department details
+            departmentName =
+              departmentData.department_name || "Không có dữ liệu";
+          } catch (error) {
+            console.error("Error fetching department details:", error);
+          }
+        }
+        // Transform the API response to match the expected structure
+        const transformedPaper = {
+          title: data.title_vn || "Không có tiêu đề",
+          description: data.summary || "Không có mô tả",
+          type: data.article_type?.type_name || "Không có dữ liệu",
+          group: data.article_group?.group_name || "Không có dữ liệu",
+          authors: data.author?.map((a) => a.author_name_vi) || [],
+          authorCount: data.author_count || "Không có dữ liệu",
+          publishDate: new Date(data.publish_date).toLocaleDateString("vi-VN"),
+          pageCount: data.page || "Không có dữ liệu",
+          keywords: data.keywords?.split(",").map((k) => k.trim()) || [],
+          researchArea: data.department || "Không có dữ liệu",
+          thumbnail: data.cover_image || "/placeholder.svg",
+          views: data.views?.view_id?.length || 0,
+          downloads: data.downloads?.download_id?.length || 0,
+          cover_image: data.cover_image || "/placeholder.svg",
+          department: departmentName,
+          magazine_vi: data.magazine_vi || "Không có dữ liệu",
+        };
+
+        setPaper(transformedPaper);
+      } catch (error) {
+        console.error("Error fetching scientific paper:", error);
+      }
+    };
+    fetchPaper();
+  }, [id]); // Add id as a dependency
+
+  if (!paper) {
+    return <div>Loading...</div>;
+  }
 
   const citation = {
     text: 'Thông, Phạm Lê, và Nguyễn Thị Thiện Hảo. 2014. "LÒNG TRUNG THÀNH CỦA KHÁCH HÀNG Ở THÀNH PHỐ CẦN THƠ ĐỐI VỚI DỊCH VỤ ĐIỆN THOẠI DI ĐỘNG TRẢ SAU VINAPHONE: MÔ HÌNH THỜI GIAN", Tạp Chí Khoa học Đại học Cần Thơ, số p.h 33 (Tháng Mười):58-64. https://ctujsvn.ctu.edu.vn/index.php/ctujsvn/article/view/1479.',
@@ -71,7 +105,7 @@ const ScientificPaperDetailPage = () => {
                 <div className="flex gap-6">
                   <div className="flex flex-col items-center gap-4">
                     <img
-                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/0563f14b44500ff5b83245fb9a6af2b57eb332ec4bbe05eafafe76a4e02af753?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
+                      src={paper.cover_image}
                       alt="Form illustration"
                       className="w-[180px] h-[200px] max-w-[180px] max-h-[250px] pl-4"
                     />
@@ -86,10 +120,10 @@ const ScientificPaperDetailPage = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h1 className="text-xl font-bold text-[#2B3674] mb-4">
-                          {paper.title}
+                          {paper.title || "Không có tiêu đề"}
                         </h1>
                         <p className="text-gray-600 mb-4 text-sm">
-                          {paper.description}
+                          {paper.description || "Không có mô tả"}
                         </p>
                         <div className="grid grid-cols-2 gap-4 mt-6">
                           <div className="flex items-center">
@@ -97,13 +131,16 @@ const ScientificPaperDetailPage = () => {
                               Loại bài báo:
                             </p>
                             <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.type}
+                              {paper.type || "Không có dữ liệu"}
                             </p>
                           </div>
+
                           <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Thuộc nhóm:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.group}
+                            <p className="text-sm text-gray-500 flex-shrink-0">
+                              Thuộc nhóm:
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371] truncate overflow-hidden whitespace-nowrap">
+                              {paper.group || "Không có dữ liệu"}
                             </p>
                           </div>
                           <div className="flex items-center">
@@ -111,7 +148,7 @@ const ScientificPaperDetailPage = () => {
                               Tên tác giả:
                             </p>
                             <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.authors.join(", ")}
+                              {paper.authors?.join(", ") || "Không có dữ liệu"}
                             </p>
                           </div>
                           <div className="flex items-center">
@@ -137,31 +174,26 @@ const ScientificPaperDetailPage = () => {
                           </div>
 
                           <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Lĩnh vực nghiên cứu:
-                            </p>
+                            <p className="text-sm text-gray-500">Khoa:</p>
                             <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.researchArea}
+                              {paper.department}
                             </p>
                           </div>
                           <div className="flex items-center">
                             <p className="text-sm text-gray-500">Tạp chí:</p>
                             <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.journal}
+                              {paper.magazine_vi}
                             </p>
                           </div>
+                        </div>
 
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Từ khóa:</p>
-                            {paper.keywords.map((keyword, index) => (
-                              <span
-                                key={index}
-                                className="px-3 py-1 bg-gray-100 rounded-full text-sm"
-                              >
-                                {keyword}
-                              </span>
-                            ))}
-                          </div>
+                        <div className="flex mt-4 items-center flex-nowrap overflow-hidden whitespace-nowrap">
+                          <p className="text-sm text-gray-500 flex-shrink-0">
+                            Từ khóa:
+                          </p>
+                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                            {paper.keywords?.join(", ") || "Không có dữ liệu"}
+                          </p>
                         </div>
                       </div>
 

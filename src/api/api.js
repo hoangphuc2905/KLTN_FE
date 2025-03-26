@@ -374,7 +374,7 @@ const userApi = {
   },
 
   // deleteRole: async (adminId, lecturerId, role) => {
-  //   try { 
+  //   try {
 
   getAllRoles: async () => {
     try {
@@ -404,6 +404,43 @@ const userApi = {
       return response.data;
     } catch (error) {
       console.error("Error fetching student:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAllScientificPapers: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/scientificPapers`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getScientificPaperById: async (paper_id) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/${paper_id}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching scientific paper:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAuthorsByPaperId: async (paper_id) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/paperauthor/paper/${paper_id}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching authors:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },

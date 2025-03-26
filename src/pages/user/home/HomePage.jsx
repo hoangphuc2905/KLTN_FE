@@ -3,293 +3,10 @@ import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
 import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
-import { Modal, Button, Input } from "antd"; // Import Modal, Button, and Input from antd
+import { Modal, Button, Input } from "antd";
+import userApi from "../../../api/api";
 
 const HomePage = () => {
-  const user = {
-    name: "NGUYEN VAN A",
-    role: "User",
-  };
-
-  const researchPapers = [
-    {
-      id: "1",
-      title:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
-      department: "Khoa CNHH",
-      publishDate: "20/02/2025",
-      description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 100,
-      commentCount: 27,
-    },
-    {
-      id: "2",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "3",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "4",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "5",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "6",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "7",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "8",
-      title:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
-      department: "Khoa CNHH",
-      publishDate: "20/02/2025",
-      description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 100,
-      commentCount: 27,
-    },
-    {
-      id: "9",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "10",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "11",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "12",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "13",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "14",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "15",
-      title:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
-      department: "Khoa CNHH",
-      publishDate: "20/02/2025",
-      description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 100,
-      commentCount: 27,
-    },
-    {
-      id: "16",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "17",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "18",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "19",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "20",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "21",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-  ];
-
   const recentPapers = [
     {
       id: "1",
@@ -360,6 +77,9 @@ const HomePage = () => {
     },
   ];
 
+  const [researchPapers, setResearchPapers] = useState([]);
+  const [authors, setAuthors] = useState({});
+  const [departments, setDepartments] = useState({});
   const [activeTab, setActiveTab] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState(currentPage);
@@ -396,6 +116,94 @@ const HomePage = () => {
   useEffect(() => {
     setInputPage(currentPage);
   }, [currentPage]);
+
+  useEffect(() => {
+    const fetchResearchPapers = async () => {
+      try {
+        const papers = await userApi.getAllScientificPapers();
+        setResearchPapers(papers);
+      } catch (error) {
+        console.error("Error fetching research papers:", error);
+      }
+    };
+
+    fetchResearchPapers();
+  }, []);
+
+  const fetchAuthors = async (paperId) => {
+    if (authors[paperId]) return; // Skip if authors are already fetched
+
+    try {
+      const authorsData = await userApi.getAuthorsByPaperId(paperId);
+      const authorNames = authorsData.map(
+        (author) => author.author_name_vi || author.author_name_en
+      );
+      setAuthors((prevAuthors) => ({
+        ...prevAuthors,
+        [paperId]:
+          authorNames.length > 0
+            ? authorNames.join(", ")
+            : "No authors available",
+      }));
+    } catch (error) {
+      if (error.response?.status === 404) {
+        console.warn(`No authors found for paper ${paperId}`);
+        setAuthors((prevAuthors) => ({
+          ...prevAuthors,
+          [paperId]: "No authors available",
+        }));
+      } else {
+        console.error(`Error fetching authors for paper ${paperId}:`, error);
+        setAuthors((prevAuthors) => ({
+          ...prevAuthors,
+          [paperId]: "Error fetching authors",
+        }));
+      }
+    }
+  };
+
+  const fetchDepartment = async (departmentId) => {
+    if (!departmentId || departments[departmentId]) return; // Skip if already fetched or no ID
+
+    try {
+      const departmentData = await userApi.getDepartmentById(departmentId);
+      setDepartments((prevDepartments) => ({
+        ...prevDepartments,
+        [departmentId]: departmentData.department_name,
+      }));
+      console.log(`Fetched department for ID ${departmentId}:`, departmentData);
+    } catch (error) {
+      console.error(`Error fetching department for ID ${departmentId}:`, error);
+      setDepartments((prevDepartments) => ({
+        ...prevDepartments,
+        [departmentId]: "Unknown Department", // Fallback for errors
+      }));
+    }
+  };
+
+  useEffect(() => {
+    const fetchAuthorsForCurrentPapers = async () => {
+      for (const paper of currentPapers) {
+        if (!authors[paper._id]) {
+          await fetchAuthors(paper._id); // Fetch authors only if not already fetched
+        }
+      }
+    };
+
+    fetchAuthorsForCurrentPapers();
+  }, [currentPapers, authors]);
+
+  useEffect(() => {
+    const fetchDepartmentsForCurrentPapers = async () => {
+      for (const paper of currentPapers) {
+        if (paper.department && !departments[paper.department]) {
+          await fetchDepartment(paper.department); // Fetch department using 'department' field
+        }
+      }
+    };
+
+    fetchDepartmentsForCurrentPapers();
+  }, [currentPapers, departments]);
 
   const showModal = (paper) => {
     setSelectedPaper(paper);
@@ -449,7 +257,7 @@ const HomePage = () => {
       </style>
       <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto">
         <div className="w-full bg-white">
-          <Header user={user} />
+          <Header />
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-3 bg-[#E7ECF0] z-10">
@@ -493,30 +301,27 @@ const HomePage = () => {
             <section className="w-[71%] max-md:ml-0 max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
                 {currentPapers.map((paper, index) => (
-                  <Link to={`/scientific-paper/${paper.id}`} key={paper.id}>
+                  <Link to={`/scientific-paper/${paper._id}`} key={paper._id}>
                     <article
-                      key={paper.id}
+                      key={paper._id}
                       className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
                         index > 0 ? "mt-3" : ""
                       }`}
                     >
                       <div className="flex justify-center w-fit">
                         <img
-                          src={paper.thumbnailUrl}
+                          src={paper.cover_image}
                           className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
-                          alt={paper.title}
+                          alt={paper.title_vn || "No Title"}
                         />
                       </div>
 
                       <div className="grid grid-cols-1 gap-2 w-full">
-                        {/* Hàng 1: Tiêu đề + Thông tin lượt xem */}
+                        {/* Title */}
                         <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
-                          {/* Tiêu đề */}
                           <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
-                            {paper.title}
+                            {paper.title_vn || "No Title"}
                           </h2>
-
-                          {/* Lượt xem + Bình luận */}
                           <div className="flex flex-col items-center ml-auto">
                             <div className="flex items-center gap-2">
                               <img
@@ -525,45 +330,52 @@ const HomePage = () => {
                                 alt="Views icon"
                               />
                               <div className="text-xs text-orange-500">
-                                {paper.viewCount}
+                                {typeof paper.views === "number"
+                                  ? paper.views
+                                  : 0}
                               </div>
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
                                 className="object-contain w-4 aspect-[1.2]"
-                                alt="Comments icon"
+                                alt="Downloads icon"
                               />
                               <div className="text-xs">
-                                {paper.commentCount}
+                                {typeof paper.downloads === "number"
+                                  ? paper.downloads
+                                  : 0}
                               </div>
                             </div>
-
-                            {/* Ngày đăng */}
                             <div className="text-xs text-neutral-500 mt-1">
-                              {paper.publishDate}
+                              {paper.publish_date
+                                ? new Date(
+                                    paper.publish_date
+                                  ).toLocaleDateString()
+                                : "No Date"}
                             </div>
                           </div>
                         </div>
 
-                        {/* Hàng 2: Tác giả */}
+                        {/* Authors */}
                         <div className="text-sm text-sky-900">
-                          {paper.author}
+                          {authors[paper._id] || "Loading authors..."}
                         </div>
 
-                        {/* Hàng 3: Mô tả */}
+                        {/* Summary */}
                         <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
-                          {paper.description}
+                          {paper.summary || "No Summary"}
                         </p>
 
-                        {/* Hàng 4: Bộ phận */}
+                        {/* Department */}
                         <div className="text-sm text-sky-900">
-                          {paper.department}
+                          {departments[paper.department] ||
+                            "Loading department..."}
                         </div>
 
-                        {/* Ngôi sao thêm vào lưu trữ */}
+                        {/* Archive Icon */}
                         <div className="flex justify-end">
                           <img
                             src={
-                              archivedPapers.includes(paper.id)
+                              archivedPapers.includes(paper._id)
                                 ? "https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
                                 : "https://cdn-icons-png.flaticon.com/512/1828/1828970.png"
                             }
