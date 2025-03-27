@@ -382,7 +382,7 @@ const ScientificPaperPage = () => {
     {
       title: "MINH CHỨNG",
       key: "evidence",
-      render: (text, record) => (
+      render: () => (
         <div className="flex-col text-[#00A3FF]">
           <button className="hover:underline">Xem link|</button>
           <button className="hover:underline">Xem file</button>
