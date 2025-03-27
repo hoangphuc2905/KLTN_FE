@@ -3,183 +3,66 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
+import userApi from "../../../api/api";
 
 const ManagementAriticle = () => {
   const navigate = useNavigate();
-  const papers = [
-    {
-      id: 1,
-      paperType: "Tạp chí khoa học tổng hợp	",
-      group: "Q1",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
-    },
-    {
-      id: 2,
-      paperType: "Tạp chí khoa học xã hội và giáo dục	",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "EUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 3,
-      paperType: "Tạp chí khoa học xã hội và giáo dục	",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "EUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 4,
-      paperType: "Tạp chí khoa học tổng hợp	",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 5,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 6,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q1",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
-    },
-    {
-      id: 7,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 8,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 9,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q1",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
-    },
-    {
-      id: 10,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 11,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 12,
-      paperType: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q1",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
-    },
-  ];
+  const [papers, setPapers] = useState([]); // Ensure papers is initialized as an empty array
+  const [userRole] = useState(localStorage.getItem("current_role") || "");
+  const [userDepartment] = useState(localStorage.getItem("department") || "");
+
+  useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        let fetchedPapers = [];
+        if (userRole === "admin") {
+          const response = await getAllScientificPapers();
+          fetchedPapers = response || [];
+        } else if (
+          [
+            "head_of_department",
+            "deputy_head_of_department",
+            "department_in_charge",
+          ].includes(userRole)
+        ) {
+          const response = await getScientificPapersByDepartment(
+            userDepartment
+          );
+          fetchedPapers = response || [];
+        }
+        setPapers(fetchedPapers);
+      } catch (error) {
+        console.error("Error fetching papers:", error);
+        setPapers([]); // Ensure papers is set to an empty array on error
+      }
+    };
+
+    fetchPapers();
+  }, [userRole, userDepartment]);
+
+  const getAllScientificPapers = async () => {
+    try {
+      const response = await userApi.getAllScientificPapers();
+      console.log("API Response:", response); // Log the correct response
+      return response;
+    } catch (error) {
+      console.error("Error fetching scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  };
+
+  const getScientificPapersByDepartment = async (department) => {
+    try {
+      const response = await userApi.getScientificPapersByDepartment(
+        department
+      );
+      console.log("API Response:", response); // Log the correct response
+      return response;
+    } catch (error) {
+      console.error("Error fetching scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  };
 
   const [activeTab, setActiveTab] = useState("all");
   const [showFilter, setShowFilter] = useState(false);
@@ -281,37 +164,45 @@ const ManagementAriticle = () => {
 
   const uniquePaperTypes = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.paperType)),
+    ...new Set(papers.map((paper) => paper.article_type?.type_name)),
   ];
   const uniqueGroups = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.group)),
+    ...new Set(papers.map((paper) => paper.article_group?.group_name)),
   ];
-  const uniqueRoles = ["Tất cả", ...new Set(papers.map((paper) => paper.role))];
+  const uniqueRoles = [
+    "Tất cả",
+    ...new Set(papers.flatMap((paper) => paper.author.map((a) => a.role))),
+  ];
   const uniqueInstitutions = [
     "Tất cả",
-    ...new Set(papers.map((paper) => paper.institution)),
+    ...new Set(papers.map((paper) => paper.department)),
   ];
-  const uniqueStatuses = ["Tất cả", "Đã duyệt", "Đang chờ", "Từ chối"];
+  const uniqueStatuses = ["Tất cả", "true", "false"]; // Assuming status is boolean
 
   const filteredPapers = papers.filter((paper) => {
-    const authorCount = parseInt(paper.authorCount.split(" ")[0]);
+    const authorCount = parseInt(paper.author_count?.split("(")[0] || 0); // Adjusted for correct format
     return (
       (filterPaperType.includes("Tất cả") ||
-        filterPaperType.includes(paper.paperType)) &&
-      (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
-      (filterPaperTitle === "" || paper.title.includes(filterPaperTitle)) &&
-      (filterAuthorName === "" || paper.authors.includes(filterAuthorName)) &&
+        filterPaperType.includes(paper.article_type?.type_name)) &&
+      (filterGroup.includes("Tất cả") ||
+        filterGroup.includes(paper.article_group?.group_name)) &&
+      (filterPaperTitle === "" || paper.title_vn.includes(filterPaperTitle)) &&
+      (filterAuthorName === "" ||
+        paper.author.some((a) =>
+          a.author_name_vi.includes(filterAuthorName)
+        )) &&
       (filterAuthorCountFrom === "" ||
         authorCount >= parseInt(filterAuthorCountFrom)) &&
       (filterAuthorCountTo === "" ||
         authorCount <= parseInt(filterAuthorCountTo)) &&
-      (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
+      (filterRole.includes("Tất cả") ||
+        paper.author.some((a) => filterRole.includes(a.role))) &&
       (filterInstitution.includes("Tất cả") ||
-        filterInstitution.includes(paper.institution)) &&
+        filterInstitution.includes(paper.department)) &&
       (filterStatus.includes("Tất cả") ||
-        filterStatus.includes(paper.status)) &&
-      (activeTab === "all" || paper.status === activeTab)
+        filterStatus.includes(paper.status.toString())) &&
+      (activeTab === "all" || paper.status.toString() === activeTab)
     );
   });
 
@@ -323,119 +214,125 @@ const ManagementAriticle = () => {
   const columns = [
     {
       title: "STT",
-      dataIndex: "id",
-      key: "id",
+      dataIndex: "paper_id",
+      key: "paper_id",
       render: (text, record, index) => index + 1,
       width: 65,
     },
     {
       title: "LOẠI BÀI BÁO",
-      dataIndex: "paperType",
-      key: "paperType",
+      dataIndex: "article_type",
+      key: "article_type",
       ellipsis: {
         showTitle: false,
       },
-      render: (paperType) => (
-        <Tooltip placement="topLeft" title={paperType}>
-          {paperType}
+      render: (article_type) => (
+        <Tooltip placement="topLeft" title={article_type?.type_name}>
+          {article_type?.type_name}
         </Tooltip>
       ),
       width: 150,
     },
     {
       title: "THUỘC NHÓM",
-      dataIndex: "group",
-      key: "group",
+      dataIndex: "article_group",
+      key: "article_group",
       ellipsis: {
         showTitle: false,
       },
-      render: (group) => (
-        <Tooltip placement="topLeft" title={group}>
-          {group}
+      render: (article_group) => (
+        <Tooltip placement="topLeft" title={article_group?.group_name}>
+          {article_group?.group_name}
         </Tooltip>
       ),
       width: 150,
     },
     {
       title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
-      dataIndex: "title",
-      key: "title",
+      dataIndex: "title_vn",
+      key: "title_vn",
       ellipsis: {
         showTitle: false,
       },
-      render: (title) => (
-        <Tooltip placement="topLeft" title={title}>
-          {title}
+      render: (title_vn) => (
+        <Tooltip placement="topLeft" title={title_vn}>
+          {title_vn}
         </Tooltip>
       ),
       width: 300,
     },
     {
       title: "TÁC GIẢ",
-      dataIndex: "authors",
-      key: "authors",
+      dataIndex: "author",
+      key: "author",
       ellipsis: {
         showTitle: false,
       },
-      render: (authors) => (
-        <Tooltip placement="topLeft" title={authors}>
-          {authors}
+      render: (author) => (
+        <Tooltip
+          placement="topLeft"
+          title={author.map((a) => a.author_name_vi).join(", ")}
+        >
+          {author.map((a) => a.author_name_vi).join(", ")}
         </Tooltip>
       ),
       width: 200,
     },
     {
       title: "SỐ T/GIẢ",
-      dataIndex: "authorCount",
-      key: "authorCount",
+      dataIndex: "author_count",
+      key: "author_count",
       ellipsis: {
         showTitle: false,
       },
-      render: (authorCount) => (
-        <Tooltip placement="topLeft" title={authorCount}>
-          {authorCount}
+      render: (author_count) => (
+        <Tooltip placement="topLeft" title={author_count}>
+          {author_count}
         </Tooltip>
       ),
       width: 100,
     },
     {
       title: "VAI TRÒ",
-      dataIndex: "role",
+      dataIndex: "author",
       key: "role",
       ellipsis: {
         showTitle: false,
       },
-      render: (role) => (
-        <Tooltip placement="topLeft" title={role}>
-          {role}
+      render: (author) => (
+        <Tooltip
+          placement="topLeft"
+          title={author.map((a) => a.role).join(", ")}
+        >
+          {author.map((a) => a.role).join(", ")}
         </Tooltip>
       ),
       width: 150,
     },
     {
       title: "CQ ĐỨNG TÊN",
-      dataIndex: "institution",
-      key: "institution",
+      dataIndex: "department",
+      key: "department",
       ellipsis: {
         showTitle: false,
       },
-      render: (institution) => (
-        <Tooltip placement="topLeft" title={institution}>
-          {institution}
+      render: (department) => (
+        <Tooltip placement="topLeft" title={department}>
+          {department}
         </Tooltip>
       ),
       width: 150,
     },
     {
       title: "NGÀY CÔNG BỐ",
-      dataIndex: "publicationDate",
-      key: "publicationDate",
+      dataIndex: "publish_date",
+      key: "publish_date",
       ellipsis: {
         showTitle: false,
       },
-      render: (publicationDate) => (
-        <Tooltip placement="topLeft" title={publicationDate}>
-          {publicationDate}
+      render: (publish_date) => (
+        <Tooltip placement="topLeft" title={publish_date}>
+          {publish_date}
         </Tooltip>
       ),
       width: 150,
@@ -445,7 +342,7 @@ const ManagementAriticle = () => {
       key: "evidence",
       render: (text, record) => (
         <div className="flex-col text-[#00A3FF]">
-          <button className="hover:underline">Xem link|</button>
+          <button className="hover:underline">Xem link</button>
           <button className="hover:underline">Xem file</button>
         </div>
       ),
@@ -456,7 +353,9 @@ const ManagementAriticle = () => {
       dataIndex: "status",
       key: "status",
       render: (status) => (
-        <span className={`${getStatusColor(status)}`}>{status}</span>
+        <span className={`${getStatusColor(status.toString())}`}>
+          {status ? "Đã duyệt" : "Từ chối"}
+        </span>
       ),
       ellipsis: {
         showTitle: false,
@@ -465,14 +364,14 @@ const ManagementAriticle = () => {
     },
     {
       title: "NGÀY THÊM",
-      dataIndex: "dateAdded",
-      key: "dateAdded",
+      dataIndex: "createdAt",
+      key: "createdAt",
       ellipsis: {
         showTitle: false,
       },
-      render: (dateAdded) => (
-        <Tooltip placement="topLeft" title={dateAdded}>
-          {dateAdded}
+      render: (createdAt) => (
+        <Tooltip placement="topLeft" title={createdAt}>
+          {createdAt}
         </Tooltip>
       ),
       width: 150,
@@ -515,11 +414,9 @@ const ManagementAriticle = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case "Đã duyệt":
+      case "true":
         return "text-green-600";
-      case "Đang chờ":
-        return "text-yellow-600";
-      case "Từ chối":
+      case "false":
         return "text-red-600";
       default:
         return "text-gray-600";
@@ -586,36 +483,25 @@ const ManagementAriticle = () => {
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Đã duyệt"
+                activeTab === "true"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
               } rounded-lg`}
-              onClick={() => setActiveTab("Đã duyệt")}
+              onClick={() => setActiveTab("true")}
             >
-              Đã duyệt (
-              {papers.filter((paper) => paper.status === "Đã duyệt").length})
+              Đã duyệt ({papers.filter((paper) => paper.status === true).length}
+              )
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Đang chờ"
+                activeTab === "false"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
               } rounded-lg`}
-              onClick={() => setActiveTab("Đang chờ")}
+              onClick={() => setActiveTab("false")}
             >
-              Chờ duyệt (
-              {papers.filter((paper) => paper.status === "Đang chờ").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Từ chối"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("Từ chối")}
-            >
-              Từ chối (
-              {papers.filter((paper) => paper.status === "Từ chối").length})
+              Từ chối ({papers.filter((paper) => paper.status === false).length}
+              )
             </button>
           </div>
         </div>
