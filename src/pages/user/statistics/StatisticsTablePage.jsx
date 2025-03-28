@@ -14,182 +14,10 @@ import {
 } from "antd";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
+import userApi from "../../../api/api";
 
 const ManagementTable = () => {
-  const papers = [
-    {
-      id: 1,
-      paperType: "Tạp chí khoa học kỹ thuật và công nghệ	",
-      group: "Q1",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "EUH",
-      publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
-    },
-    {
-      id: 2,
-      paperType: "Tạp chí y học và sinh học	",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 3,
-      paperType: "Tạp chí y học và sinh học	",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 4,
-      paperType: "Tạp chí khoa học kỹ thuật và công nghệ	",
-      group: "Q4",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 5,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q1",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "EUH",
-      publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
-    },
-    {
-      id: 6,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "EUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 7,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 8,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q4",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 9,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q1",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đã duyệt",
-      dateAdded: "12/12/2024",
-    },
-    {
-      id: 10,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-    {
-      id: 11,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Từ chối",
-      dateAdded: "19/12/2024",
-      note: "Ảnh không phù hợp. Tên bài nghiên cứu viết sai",
-    },
-    {
-      id: 12,
-      paperType: "Bài báo đăng kỷ yếu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q4",
-      title:
-        "Công nghệ thông tin dùng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 1155 của bộ luật phóng sự",
-      authors: "Nguyễn Văn A, Nguyễn Duy Thanh, Huỳnh Hoàng Phúc",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      status: "Đang chờ",
-      dateAdded: "19/12/2024",
-    },
-  ];
-
+  const [papers, setPapers] = useState([]); // Initialize papers state
   const [showGroupFilter, setShowGroupFilter] = useState(false);
   const [fromAuthorCount, setFromAuthorCount] = useState("");
   const [toAuthorCount, setToAuthorCount] = useState("");
@@ -216,6 +44,7 @@ const ManagementTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
+
   const itemsPerPage = 10;
 
   const uniquePaperTypes = [...new Set(papers.map((paper) => paper.paperType))];
@@ -223,22 +52,78 @@ const ManagementTable = () => {
   const [filterPaperType, setFilterPaperType] = useState(uniquePaperTypes);
   const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
 
+  useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        const user_id = localStorage.getItem("user_id");
+        if (!user_id) {
+          console.error("Missing user_id");
+          return;
+        }
+        const response = await userApi.getScientificPapersByAuthorId(user_id);
+        console.log("Full API Response:", response); // Log the full response for debugging
+
+        if (Array.isArray(response)) {
+          console.log("API Response is an array:", response); // Log the array response
+          const mappedPapers = response.map((paper) => ({
+            id: paper.paper_id,
+            paperType: paper.article_type?.type_name || "N/A",
+            group: paper.article_group?.group_name || "N/A",
+            title: paper.title_vn || "N/A",
+            authors:
+              paper.author?.map((author) => author.name).join(", ") || "N/A",
+            authorCount: paper.author_count || "0",
+            role: paper.role || "N/A", // Assuming role is part of the API response
+            institution: paper.department || "N/A",
+            publicationDate: paper.publish_date || "N/A",
+            dateAdded: paper.createdAt || "N/A",
+          }));
+          setPapers(mappedPapers); // Map API response to match table structure
+        } else {
+          console.error("Unexpected API response structure:", response);
+          setPapers([]); // Fallback to an empty array
+        }
+      } catch (error) {
+        console.error("Error fetching scientific papers:", error);
+        setPapers([]); // Fallback to an empty array on error
+      }
+    };
+
+    fetchPapers();
+  }, []);
+
+  console.log("Mapped Papers:", papers); // Log mapped papers for debugging
+  console.log("Filter Values:", {
+    filterPaperType,
+    filterGroup,
+    filterPaperTitle,
+    filterAuthorName,
+    fromAuthorCount,
+    toAuthorCount,
+    filterRole,
+    filterInstitution,
+    filterStatus,
+  }); // Log filter values for debugging
+
   const filteredPapers = papers.filter((paper) => {
-    const authorCount = parseInt(paper.authorCount.match(/\d+/)[0]);
     return (
       (filterPaperType.includes("Tất cả") ||
         filterPaperType.includes(paper.paperType)) &&
       (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
-      (filterPaperTitle === "" || paper.title.includes(filterPaperTitle)) &&
-      (filterAuthorName === "" || paper.authors.includes(filterAuthorName)) &&
-      (fromAuthorCount === "" || authorCount >= fromAuthorCount) &&
-      (toAuthorCount === "" || authorCount <= toAuthorCount) &&
+      (filterPaperTitle === "" ||
+        paper.title.toLowerCase().includes(filterPaperTitle.toLowerCase())) &&
+      (filterAuthorName === "" ||
+        paper.authors.toLowerCase().includes(filterAuthorName.toLowerCase())) &&
+      (fromAuthorCount === "" || paper.authorCount >= fromAuthorCount) &&
+      (toAuthorCount === "" || paper.authorCount <= toAuthorCount) &&
       (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
       (filterInstitution.length === 0 ||
         filterInstitution.includes(paper.institution)) &&
       (filterStatus.length === 0 || filterStatus.includes(paper.status))
     );
   });
+
+  console.log("Filtered Papers:", filteredPapers); // Log filtered data for debugging
 
   const handleRowClick = (record) => {
     setModalContent(record);
@@ -258,7 +143,12 @@ const ManagementTable = () => {
   };
 
   const maxAuthorCount = Math.max(
-    ...papers.map((paper) => parseInt(paper.authorCount.match(/\d+/)[0]))
+    ...papers.map(
+      (paper) =>
+        paper.authorCount
+          ? parseInt(paper.authorCount.match(/\d+/)?.[0] || 0) // Safely parse authorCount
+          : 0 // Default to 0 if authorCount is undefined
+    )
   );
 
   const columns = [
@@ -608,6 +498,7 @@ const ManagementTable = () => {
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
             <select className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[85px]">
+              <option value="2025">2025</option>
               <option value="2024">2024</option>
               <option value="2023">2023</option>
             </select>
@@ -1055,14 +946,14 @@ const ManagementTable = () => {
               </div>
               <Table
                 columns={filteredColumns}
-                dataSource={filteredPapers}
+                dataSource={filteredPapers} // Ensure dataSource is set correctly
                 pagination={{
                   current: currentPage,
                   pageSize: itemsPerPage,
                   total: filteredPapers.length,
                   onChange: (page) => setCurrentPage(page),
                 }}
-                rowKey="id"
+                rowKey="id" // Ensure rowKey matches the unique identifier
                 className="text-sm"
                 onRow={(record) => ({
                   onClick: () => handleRowClick(record),
