@@ -25,18 +25,19 @@ const ManagementTable = () => {
 
   const [showFilter, setShowFilter] = useState(false);
   const uniqueGroups = [...new Set(papers.map((paper) => paper.group))];
-  const [filterGroup, setFilterGroup] = useState(uniqueGroups);
+  const [filterGroup, setFilterGroup] = useState(["Tất cả"]);
   const [filterPaperTitle, setFilterPaperTitle] = useState("");
   const [filterAuthorName, setFilterAuthorName] = useState("");
-  const [filterAuthorCount, setFilterAuthorCount] = useState("");
+  const [filterAuthorCountFrom, setFilterAuthorCountFrom] = useState("");
+  const [filterAuthorCountTo, setFilterAuthorCountTo] = useState("");
   const uniqueRoles = [...new Set(papers.map((paper) => paper.role))];
-  const [filterRole, setFilterRole] = useState(uniqueRoles);
+  const [filterRole, setFilterRole] = useState(["Tất cả"]);
   const [showRoleFilter, setShowRoleFilter] = useState(false);
   const uniqueInstitutions = [
     ...new Set(papers.map((paper) => paper.institution)),
   ];
-  const [filterInstitution, setFilterInstitution] =
-    useState(uniqueInstitutions);
+  const [filterInstitution, setFilterInstitution] = useState([]);
+
   const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
   const uniqueStatuses = ["Đã duyệt", "Đang chờ", "Từ chối"];
   const [filterStatus, setFilterStatus] = useState(uniqueStatuses);
@@ -49,7 +50,7 @@ const ManagementTable = () => {
 
   const uniquePaperTypes = [...new Set(papers.map((paper) => paper.paperType))];
 
-  const [filterPaperType, setFilterPaperType] = useState(uniquePaperTypes);
+  const [filterPaperType, setFilterPaperType] = useState(["Tất cả"]);
   const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
 
   useEffect(() => {
@@ -60,24 +61,50 @@ const ManagementTable = () => {
           console.error("Missing user_id");
           return;
         }
+
         const response = await userApi.getScientificPapersByAuthorId(user_id);
-        console.log("Full API Response:", response); // Log the full response for debugging
+        console.log("Full API Response:", response);
 
         if (Array.isArray(response)) {
-          console.log("API Response is an array:", response); // Log the array response
-          const mappedPapers = response.map((paper) => ({
-            id: paper.paper_id,
-            paperType: paper.article_type?.type_name || "N/A",
-            group: paper.article_group?.group_name || "N/A",
-            title: paper.title_vn || "N/A",
-            authors:
-              paper.author?.map((author) => author.name).join(", ") || "N/A",
-            authorCount: paper.author_count || "0",
-            role: paper.role || "N/A", // Assuming role is part of the API response
-            institution: paper.department || "N/A",
-            publicationDate: paper.publish_date || "N/A",
-            dateAdded: paper.createdAt || "N/A",
-          }));
+          const mappedPapers = await Promise.all(
+            response.map(async (paper) => {
+              // Fetch department name
+              let departmentName = "N/A";
+              if (paper.department) {
+                try {
+                  const departmentResponse =
+                    await userApi.getDepartmentById(paper.department);
+                  departmentName = departmentResponse?.department_name || "N/A";
+                } catch (error) {
+                  console.error(
+                    `Error fetching department for ID ${paper.department}:`,
+                    error
+                  );
+                }
+              }
+
+              // Filter role for the logged-in user
+              const userRole =
+                paper.author?.find((author) => author.user_id === user_id)
+                  ?.role || "N/A";
+
+              return {
+                id: paper.paper_id,
+                paperType: paper.article_type?.type_name || "N/A",
+                group: paper.article_group?.group_name || "N/A",
+                title: paper.title_vn || "N/A",
+                authors:
+                  paper.author
+                    ?.map((author) => author.author_name_vi)
+                    .join(", ") || "Không có tác giả",
+                authorCount: paper.author_count || "0",
+                role: userRole, // Use the role of the logged-in user
+                institution: departmentName, // Use the fetched department name
+                publicationDate: paper.publish_date || "N/A",
+                dateAdded: paper.createdAt || "N/A",
+              };
+            })
+          );
           setPapers(mappedPapers); // Map API response to match table structure
         } else {
           console.error("Unexpected API response structure:", response);
@@ -105,23 +132,29 @@ const ManagementTable = () => {
     filterStatus,
   }); // Log filter values for debugging
 
-  const filteredPapers = papers.filter((paper) => {
-    return (
-      (filterPaperType.includes("Tất cả") ||
-        filterPaperType.includes(paper.paperType)) &&
-      (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
-      (filterPaperTitle === "" ||
-        paper.title.toLowerCase().includes(filterPaperTitle.toLowerCase())) &&
-      (filterAuthorName === "" ||
-        paper.authors.toLowerCase().includes(filterAuthorName.toLowerCase())) &&
-      (fromAuthorCount === "" || paper.authorCount >= fromAuthorCount) &&
-      (toAuthorCount === "" || paper.authorCount <= toAuthorCount) &&
-      (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
-      (filterInstitution.length === 0 ||
-        filterInstitution.includes(paper.institution)) &&
-      (filterStatus.length === 0 || filterStatus.includes(paper.status))
-    );
-  });
+  // Comment out the filtering logic
+  // const filteredPapers = (papers || []).filter((paper) => {
+  //   const authorCount = parseInt(paper.authorCount?.split(" ")[0] || 0); // Handle undefined authorCount
+  //   return (
+  //     (filterPaperType.includes("Tất cả") ||
+  //       filterPaperType.includes(paper.paperType)) &&
+  //     (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
+  //     (filterPaperTitle.trim() === "" ||
+  //       paper.title.toLowerCase().includes(filterPaperTitle.toLowerCase())) && // Case-insensitive match
+  //     (filterAuthorName.trim() === "" ||
+  //       paper.authors.toLowerCase().includes(filterAuthorName.toLowerCase())) && // Case-insensitive match
+  //     (filterAuthorCountFrom.trim() === "" ||
+  //       authorCount >= parseInt(filterAuthorCountFrom)) &&
+  //     (filterAuthorCountTo.trim() === "" ||
+  //       authorCount <= parseInt(filterAuthorCountTo)) &&
+  //     (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
+  //     (filterInstitution.length === 0 ||
+  //       filterInstitution.includes(paper.institution)) && // Fix empty institution filter
+  //     (filterStatus.includes("Tất cả") || filterStatus.includes(paper.status)) // Fix status filter
+  //   );
+  // });
+
+  const filteredPapers = papers; // Display all papers without filtering
 
   console.log("Filtered Papers:", filteredPapers); // Log filtered data for debugging
 
@@ -150,6 +183,16 @@ const ManagementTable = () => {
           : 0 // Default to 0 if authorCount is undefined
     )
   );
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return `${date.getDate().toString().padStart(2, "0")}/${(
+      date.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
 
   const columns = [
     {
@@ -275,8 +318,8 @@ const ManagementTable = () => {
       sorter: (a, b) =>
         new Date(a.publicationDate) - new Date(b.publicationDate),
       render: (publicationDate) => (
-        <Tooltip placement="topLeft" title={publicationDate}>
-          {publicationDate}
+        <Tooltip placement="topLeft" title={formatDate(publicationDate)}>
+          {formatDate(publicationDate)}
         </Tooltip>
       ),
       width: 160,
@@ -290,8 +333,8 @@ const ManagementTable = () => {
       },
       sorter: (a, b) => new Date(a.dateAdded) - new Date(b.dateAdded),
       render: (dateAdded) => (
-        <Tooltip placement="topLeft" title={dateAdded}>
-          {dateAdded}
+        <Tooltip placement="topLeft" title={formatDate(dateAdded)}>
+          {formatDate(dateAdded)}
         </Tooltip>
       ),
       width: 150,
