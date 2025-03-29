@@ -261,6 +261,13 @@ const AddScientificPaperPage = () => {
                       className="w-full h-10"
                       placeholder="Loại bài báo"
                       required
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        option?.children
+                          ?.toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
                     >
                       {paperTypes.map((type) => (
                         <Option key={type.id} value={type.id}>
@@ -273,6 +280,13 @@ const AddScientificPaperPage = () => {
                       className="w-full h-10"
                       placeholder="Thuộc nhóm"
                       required
+                      showSearch
+                      optionFilterProp="children"
+                      filterOption={(input, option) =>
+                        option?.children
+                          ?.toLowerCase()
+                          .includes(input.toLowerCase())
+                      }
                     >
                       {paperGroups.map((group) => (
                         <Option key={group.id} value={group.id}>
@@ -283,6 +297,7 @@ const AddScientificPaperPage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="Tên bài báo (Tiếng Việt)"
+                      suffix={<span style={{ color: "red" }}>*</span>}
                       required
                     />
                   </div>
@@ -298,6 +313,7 @@ const AddScientificPaperPage = () => {
                     <InputNumber
                       className="w-full h-10"
                       placeholder="Số trang"
+                      suffix={<span style={{ color: "red" }}>*</span>}
                       min={1}
                     />
 
@@ -310,6 +326,7 @@ const AddScientificPaperPage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="Số ISSN / ISBN"
+                      suffix={<span style={{ color: "red" }}>*</span>}
                     />
                   </div>
 
@@ -322,6 +339,7 @@ const AddScientificPaperPage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt) "
+                      suffix={<span style={{ color: "red" }}>*</span>}
                     />
                     <Input
                       className="w-full h-10"
@@ -333,6 +351,26 @@ const AddScientificPaperPage = () => {
                       placeholder="Tập / quyển (nếu có)"
                     />
                   </div>
+                </div>
+                <div className="mt-4 ml-3">
+                  <Select
+                    className="w-full h-10"
+                    placeholder="Thuộc khoa"
+                    required
+                    showSearch
+                    optionFilterProp="children"
+                    filterOption={(input, option) =>
+                      option?.children
+                        ?.toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                  >
+                    {paperTypes.map((type) => (
+                      <Option key={type.id} value={type.id}>
+                        {type.department_name}
+                      </Option>
+                    ))}
+                  </Select>
                 </div>
                 <div className="mt-4 ml-3">
                   <TextArea placeholder="Từ khóa" rows={1} />
@@ -358,56 +396,112 @@ const AddScientificPaperPage = () => {
             {/* Right Column */}
             <div className="w-1/2">
               {/* Khối "Nhập thông tin tác giả" */}
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-4 h-[370px]">
+              <section className="flex flex-col bg-white rounded-lg p-6 mb-3 h-[480px] overflow-y-auto">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin TÁC GIẢ
                 </h2>
                 <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 flex items-center">
+                    <Input
+                      className="w-20 bg-gray-200 text-center"
+                      value={(() => {
+                        const counts = {
+                          primary: 0,
+                          corresponding: 0,
+                          primaryCorresponding: 0,
+                          contributor: 0,
+                        };
+                        if (authors.length > 0) {
+                          authors.forEach((author) => {
+                            if (author.role === "primary") counts.primary++;
+                            if (author.role === "corresponding")
+                              counts.corresponding++;
+                            if (author.role === "primaryCorresponding")
+                              counts.primaryCorresponding++;
+                            if (author.role === "contributor")
+                              counts.contributor++;
+                          });
+                        }
+                        return `${authors.length || 0}(${counts.primary},${
+                          counts.corresponding
+                        },${counts.primaryCorresponding},${
+                          counts.contributor
+                        })`;
+                      })()}
+                      readOnly
+                    />
+                  </div>
                   {authors.map((author, index) => (
                     <div
                       key={author.id}
                       className="grid grid-cols-6 gap-4 col-span-2"
                     >
-                      <Input
-                        placeholder="MSSV/MSGV"
-                        value={author.mssvMsgv}
-                        onChange={(e) =>
-                          handleAuthorChange(index, "mssvMsgv", e.target.value)
-                        }
-                        required
-                      />
-                      <Input
-                        className="col-span-2"
-                        placeholder="Tên sinh viên / giảng viên"
-                        value={author.full_name}
-                        readOnly
-                      />
-
-                      <Select
-                        placeholder="Vai trò"
-                        value={author.role}
-                        onChange={(value) =>
-                          handleAuthorChange(index, "role", value)
-                        }
-                        required
-                      >
-                        <Option value="primary">Chính</Option>
-                        <Option value="corresponding">Liên hệ</Option>
-                        <Option value="primaryCorresponding">
-                          Vừa chính vừa liên hệ
-                        </Option>
-                        <Option value="contributor">Tham gia</Option>
-                      </Select>
-                      <Input
-                        placeholder="CQ công tác"
-                        value={author.institution}
-                        readOnly
-                      />
-                      <Button
-                        icon={<MinusOutlined />}
-                        onClick={() => handleRemoveAuthor(index)}
-                        size="small"
-                      />
+                      {/* Row 1 */}
+                      <div className="grid grid-cols-6 gap-4 col-span-6">
+                        <Input
+                          placeholder="MSSV/MSGV"
+                          suffix={<span style={{ color: "red" }}>*</span>}
+                          value={author.mssvMsgv}
+                          onChange={(e) =>
+                            handleAuthorChange(
+                              index,
+                              "mssvMsgv",
+                              e.target.value
+                            )
+                          }
+                          required
+                        />
+                        <Input
+                          className="col-span-2"
+                          placeholder="Tên sinh viên / giảng viên"
+                          value={author.full_name}
+                          suffix={<span style={{ color: "red" }}>*</span>}
+                          readOnly
+                        />
+                        <Input
+                          className="col-span-2"
+                          placeholder="Tên sinh viên / giảng viên (English)"
+                          value={author.full_name_eng}
+                          onChange={(e) =>
+                            handleAuthorChange(
+                              index,
+                              "full_name_eng",
+                              e.target.value
+                            )
+                          }
+                        />
+                        <Button
+                          icon={<MinusOutlined />}
+                          onClick={() => handleRemoveAuthor(index)}
+                          size="small"
+                        />
+                      </div>
+                      {/* Row 2 */}
+                      <div className="grid grid-cols-5 gap-4 col-span-6 mt-2 ml-24">
+                        <Select
+                          className="col-span-2"
+                          placeholder="Vai trò"
+                          value={author.role}
+                          onChange={(value) =>
+                            handleAuthorChange(index, "role", value)
+                          }
+                          required
+                        >
+                          <Option value="primary">Chính</Option>
+                          <Option value="corresponding">Liên hệ</Option>
+                          <Option value="primaryCorresponding">
+                            Vừa chính vừa liên hệ
+                          </Option>
+                          <Option value="contributor">Tham gia</Option>
+                        </Select>
+                        <Input
+                          className="col-span-2"
+                          placeholder="CQ công tác"
+                          suffix={<span style={{ color: "red" }}>*</span>}
+                          value={author.institution}
+                          readOnly
+                        />
+                      </div>
                     </div>
                   ))}
                   <h2 className="col-span-2 text-xs text-red-700 italic">
