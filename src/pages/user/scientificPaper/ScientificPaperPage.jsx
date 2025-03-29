@@ -15,6 +15,7 @@ const ScientificPaperPage = () => {
   const paperTypeFilterRef = useRef(null);
   const [filterGroup, setFilterGroup] = useState(["Tất cả"]);
   const [showGroupFilter, setShowGroupFilter] = useState(false);
+  const groupFilterRef = useRef(null);
   const [filterPaperTitle, setFilterPaperTitle] = useState("");
   const [filterAuthorName, setFilterAuthorName] = useState("");
   const [filterAuthorCountFrom, setFilterAuthorCountFrom] = useState("");
@@ -31,7 +32,6 @@ const ScientificPaperPage = () => {
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
-  const groupFilterRef = useRef(null);
   const roleFilterRef = useRef(null);
   const [showRoleFilter, setShowRoleFilter] = useState(false);
 
@@ -136,42 +136,105 @@ const ScientificPaperPage = () => {
   const navigate = useNavigate();
   const uniquePaperTypes = [
     "Tất cả",
-    ...new Set((papers || []).map((paper) => paper.paperType)), // Add fallback to empty array
+    ...new Set(
+      (papers || []).map((paper) => paper.article_type?.type_name || "")
+    ),
   ];
   const uniqueGroups = [
     "Tất cả",
-    ...new Set((papers || []).map((paper) => paper.group)),
+    ...new Set(
+      (papers || []).map((paper) => paper.article_group?.group_name || "")
+    ),
   ];
   const uniqueRoles = [
     "Tất cả",
-    ...new Set((papers || []).map((paper) => paper.role)),
+    ...new Set(
+      (papers || [])
+        .flatMap((paper) => paper.author?.map((auth) => auth.role) || [])
+        .filter(Boolean)
+    ),
   ];
   const uniqueInstitutions = [
     "Tất cả",
-    ...new Set((papers || []).map((paper) => paper.institution)),
+    ...new Set(
+      (papers || [])
+        .flatMap(
+          (paper) =>
+            paper.author?.map((auth) => auth.work_unit_id?.name_vi) || []
+        )
+        .filter(Boolean)
+    ),
   ];
   const uniqueStatuses = ["Tất cả", "Đã duyệt", "Đang chờ", "Từ chối"];
 
-  const filteredPapers = (papers || []).filter((paper) => {
-    const authorCount = parseInt(paper.authorCount?.split(" ")[0] || 0); // Handle undefined authorCount
-    return (
-      (filterPaperType.includes("Tất cả") ||
-        filterPaperType.includes(paper.paperType)) &&
-      (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
-      (filterPaperTitle === "" || paper.title.includes(filterPaperTitle)) &&
-      (filterAuthorName === "" || paper.authors.includes(filterAuthorName)) &&
-      (filterAuthorCountFrom === "" ||
-        authorCount >= parseInt(filterAuthorCountFrom)) &&
-      (filterAuthorCountTo === "" ||
-        authorCount <= parseInt(filterAuthorCountTo)) &&
-      (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
-      (filterInstitution.includes("Tất cả") ||
-        filterInstitution.includes(paper.institution)) &&
-      (filterStatus.includes("Tất cả") ||
-        filterStatus.includes(paper.status)) &&
-      (activeTab === "all" || paper.status === activeTab)
-    );
-  });
+  const handleFilterDropdownOpen = (filterType) => {
+    switch (filterType) {
+      case "paperType":
+        setFilterPaperType(uniquePaperTypes);
+        setShowPaperTypeFilter(true);
+        break;
+      case "group":
+        setFilterGroup(uniqueGroups);
+        setShowGroupFilter(true);
+        break;
+      case "role":
+        setFilterRole(uniqueRoles);
+        setShowRoleFilter(true);
+        break;
+      case "institution":
+        setFilterInstitution(uniqueInstitutions);
+        setShowInstitutionFilter(true);
+        break;
+      case "status":
+        setFilterStatus(uniqueStatuses);
+        setShowStatusFilter(true);
+        break;
+      default:
+        break;
+    }
+  };
+
+  const filteredPapers = (papers || [])
+    .filter((paper) => {
+      // Filter papers based on the active tab
+      if (activeTab === "Đã duyệt" && paper.status !== "Đã duyệt") return false;
+      if (activeTab === "Đang chờ" && paper.status !== "Đang chờ") return false;
+      if (activeTab === "Từ chối" && paper.status !== "Từ chối") return false;
+      return true;
+    })
+    .filter((paper) => {
+      // Apply filters to the filtered papers
+      const authorNames =
+        paper.author?.map((auth) => auth.author_name_vi).join(", ") || ""; // Combine author names for filtering
+      const authorCount = parseInt(paper.author_count?.split("(")[0] || 0); // Extract author count
+
+      return (
+        (filterPaperType.includes("Tất cả") ||
+          filterPaperType.includes(paper.article_type?.type_name)) &&
+        (filterGroup.includes("Tất cả") ||
+          filterGroup.includes(paper.article_group?.group_name)) &&
+        (filterPaperTitle === "" ||
+          paper.title_vn
+            ?.toLowerCase()
+            .includes(filterPaperTitle.toLowerCase())) &&
+        (filterAuthorName === "" ||
+          authorNames.toLowerCase().includes(filterAuthorName.toLowerCase())) &&
+        (filterAuthorCountFrom === "" ||
+          authorCount >= parseInt(filterAuthorCountFrom)) &&
+        (filterAuthorCountTo === "" ||
+          authorCount <= parseInt(filterAuthorCountTo)) &&
+        (filterRole.includes("Tất cả") ||
+          filterRole.some((role) =>
+            paper.author?.some((auth) => auth.role === role)
+          )) &&
+        (filterInstitution.includes("Tất cả") ||
+          filterInstitution.some((institution) =>
+            paper.author?.some(
+              (auth) => auth.work_unit_id?.name_vi === institution
+            )
+          ))
+      );
+    });
 
   const handleRowClick = (record) => {
     setModalContent(record);
@@ -477,7 +540,7 @@ const ScientificPaperPage = () => {
   };
 
   const [checkedList, setCheckedList] = useState(
-    columns.map((item) => item.key)
+    columns.map((item) => item.key) // All columns are selected by default
   );
   const options = columns.map(({ key, title }) => ({
     label: title,
@@ -598,7 +661,7 @@ const ScientificPaperPage = () => {
                           <button
                             type="button"
                             onClick={() =>
-                              setShowPaperTypeFilter(!showPaperTypeFilter)
+                              handleFilterDropdownOpen("paperType")
                             }
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
@@ -637,10 +700,13 @@ const ScientificPaperPage = () => {
                                     value: type,
                                   }))}
                                 value={filterPaperType}
-                                onChange={(checkedValues) =>
-                                  setFilterPaperType(checkedValues)
-                                }
-                                className="flex flex-col gap-2 mt-2"
+                                onChange={(checkedValues) => {
+                                  console.log(
+                                    "Selected Paper Types:",
+                                    checkedValues
+                                  ); // Debug
+                                  setFilterPaperType(checkedValues);
+                                }}
                               />
                             </div>
                           )}
@@ -654,7 +720,7 @@ const ScientificPaperPage = () => {
                         <div className="relative">
                           <button
                             type="button"
-                            onClick={() => setShowGroupFilter(!showGroupFilter)}
+                            onClick={() => handleFilterDropdownOpen("group")}
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn nhóm
@@ -690,9 +756,13 @@ const ScientificPaperPage = () => {
                                     value: group,
                                   }))}
                                 value={filterGroup}
-                                onChange={(checkedValues) =>
-                                  setFilterGroup(checkedValues)
-                                }
+                                onChange={(checkedValues) => {
+                                  console.log(
+                                    "Selected Groups:",
+                                    checkedValues
+                                  ); // Debug
+                                  setFilterGroup(checkedValues);
+                                }}
                                 className="flex flex-col gap-2 mt-2"
                               />
                             </div>
@@ -767,7 +837,7 @@ const ScientificPaperPage = () => {
                         <div className="relative">
                           <button
                             type="button"
-                            onClick={() => setShowRoleFilter(!showRoleFilter)}
+                            onClick={() => handleFilterDropdownOpen("role")}
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
                             Chọn vai trò
@@ -821,7 +891,7 @@ const ScientificPaperPage = () => {
                           <button
                             type="button"
                             onClick={() =>
-                              setShowInstitutionFilter(!showInstitutionFilter)
+                              handleFilterDropdownOpen("institution")
                             }
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
@@ -879,14 +949,13 @@ const ScientificPaperPage = () => {
                         <div className="relative">
                           <button
                             type="button"
-                            onClick={() =>
-                              setShowStatusFilter(!showStatusFilter)
-                            }
+                            onClick={() => handleFilterDropdownOpen("status")}
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
+                            disabled={activeTab !== "all"} // Only enable for "Tất cả" tab
                           >
                             Chọn trạng thái
                           </button>
-                          {showStatusFilter && (
+                          {showStatusFilter && activeTab === "all" && (
                             <div
                               ref={statusFilterRef}
                               className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
@@ -987,7 +1056,10 @@ const ScientificPaperPage = () => {
               ) : (
                 <Table
                   columns={newColumns}
-                  dataSource={filteredPapers}
+                  dataSource={filteredPapers.map((paper, index) => ({
+                    ...paper,
+                    key: index, // Ensure each row has a unique key
+                  }))}
                   onChange={handleChange}
                   pagination={{
                     current: currentPage,
@@ -995,14 +1067,14 @@ const ScientificPaperPage = () => {
                     total: filteredPapers.length,
                     onChange: (page) => setCurrentPage(page),
                   }}
-                  rowKey="id"
+                  rowKey="id" // Ensure rowKey is unique and matches the data
                   className="text-sm"
                   scroll={{
                     x: newColumns.reduce(
                       (total, col) => total + (col.width || 0),
                       0
                     ),
-                  }} // Thêm dòng này để tạo thanh kéo ngang
+                  }} // Add horizontal scroll for wide tables
                   onRow={(record) => ({
                     onClick: () => handleRowClick(record),
                   })}

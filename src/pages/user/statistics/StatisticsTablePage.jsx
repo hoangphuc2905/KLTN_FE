@@ -39,9 +39,6 @@ const ManagementTable = () => {
   const [filterInstitution, setFilterInstitution] = useState([]);
 
   const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
-  const uniqueStatuses = ["Đã duyệt", "Đang chờ", "Từ chối"];
-  const [filterStatus, setFilterStatus] = useState(uniqueStatuses);
-  const [showStatusFilter, setShowStatusFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
@@ -72,8 +69,9 @@ const ManagementTable = () => {
               let departmentName = "N/A";
               if (paper.department) {
                 try {
-                  const departmentResponse =
-                    await userApi.getDepartmentById(paper.department);
+                  const departmentResponse = await userApi.getDepartmentById(
+                    paper.department
+                  );
                   departmentName = departmentResponse?.department_name || "N/A";
                 } catch (error) {
                   console.error(
@@ -129,32 +127,27 @@ const ManagementTable = () => {
     toAuthorCount,
     filterRole,
     filterInstitution,
-    filterStatus,
   }); // Log filter values for debugging
 
-  // Comment out the filtering logic
-  // const filteredPapers = (papers || []).filter((paper) => {
-  //   const authorCount = parseInt(paper.authorCount?.split(" ")[0] || 0); // Handle undefined authorCount
-  //   return (
-  //     (filterPaperType.includes("Tất cả") ||
-  //       filterPaperType.includes(paper.paperType)) &&
-  //     (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
-  //     (filterPaperTitle.trim() === "" ||
-  //       paper.title.toLowerCase().includes(filterPaperTitle.toLowerCase())) && // Case-insensitive match
-  //     (filterAuthorName.trim() === "" ||
-  //       paper.authors.toLowerCase().includes(filterAuthorName.toLowerCase())) && // Case-insensitive match
-  //     (filterAuthorCountFrom.trim() === "" ||
-  //       authorCount >= parseInt(filterAuthorCountFrom)) &&
-  //     (filterAuthorCountTo.trim() === "" ||
-  //       authorCount <= parseInt(filterAuthorCountTo)) &&
-  //     (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
-  //     (filterInstitution.length === 0 ||
-  //       filterInstitution.includes(paper.institution)) && // Fix empty institution filter
-  //     (filterStatus.includes("Tất cả") || filterStatus.includes(paper.status)) // Fix status filter
-  //   );
-  // });
+  const filteredPapers = papers.filter((paper) => {
+    const authorNames = paper.authors?.toLowerCase() || ""; // Combine author names for filtering
+    const authorCount = parseInt(paper.authorCount || 0); // Extract author count
 
-  const filteredPapers = papers; // Display all papers without filtering
+    return (
+      (filterPaperType.includes("Tất cả") || // Fix logic for "Tất cả"
+        filterPaperType.some((type) => type === paper.paperType)) &&
+      (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
+      (filterPaperTitle === "" ||
+        paper.title.toLowerCase().includes(filterPaperTitle.toLowerCase())) &&
+      (filterAuthorName === "" ||
+        authorNames.includes(filterAuthorName.toLowerCase())) &&
+      (fromAuthorCount === "" || authorCount >= parseInt(fromAuthorCount)) && // Fix filter logic for "from"
+      (toAuthorCount === "" || authorCount <= parseInt(toAuthorCount)) && // Fix filter logic for "to"
+      (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
+      (filterInstitution.length === 0 ||
+        filterInstitution.includes(paper.institution))
+    );
+  });
 
   console.log("Filtered Papers:", filteredPapers); // Log filtered data for debugging
 
@@ -434,7 +427,6 @@ const ManagementTable = () => {
   const groupFilterRef = useRef(null);
   const roleFilterRef = useRef(null);
   const institutionFilterRef = useRef(null);
-  const statusFilterRef = useRef(null);
   const paperTypeFilterRef = useRef(null);
 
   useEffect(() => {
@@ -475,13 +467,6 @@ const ManagementTable = () => {
         setShowInstitutionFilter(false);
       }
       if (
-        showStatusFilter &&
-        statusFilterRef.current &&
-        !statusFilterRef.current.contains(event.target)
-      ) {
-        setShowStatusFilter(false);
-      }
-      if (
         showPaperTypeFilter &&
         paperTypeFilterRef.current &&
         !paperTypeFilterRef.current.contains(event.target)
@@ -500,7 +485,6 @@ const ManagementTable = () => {
     showGroupFilter,
     showRoleFilter,
     showInstitutionFilter,
-    showStatusFilter,
     showPaperTypeFilter,
   ]);
 
@@ -625,13 +609,8 @@ const ManagementTable = () => {
                                 }))}
                                 value={filterPaperType}
                                 onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterPaperType([]); // Khi không chọn gì, dữ liệu sẽ trống
-                                  } else if (
-                                    checkedValues.length ===
-                                    uniquePaperTypes.length
-                                  ) {
-                                    setFilterPaperType(uniquePaperTypes); // Chọn lại tất cả
+                                  if (checkedValues.includes("Tất cả")) {
+                                    setFilterPaperType(["Tất cả"]); // Select all if "Tất cả" is selected
                                   } else {
                                     setFilterPaperType(checkedValues);
                                   }
@@ -667,14 +646,12 @@ const ManagementTable = () => {
                                 }
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setFilterGroup(uniqueGroups);
+                                    setFilterGroup(["Tất cả", ...uniqueGroups]); // Include "Tất cả" when selecting all
                                   } else {
-                                    setFilterGroup([]);
+                                    setFilterGroup([]); // Clear all selections
                                   }
                                 }}
-                                checked={
-                                  filterGroup.length === uniqueGroups.length
-                                }
+                                checked={filterGroup.includes("Tất cả")}
                               >
                                 Tất cả
                               </Checkbox>
@@ -683,10 +660,21 @@ const ManagementTable = () => {
                                   label: group,
                                   value: group,
                                 }))}
-                                value={filterGroup}
-                                onChange={(checkedValues) =>
-                                  setFilterGroup(checkedValues)
-                                }
+                                value={filterGroup.filter(
+                                  (group) => group !== "Tất cả"
+                                )} // Exclude "Tất cả" from the group list
+                                onChange={(checkedValues) => {
+                                  if (
+                                    checkedValues.length === uniqueGroups.length
+                                  ) {
+                                    setFilterGroup([
+                                      "Tất cả",
+                                      ...checkedValues,
+                                    ]); // Add "Tất cả" if all groups are selected
+                                  } else {
+                                    setFilterGroup(checkedValues); // Update with selected groups
+                                  }
+                                }}
                                 className="flex flex-col gap-2 mt-2"
                               />
                             </div>
@@ -725,20 +713,26 @@ const ManagementTable = () => {
                         <div className="flex gap-2">
                           <Input
                             type="number"
-                            value={fromAuthorCount}
-                            onChange={(e) =>
-                              handleFromAuthorCountChange(e.target.value)
-                            }
+                            value={fromAuthorCount} // Bind to fromAuthorCount
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (!isNaN(value) && value >= 0) {
+                                setFromAuthorCount(value); // Update fromAuthorCount directly
+                              }
+                            }}
                             placeholder="Từ"
                             min={0}
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
                           />
                           <Input
                             type="number"
-                            value={toAuthorCount}
-                            onChange={(e) =>
-                              handleToAuthorCountChange(e.target.value)
-                            }
+                            value={toAuthorCount} // Bind to toAuthorCount
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              if (!isNaN(value) && value >= 0) {
+                                setToAuthorCount(value); // Update toAuthorCount directly
+                              }
+                            }}
                             placeholder="Đến"
                             min={0}
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
@@ -824,15 +818,15 @@ const ManagementTable = () => {
                                 }
                                 onChange={(e) => {
                                   if (e.target.checked) {
-                                    setFilterInstitution(uniqueInstitutions);
+                                    setFilterInstitution([
+                                      "Tất cả",
+                                      ...uniqueInstitutions,
+                                    ]); // Include "Tất cả" when selecting all
                                   } else {
-                                    setFilterInstitution([]);
+                                    setFilterInstitution([]); // Clear all selections
                                   }
                                 }}
-                                checked={
-                                  filterInstitution.length ===
-                                  uniqueInstitutions.length
-                                }
+                                checked={filterInstitution.includes("Tất cả")}
                               >
                                 Tất cả
                               </Checkbox>
@@ -843,79 +837,22 @@ const ManagementTable = () => {
                                     value: institution,
                                   })
                                 )}
-                                value={filterInstitution}
+                                value={filterInstitution.filter(
+                                  (institution) => institution !== "Tất cả"
+                                )} // Exclude "Tất cả" from the institution list
                                 onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterInstitution([]); // Khi không chọn gì, dữ liệu sẽ trống
-                                  } else if (
+                                  if (
                                     checkedValues.length ===
                                     uniqueInstitutions.length
                                   ) {
-                                    setFilterInstitution(uniqueInstitutions); // Chọn lại tất cả
+                                    setFilterInstitution([
+                                      "Tất cả",
+                                      ...checkedValues,
+                                    ]); // Add "Tất cả" if all institutions are selected
+                                  } else if (checkedValues.length === 0) {
+                                    setFilterInstitution([]); // Clear all selections
                                   } else {
-                                    setFilterInstitution(checkedValues);
-                                  }
-                                }}
-                                className="flex flex-col gap-2 mt-2"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-gray-700 text-xs">
-                          Trạng thái:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowStatusFilter(!showStatusFilter)
-                            }
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
-                          >
-                            Chọn trạng thái
-                          </button>
-                          {showStatusFilter && (
-                            <div
-                              ref={statusFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
-                            >
-                              <Checkbox
-                                indeterminate={
-                                  filterStatus.length > 0 &&
-                                  filterStatus.length < uniqueStatuses.length
-                                }
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setFilterStatus(uniqueStatuses);
-                                  } else {
-                                    setFilterStatus([]);
-                                  }
-                                }}
-                                checked={
-                                  filterStatus.length === uniqueStatuses.length
-                                }
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniqueStatuses.map((status) => ({
-                                  label: status,
-                                  value: status,
-                                }))}
-                                value={filterStatus}
-                                onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterStatus([]); // Khi không chọn gì, dữ liệu sẽ trống
-                                  } else if (
-                                    checkedValues.length ===
-                                    uniqueStatuses.length
-                                  ) {
-                                    setFilterStatus(uniqueStatuses); // Chọn lại tất cả
-                                  } else {
-                                    setFilterStatus(checkedValues);
+                                    setFilterInstitution(checkedValues); // Update with selected institutions
                                   }
                                 }}
                                 className="flex flex-col gap-2 mt-2"
@@ -932,10 +869,12 @@ const ManagementTable = () => {
                           setFilterGroup(["Tất cả"]);
                           setFilterPaperTitle("");
                           setFilterAuthorName("");
-                          setFilterAuthorCount("");
-                          setFilterRole(uniqueRoles);
+                          setFilterAuthorCountFrom(""); // Clear "Từ" field
+                          setFilterAuthorCountTo(""); // Clear "Đến" field
+                          setFromAuthorCount(""); // Clear state for "Từ"
+                          setToAuthorCount(""); // Clear state for "Đến"
+                          setFilterRole(["Tất cả"]);
                           setFilterInstitution([]);
-                          setFilterStatus(uniqueStatuses);
                         }}
                         className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
                       >
@@ -989,14 +928,21 @@ const ManagementTable = () => {
               </div>
               <Table
                 columns={filteredColumns}
-                dataSource={filteredPapers} // Ensure dataSource is set correctly
+                dataSource={
+                  filteredPapers.length > 0 && visibleColumns.length > 0
+                    ? filteredPapers
+                    : []
+                } // Show no data if no filters or columns are selected
                 pagination={{
                   current: currentPage,
                   pageSize: itemsPerPage,
-                  total: filteredPapers.length,
+                  total:
+                    filteredPapers.length > 0 && visibleColumns.length > 0
+                      ? filteredPapers.length
+                      : 0, // Adjust pagination
                   onChange: (page) => setCurrentPage(page),
                 }}
-                rowKey="id" // Ensure rowKey matches the unique identifier
+                rowKey={(record) => record.id || record.key} // Ensure rowKey is unique
                 className="text-sm"
                 onRow={(record) => ({
                   onClick: () => handleRowClick(record),
