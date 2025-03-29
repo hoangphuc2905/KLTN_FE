@@ -316,6 +316,17 @@ const userApi = {
     }
   },
 
+  getAllDepartments: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/departments`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   getLecturerAndStudentByDepartment: async (department) => {
     try {
       const response = await axios.get(
@@ -468,6 +479,96 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  uploadImage: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await axios.post(
+        `${API_URL}/articlesAI/uploadimage`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error uploading image:",
+        error.response?.data || error.message
+      );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  uploadFile: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await axios.post(
+        `${API_URL}/files/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error uploading file:",
+        error.response?.data || error.message
+      );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  createScientificPaper: async (paperData) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/scientificPapers`,
+        paperData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating scientific paper:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  createMessage: async (messageData) => {
+    try {
+      const response = await axios.post(`${API_URL}/messages`, messageData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating message:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getMessagesByReceiverId: async (receiverId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/messages/receiver/${receiverId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  }
 };
 
 export default userApi;

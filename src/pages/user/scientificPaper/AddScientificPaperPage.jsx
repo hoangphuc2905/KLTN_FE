@@ -34,10 +34,27 @@ const AddScientificPaperPage = () => {
   const [coverImage, setCoverImage] = useState(null);
   const [paperTypes, setPaperTypes] = useState([]);
   const [paperGroups, setPaperGroups] = useState([]);
+  const [departments, setDepartments] = useState([]); // State for departments
   const [isIconModalVisible, setIsIconModalVisible] = useState(false); // State for icon modal visibility
   const [link, setLink] = useState(""); // State for link input
   const [uploadedImage, setUploadedImage] = useState(null); // State for uploaded image
   const [isHelpModalVisible, setIsHelpModalVisible] = useState(false); // State for help modal visibility
+  const [selectedPaperType, setSelectedPaperType] = useState(""); // State for selected paper type
+  const [selectedPaperGroup, setSelectedPaperGroup] = useState(""); // State for selected paper group
+  const [titleVn, setTitleVn] = useState(""); // State for title in Vietnamese
+  const [titleEn, setTitleEn] = useState(""); // State for title in English
+  const [publishDate, setPublishDate] = useState(""); // State for publish date
+  const [magazineVi, setMagazineVi] = useState(""); // State for magazine name in Vietnamese
+  const [magazineEn, setMagazineEn] = useState(""); // State for magazine name in English
+  const [magazineType, setMagazineType] = useState(""); // State for magazine type
+  const [pageCount, setPageCount] = useState(0); // State for page count
+  const [issnIsbn, setIssnIsbn] = useState(""); // State for ISSN/ISBN
+  const [orderNo, setOrderNo] = useState(true); // State for order number
+  const [featured, setFeatured] = useState(true); // State for featured status
+  const [keywords, setKeywords] = useState(""); // State for keywords
+  const [summary, setSummary] = useState(""); // State for summary
+  const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
+  const [doi, setDoi] = useState(""); // State for DOI
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -45,26 +62,35 @@ const AddScientificPaperPage = () => {
       try {
         const types = await userApi.getAllPaperTypes();
         const groups = await userApi.getAllPaperGroups();
+        const departmentsData = await userApi.getAllDepartments(); // Fetch departments
 
         setPaperTypes(types);
         setPaperGroups(groups);
+        setDepartments(departmentsData); // Set departments
       } catch (error) {
-        console.error("Error fetching paper types or groups:", error);
-        message.error("Không thể tải dữ liệu loại bài báo hoặc nhóm bài báo.");
+        console.error("Error fetching data:", error);
+        message.error("Không thể tải dữ liệu.");
       }
     };
 
     fetchPaperData();
   }, []);
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setCoverImage(event.target.result);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const response = await userApi.uploadImage(file); // Call uploadImage function
+        setCoverImage(response.url); // Use the uploaded image's URL
+        message.success("Ảnh bìa đã được tải lên thành công!");
+        console.log("Uploaded image response:", response);
+      } catch (error) {
+        console.error(
+          "Error uploading image:",
+          error.response?.data || error.message
+        );
+        message.error("Không thể tải ảnh bìa lên. Vui lòng thử lại.");
+      }
     }
   };
 
@@ -72,9 +98,22 @@ const AddScientificPaperPage = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "application/pdf";
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = e.target.files[0];
-      setSelectedFile(file.name);
+      if (file) {
+        try {
+          const response = await userApi.uploadFile(file); // Call uploadFile function
+          setSelectedFile(response.url); // Use the uploaded file's URL
+          message.success("File đã được tải lên thành công!");
+          console.log("Uploaded file response:", response);
+        } catch (error) {
+          console.error(
+            "Error uploading file:",
+            error.response?.data || error.message
+          );
+          message.error("Không thể tải file lên. Vui lòng thử lại.");
+        }
+      }
     };
     input.click();
   };
@@ -139,10 +178,113 @@ const AddScientificPaperPage = () => {
     message.info("Đã xóa trắng thông tin.");
   };
 
-  const handleSave = () => {
-    console.log("Danh sách tác giả:", authors);
-    console.log("File đã chọn:", selectedFile);
-    message.success("Lưu thành công!");
+  const handleSave = async () => {
+    try {
+      // Validate required fields
+      const requiredFields = {
+        coverImage,
+        selectedFile,
+        authors,
+        selectedDepartment,
+        summary,
+        keywords,
+        selectedPaperType,
+        selectedPaperGroup,
+        titleVn,
+        titleEn,
+        publishDate,
+        magazineVi,
+        magazineEn,
+        magazineType,
+        pageCount,
+        issnIsbn,
+        doi,
+        link,
+      };
+
+      const missingFields = Object.entries(requiredFields)
+        .filter(
+          ([key, value]) =>
+            value === null ||
+            value === undefined ||
+            value === "" ||
+            (Array.isArray(value) && value.length === 0)
+        )
+        .map(([key]) => key);
+
+      if (missingFields.length > 0) {
+        message.error(`Thiếu các trường bắt buộc: ${missingFields.join(", ")}`);
+        return;
+      }
+
+      // Format author_count
+      const roleCounts = {
+        primary: 0,
+        corresponding: 0,
+        primaryCorresponding: 0,
+        contributor: 0,
+      };
+      authors.forEach((author) => {
+        if (author.role && roleCounts.hasOwnProperty(author.role)) {
+          roleCounts[author.role]++;
+        }
+      });
+      const authorCount = `${authors.length}(${roleCounts.primary},${roleCounts.corresponding},${roleCounts.primaryCorresponding},${roleCounts.contributor})`;
+
+      console.log("Authors:", authors);
+      console.log("Selected Department:", selectedDepartment);
+      // Prepare JSON payload
+      const payload = {
+        article_type: selectedPaperType || "",
+        article_group: selectedPaperGroup || "",
+        title_vn: titleVn || "",
+        title_en: titleEn || "",
+        author_count: authorCount,
+        author: authors.map((author) => ({
+          user_id: author.mssvMsgv || "",
+          author_name_vi: author.full_name || "",
+          author_name_en: author.full_name_eng || "",
+          role: author.role || "",
+          work_unit_id: author.institution || "",
+          degree: "Bachelor",
+          point: 0,
+        })),
+        publish_date: publishDate || "",
+        magazine_vi: magazineVi || "",
+        magazine_en: magazineEn || "",
+        magazine_type: magazineType || "",
+        page: pageCount || 0,
+        issn_isbn: issnIsbn || "",
+        file: selectedFile || "",
+        link: link || "",
+        doi: doi || "",
+        status: "pending",
+        order_no: orderNo,
+        featured: featured,
+        keywords: keywords || "",
+        summary: summary || "",
+        department: selectedDepartment || "",
+        cover_image: coverImage || "",
+      };
+
+      // Debugging: Log payload
+      console.log("Payload:", payload);
+
+      // Send data to the backend
+      const response = await userApi.createScientificPaper(payload);
+      message.success("Bài báo đã được lưu thành công!");
+      console.log("Response:", response);
+    } catch (error) {
+      console.error(
+        "Error saving scientific paper:",
+        error.response?.data || error.message
+      );
+      if (error.response?.data?.message) {
+        message.error(`Lỗi từ server: ${error.response.data.message}`);
+      } else {
+        message.error("Không thể lưu bài báo. Vui lòng thử lại.");
+      }
+    }
   };
 
   const showIconModal = () => {
@@ -251,12 +393,6 @@ const AddScientificPaperPage = () => {
                   </div>
 
                   <div className="w-2/3 grid grid-cols-1">
-                    <Input
-                      className="w-full h-10 bg-gray-200"
-                      placeholder="ID"
-                      required
-                      readOnly
-                    />
                     <Select
                       className="w-full h-10"
                       placeholder="Loại bài báo"
@@ -268,9 +404,12 @@ const AddScientificPaperPage = () => {
                           ?.toLowerCase()
                           .includes(input.toLowerCase())
                       }
+                      onChange={(value) => setSelectedPaperType(value)} // Lưu `_id` vào state
                     >
                       {paperTypes.map((type) => (
-                        <Option key={type.id} value={type.id}>
+                        <Option key={type._id} value={type._id}>
+                          {" "}
+                          {/* Sử dụng `_id` làm value */}
                           {type.type_name}
                         </Option>
                       ))}
@@ -287,9 +426,12 @@ const AddScientificPaperPage = () => {
                           ?.toLowerCase()
                           .includes(input.toLowerCase())
                       }
+                      onChange={(value) => setSelectedPaperGroup(value)} // Lưu `_id` vào state
                     >
                       {paperGroups.map((group) => (
-                        <Option key={group.id} value={group.id}>
+                        <Option key={group._id} value={group._id}>
+                          {" "}
+                          {/* Sử dụng `_id` làm value */}
                           {group.group_name}
                         </Option>
                       ))}
@@ -299,6 +441,7 @@ const AddScientificPaperPage = () => {
                       placeholder="Tên bài báo (Tiếng Việt)"
                       suffix={<span style={{ color: "red" }}>*</span>}
                       required
+                      onChange={(e) => setTitleVn(e.target.value)}
                     />
                   </div>
                 </div>
@@ -308,6 +451,9 @@ const AddScientificPaperPage = () => {
                     <DatePicker
                       className="w-full h-10"
                       placeholder="Ngày công bố"
+                      onChange={(date, dateString) =>
+                        setPublishDate(dateString)
+                      }
                     />
 
                     <InputNumber
@@ -315,18 +461,21 @@ const AddScientificPaperPage = () => {
                       placeholder="Số trang"
                       suffix={<span style={{ color: "red" }}>*</span>}
                       min={1}
+                      onChange={(value) => setPageCount(value)}
                     />
 
                     <InputNumber
                       className="w-full h-10"
                       placeholder="Thứ tự"
                       min={1}
+                      onChange={(value) => setOrderNo(value)}
                     />
 
                     <Input
                       className="w-full h-10"
                       placeholder="Số ISSN / ISBN"
                       suffix={<span style={{ color: "red" }}>*</span>}
+                      onChange={(e) => setIssnIsbn(e.target.value)}
                     />
                   </div>
 
@@ -335,27 +484,31 @@ const AddScientificPaperPage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="Tên bài báo (Tiếng Anh)"
+                      onChange={(e) => setTitleEn(e.target.value)}
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt) "
                       suffix={<span style={{ color: "red" }}>*</span>}
+                      onChange={(e) => setMagazineVi(e.target.value)}
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên tạp chí / kỷ yếu (Tiếng Anh) "
+                      onChange={(e) => setMagazineEn(e.target.value)}
                     />
 
                     <Input
                       className="w-full h-10"
                       placeholder="Tập / quyển (nếu có)"
+                      onChange={(e) => setMagazineType(e.target.value)}
                     />
                   </div>
                 </div>
                 <div className="mt-4 ml-3">
                   <Select
                     className="w-full h-10"
-                    placeholder="Thuộc khoa"
+                    placeholder="Khoa / Viện"
                     required
                     showSearch
                     optionFilterProp="children"
@@ -364,16 +517,23 @@ const AddScientificPaperPage = () => {
                         ?.toLowerCase()
                         .includes(input.toLowerCase())
                     }
+                    onChange={(value) => setSelectedDepartment(value)} // Lưu `_id` vào state
                   >
-                    {paperTypes.map((type) => (
-                      <Option key={type.id} value={type.id}>
-                        {type.department_name}
+                    {departments.map((department) => (
+                      <Option key={department._id} value={department._id}>
+                        {" "}
+                        {/* Sử dụng `_id` làm value */}
+                        {department.department_name}
                       </Option>
                     ))}
                   </Select>
                 </div>
                 <div className="mt-4 ml-3">
-                  <TextArea placeholder="Từ khóa" rows={1} />
+                  <TextArea
+                    placeholder="Từ khóa"
+                    rows={1}
+                    onChange={(e) => setKeywords(e.target.value)}
+                  />
                 </div>
 
                 {/* Lưu ý */}
@@ -388,7 +548,11 @@ const AddScientificPaperPage = () => {
                 </div>
 
                 <div className="mt-4 ml-3">
-                  <TextArea placeholder="Tóm tắt" rows={4} />
+                  <TextArea
+                    placeholder="Tóm tắt"
+                    rows={4}
+                    onChange={(e) => setSummary(e.target.value)}
+                  />
                 </div>
               </section>
             </div>
@@ -433,7 +597,7 @@ const AddScientificPaperPage = () => {
                   </div>
                   {authors.map((author, index) => (
                     <div
-                      key={author.id}
+                      key={author.id || index}
                       className="grid grid-cols-6 gap-4 col-span-2"
                     >
                       {/* Row 1 */}
@@ -535,12 +699,17 @@ const AddScientificPaperPage = () => {
                     />
                   )}
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <Input
                     placeholder="Link công bố bài báo (http://...)"
                     required
+                    onChange={(e) => setLink(e.target.value)}
                   />
-                  <Input placeholder="Số DOI (vd: http://doi.org/10.1155.2019)" />
+                  <Input
+                    placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
+                    onChange={(e) => setDoi(e.target.value)}
+                  />
                 </div>
                 <p className="mt-4 text-xs leading-5 text-black">
                   Minh chứng cần file upload full bài báo và link bài báo. Hệ
