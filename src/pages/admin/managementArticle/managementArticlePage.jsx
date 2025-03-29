@@ -10,6 +10,7 @@ const ManagementAriticle = () => {
   const [papers, setPapers] = useState([]); // Ensure papers is initialized as an empty array
   const [userRole] = useState(localStorage.getItem("current_role") || "");
   const [userDepartment] = useState(localStorage.getItem("department") || "");
+  const [departments, setDepartments] = useState({});
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -33,12 +34,30 @@ const ManagementAriticle = () => {
         setPapers(fetchedPapers);
       } catch (error) {
         console.error("Error fetching papers:", error);
-        setPapers([]); // Ensure papers is set to an empty array on error
+        setPapers([]);
       }
     };
 
     fetchPapers();
   }, [userRole, userDepartment]);
+
+  const fetchDepartments = async () => {
+    try {
+      const response = await userApi.getAllDepartments();
+      const departmentMap = response.reduce((map, department) => {
+        map[department._id] = department.department_name;
+        return map;
+      }, {});
+      setDepartments(departmentMap);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+      setDepartments({});
+    }
+  };
+
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
 
   const getAllScientificPapers = async () => {
     try {
@@ -202,13 +221,14 @@ const ManagementAriticle = () => {
         filterInstitution.includes(paper.department)) &&
       (filterStatus.includes("Tất cả") ||
         filterStatus.includes(paper.status.toString())) &&
-      (activeTab === "all" || paper.status.toString() === activeTab)
+      (activeTab === "all" ||
+        paper.status.toString() === activeTab ||
+        (activeTab === "pending" && paper.status === "pending"))
     );
   });
 
   const handleRowClick = (record) => {
-    // navigate(`/admin/management/ariticle/detail/${record.id}`);
-    navigate(`/admin/management/ariticle/detail`);
+    navigate(`/admin/management/ariticle/detail/${record._id}`);
   };
 
   const columns = [
@@ -299,14 +319,27 @@ const ManagementAriticle = () => {
       ellipsis: {
         showTitle: false,
       },
-      render: (author) => (
-        <Tooltip
-          placement="topLeft"
-          title={author.map((a) => a.role).join(", ")}
-        >
-          {author.map((a) => a.role).join(", ")}
-        </Tooltip>
-      ),
+      render: (author) => {
+        const roleMapping = {
+          MainAuthor: "Chính",
+          CorrespondingAuthor: "Liên hệ",
+          MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+          Participant: "Tham gia",
+        };
+
+        return (
+          <Tooltip
+            placement="topLeft"
+            title={author
+              .map((a) => roleMapping[a.role] || "Không xác định")
+              .join(", ")}
+          >
+            {author
+              .map((a) => roleMapping[a.role] || "Không xác định")
+              .join(", ")}
+          </Tooltip>
+        );
+      },
       width: 150,
     },
     {
@@ -316,9 +349,12 @@ const ManagementAriticle = () => {
       ellipsis: {
         showTitle: false,
       },
-      render: (department) => (
-        <Tooltip placement="topLeft" title={department}>
-          {department}
+      render: (departmentId) => (
+        <Tooltip
+          placement="topLeft"
+          title={departments[departmentId] || "Không xác định"}
+        >
+          {departments[departmentId] || "Không xác định"}
         </Tooltip>
       ),
       width: 150,
@@ -330,17 +366,22 @@ const ManagementAriticle = () => {
       ellipsis: {
         showTitle: false,
       },
-      render: (publish_date) => (
-        <Tooltip placement="topLeft" title={publish_date}>
-          {publish_date}
-        </Tooltip>
-      ),
+      render: (publish_date) => {
+        const formattedDate = new Date(publish_date).toLocaleDateString(
+          "vi-VN"
+        );
+        return (
+          <Tooltip placement="topLeft" title={formattedDate}>
+            {formattedDate}
+          </Tooltip>
+        );
+      },
       width: 150,
     },
     {
       title: "MINH CHỨNG",
       key: "evidence",
-      render: (text, record) => (
+      render: () => (
         <div className="flex-col text-[#00A3FF]">
           <button className="hover:underline">Xem link</button>
           <button className="hover:underline">Xem file</button>
@@ -352,11 +393,23 @@ const ManagementAriticle = () => {
       title: "TRẠNG THÁI",
       dataIndex: "status",
       key: "status",
-      render: (status) => (
-        <span className={`${getStatusColor(status.toString())}`}>
-          {status ? "Đã duyệt" : "Từ chối"}
-        </span>
-      ),
+      render: (status) => {
+        const statusText =
+          {
+            true: "Đã duyệt",
+            false: "Từ chối",
+            pending: "Chờ duyệt",
+          }[status.toString()] || "Không xác định";
+
+        const statusColor =
+          {
+            true: "text-green-600",
+            false: "text-red-600",
+            pending: "text-yellow-600",
+          }[status.toString()] || "text-gray-600";
+
+        return <span className={statusColor}>{statusText}</span>;
+      },
       ellipsis: {
         showTitle: false,
       },
@@ -369,11 +422,14 @@ const ManagementAriticle = () => {
       ellipsis: {
         showTitle: false,
       },
-      render: (createdAt) => (
-        <Tooltip placement="topLeft" title={createdAt}>
-          {createdAt}
-        </Tooltip>
-      ),
+      render: (createdAt) => {
+        const formattedDate = new Date(createdAt).toLocaleDateString("vi-VN");
+        return (
+          <Tooltip placement="topLeft" title={formattedDate}>
+            {formattedDate}
+          </Tooltip>
+        );
+      },
       width: 150,
     },
     {
@@ -411,17 +467,6 @@ const ManagementAriticle = () => {
       width: 200,
     },
   ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "true":
-        return "text-green-600";
-      case "false":
-        return "text-red-600";
-      default:
-        return "text-gray-600";
-    }
-  };
 
   const [checkedList, setCheckedList] = useState(
     columns.map((item) => item.key)
@@ -491,6 +536,17 @@ const ManagementAriticle = () => {
             >
               Đã duyệt ({papers.filter((paper) => paper.status === true).length}
               )
+            </button>
+            <button
+              className={`px-4 py-2 text-center text-xs ${
+                activeTab === "pending"
+                  ? "bg-[#00A3FF] text-white"
+                  : "bg-white text-gray-700"
+              } rounded-lg`}
+              onClick={() => setActiveTab("pending")}
+            >
+              Chờ duyệt (
+              {papers.filter((paper) => paper.status === "pending").length})
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${

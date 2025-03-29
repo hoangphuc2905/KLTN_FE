@@ -14,10 +14,11 @@ import {
   PlusOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import userApi from "../../../api/api";
 
 const { Option } = Select;
 
@@ -35,7 +36,55 @@ const DetailArticlePage = () => {
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [requestContent, setRequestContent] = useState("");
   const [rejectReason, setRejectReason] = useState("");
+  const { id } = useParams(); // Extract the _id from the URL
+  const [paper, setPaper] = useState(null); // Add this line to define the paper state
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchPaper = async () => {
+      try {
+        const data = await userApi.getScientificPaperById(id); // Fetch data from API
+
+        let departmentName = "Không có dữ liệu";
+        if (data.department) {
+          try {
+            const departmentData = await userApi.getDepartmentById(
+              data.department
+            ); // Call API to get department details
+            departmentName =
+              departmentData.department_name || "Không có dữ liệu";
+          } catch (error) {
+            console.error("Error fetching department details:", error);
+          }
+        }
+        // Transform the API response to match the expected structure
+        const transformedPaper = {
+          title: data.title_vn || "Không có tiêu đề",
+          description: data.summary || "Không có mô tả",
+          type: data.article_type?.type_name || "Không có dữ liệu",
+          group: data.article_group?.group_name || "Không có dữ liệu",
+          authors: data.author?.map((a) => a.author_name_vi) || [],
+          authorCount: data.author_count || "Không có dữ liệu",
+          publishDate: new Date(data.publish_date).toLocaleDateString("vi-VN"),
+          pageCount: data.page || "Không có dữ liệu",
+          keywords: data.keywords?.split(",").map((k) => k.trim()) || [],
+          researchArea: data.department || "Không có dữ liệu",
+          thumbnail: data.cover_image || "/placeholder.svg",
+          views: data.views?.view_id?.length || 0,
+          downloads: data.downloads?.download_id?.length || 0,
+          cover_image: data.cover_image || "/placeholder.svg",
+          department: departmentName,
+          magazine_vi: data.magazine_vi || "Không có dữ liệu",
+        };
+
+        setPaper(transformedPaper);
+      } catch (error) {
+        console.error("Error fetching scientific paper:", error);
+      }
+    };
+    fetchPaper();
+  }, [id]); // Add id as a dependency
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -163,7 +212,7 @@ const DetailArticlePage = () => {
             </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
-              Thêm bài báo nghiên cứu khoa học
+              Chi tiết bài báo
             </span>
           </div>
         </div>
@@ -206,25 +255,25 @@ const DetailArticlePage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="ID"
-                      required
+                      value={paper?.paper_id || ""}
                       readOnly
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Loại bài báo"
-                      required
+                      value={paper?.type || ""}
                       readOnly
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Thuộc nhóm"
-                      required
+                      value={paper?.group || ""}
                       readOnly
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên bài báo (Tiếng Việt)"
-                      required
+                      value={paper?.title || ""}
                       readOnly
                     />
                   </div>
@@ -235,26 +284,28 @@ const DetailArticlePage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="Ngày công bố"
+                      value={paper?.publishDate || ""}
                       readOnly
                     />
 
                     <InputNumber
                       className="w-full h-10"
                       placeholder="Số trang"
-                      min={1}
+                      value={paper?.pageCount || ""}
                       readOnly
                     />
 
                     <InputNumber
                       className="w-full h-10"
                       placeholder="Thứ tự"
-                      min={1}
+                      value={paper?.order_no || ""}
                       readOnly
                     />
 
                     <Input
                       className="w-full h-10"
                       placeholder="Số ISSN / ISBN"
+                      value={paper?.issn_isbn || ""}
                       readOnly
                     />
                   </div>
@@ -264,22 +315,26 @@ const DetailArticlePage = () => {
                     <Input
                       className="w-full h-10"
                       placeholder="Tên bài báo (Tiếng Anh)"
+                      value={paper?.title_en || ""}
                       readOnly
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt) "
+                      value={paper?.magazine_vi || ""}
                       readOnly
                     />
                     <Input
                       className="w-full h-10"
                       placeholder="Tên tạp chí / kỷ yếu (Tiếng Anh) "
+                      value={paper?.magazine_en || ""}
                       readOnly
                     />
 
                     <Input
                       className="w-full h-10"
                       placeholder="Tập / quyển (nếu có)"
+                      value={paper?.magazine_type || ""}
                       readOnly
                     />
                   </div>
@@ -297,7 +352,12 @@ const DetailArticlePage = () => {
                 </div>
 
                 <div className="mt-4 ml-3">
-                  <TextArea placeholder="Tóm tắt" rows={4} readOnly />
+                  <TextArea
+                    placeholder="Tóm tắt"
+                    rows={4}
+                    value={paper?.description || ""}
+                    readOnly
+                  />
                 </div>
               </section>
             </div>

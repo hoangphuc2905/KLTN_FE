@@ -651,12 +651,12 @@ const AddScientificPaperPage = () => {
                           }
                           required
                         >
-                          <Option value="primary">Chính</Option>
-                          <Option value="corresponding">Liên hệ</Option>
-                          <Option value="primaryCorresponding">
+                          <Option value="MainAuthor">Chính</Option>
+                          <Option value="CorrespondingAuthor">Liên hệ</Option>
+                          <Option value="MainAndCorrespondingAuthor">
                             Vừa chính vừa liên hệ
                           </Option>
-                          <Option value="contributor">Tham gia</Option>
+                          <Option value="Participant">Tham gia</Option>
                         </Select>
                         <Input
                           className="col-span-2"
