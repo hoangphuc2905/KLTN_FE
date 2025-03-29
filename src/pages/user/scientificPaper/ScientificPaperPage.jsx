@@ -148,11 +148,10 @@ const ScientificPaperPage = () => {
   ];
   const uniqueRoles = [
     "Tất cả",
-    ...new Set(
-      (papers || [])
-        .flatMap((paper) => paper.author?.map((auth) => auth.role) || [])
-        .filter(Boolean)
-    ),
+    "Chính",
+    "Liên hệ",
+    "Vừa chính vừa liên hệ",
+    "Tham gia",
   ];
   const uniqueInstitutions = [
     "Tất cả",
@@ -165,7 +164,12 @@ const ScientificPaperPage = () => {
         .filter(Boolean)
     ),
   ];
-  const uniqueStatuses = ["Tất cả", "Đã duyệt", "Đang chờ", "Từ chối"];
+  const uniqueStatuses = [
+    "Tất cả",
+    { value: "approved", label: "Đã duyệt", color: "text-green-600" },
+    { value: "pending", label: "Đang chờ", color: "text-yellow-600" },
+    { value: "refused", label: "Từ chối", color: "text-red-600" },
+  ];
 
   const handleFilterDropdownOpen = (filterType) => {
     switch (filterType) {
@@ -197,9 +201,9 @@ const ScientificPaperPage = () => {
   const filteredPapers = (papers || [])
     .filter((paper) => {
       // Filter papers based on the active tab
-      if (activeTab === "Đã duyệt" && paper.status !== "Đã duyệt") return false;
-      if (activeTab === "Đang chờ" && paper.status !== "Đang chờ") return false;
-      if (activeTab === "Từ chối" && paper.status !== "Từ chối") return false;
+      if (activeTab === "Đã duyệt" && paper.status !== "approved") return false;
+      if (activeTab === "Đang chờ" && paper.status !== "pending") return false;
+      if (activeTab === "Từ chối" && paper.status !== "refused") return false;
       return true;
     })
     .filter((paper) => {
@@ -379,12 +383,16 @@ const ScientificPaperPage = () => {
       render: (author) => {
         const userId = localStorage.getItem("user_id"); // Lấy user_id từ localStorage
         const userRole = author?.find((auth) => auth.user_id === userId)?.role; // Tìm role của user_id
-        if (!userRole) {
-          return "Không có dữ liệu"; // Xử lý trường hợp không có dữ liệu
-        }
+        const roleMapping = {
+          MainAuthor: "Chính",
+          CorrespondingAuthor: "Liên hệ",
+          MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+          Participant: "Tham gia",
+        };
+        const translatedRole = roleMapping[userRole] || "Không có dữ liệu";
         return (
-          <Tooltip placement="topLeft" title={userRole}>
-            {userRole}
+          <Tooltip placement="topLeft" title={translatedRole}>
+            {translatedRole}
           </Tooltip>
         );
       },
@@ -459,9 +467,14 @@ const ScientificPaperPage = () => {
       key: "status",
       sorter: (a, b) => a.status.localeCompare(b.status),
       sortOrder: sortedInfo.columnKey === "status" ? sortedInfo.order : null,
-      render: (status) => (
-        <span className={`${getStatusColor(status)}`}>{status}</span>
-      ),
+      render: (status) => {
+        const statusObj = uniqueStatuses.find((s) => s.value === status);
+        return (
+          <span className={`${getStatusColor(status)}`}>
+            {statusObj ? statusObj.label : "Không có dữ liệu"}
+          </span>
+        );
+      },
       ellipsis: {
         showTitle: false,
       },
@@ -527,16 +540,8 @@ const ScientificPaperPage = () => {
   ];
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Đã duyệt":
-        return "text-green-600";
-      case "Đang chờ":
-        return "text-yellow-600";
-      case "Từ chối":
-        return "text-red-600";
-      default:
-        return "text-gray-600";
-    }
+    const statusObj = uniqueStatuses.find((s) => s.value === status);
+    return statusObj ? statusObj.color : "text-gray-600";
   };
 
   const [checkedList, setCheckedList] = useState(
@@ -606,7 +611,7 @@ const ScientificPaperPage = () => {
               onClick={() => setActiveTab("Đã duyệt")}
             >
               Đã duyệt (
-              {papers.filter((paper) => paper.status === "Đã duyệt").length})
+              {papers.filter((paper) => paper.status === "approved").length})
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
@@ -617,7 +622,7 @@ const ScientificPaperPage = () => {
               onClick={() => setActiveTab("Đang chờ")}
             >
               Chờ duyệt (
-              {papers.filter((paper) => paper.status === "Đang chờ").length})
+              {papers.filter((paper) => paper.status === "pending").length})
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
@@ -628,7 +633,7 @@ const ScientificPaperPage = () => {
               onClick={() => setActiveTab("Từ chối")}
             >
               Từ chối (
-              {papers.filter((paper) => paper.status === "Từ chối").length})
+              {papers.filter((paper) => paper.status === "refused").length})
             </button>
           </div>
         </div>
@@ -866,12 +871,10 @@ const ScientificPaperPage = () => {
                                 Tất cả
                               </Checkbox>
                               <Checkbox.Group
-                                options={uniqueRoles
-                                  .filter((role) => role !== "Tất cả")
-                                  .map((role) => ({
-                                    label: role,
-                                    value: role,
-                                  }))}
+                                options={uniqueRoles.map((role) => ({
+                                  label: role,
+                                  value: role,
+                                }))}
                                 value={filterRole}
                                 onChange={(checkedValues) =>
                                   setFilterRole(checkedValues)
@@ -980,10 +983,10 @@ const ScientificPaperPage = () => {
                               </Checkbox>
                               <Checkbox.Group
                                 options={uniqueStatuses
-                                  .filter((status) => status !== "Tất cả")
+                                  .filter((status) => status.value !== "Tất cả")
                                   .map((status) => ({
-                                    label: status,
-                                    value: status,
+                                    label: status.label,
+                                    value: status.value,
                                   }))}
                                 value={filterStatus}
                                 onChange={(checkedValues) =>

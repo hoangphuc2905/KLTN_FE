@@ -235,11 +235,11 @@ const App = () => {
               }
             />
             <Route
-              path="/admin/management/ariticle/detail"
+              path="/admin/management/ariticle/detail/:id"
               element={
                 <ProtectedRoute
                   roles={userRoles}
-                  path="/admin/management/ariticle/detail"
+                  path="/admin/management/ariticle/detail/:id"
                 >
                   <DetailArticlePage />
                 </ProtectedRoute>
