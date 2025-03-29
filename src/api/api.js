@@ -411,8 +411,19 @@ const userApi = {
   getAllScientificPapers: async () => {
     try {
       const response = await axios.get(`${API_URL}/scientificPapers`);
-      console.log("API Response:", response.data);
-      return response.data;
+      return response.data; // Return only the data property
+    } catch (error) {
+      console.error("Error fetching scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getScientificPapersByDepartment: async (department) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/department/${department}`
+      );
+      return response.data; // Return only the data property
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
