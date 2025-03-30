@@ -10,6 +10,7 @@ const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currentRole, setCurrentRole] = useState("");
   const [showChangePasswordPopup, setShowChangePasswordPopup] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0); // State to store unread notifications count
   const menuRef = useRef(null);
 
   const roleMapping = {
@@ -72,6 +73,34 @@ const Header = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const fetchUnreadNotifications = async () => {
+      try {
+        const receiverId = localStorage.getItem("user_id"); // Get receiver_id from localStorage
+        if (!receiverId) {
+          console.error("ReceiverId không tồn tại.");
+          return;
+        }
+
+        // Call the API with receiverId
+        const response = await userApi.getMessagesByReceiverId(receiverId);
+
+        console.log("Thông báo chưa đọc:", response);
+
+        // Filter unread messages
+        const unreadMessages = response.filter((msg) => !msg.isread);
+        setUnreadCount(unreadMessages.length);
+      } catch (error) {
+        console.error(
+          "Lỗi khi lấy thông báo:",
+          error || "Lỗi kết nối đến server"
+        );
+      }
+    };
+
+    fetchUnreadNotifications();
+  }, []);
+
   const handleLogout = () => {
     localStorage.clear();
     message.success("Bạn đã đăng xuất thành công.");
@@ -110,10 +139,15 @@ const Header = () => {
 
         <div className="relative flex items-center gap-4" ref={menuRef}>
           <button
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-500 hover:text-gray-700 relative"
             onClick={openNotifications}
           >
             🔔
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center transform translate-x-1/2 -translate-y-1/2">
+                {unreadCount > 5 ? "5+" : unreadCount}
+              </span>
+            )}
           </button>
 
           {user ? (
