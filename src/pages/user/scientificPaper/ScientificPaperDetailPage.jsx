@@ -2,7 +2,7 @@ import Header from "../../../components/header";
 import { Download, Eye, MessageCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
-import { useParams } from "react-router-dom"; // Import useParams
+import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 
 const ScientificPaperDetailPage = () => {

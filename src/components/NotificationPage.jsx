@@ -1,9 +1,26 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom"; // Added import
 import userApi from "../api/api";
 import Header from "./header";
 
 const NotificationPage = () => {
   const [notifications, setNotifications] = useState([]);
+  const navigate = useNavigate(); // Initialize navigate
+
+  const translateMessageType = (messageType) => {
+    switch (messageType) {
+      case "Request for Edit":
+        return "Yêu cầu chỉnh sửa";
+      case "Feedback":
+        return "Phản hồi";
+      case "Approved":
+        return "Đã phê duyệt";
+      case "Request for Approval":
+        return "Yêu cầu phê duyệt";
+      default:
+        return "Thông báo";
+    }
+  };
 
   useEffect(() => {
     const fetchNotifications = async () => {
@@ -18,6 +35,9 @@ const NotificationPage = () => {
         const [notificationsResponse, messagesResponse] = await Promise.all([
           userApi.getMessagesByReceiverId(user_id),
         ]);
+
+        console.log("Thông báo chưa đọc:", notificationsResponse);
+        console.log("Thông báo đã đọc:", messagesResponse);
 
         let allNotifications = [
           ...(notificationsResponse || []),
@@ -47,6 +67,20 @@ const NotificationPage = () => {
     fetchNotifications();
   }, []);
 
+  const handleNotificationClick = async (notification) => {
+    if (notification.paper_id) {
+      try {
+        navigate(`/scientific-paper/${notification.paper_id._id}`);
+        await userApi.markMessageAsRead(notification._id);
+        console.log("Đã đánh dấu thông báo là đã đọc:", notification._id);
+      } catch (error) {
+        console.error("Lỗi khi cập nhật trạng thái thông báo:", error);
+      }
+    } else {
+      console.error("Missing paper_id for notification:", notification);
+    }
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="max-w-screen-xl mx-auto px-4 md:px-6 lg:px-8 py-8">
@@ -55,11 +89,15 @@ const NotificationPage = () => {
         {notifications.length > 0 ? (
           <div className="grid grid-cols-1 gap-6">
             {notifications.map((notification, index) => (
-              <div key={index} className="p-4 rounded-lg shadow-md bg-white">
+              <div
+                key={index}
+                className={`p-4 rounded-lg shadow-md cursor-pointer ${
+                  notification.isread ? "bg-white" : "bg-blue-100"
+                }`}
+                onClick={() => handleNotificationClick(notification)}
+              >
                 <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  {notification.message_type === "Request for Approval"
-                    ? "Yêu cầu phê duyệt"
-                    : notification.message_type || "Thông báo"}
+                  {translateMessageType(notification.message_type)}
                 </h3>
                 <p className="text-gray-600 mb-2">{notification.content}</p>
                 <p className="text-sm text-gray-400">

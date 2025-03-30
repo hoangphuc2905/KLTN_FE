@@ -197,7 +197,7 @@ const ManagementAriticle = () => {
     "Tất cả",
     ...new Set(papers.map((paper) => paper.department)),
   ];
-  const uniqueStatuses = ["Tất cả", "true", "false"]; // Assuming status is boolean
+  const uniqueStatuses = ["Tất cả", "pending", "approved", "refused"]; // Updated status values
 
   const filteredPapers = papers.filter((paper) => {
     const authorCount = parseInt(paper.author_count?.split("(")[0] || 0); // Adjusted for correct format
@@ -223,7 +223,9 @@ const ManagementAriticle = () => {
         filterStatus.includes(paper.status.toString())) &&
       (activeTab === "all" ||
         paper.status.toString() === activeTab ||
-        (activeTab === "pending" && paper.status === "pending"))
+        (activeTab === "pending" && paper.status === "pending") ||
+        (activeTab === "approved" && paper.status === "approved") || // Ensure approved papers appear in the "Đã duyệt" tab
+        (activeTab === "refused" && paper.status === "refused"))
     );
   });
 
@@ -396,15 +398,15 @@ const ManagementAriticle = () => {
       render: (status) => {
         const statusText =
           {
-            true: "Đã duyệt",
-            false: "Từ chối",
+            approved: "Đã duyệt",
+            refused: "Từ chối",
             pending: "Chờ duyệt",
           }[status.toString()] || "Không xác định";
 
         const statusColor =
           {
-            true: "text-green-600",
-            false: "text-red-600",
+            approved: "text-green-600",
+            refused: "text-red-600",
             pending: "text-yellow-600",
           }[status.toString()] || "text-gray-600";
 
@@ -528,14 +530,14 @@ const ManagementAriticle = () => {
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
-                activeTab === "true"
+                activeTab === "approved"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
               } rounded-lg`}
-              onClick={() => setActiveTab("true")}
+              onClick={() => setActiveTab("approved")}
             >
-              Đã duyệt ({papers.filter((paper) => paper.status === true).length}
-              )
+              Đã duyệt (
+              {papers.filter((paper) => paper.status === "approved").length})
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
@@ -550,14 +552,14 @@ const ManagementAriticle = () => {
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
-                activeTab === "false"
+                activeTab === "refused"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
               } rounded-lg`}
-              onClick={() => setActiveTab("false")}
+              onClick={() => setActiveTab("refused")}
             >
-              Từ chối ({papers.filter((paper) => paper.status === false).length}
-              )
+              Từ chối (
+              {papers.filter((paper) => paper.status === "refused").length})
             </button>
           </div>
         </div>

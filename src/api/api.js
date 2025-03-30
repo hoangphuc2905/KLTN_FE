@@ -511,15 +511,11 @@ const userApi = {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await axios.post(
-        `${API_URL}/files/upload`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const response = await axios.post(`${API_URL}/files/upload`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
 
       console.log("API Response:", response.data);
       return response.data;
@@ -568,7 +564,35 @@ const userApi = {
       console.error("Error fetching messages:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
-  }
+  },
+
+  markMessageAsRead: async (messageId) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/messages/read/${messageId}`,
+        {}
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updateScientificPaperStatus: async (paperId, status) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/scientificPapers/status/${paperId}`,
+        { status }
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating scientific paper status:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
