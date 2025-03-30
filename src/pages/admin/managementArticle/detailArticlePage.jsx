@@ -1,134 +1,108 @@
-import {
-  Button,
-  Input,
-  Select,
-  DatePicker,
-  InputNumber,
-  message,
-  Table,
-  Modal,
-} from "antd";
-import {
-  CloseCircleOutlined,
-  MinusOutlined,
-  PlusOutlined,
-} from "@ant-design/icons";
-import TextArea from "antd/es/input/TextArea";
-import { useState, useEffect } from "react";
 import Header from "../../../components/header";
-import Footer from "../../../components/footer";
-import { useNavigate, useParams } from "react-router-dom";
-import userApi from "../../../api/api";
+import { Download } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Input, Table, Select, Button, Modal } from "antd";
+import { CloseCircleOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
+const { TextArea } = Input;
 
 const DetailArticlePage = () => {
+  const [paper, setPaper] = useState({
+    article_type: "Báo khoa học trẻ Việt Nam",
+    article_group: "Q2",
+    title_vn:
+      "TÁC ĐỘNG CỦA RỦI RO VỠ NỢ KHU VỰC BẤT ĐỘNG SẢN ĐẾN LỢI NHUẬN VÀ ỔN ĐỊNH NGÂN HÀNG: BẰNG CHỨNG TẠI VIỆT NAM",
+    title_en:
+      "THE IMPACT OF DEBT BANKRUPTCY RISK IN THE REAL PRODUCTS SECTOR ON BANKING PROFITS AND STABILITY: EVIDENCE FROM VIETNAM",
+    publish_date: "01/01/2023",
+    magazine_vi: "Tạp chí Khoa học và Công nghệ",
+    magazine_en: "Science Magazine",
+    magazine_type: "Tạp chí khoa học tổng hợp",
+    page: 10,
+    issn_isbn: "1234567890",
+    keywords: [
+      "Rủi ro vỡ nợ, bất động sản, lợi nhuận ngân hàng, ổn định tài chính, X-SCORE, Z-SCORE",
+    ],
+    summary:
+      "Nghiên cứu này xem xét tác động của rủi ro vỡ nợ khu vực bất động sản đến lợinhuận và ổn định tài chính của các ngân hàng thương mại Việt Nam trong giai đoạn 2010-2023. Tác giả sử dụng tích hợp ba cách tiếp cận gồm các ước lượng dữ liệu bảng theo POLS, FEM, REM, 2S-GMM; hồi quy phân vị; PVAR & kiểm định nhân quả Granger và mô hình Zmijewski X-SCORE để đo lường rủi ro vỡ nợ khu vực bất động sản. Kết quả nghiên cứu cho thấy rủi ro vỡ nợ khu vực bất động sản có tác động tiêu cực đến lợi nhuận và ổn định ngân hàng, nhưng mức độ tác động khác nhautại các phân vị khác nhau. Bên cạnh đó, kết quả nghiên cứu còn cho thấylợi nhuận và ổn định ngân hàng có mối quan hệ tíchcực và nhân quả hai chiều.Ngoài ra, các biến kiểm soát đặc thù ngân hàng và vĩ mô đều có tác động đến lợi nhuận và/hoặc ổn định ngân hàng trên hàm hồi quy chung cũng như tất cả các phân vị được xét. Pháthiện của nghiên cứu có ý nghĩa quan trọng đối với các nhà quản lý doanh nghiệp, ngân hàng vàhoạch định chính sách.",
+    department: "Công nghệ Thông tin",
+    cover_image:
+      "https://jst.iuh.edu.vn/public/journals/1/cover_issue_65_en_US.jpg",
+    upload_file: "example.pdf",
+    publication_link: "http://example.com/publication",
+    doi: "http://doi.org/10.1234/example",
+    file: "example.pdf",
+    link: "http://example.com",
+  });
+
   const [authors, setAuthors] = useState([
-    { id: 1, mssvMsgv: "", full_name: "", role: "", institution: "" },
-    { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
-    { id: 3, mssvMsgv: "", full_name: "", role: "", institution: "" },
+    {
+      id: 1,
+      mssvMsgv: "123456",
+      full_name: "Nguyễn Văn A",
+      full_name_eng: "Nguyen Van A",
+      role: "primary",
+      institution: "Trường Đại học A",
+    },
+    {
+      id: 2,
+      mssvMsgv: "654321",
+      full_name: "Trần Thị B",
+      full_name_eng: "Tran Thi B",
+      role: "corresponding",
+      institution: "Trường Đại học B",
+    },
+    {
+      id: 3,
+      mssvMsgv: "789012",
+      full_name: "Lê Văn C",
+      full_name_eng: "Le Van C",
+      role: "contributor",
+      institution: "Trường Đại học C",
+    },
   ]);
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [coverImage, setCoverImage] = useState(null);
-  const [paperTypes, setPaperTypes] = useState([]);
-  const [paperGroups, setPaperGroups] = useState([]);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
-  const [requestContent, setRequestContent] = useState("");
-  const [rejectReason, setRejectReason] = useState("");
-  const { id } = useParams(); // Extract the _id from the URL
-  const [paper, setPaper] = useState(null); // Add this line to define the paper state
+
+  const columns = [
+    {
+      title: "MSSV/MSGV",
+      dataIndex: "mssvMsgv",
+      key: "mssvMsgv",
+      width: 150,
+      ellipsis: true,
+    },
+    {
+      title: "Tên sinh viên/giảng viên (VI)",
+      dataIndex: "full_name",
+      key: "full_name",
+      width: 300,
+      ellipsis: true,
+    },
+    {
+      title: "Tên sinh viên/giảng viên (EN)",
+      dataIndex: "full_name_eng",
+      key: "full_name_eng",
+      width: 300,
+      ellipsis: true,
+    },
+    {
+      title: "Vai trò",
+      dataIndex: "role",
+      key: "role",
+      width: 250,
+      ellipsis: true,
+    },
+    {
+      title: "Cơ quan đứng tên",
+      dataIndex: "institution",
+      key: "institution",
+      width: 150,
+      ellipsis: true,
+    },
+  ];
 
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchPaper = async () => {
-      try {
-        const data = await userApi.getScientificPaperById(id); // Fetch data from API
-
-        let departmentName = "Không có dữ liệu";
-        if (data.department) {
-          try {
-            const departmentData = await userApi.getDepartmentById(
-              data.department
-            ); // Call API to get department details
-            departmentName =
-              departmentData.department_name || "Không có dữ liệu";
-          } catch (error) {
-            console.error("Error fetching department details:", error);
-          }
-        }
-        // Transform the API response to match the expected structure
-        const transformedPaper = {
-          title: data.title_vn || "Không có tiêu đề",
-          description: data.summary || "Không có mô tả",
-          type: data.article_type?.type_name || "Không có dữ liệu",
-          group: data.article_group?.group_name || "Không có dữ liệu",
-          authors: data.author?.map((a) => a.author_name_vi) || [],
-          authorCount: data.author_count || "Không có dữ liệu",
-          publishDate: new Date(data.publish_date).toLocaleDateString("vi-VN"),
-          pageCount: data.page || "Không có dữ liệu",
-          keywords: data.keywords?.split(",").map((k) => k.trim()) || [],
-          researchArea: data.department || "Không có dữ liệu",
-          thumbnail: data.cover_image || "/placeholder.svg",
-          views: data.views?.view_id?.length || 0,
-          downloads: data.downloads?.download_id?.length || 0,
-          cover_image: data.cover_image || "/placeholder.svg",
-          department: departmentName,
-          magazine_vi: data.magazine_vi || "Không có dữ liệu",
-        };
-
-        setPaper(transformedPaper);
-      } catch (error) {
-        console.error("Error fetching scientific paper:", error);
-      }
-    };
-    fetchPaper();
-  }, [id]); // Add id as a dependency
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setCoverImage(event.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleFileChange = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/pdf";
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      setSelectedFile(file.name);
-    };
-    input.click();
-  };
-
-  const handleRemoveFile = () => {
-    setSelectedFile(null);
-  };
-
-  const handleAddAuthor = () => {
-    setAuthors([
-      ...authors,
-      {
-        id: authors.length + 1,
-        mssvMsgv: "",
-        full_name: "",
-        role: "",
-        institution: "",
-      },
-    ]);
-  };
-
-  const handleRemoveAuthor = (index) => {
-    const newAuthors = authors.filter((_, i) => i !== index);
-    setAuthors(newAuthors);
-  };
 
   const handleAuthorChange = (index, field, value) => {
     const updatedAuthors = [...authors];
@@ -136,60 +110,23 @@ const DetailArticlePage = () => {
     setAuthors(updatedAuthors);
   };
 
-  const columns = [
-    {
-      title: "STT",
-      dataIndex: "id",
-      key: "id",
-      render: (text, record, index) => index + 1,
-    },
-    {
-      title: "MSSV/MSGV",
-      dataIndex: "mssvMsgv",
-      key: "mssvMsgv",
-    },
-    {
-      title: "Tên SV/GV",
-      dataIndex: "full_name",
-      key: "full_name",
-    },
-    {
-      title: "Vai trò",
-      dataIndex: "role",
-      key: "role",
-    },
-    {
-      title: "CQ công tác",
-      dataIndex: "institution",
-      key: "institution",
-    },
-  ];
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
+  const [requestContent, setRequestContent] = useState("");
+  const [rejectReason, setRejectReason] = useState("");
 
-  const showEditModal = () => {
-    setIsEditModalVisible(true);
-  };
-
-  const handleEditCancel = () => {
-    setIsEditModalVisible(false);
-  };
-
+  const handleRemoveFile = () => setSelectedFile(null);
+  const showEditModal = () => setIsEditModalVisible(true);
+  const handleEditCancel = () => setIsEditModalVisible(false);
   const handleEditSend = () => {
-    // Handle send request logic here
-    console.log("Request content:", requestContent);
+    console.log("Edit Request Sent:", requestContent);
     setIsEditModalVisible(false);
   };
-
-  const showRejectModal = () => {
-    setIsRejectModalVisible(true);
-  };
-
-  const handleRejectCancel = () => {
-    setIsRejectModalVisible(false);
-  };
-
+  const showRejectModal = () => setIsRejectModalVisible(true);
+  const handleRejectCancel = () => setIsRejectModalVisible(false);
   const handleRejectSend = () => {
-    // Handle send rejection logic here
-    console.log("Reject reason:", rejectReason);
+    console.log("Reject Reason Sent:", rejectReason);
     setIsRejectModalVisible(false);
   };
 
@@ -211,301 +148,259 @@ const DetailArticlePage = () => {
               Trang chủ
             </span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900">
-              Chi tiết bài báo
-            </span>
+            <span className="font-semibold text-sky-900">Chi tiết bài báo</span>
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
-          <div className="flex gap-4">
-            {/* Left Column */}
-            <div className="w-1/2">
-              {/* Khối "Nhập thông tin" */}
-              <section className="flex flex-col bg-white rounded-lg p-4 mb-4">
-                <h2 className="text-sm font-medium leading-none text-black uppercase mb-4 pl-[210px]">
-                  Nhập thông tin
-                </h2>
-
-                <div className="flex gap-4">
-                  <div className="w-1/3 flex justify-center">
-                    <label
-                      htmlFor="cover-upload"
-                      className="cursor-pointer relative"
-                    >
-                      <img
-                        src={
-                          coverImage ||
-                          "https://via.placeholder.com/180x200?text=Bìa+Bài+Báo"
-                        }
-                        alt="Bìa bài báo"
-                        className="w-[180px] h-[200px] object-cover border border-gray-300 rounded-lg shadow-md"
-                      />
-                    </label>
-                    <input
-                      id="cover-upload"
-                      type="file"
-                      accept="image/*"
-                      disabled
-                      className="hidden"
+        <div className="self-center w-full max-w-[1563px] px-6 mt-6">
+          <div className="grid grid-cols-1 gap-6">
+            <div className="col-span-1">
+              <div className="bg-white rounded-xl p-6">
+                <div className="flex gap-6">
+                  <div className="flex flex-col items-center gap-4">
+                    <img
+                      src={paper.cover_image}
+                      alt="Form illustration"
+                      className="w-[160px] h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
                     />
                   </div>
 
-                  <div className="w-2/3 grid grid-cols-1">
-                    <Input
-                      className="w-full h-10"
-                      placeholder="ID"
-                      value={paper?.paper_id || ""}
-                      readOnly
-                    />
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Loại bài báo"
-                      value={paper?.type || ""}
-                      readOnly
-                    />
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Thuộc nhóm"
-                      value={paper?.group || ""}
-                      readOnly
-                    />
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên bài báo (Tiếng Việt)"
-                      value={paper?.title || ""}
-                      readOnly
-                    />
+                  <div className="flex-1 ml-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h1 className="text-xl font-bold text-sky-900 mb-4">
+                          {paper.title_vn}
+                        </h1>
+                        <h2 className="text-lg font-medium text-gray-600 mb-4">
+                          {paper.title_en}
+                        </h2>
+                        <p className="text-gray-600 mb-4 text-sm w-[96%] text-justify leading-6">
+                          {paper.summary}
+                        </p>
+                        <div className="grid grid-cols-2 gap-4 mt-6">
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">
+                              Loại bài báo:
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.article_type}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">
+                              Nhóm bài báo:
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.article_group}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">
+                              Ngày công bố:
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.publish_date}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">Số trang:</p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.page}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">
+                              Tạp chí (VN):
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.magazine_vi}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">
+                              Tạp chí (EN):
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.magazine_en}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">Khoa:</p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.department}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">
+                              Loại tạp chí:
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.magazine_type}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">ISSN/ISBN:</p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.issn_isbn}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex mt-4 items-center flex-nowrap overflow-hidden whitespace-nowrap">
+                          <p className="text-sm text-gray-500 flex-shrink-0">
+                            Từ khóa:
+                          </p>
+                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                            {paper.keywords?.join(", ") || "Không có dữ liệu"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-4 mt-4 ml-3">
-                  {/* Bên dưới ảnh: 4 input xếp dọc (bằng ảnh) */}
-                  <div className="flex flex-col w-[180px] gap-4">
+              </div>
+
+              {/* Thông tin tác giả */}
+              <div className="bg-white rounded-xl p-4 mt-6">
+                <section className="flex flex-col bg-white rounded-lg p-6 mb-6">
+                  <h2 className="text-sm font-medium leading-none text-black uppercase mb-6">
+                    Thông tin tác giả
+                  </h2>
+                  <div className="mb-6">
                     <Input
-                      className="w-full h-10"
-                      placeholder="Ngày công bố"
-                      value={paper?.publishDate || ""}
+                      value={`Số lượng tác giả: ${authors.length}`}
                       readOnly
-                    />
-
-                    <InputNumber
-                      className="w-full h-10"
-                      placeholder="Số trang"
-                      value={paper?.pageCount || ""}
-                      readOnly
-                    />
-
-                    <InputNumber
-                      className="w-full h-10"
-                      placeholder="Thứ tự"
-                      value={paper?.order_no || ""}
-                      readOnly
-                    />
-
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Số ISSN / ISBN"
-                      value={paper?.issn_isbn || ""}
-                      readOnly
+                      className="w-[200px]"
                     />
                   </div>
+                  <Table
+                    columns={columns}
+                    dataSource={authors}
+                    pagination={false}
+                    rowKey="id"
+                  />
+                </section>
+              </div>
 
-                  {/* Bên phải ảnh: 4 input xếp dọc (bằng ID ở trên) */}
-                  <div className="flex flex-col gap-4 w-2/3">
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên bài báo (Tiếng Anh)"
-                      value={paper?.title_en || ""}
-                      readOnly
-                    />
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt) "
-                      value={paper?.magazine_vi || ""}
-                      readOnly
-                    />
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên tạp chí / kỷ yếu (Tiếng Anh) "
-                      value={paper?.magazine_en || ""}
-                      readOnly
-                    />
+              {/* Thông tin minh chứng + 3 button :yêu cầu chỉnh sửa, từ chối, duyệt bài */}
+              <div className="bg-white rounded-xl p-4 mt-6">
+                <section className="flex flex-col bg-white rounded-lg p-9 mb-6">
+                  <h2 className="text-sm font-medium leading-none text-black uppercase mb-6">
+                    Nhập thông tin Minh chứng
+                  </h2>
 
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tập / quyển (nếu có)"
-                      value={paper?.magazine_type || ""}
-                      readOnly
-                    />
+                  <div>
+                    <div className="flex items-center mb-4">
+                      <p className="text-sm text-gray-500">File:</p>
+                      <p className="text-sm ml-2 font-medium text-[#174371]">
+                        {paper.file}
+                      </p>
+                    </div>
+                    <div className="flex items-center mb-4">
+                      <p className="text-sm text-gray-500">Link công bố:</p>
+                      <p className="text-sm ml-2 font-medium text-[#174371]">
+                        {paper.link}
+                      </p>
+                    </div>
+                    <div className="flex items-center mb-4">
+                      <p className="text-sm text-gray-500">Số DOI:</p>
+                      <p className="text-sm ml-2 font-medium text-[#174371]">
+                        {paper.doi}
+                      </p>
+                    </div>
                   </div>
-                </div>
 
-                {/* Lưu ý */}
-                <div className="mt-2 p-2 text-xs text-gray-700 italic">
-                  (<span className="font-bold">LƯU Ý</span>: KHÔNG CẦN đánh chữ
-                  <span className="font-bold"> ISSN </span> vào. Với các
-                  <span className="font-bold"> TẠP CHÍ </span>, bắt buộc điền
-                  chỉ số
-                  <span className="font-bold"> ISSN</span>. Cung cấp số
-                  <span className="font-bold"> ISSN</span> để việc tra cứu và
-                  duyệt nội dung)
-                </div>
+                  <div className="relative">
+                    <div className="absolute right-1 flex justify-end space-x-4">
+                      <Button
+                        style={{ backgroundColor: "#FFD700", color: "black" }}
+                        onClick={showEditModal}
+                      >
+                        Yêu cầu chỉnh sửa
+                      </Button>
+                      <Button
+                        style={{ backgroundColor: "#FF0000", color: "white" }}
+                        onClick={showRejectModal}
+                      >
+                        Từ chối
+                      </Button>
+                      <Button
+                        style={{ backgroundColor: "#008000", color: "white" }}
+                      >
+                        Duyệt bài
+                      </Button>
+                    </div>
+                  </div>
+                </section>
+              </div>
 
-                <div className="mt-4 ml-3">
-                  <TextArea
-                    placeholder="Tóm tắt"
-                    rows={4}
-                    value={paper?.description || ""}
-                    readOnly
-                  />
-                </div>
-              </section>
-            </div>
-
-            {/* Right Column */}
-            <div className="w-1/2">
-              {/* Khối "Nhập thông tin tác giả" */}
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-4">
-                <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
-                  Thông tin tác giả
-                </h2>
-                <div className="mb-4">
-                  <Input
-                    value={`Số lượng tác giả: ${authors.length}`}
-                    readOnly
-                    className="w-[200px]"
-                  />
-                </div>
-                <Table
-                  columns={columns}
-                  dataSource={authors}
-                  pagination={false}
-                  rowKey="id"
-                />
-              </section>
-
-              {/* Khối "Nhập thông tin minh chứng" */}
-              <section className="flex flex-col bg-white rounded-lg p-9 mb-4 ">
-                <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
-                  Nhập thông tin Minh chứng
-                </h2>
-                <div className="flex items-center space-x-2 mb-4">
-                  <Input
-                    placeholder="Upload file..."
-                    value={selectedFile || ""}
-                    readOnly
-                  />
-                  {selectedFile && (
-                    <Button
-                      icon={<CloseCircleOutlined />}
-                      onClick={handleRemoveFile}
-                      danger
-                      disabled
-                    />
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    placeholder="Link công bố bài báo (http://...)"
-                    required
-                    readOnly
-                  />
-                  <Input
-                    placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
-                    readOnly
-                  />
-                </div>
-                <p className="mt-4 text-xs leading-5 text-black">
-                  Minh chứng cần file upload full bài báo và link bài báo. Hệ
-                  thống chỉ hỗ trợ file PDF và có kích thước nhỏ hơn 3.5MB.
-                  Trường hợp có nhiều hơn 1 file sử dụng nén thành file Zip hoặc
-                  file Rar trước khi upload.
-                </p>
-                <div className="flex justify-end space-x-4 mt-6">
+              <Modal
+                title={
+                  <div style={{ textAlign: "center" }}>Yêu cầu chỉnh sửa</div>
+                }
+                visible={isEditModalVisible}
+                onCancel={handleEditCancel}
+                // centered
+                footer={[
                   <Button
-                    style={{ backgroundColor: "#FFD700", color: "black" }}
-                    onClick={showEditModal}
-                  >
-                    Yêu cầu chỉnh sửa
-                  </Button>
-                  <Button
+                    key="cancel"
+                    onClick={handleEditCancel}
                     style={{ backgroundColor: "#FF0000", color: "white" }}
-                    onClick={showRejectModal}
                   >
-                    Từ chối
-                  </Button>
+                    Hủy
+                  </Button>,
                   <Button
+                    key="submit"
+                    type="primary"
+                    onClick={handleEditSend}
                     style={{ backgroundColor: "#008000", color: "white" }}
                   >
-                    Duyệt bài
-                  </Button>
-                </div>
-              </section>
+                    Gửi
+                  </Button>,
+                ]}
+              >
+                <TextArea
+                  placeholder="Nội dung yêu cầu chỉnh sửa"
+                  rows={4}
+                  value={requestContent}
+                  onChange={(e) => setRequestContent(e.target.value)}
+                />
+              </Modal>
+
+              <Modal
+                title={
+                  <div style={{ textAlign: "center" }}>Yêu cầu từ chối</div>
+                }
+                visible={isRejectModalVisible}
+                onCancel={handleRejectCancel}
+                footer={[
+                  <Button
+                    key="cancel"
+                    onClick={handleRejectCancel}
+                    style={{ backgroundColor: "#FF0000", color: "white" }}
+                  >
+                    Hủy
+                  </Button>,
+                  <Button
+                    key="submit"
+                    type="primary"
+                    onClick={handleRejectSend}
+                    style={{ backgroundColor: "#008000", color: "white" }}
+                  >
+                    Gửi
+                  </Button>,
+                ]}
+              >
+                <TextArea
+                  placeholder="Lý do từ chối"
+                  rows={4}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                />
+              </Modal>
             </div>
           </div>
         </div>
       </div>
-      <Footer />
-
-      <Modal
-        title={<div style={{ textAlign: "center" }}>Yêu cầu chỉnh sửa</div>}
-        visible={isEditModalVisible}
-        onCancel={handleEditCancel}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleEditCancel}
-            style={{ backgroundColor: "#FF0000", color: "white" }}
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleEditSend}
-            style={{ backgroundColor: "#008000", color: "white" }}
-          >
-            Gửi
-          </Button>,
-        ]}
-      >
-        <TextArea
-          placeholder="Nội dung yêu cầu chỉnh sửa"
-          rows={4}
-          value={requestContent}
-          onChange={(e) => setRequestContent(e.target.value)}
-        />
-      </Modal>
-
-      <Modal
-        title={<div style={{ textAlign: "center" }}>Yêu cầu từ chối</div>}
-        visible={isRejectModalVisible}
-        onCancel={handleRejectCancel}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleRejectCancel}
-            style={{ backgroundColor: "#FF0000", color: "white" }}
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleRejectSend}
-            style={{ backgroundColor: "#008000", color: "white" }}
-          >
-            Gửi
-          </Button>,
-        ]}
-      >
-        <TextArea
-          placeholder="Lý do từ chối"
-          rows={4}
-          value={rejectReason}
-          onChange={(e) => setRejectReason(e.target.value)}
-        />
-      </Modal>
     </div>
   );
 };
