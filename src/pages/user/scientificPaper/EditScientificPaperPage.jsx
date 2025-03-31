@@ -713,13 +713,24 @@ const EditScientificPaperPage = () => {
                           </Option>
                           <Option value="Participant">Tham gia</Option>
                         </Select>
-                        <Input
+                        <Select
                           className="col-span-2"
                           placeholder="CQ công tác"
-                          suffix={<span style={{ color: "red" }}>*</span>}
                           value={author.institution}
-                          readOnly
-                        />
+                          onChange={(value) =>
+                            handleAuthorChange(index, "institution", value)
+                          }
+                          required
+                        >
+                          {departments.map((department) => (
+                            <Option
+                              key={department._id}
+                              value={department.department_name}
+                            >
+                              {department.department_name}
+                            </Option>
+                          ))}
+                        </Select>
                       </div>
                     </div>
                   ))}

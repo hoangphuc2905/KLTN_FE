@@ -187,6 +187,29 @@ const HomePage = () => {
     }
   };
 
+  const fetchDownloadCount = async (paperId) => {
+    try {
+      const response = await userApi.getDownloadCountByPaperId(paperId);
+      return response.download_count || 0;
+    } catch (error) {
+      console.error(
+        `Error fetching download count for paper ${paperId}:`,
+        error
+      );
+      return 0; // Fallback to 0 in case of an error
+    }
+  };
+
+  const fetchViewCount = async (paperId) => {
+    try {
+      const response = await userApi.getViewCountByPaperId(paperId);
+      return response.viewCount || 0; // Return view count or fallback to 0
+    } catch (error) {
+      console.error(`Error fetching view count for paper ${paperId}:`, error);
+      return 0; // Fallback to 0 in case of an error
+    }
+  };
+
   useEffect(() => {
     const fetchAuthorsForCurrentPapers = async () => {
       for (const paper of currentPapers) {
@@ -228,6 +251,58 @@ const HomePage = () => {
 
     fetchDepartments();
   }, []);
+
+  useEffect(() => {
+    const fetchCountsForCurrentPapers = async () => {
+      try {
+        const updatedPapers = await Promise.all(
+          currentPapers.map(async (paper) => {
+            const [viewCount, downloadCount] = await Promise.all([
+              fetchViewCount(paper._id),
+              fetchDownloadCount(paper._id),
+            ]);
+            return { ...paper, views: viewCount, downloads: downloadCount };
+          })
+        );
+
+        setResearchPapers((prev) => {
+          const updatedResearchPapers = [...prev];
+          updatedPapers.forEach((updatedPaper) => {
+            const index = updatedResearchPapers.findIndex(
+              (paper) => paper._id === updatedPaper._id
+            );
+            if (index !== -1) {
+              updatedResearchPapers[index] = updatedPaper;
+            }
+          });
+          return updatedResearchPapers;
+        });
+      } catch (error) {
+        console.error("Error fetching counts for current papers:", error);
+      }
+    };
+
+    if (currentPapers.length > 0) {
+      fetchCountsForCurrentPapers();
+    }
+  }, [currentPapers]);
+
+  const createPaperView = async (paperId) => {
+    try {
+      console.log(`Creating view for paperId: ${paperId}`);
+      await userApi.createPaperView({
+        paper_id: paperId,
+        user_id: localStorage.getItem("user_id"),
+        user_type: localStorage.getItem("user_type"),
+      });
+      console.log(`View created for paper ${paperId}`);
+    } catch (error) {
+      console.error(
+        `Error creating view for paper ${paperId}:`,
+        error.response?.data || error
+      );
+    }
+  };
 
   const showModal = (paper) => {
     setSelectedPaper(paper);
@@ -358,7 +433,11 @@ const HomePage = () => {
                 {filteredPapers
                   .slice(indexOfFirstPaper, indexOfLastPaper)
                   .map((paper, index) => (
-                    <Link to={`/scientific-paper/${paper._id}`} key={paper._id}>
+                    <Link
+                      to={`/scientific-paper/${paper._id}`}
+                      key={paper._id}
+                      onClick={() => createPaperView(paper._id)} // Trigger view creation on click
+                    >
                       <article
                         key={paper._id}
                         className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${

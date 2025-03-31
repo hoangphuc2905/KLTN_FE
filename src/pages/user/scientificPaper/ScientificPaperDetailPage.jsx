@@ -1,10 +1,10 @@
 import Header from "../../../components/header";
-import { Download, Eye, MessageCircle } from "lucide-react";
+import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import axios from "axios"; // Import axios for API calls
+import { message } from "antd";
 
 const ScientificPaperDetailPage = () => {
   const { id } = useParams(); // Extract the _id from the URL
@@ -13,6 +13,8 @@ const ScientificPaperDetailPage = () => {
   const [selectedFormat, setSelectedFormat] = useState("APA"); // State to track selected format
   const [copySuccess, setCopySuccess] = useState(false); // State to track copy success
   const navigate = useNavigate();
+  const user_id = localStorage.getItem("user_id");
+  const user_type = localStorage.getItem("user_type");
 
   const relatedPapers = [
     {
@@ -30,6 +32,29 @@ const ScientificPaperDetailPage = () => {
     },
     // Add more related papers as needed
   ];
+
+  const fetchDownloadCount = async (paperId) => {
+    try {
+      const response = await userApi.getDownloadCountByPaperId(paperId);
+      return response.download_count || 0;
+    } catch (error) {
+      console.error(
+        `Error fetching download count for paper ${paperId}:`,
+        error
+      );
+      return 0; // Fallback to 0 in case of an error
+    }
+  };
+
+  const fetchViewCount = async (paperId) => {
+    try {
+      const response = await userApi.getViewCountByPaperId(paperId);
+      return response.viewCount || 0;
+    } catch (error) {
+      console.error(`Error fetching view count for paper ${paperId}:`, error);
+      return 0; // Fallback to 0 in case of an error
+    }
+  };
 
   useEffect(() => {
     const fetchPaper = async () => {
@@ -49,6 +74,9 @@ const ScientificPaperDetailPage = () => {
           }
         }
 
+        const downloadCount = await fetchDownloadCount(id); // Fetch download count
+        const viewCount = await fetchViewCount(id); // Fetch view count
+
         const transformedPaper = {
           title: data.title_vn || "Không có tiêu đề",
           description: data.summary || "Không có mô tả",
@@ -61,8 +89,8 @@ const ScientificPaperDetailPage = () => {
           keywords: data.keywords?.split(",").map((k) => k.trim()) || [],
           researchArea: data.department || "Không có dữ liệu",
           thumbnail: data.cover_image || "/placeholder.svg",
-          views: data.views?.view_id?.length || 0,
-          downloads: data.downloads?.download_id?.length || 0,
+          views: viewCount, // Use dynamically fetched view count
+          downloads: downloadCount, // Use dynamically fetched download count
           cover_image: data.cover_image || "/placeholder.svg",
           department: departmentName,
           magazine_vi: data.magazine_vi || "Không có dữ liệu",
@@ -159,7 +187,7 @@ const ScientificPaperDetailPage = () => {
 
                     <button
                       className="flex items-center gap-2 bg-[#00A3FF] text-white px-4 py-2 rounded-lg"
-                      onClick={() => {
+                      onClick={async () => {
                         if (paper.fileUrl) {
                           const link = document.createElement("a");
                           link.href = paper.fileUrl; // URL của file từ Cloudinary
@@ -171,8 +199,23 @@ const ScientificPaperDetailPage = () => {
                           document.body.appendChild(link);
                           link.click();
                           document.body.removeChild(link);
+
+                          // Call API to log download action
+                          try {
+                            await userApi.createPaperDownload({
+                              paper_id: id, // Use the paper ID from the URL
+                              user_id: user_id, // Replace with actual user ID
+                              user_type: user_type, // Replace with actual user type
+                              download_time: new Date().toISOString(), // Current timestamp
+                            });
+                            message.success("Tải file thành công!");
+                          } catch (error) {
+                            console.error("Error logging download:", error);
+                          }
                         } else {
-                          alert("Không có file để tải!");
+                          message.error(
+                            "Không có file để tải về! Vui lòng liên hệ với quản trị viên."
+                          );
                         }
                       }}
                     >
