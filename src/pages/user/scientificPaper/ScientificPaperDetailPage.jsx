@@ -4,30 +4,50 @@ import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
 import { useParams } from "react-router-dom"; // Import useParams
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; // Import axios for API calls
 
 const ScientificPaperDetailPage = () => {
   const { id } = useParams(); // Extract the _id from the URL
   const [paper, setPaper] = useState(null);
+  const [citation, setCitation] = useState(null); // State for citation
+  const [selectedFormat, setSelectedFormat] = useState("APA"); // State to track selected format
   const navigate = useNavigate();
+
+  const relatedPapers = [
+    {
+      id: 1,
+      title:
+        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
+      author: "Đoàn Văn Đạt",
+      department: "Khoa CNHH",
+      description:
+        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols. Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
+      thumbnail: "/placeholder.svg?height=150&width=100",
+      views: 100,
+      downloads: 50,
+      date: "20/02/2025",
+    },
+    // Add more related papers as needed
+  ];
 
   useEffect(() => {
     const fetchPaper = async () => {
       try {
         const data = await userApi.getScientificPaperById(id); // Fetch data from API
 
-        let departmentName = "Không có dữ liệu";
+        let departmentName = "Đang load dữ liệu...";
         if (data.department) {
           try {
             const departmentData = await userApi.getDepartmentById(
               data.department
-            ); // Call API to get department details
+            );
             departmentName =
               departmentData.department_name || "Không có dữ liệu";
           } catch (error) {
             console.error("Error fetching department details:", error);
           }
         }
-        // Transform the API response to match the expected structure
+
         const transformedPaper = {
           title: data.title_vn || "Không có tiêu đề",
           description: data.summary || "Không có mô tả",
@@ -45,40 +65,58 @@ const ScientificPaperDetailPage = () => {
           cover_image: data.cover_image || "/placeholder.svg",
           department: departmentName,
           magazine_vi: data.magazine_vi || "Không có dữ liệu",
+          doi: data.doi || null,
+          link: "https://ctujsvn.ctu.edu.vn/index.php/ctujsvn/article/view/5036",
         };
 
         setPaper(transformedPaper);
+
+        // Fetch citation for the default format (APA) if DOI exists
+        if (data.doi) {
+          fetchCitationByFormat(data.doi, "apa");
+        }
       } catch (error) {
         console.error("Error fetching scientific paper:", error);
       }
     };
+
     fetchPaper();
-  }, [id]); // Add id as a dependency
+  }, [id]);
+
+  const fetchCitationByFormat = async (doi, format = "apa") => {
+    if (!doi) {
+      alert("Vui lòng nhập DOI!");
+      return;
+    }
+
+    const headers = {
+      Accept: `text/x-bibliography; style=${format}`,
+    };
+
+    try {
+      const response = await fetch(`https://doi.org/${doi}`, { headers });
+      if (!response.ok) throw new Error("Không tìm thấy DOI");
+
+      let text = await response.text();
+      if (format.toLowerCase() === "mla") {
+        text = text.replace(/Crossref,/g, ""); // Remove "Crossref" for MLA format
+      }
+
+      setCitation((prev) => ({
+        ...prev,
+        [format]: text,
+      }));
+    } catch (error) {
+      setCitation((prev) => ({
+        ...prev,
+        [format]: "Lỗi khi lấy trích dẫn!",
+      }));
+    }
+  };
 
   if (!paper) {
     return <div>Loading...</div>;
   }
-
-  const citation = {
-    text: 'Thông, Phạm Lê, và Nguyễn Thị Thiện Hảo. 2014. "LÒNG TRUNG THÀNH CỦA KHÁCH HÀNG Ở THÀNH PHỐ CẦN THƠ ĐỐI VỚI DỊCH VỤ ĐIỆN THOẠI DI ĐỘNG TRẢ SAU VINAPHONE: MÔ HÌNH THỜI GIAN", Tạp Chí Khoa học Đại học Cần Thơ, số p.h 33 (Tháng Mười):58-64. https://ctujsvn.ctu.edu.vn/index.php/ctujsvn/article/view/1479.',
-  };
-
-  const relatedPapers = [
-    {
-      id: 1,
-      title:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
-      department: "Khoa CNHH",
-      description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols. Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      thumbnail: "/placeholder.svg?height=150&width=100",
-      views: 100,
-      comments: 27,
-      date: "20/02/2025",
-    },
-    // ... similar objects for other related papers
-  ];
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -204,39 +242,93 @@ const ScientificPaperDetailPage = () => {
                         </div>
                       </div>
 
-                      <div className="bg-[#F4F7FE] rounded-lg p-4 w-[250px] h-[350px] flex flex-col">
+                      <div className="bg-[#F4F7FE] rounded-lg p-4 w-[350px] flex flex-col relative">
+                        {/* Nút copy */}
+                        <button
+                          className="absolute top-2 right-2 bg-white p-1 rounded-full shadow hover:bg-gray-100"
+                          onClick={() => {
+                            const textToCopy =
+                              citation?.[selectedFormat.toLowerCase()] ||
+                              "Không có dữ liệu để sao chép!";
+                            navigator.clipboard.writeText(textToCopy);
+                          }}
+                        >
+                          <img
+                            src="https://cdn-icons-png.flaticon.com/512/10146/10146565.png"
+                            alt="Copy Icon"
+                            className="w-4 h-4"
+                          />
+                        </button>
+
                         {/* Tiêu đề */}
                         <div className="text-center font-bold text-[#00A3FF]">
                           Trích dẫn
                         </div>
-
                         {/* Nội dung trích dẫn */}
-                        <p className="text-sm mt-2 break-words">
-                          {citation?.text || "Không có dữ liệu"}
-                        </p>
+                        <div
+                          className="text-sm mt-2 break-words leading-relaxed"
+                          style={{
+                            height: "200px",
+                            overflow: "hidden",
+                            width: "250px",
+                          }} // Set a consistent fixed height
+                        >
+                          {citation?.[selectedFormat.toLowerCase()] ? (
+                            <div
+                              className="gs_citr"
+                              dangerouslySetInnerHTML={{
+                                __html: citation[selectedFormat.toLowerCase()],
+                              }}
+                            />
+                          ) : (
+                            "Đang load dữ liệu..."
+                          )}
+                        </div>
 
                         {/* Các định dạng trích dẫn */}
                         <div className="mt-auto">
                           <div className="border-t mt-2 pt-2">
                             <label className="text-xs font-medium block mb-1">
-                              Các định dạng trích dẫn:
+                              Chọn định dạng trích dẫn:
                             </label>
-                            <select
-                              className="w-full p-2 border rounded-lg text-xs"
-                              defaultValue={
-                                citation?.formats?.[0] || "Không có định dạng"
-                              }
-                            >
-                              {(citation?.formats || []).length > 0 ? (
-                                citation.formats.map((format, index) => (
-                                  <option key={index} value={format}>
-                                    {format}
-                                  </option>
-                                ))
-                              ) : (
-                                <option>Không có định dạng</option>
-                              )}
-                            </select>
+                            <div className="flex items-center gap-2">
+                              <select
+                                className="text-sm border rounded p-1 w-1/2"
+                                onChange={(e) => {
+                                  const format = e.target.value;
+                                  setSelectedFormat(format);
+                                  fetchCitationByFormat(paper.doi, format); // Fetch citation for the selected format
+                                }}
+                              >
+                                <option value="apa">APA</option>
+                                <option value="ieee">IEEE</option>
+                                <option value="mla">MLA</option>
+                              </select>
+                              <button
+                                className="text-sm bg-[#00A3FF] text-white px-3 py-1 rounded w-1/2"
+                                onClick={() => {
+                                  const citationText =
+                                    citation?.[selectedFormat.toLowerCase()];
+                                  if (citationText) {
+                                    const blob = new Blob([citationText], {
+                                      type: "application/x-research-info-systems",
+                                    });
+                                    const link = document.createElement("a");
+                                    const sanitizedTitle = paper.title.replace(
+                                      /[^a-zA-Z0-9]/g,
+                                      "_"
+                                    ); // Sanitize title for file name
+                                    link.href = URL.createObjectURL(blob);
+                                    link.download = `${sanitizedTitle}.${selectedFormat.toLowerCase()}.ris`;
+                                    link.click();
+                                  } else {
+                                    alert("Không có dữ liệu để tải!");
+                                  }
+                                }}
+                              >
+                                Tải về trích dẫn
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>

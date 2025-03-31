@@ -148,7 +148,7 @@ const DetailArticlePage = () => {
               Trang chủ
             </span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900">Chi tiết bài báo</span>
+            <span className="font-semibold text-sky-900">Kiểm tra bài báo</span>
           </div>
         </div>
 
