@@ -71,6 +71,17 @@ const userApi = {
     }
   },
 
+  getUserWorksByUserId: async (user_id) => {
+    try {
+      const response = await axios.get(`${API_URL}/userworks/${user_id}`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user works:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   // Cập nhật công thức theo khoảng thời gian
   updateFormula: async (startDate, endDate, formulaData) => {
     try {
@@ -604,6 +615,55 @@ const userApi = {
       return response.data;
     } catch (error) {
       console.error("Error updating scientific paper status:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  createPaperDownload: async (paperDownloadData) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/paperdownload`,
+        paperDownloadData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating paper download:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getDownloadCountByPaperId: async (paperId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/paperdownload/count/${paperId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching download count:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  createPaperView: async (paperViewData) => {
+    try {
+      const response = await axios.post(`${API_URL}/paperview`, paperViewData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating paper view:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getViewCountByPaperId: async (paperId) => {
+    try {
+      const response = await axios.get(`${API_URL}/paperview/count/${paperId}`);
+      console.log("API Response:", response.data);
+      return response.data; // Return the response data
+    } catch (error) {
+      console.error("Error fetching view count:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },

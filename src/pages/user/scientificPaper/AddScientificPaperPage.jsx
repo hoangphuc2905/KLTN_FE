@@ -142,26 +142,57 @@ const AddScientificPaperPage = () => {
 
   const handleAuthorChange = async (index, field, value) => {
     const updatedAuthors = [...authors];
-    updatedAuthors[index][field] = value;
+
+    if (field === "institution") {
+      updatedAuthors[index][field] = value; // Ensure this is the ObjectId (_id)
+    } else {
+      updatedAuthors[index][field] = value;
+    }
 
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
-        let userData;
+        // Gọi cả hai hàm để lấy dữ liệu từ giảng viên và sinh viên
+        const lecturerData = await userApi
+          .getLecturerById(value)
+          .catch((error) => {
+            console.error("Error fetching lecturer:", error.message);
+            return null; // Trả về null nếu không tìm thấy giảng viên
+          });
 
-        if (value.startsWith("GV") || value.length === 8) {
-          userData = await userApi.getLecturerById(value);
-        } else {
-          userData = await userApi.getStudentById(value);
+        const studentData = await userApi
+          .getStudentById(value)
+          .catch((error) => {
+            console.error("Error fetching student:", error.message);
+            return null; // Trả về null nếu không tìm thấy sinh viên
+          });
+
+        // Ưu tiên dữ liệu từ giảng viên nếu có, nếu không thì lấy từ sinh viên
+        const userData = lecturerData || studentData;
+
+        if (!userData) {
+          throw new Error(
+            "Không tìm thấy thông tin giảng viên hoặc sinh viên."
+          );
         }
+
+        const institutionsResponse = await userApi.getUserWorksByUserId(value); // Fetch user-work mappings
+        const institutions = await Promise.all(
+          institutionsResponse.map(async (item) => {
+            const workUnit = await userApi.getWorkUnitById(item.work_unit_id); // Fetch work unit details
+            return {
+              _id: workUnit._id, // Use the _id from the work unit database
+              name: workUnit.name_vi || item.work_unit_id, // Display the name
+            };
+          })
+        );
 
         updatedAuthors[index].full_name =
           userData.full_name || userData.name || "";
-        updatedAuthors[index].institution =
-          userData.department || "Không xác định";
+        updatedAuthors[index].institutions = institutions || []; // Set institutions
       } catch (error) {
-        console.error("Không tìm thấy thông tin:", error);
+        console.error("Không tìm thấy thông tin:", error.message);
         updatedAuthors[index].full_name = "";
-        updatedAuthors[index].institution = "";
+        updatedAuthors[index].institutions = [];
       }
     }
 
@@ -217,35 +248,35 @@ const AddScientificPaperPage = () => {
         return;
       }
 
-      // Format author_count
-      const roleCounts = {
+      // Compute author_count using the same logic as displayed in the UI
+      const counts = {
         primary: 0,
         corresponding: 0,
         primaryCorresponding: 0,
         contributor: 0,
       };
       authors.forEach((author) => {
-        if (author.role && roleCounts.hasOwnProperty(author.role)) {
-          roleCounts[author.role]++;
-        }
+        if (author.role === "MainAuthor") counts.primary++;
+        if (author.role === "CorrespondingAuthor") counts.corresponding++;
+        if (author.role === "MainAndCorrespondingAuthor")
+          counts.primaryCorresponding++;
+        if (author.role === "Participant") counts.contributor++;
       });
-      const authorCount = `${authors.length}(${roleCounts.primary},${roleCounts.corresponding},${roleCounts.primaryCorresponding},${roleCounts.contributor})`;
+      const authorCount = `${authors.length}(${counts.primary},${counts.corresponding},${counts.primaryCorresponding},${counts.contributor})`;
 
-      console.log("Authors:", authors);
-      console.log("Selected Department:", selectedDepartment);
       // Prepare JSON payload
       const payload = {
         article_type: selectedPaperType || "",
         article_group: selectedPaperGroup || "",
         title_vn: titleVn || "",
         title_en: titleEn || "",
-        author_count: authorCount,
+        author_count: authorCount, // Use the computed author_count
         author: authors.map((author) => ({
           user_id: author.mssvMsgv || "",
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
-          work_unit_id: author.institution || "",
+          work_unit_id: author.institution || null, // Ensure this is the ObjectId (_id)
           degree: "Bachelor",
           point: 0,
         })),
@@ -270,9 +301,21 @@ const AddScientificPaperPage = () => {
       // Debugging: Log payload
       console.log("Payload:", payload);
 
+      // Validate ObjectId format for work_unit_id
+      const invalidAuthors = payload.author.filter(
+        (author) =>
+          !author.work_unit_id || !/^[a-f\d]{24}$/i.test(author.work_unit_id)
+      );
+
+      if (invalidAuthors.length > 0) {
+        message.error("Một hoặc nhiều tác giả có work_unit_id không hợp lệ.");
+        return;
+      }
+
       // Send data to the backend
       const response = await userApi.createScientificPaper(payload);
       message.success("Bài báo đã được lưu thành công!");
+      navigate("/scientific-paper");
       console.log("Response:", response);
     } catch (error) {
       console.error(
@@ -654,13 +697,24 @@ const AddScientificPaperPage = () => {
                           </Option>
                           <Option value="Participant">Tham gia</Option>
                         </Select>
-                        <Input
+                        <Select
                           className="col-span-2"
                           placeholder="CQ công tác"
-                          suffix={<span style={{ color: "red" }}>*</span>}
                           value={author.institution}
-                          readOnly
-                        />
+                          onChange={(value) =>
+                            handleAuthorChange(index, "institution", value)
+                          }
+                          required
+                        >
+                          {author.institutions?.map((institution) => (
+                            <Option
+                              key={institution._id}
+                              value={institution._id}
+                            >
+                              {institution.name}
+                            </Option>
+                          ))}
+                        </Select>
                       </div>
                     </div>
                   ))}
