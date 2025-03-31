@@ -4,6 +4,7 @@ import userApi from "../../../api/api";
 import authApi from "../../../api/authApi";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
+import { useNavigate } from "react-router-dom";
 
 const UpdateProfilePage = () => {
   const [user, setUser] = useState({
@@ -20,6 +21,7 @@ const UpdateProfilePage = () => {
   });
   const [initialUser, setInitialUser] = useState(null);
   const [departmentName, setDepartmentName] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -123,7 +125,12 @@ const UpdateProfilePage = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
               Cập nhật thông tin cá nhân

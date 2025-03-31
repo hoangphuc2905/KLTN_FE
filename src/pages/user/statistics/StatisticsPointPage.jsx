@@ -3,7 +3,7 @@ import Header from "../../../components/header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Tooltip, Modal } from "antd"; // Added Tooltip and Modal import
 import { saveAs } from "file-saver";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs"; // Import ExcelJS
 import { useNavigate } from "react-router-dom";
 
 const ManagementPoint = () => {
@@ -121,26 +121,27 @@ const ManagementPoint = () => {
   const uniqueGroups = [...new Set(papers.map((paper) => paper.group))];
 
   const filteredPapers = papers.filter((paper) => {
+    const authorCountNumeric = parseInt(paper.authorCount.split(" ")[0]); // Extract numeric part of authorCount
     return (
-      (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) && // Updated filter condition
+      (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
       (filterInstitution.includes("Tất cả") ||
-        filterInstitution.includes(paper.institution)) && // Updated filter condition
+        filterInstitution.includes(paper.institution)) &&
       (filterTotalPapersFrom === "" ||
         paper.totalPapers >= parseInt(filterTotalPapersFrom)) &&
       (filterTotalPapersTo === "" ||
         paper.totalPapers <= parseInt(filterTotalPapersTo)) &&
       (filterPaperType.includes("Tất cả") ||
-        filterPaperType.includes(paper.type)) && // Updated filter condition
+        filterPaperType.includes(paper.type)) &&
       (filterTotalPointsFrom === "" ||
         paper.points >= parseInt(filterTotalPointsFrom)) &&
       (filterTotalPointsTo === "" ||
         paper.points <= parseInt(filterTotalPointsTo)) &&
-      (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) && // Updated filter condition
-      (filterTitle === "" || paper.title.includes(filterTitle)) && // Added missing filter condition
+      (filterGroup.includes("Tất cả") || filterGroup.includes(paper.group)) &&
+      (filterTitle === "" || paper.title.includes(filterTitle)) &&
       (filterAuthorCountFrom === "" ||
-        parseInt(paper.authorCount) >= parseInt(filterAuthorCountFrom)) && // Updated filter condition
+        authorCountNumeric >= parseInt(filterAuthorCountFrom)) &&
       (filterAuthorCountTo === "" ||
-        parseInt(paper.authorCount) <= parseInt(filterAuthorCountTo)) // Updated filter condition
+        authorCountNumeric <= parseInt(filterAuthorCountTo))
     );
   });
 
@@ -276,24 +277,69 @@ const ManagementPoint = () => {
     },
   ].filter((column) => visibleColumns.includes(column.key));
 
-  const downloadExcel = () => {
+  const downloadExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Báo cáo");
+
+    // Add title
+    worksheet.mergeCells("A1", "J1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = "BÁO CÁO ĐIỂM ĐÓNG GÓP";
+    titleCell.font = { name: "Times New Roman", size: 16, bold: true };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+    // Add headers
+    const headers = columns
+      .filter((col) => col.dataIndex)
+      .map((col) => col.title);
+    worksheet.addRow(headers);
+    headers.forEach((header, index) => {
+      const cell = worksheet.getRow(2).getCell(index + 1);
+      cell.font = { name: "Times New Roman", size: 12, bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9E1F2" }, // Light blue background
+      };
+    });
+
+    // Add data rows
     const selectedColumns = columns.map((col) => col.dataIndex).filter(Boolean);
-    const filteredData = filteredPapers.map((paper) => {
-      const filteredPaper = {};
-      selectedColumns.forEach((col) => {
-        filteredPaper[col] = paper[col];
-      });
-      return filteredPaper;
+    filteredPapers.forEach((paper) => {
+      const rowData = selectedColumns.map((col) => paper[col] || "");
+      worksheet.addRow(rowData);
     });
-    const worksheet = XLSX.utils.json_to_sheet(filteredData);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
+
+    // Style data rows
+    worksheet.eachRow((row, rowIndex) => {
+      if (rowIndex > 2) {
+        row.eachCell((cell) => {
+          cell.font = { name: "Times New Roman", size: 12 };
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+        });
+      }
     });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "table_data.xlsx");
+
+    // Adjust column widths
+    worksheet.columns = headers.map((header, index) => ({
+      width: Math.max(
+        header.length,
+        ...filteredPapers.map((paper) =>
+          paper[selectedColumns[index]]
+            ? paper[selectedColumns[index]].toString().length
+            : 10
+        )
+      ),
+    }));
+
+    // Save the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    const fileName = `BaoCao_DiemDongGop_${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`;
+    saveAs(blob, fileName);
   };
 
   return (

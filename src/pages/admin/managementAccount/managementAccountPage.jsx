@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Modal, Input, Select, Table, message, Radio, Checkbox } from "antd";
-import Header from "../../../components/Header";
+import Header from "../../../components/header";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 

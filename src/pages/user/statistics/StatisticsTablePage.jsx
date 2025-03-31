@@ -373,53 +373,50 @@ const ManagementTable = () => {
   };
 
   const handleDownload = () => {
-    const tableData = filteredPapers.map((paper, index) => {
-      const rowData = { STT: index + 1 };
-      visibleColumns.forEach((col) => {
-        switch (col) {
-          case "paperType":
-            rowData["Loại bài báo"] = paper.paperType;
-            break;
-          case "group":
-            rowData["Nhóm"] = paper.group;
-            break;
-          case "title":
-            rowData["Tên bài báo nghiên cứu khoa học"] = paper.title;
-            break;
-          case "authors":
-            rowData["Tác giả"] = paper.authors;
-            break;
-          case "authorCount":
-            rowData["Số tác giả"] = paper.authorCount;
-            break;
-          case "role":
-            rowData["Vai trò"] = paper.role;
-            break;
-          case "institution":
-            rowData["CQ đứng tên"] = paper.institution;
-            break;
-          case "publicationDate":
-            rowData["Ngày công bố"] = paper.publicationDate;
-            break;
-          case "dateAdded":
-            rowData["Ngày thêm"] = paper.dateAdded;
-            break;
-          default:
-            break;
-        }
+    const selectedColumns = columns
+      .filter((col) => visibleColumns.includes(col.key))
+      .map((col) => col.dataIndex);
+
+    const headers = columns
+      .filter((col) => visibleColumns.includes(col.key))
+      .map((col) => col.title);
+
+    const tableData = filteredPapers.map((paper) => {
+      const rowData = {};
+      selectedColumns.forEach((col) => {
+        rowData[col] = paper[col] || "";
       });
       return rowData;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(tableData);
+    const finalData = [
+      headers,
+      ...tableData.map((row) => selectedColumns.map((col) => row[col])),
+    ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(finalData);
+
+    const columnWidths = headers.map((header, index) => ({
+      wch: Math.max(
+        header.length,
+        ...tableData.map((row) =>
+          row[selectedColumns[index]]
+            ? row[selectedColumns[index]].toString().length
+            : 10
+        )
+      ),
+    }));
+    worksheet["!cols"] = columnWidths;
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Papers");
+
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
     });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "papers.xlsx");
+    saveAs(data, `Papers_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   const filterRef = useRef(null);

@@ -292,23 +292,67 @@ const ManagementPoint = () => {
   ].filter((column) => visibleColumns.includes(column.key));
 
   const downloadExcel = () => {
-    const selectedColumns = columns.map((col) => col.dataIndex).filter(Boolean);
+    // Lấy các cột được chọn
+    const selectedColumns = columns
+      .filter((col) => col.dataIndex) // Ensure dataIndex exists
+      .map((col) => col.dataIndex);
+
+    // Lọc dữ liệu theo các cột được chọn
     const filteredData = filteredPapers.map((paper) => {
       const filteredPaper = {};
       selectedColumns.forEach((col) => {
-        filteredPaper[col] = paper[col];
+        filteredPaper[col] = paper[col] || ""; // Ensure no undefined values
       });
       return filteredPaper;
     });
-    const worksheet = XLSX.utils.json_to_sheet(filteredData);
+
+    // Thêm tiêu đề (header)
+    const title = [["BÁO CÁO ĐIỂM ĐÓNG GÓP"], []]; // Tiêu đề chính và dòng trống
+
+    // Thêm header cột
+    const headers = columns
+      .filter((col) => selectedColumns.includes(col.dataIndex))
+      .map((col) => col.title);
+
+    // Kết hợp tiêu đề và dữ liệu
+    const finalData = [
+      ...title,
+      headers,
+      ...filteredData.map((row) => selectedColumns.map((col) => row[col])),
+    ];
+
+    // Tạo worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(finalData);
+
+    // Tự động điều chỉnh độ rộng cột
+    const columnWidths = headers.map((header, index) => ({
+      wch: Math.max(
+        header.length,
+        ...filteredData.map((row) =>
+          row[selectedColumns[index]]
+            ? row[selectedColumns[index]].toString().length
+            : 10
+        )
+      ),
+    }));
+    worksheet["!cols"] = columnWidths;
+
+    // Tạo workbook và thêm worksheet
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Báo cáo");
+
+    // Xuất file Excel
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
     });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "table_data.xlsx");
+
+    // Tên file
+    const fileName = `BaoCao_DiemDongGop_${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`;
+    saveAs(data, fileName);
   };
 
   const filterRef = useRef(null);
