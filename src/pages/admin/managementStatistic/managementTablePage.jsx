@@ -509,6 +509,56 @@ const ManagementTable = () => {
     saveAs(blob, fileName);
   };
 
+  const printTable = () => {
+    const printWindow = window.open("", "_blank");
+    const tableHeaders = filteredColumns
+      .map((col) => `<th>${col.title}</th>`)
+      .join("");
+    const tableRows = filteredPapers
+      .map((paper) => {
+        const rowData = filteredColumns
+          .map((col) => `<td>${paper[col.dataIndex] || ""}</td>`)
+          .join("");
+        return `<tr>${rowData}</tr>`;
+      })
+      .join("");
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Table</title>
+          <style>
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center;">BÁO CÁO DANH SÁCH</h1>
+          <table>
+            <thead>
+              <tr>${tableHeaders}</tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
   const groupFilterRef = useRef(null);
@@ -621,7 +671,10 @@ const ManagementTable = () => {
             >
               Download
             </button>
-            <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">
+            <button
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              onClick={printTable}
+            >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"

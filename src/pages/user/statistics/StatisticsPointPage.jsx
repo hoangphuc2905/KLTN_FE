@@ -342,6 +342,60 @@ const ManagementPoint = () => {
     saveAs(blob, fileName);
   };
 
+  const printTable = () => {
+    const printWindow = window.open("", "_blank");
+    const tableHeaders = columns
+      .filter((col) => col.dataIndex)
+      .map((col) => `<th>${col.title}</th>`)
+      .join("");
+    const tableRows = filteredPapers
+      .map((paper) => {
+        const rowData = columns
+          .filter((col) => col.dataIndex)
+          .map((col) => `<td>${paper[col.dataIndex] || ""}</td>`)
+          .join("");
+        return `<tr>${rowData}</tr>`;
+      })
+      .join("");
+
+    const tableHTML = `
+      <html>
+        <head>
+          <title>Print Table</title>
+          <style>
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center;">BÁO CÁO ĐIỂM ĐÓNG GÓP</h1>
+          <table>
+            <thead>
+              <tr>${tableHeaders}</tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(tableHTML);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -387,7 +441,10 @@ const ManagementPoint = () => {
             >
               Download
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg">
+            <button
+              onClick={printTable}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+            >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"

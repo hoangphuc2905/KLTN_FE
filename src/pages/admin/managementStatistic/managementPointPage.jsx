@@ -356,6 +356,62 @@ const ManagementPoint = () => {
     saveAs(blob, fileName);
   };
 
+  const printData = () => {
+    const printWindow = window.open("", "_blank");
+    const tableHeaders = columns
+      .filter((col) => col.dataIndex)
+      .map(
+        (col) =>
+          `<th style="border: 1px solid #ddd; padding: 8px;">${col.title}</th>`
+      )
+      .join("");
+    const tableRows = filteredPapers
+      .map((paper) => {
+        const rowData = columns
+          .filter((col) => col.dataIndex)
+          .map(
+            (col) =>
+              `<td style="border: 1px solid #ddd; padding: 8px;">${
+                paper[col.dataIndex] || ""
+              }</td>`
+          )
+          .join("");
+        return `<tr>${rowData}</tr>`;
+      })
+      .join("");
+
+    const tableHTML = `
+      <table style="border-collapse: collapse; width: 100%; text-align: left;">
+        <thead>
+          <tr>${tableHeaders}</tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    `;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print Data</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center;">Báo cáo Điểm Đóng Góp</h1>
+          ${tableHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
   const roleFilterRef = useRef(null);
@@ -458,7 +514,10 @@ const ManagementPoint = () => {
             >
               Download
             </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg">
+            <button
+              onClick={printData}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+            >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"

@@ -438,6 +438,58 @@ const ManagementTable = () => {
     saveAs(blob, fileName);
   };
 
+  const printTable = () => {
+    const printWindow = window.open("", "_blank");
+    const tableHtml = `
+      <html>
+        <head>
+          <title>Print Table</title>
+          <style>
+            table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            th, td {
+              border: 1px solid black;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+            }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center;">Báo cáo danh sách</h1>
+          <table>
+            <thead>
+              <tr>
+                ${filteredColumns
+                  .map((col) => `<th>${col.title}</th>`)
+                  .join("")}
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredPapers
+                .map(
+                  (paper) => `
+                  <tr>
+                    ${filteredColumns
+                      .map((col) => `<td>${paper[col.dataIndex] || ""}</td>`)
+                      .join("")}
+                  </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(tableHtml);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
   const groupFilterRef = useRef(null);
@@ -551,7 +603,10 @@ const ManagementTable = () => {
             >
               Download
             </button>
-            <button className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg">
+            <button
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              onClick={printTable}
+            >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"
