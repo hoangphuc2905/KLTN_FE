@@ -1,48 +1,103 @@
 const Footer = () => {
   return (
-    <footer className="bg-white text-gray-700 text-sm mt-10 border-t border-gray-300">
-      <div className="max-w-screen-xl mx-auto px-4 md:px-6 lg:px-8 py-8 flex flex-wrap justify-between">
-        {/* Liên hệ */}
-        <div className="w-full md:w-1/3 px-4 text-center md:text-left">
-          <h3 className="font-bold text-red-600">LIÊN HỆ</h3>
-          <p>HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC</p>
-          <p>CỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM</p>
-          <p>
-            Địa chỉ: Số 12 Nguyễn Văn Bảo, Phường 1, Quận Gò Vấp, TP. Hồ Chí
-            Minh
-          </p>
-          <p>
-            Điện thoại: <span className="text-blue-600">0283.8940 390</span>
-          </p>
-          <p>
-            Email:{" "}
-            <a href="mailto:dhcn@iuh.edu.vn" className="text-blue-600">
-              dhcn@iuh.edu.vn
+    <footer className="bg-white text-gray-700 text-base mt-10 border-t border-gray-300">
+      {/* New Section */}
+      <div className="bg-gray-100 py-8">
+        <div className="max-w-screen-xl mx-auto px-4 md:px-6 lg:px-8 flex flex-wrap">
+          {/* Logo and Welcome Message */}
+          <div className="w-full md:w-1/3 px-4 text-center md:text-left">
+            <a href="#">
+              <img
+                src="//lms.iuh.edu.vn/pluginfile.php/1/theme_academi/logo/1697014882/Logo_IUH.png"
+                width="100"
+                height="100"
+                alt="Academi"
+              />
             </a>
-          </p>
-        </div>
+            <p className="mt-4 text-lg">
+              Chào mừng các bạn đến với Hệ thống học tập trực tuyến của trường
+              Đại học Công nghiệp TP.HCM, kênh thông tin cung cấp các khóa học
+              trực tuyến của nhà trường cho các bạn sinh viên.
+            </p>
+          </div>
 
-        {/* Hoạt động khác */}
-        <div className="w-full md:w-1/3 px-4 text-center md:text-left">
-          <h3 className="font-bold text-red-600">HOẠT ĐỘNG KHÁC</h3>
-          <ul className="space-y-2">
-            <li>Hoạt động phục vụ cộng đồng</li>
-            <li>Sinh viên tình nguyện</li>
-            <li>CLB/Đội/Nhóm sinh viên</li>
-            <li>Kết nối doanh nghiệp</li>
-          </ul>
-        </div>
+          {/* Links */}
+          <div className="w-full md:w-1/3 px-4 text-center md:text-left">
+            <h3 className="font-bold text-red-600 text-lg">Liên kết</h3>
+            <ul className="space-y-2 text-lg">
+              <li>
+                <a
+                  href="http://iuh.edu.vn/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600"
+                >
+                  Website Nhà Trường
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://csm.iuh.edu.vn/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600"
+                >
+                  Website Trung tâm QTHT
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://sv.iuh.edu.vn/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600"
+                >
+                  Cổng Thông Tin Sinh Viên
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://lms.iuh.edu.vn/course/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600"
+                >
+                  Các Khóa Học
+                </a>
+              </li>
+            </ul>
+          </div>
 
-        {/* Thông tin mở rộng */}
-        <div className="w-full md:w-1/3 px-4 text-center md:text-left">
-          <h3 className="font-bold text-red-600">THÔNG TIN MỞ RỘNG</h3>
-          <ul className="space-y-2">
-            <li>Báo chí viết về IUH</li>
-            <li>Khám phá IUH</li>
-            <li>Kỹ năng mềm</li>
-            <li>Bộ sưu tập</li>
-            <li>Dịch vụ sinh viên</li>
-          </ul>
+          {/* Contact Information */}
+          <div className="w-full md:w-1/3 px-4 text-center md:text-left">
+            <h3 className="font-bold text-red-600 text-lg">Liên hệ</h3>
+            <p className="text-lg">
+              Trung tâm Quản trị Hệ thống - Trường Đại học Công nghiệp TP.HCM
+            </p>
+            <p className="text-lg">
+              <i className="fa fa-phone-square"></i> Phone: 0283.8940 390 - ext
+              838
+            </p>
+            <p className="text-lg">
+              <i className="fa fa-envelope"></i> E-mail:{" "}
+              <a href="mailto:csm@iuh.edu.vn" className="text-blue-600">
+                csm@iuh.edu.vn
+              </a>
+            </p>
+            <div className="mt-4">
+              <h6 className="text-lg">Follow us</h6>
+              <ul className="flex space-x-4">
+                <li>
+                  <a
+                    href="https://www.facebook.com/csm.iuh.edu.vn"
+                    className="text-blue-600"
+                  >
+                    <i className="fa fa-facebook-square text-2xl"></i>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
