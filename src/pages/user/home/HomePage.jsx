@@ -90,6 +90,9 @@ const HomePage = () => {
   const [isAddingCategory, setIsAddingCategory] = useState(false); // State to toggle input field
   const [selectedCategory, setSelectedCategory] = useState(""); // State for selected category
   const [categories, setCategories] = useState(["Khoa học", "Sinh học"]); // Initial categories
+  const [departmentsList, setDepartmentsList] = useState([]); // State for departments list
+  const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
+  const [searchQuery, setSearchQuery] = useState(""); // State for search query
 
   const itemsPerPage = 10;
 
@@ -121,7 +124,10 @@ const HomePage = () => {
     const fetchResearchPapers = async () => {
       try {
         const papers = await userApi.getAllScientificPapers();
-        setResearchPapers(papers);
+        const approvedPapers = papers.filter(
+          (paper) => paper.status === "approved"
+        ); // Only include approved papers
+        setResearchPapers(approvedPapers);
       } catch (error) {
         console.error("Error fetching research papers:", error);
       }
@@ -205,6 +211,24 @@ const HomePage = () => {
     fetchDepartmentsForCurrentPapers();
   }, [currentPapers, departments]);
 
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const departments = await userApi.getAllDepartments(); // Fetch all departments
+        const departmentMapping = departments.reduce((acc, department) => {
+          acc[department.id] = department.department_name; // Map department ID to name
+          return acc;
+        }, {});
+        setDepartments(departmentMapping); // Update state with the mapping
+        setDepartmentsList(departments); // Update the dropdown list
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+
+    fetchDepartments();
+  }, []);
+
   const showModal = (paper) => {
     setSelectedPaper(paper);
     setIsModalVisible(true);
@@ -232,6 +256,26 @@ const HomePage = () => {
   const handleAddCategoryClick = () => {
     setIsAddingCategory(true);
   };
+
+  // Filter research papers by selected department and search query
+  const filteredPapers = researchPapers.filter((paper) => {
+    const departmentMatch = selectedDepartment
+      ? departments[paper.department] === selectedDepartment
+      : true;
+
+    const searchMatch = searchQuery
+      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) || // Match title
+        paper.authors?.some((author) =>
+          author.toLowerCase().includes(searchQuery.toLowerCase())
+        ) || // Match authors
+        paper.publish_date?.toString().includes(searchQuery) || // Match year
+        paper.keywords?.some((keyword) =>
+          keyword.toLowerCase().includes(searchQuery.toLowerCase())
+        ) // Match keywords
+      : true;
+
+    return departmentMatch && searchMatch;
+  });
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -273,21 +317,32 @@ const HomePage = () => {
           </div>
 
           <div className="flex gap-4 rounded-lg items-center mt-4 mb-3">
-            <select className="p-2 border rounded-lg w-60 text-sm">
-              <option value="">Chọn danh mục</option>
-              <option value="cnnt">Công nghệ thông tin</option>
-              <option value="hoa-hoc">Hóa học</option>
+            <select
+              className="p-2 border rounded-lg w-60 text-sm"
+              value={selectedDepartment}
+              onChange={(e) => setSelectedDepartment(e.target.value)} // Update selected department
+            >
+              <option value="">Chọn Khoa</option>
+              {departmentsList.map((department) => (
+                <option key={department.id} value={department.id}>
+                  {department.department_name}
+                </option>
+              ))}
             </select>
             <select className="p-2 border rounded-lg w-60 text-sm">
-              <option value="">Chọn loại tài liệu</option>
-              <option value="luan-van">Luận văn</option>
-              <option value="bai-bao">Bài báo</option>
+              <option value="">Tất cả</option>
+              <option value="title">Tiêu đề</option>
+              <option value="author">Tác giả</option>
+              <option value="publish_date">Năm xuất bản</option>
+              <option value="keywords">Từ khóa</option>
             </select>
 
             <input
               type="text"
               className="p-2 border rounded-lg flex-1 text-sm"
               placeholder="Nhập từ khóa tìm kiếm..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)} // Update search query
             />
 
             <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">
@@ -300,101 +355,103 @@ const HomePage = () => {
           <div className="flex gap-5 max-md:flex-col">
             <section className="w-[71%] max-md:ml-0 max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
-                {currentPapers.map((paper, index) => (
-                  <Link to={`/scientific-paper/${paper._id}`} key={paper._id}>
-                    <article
-                      key={paper._id}
-                      className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
-                        index > 0 ? "mt-3" : ""
-                      }`}
-                    >
-                      <div className="flex justify-center w-fit">
-                        <img
-                          src={paper.cover_image}
-                          className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
-                          alt={paper.title_vn || "No Title"}
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-2 w-full">
-                        {/* Title */}
-                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
-                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
-                            {paper.title_vn || "No Title"}
-                          </h2>
-                          <div className="flex flex-col items-center ml-auto">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                                className="object-contain w-4 aspect-square"
-                                alt="Views icon"
-                              />
-                              <div className="text-xs text-orange-500">
-                                {typeof paper.views === "number"
-                                  ? paper.views
-                                  : 0}
-                              </div>
-                              <img
-                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                                className="object-contain w-4 aspect-[1.2]"
-                                alt="Downloads icon"
-                              />
-                              <div className="text-xs">
-                                {typeof paper.downloads === "number"
-                                  ? paper.downloads
-                                  : 0}
-                              </div>
-                            </div>
-                            <div className="text-xs text-neutral-500 mt-1">
-                              {paper.publish_date
-                                ? new Date(
-                                    paper.publish_date
-                                  ).toLocaleDateString()
-                                : "No Date"}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Authors */}
-                        <div className="text-sm text-sky-900">
-                          {authors[paper._id] || "Loading authors..."}
-                        </div>
-
-                        {/* Summary */}
-                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
-                          {paper.summary || "No Summary"}
-                        </p>
-
-                        {/* Department */}
-                        <div className="text-sm text-sky-900">
-                          {departments[paper.department] ||
-                            "Loading department..."}
-                        </div>
-
-                        {/* Archive Icon */}
-                        <div className="flex justify-end">
+                {filteredPapers
+                  .slice(indexOfFirstPaper, indexOfLastPaper)
+                  .map((paper, index) => (
+                    <Link to={`/scientific-paper/${paper._id}`} key={paper._id}>
+                      <article
+                        key={paper._id}
+                        className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
+                          index > 0 ? "mt-3" : ""
+                        }`}
+                      >
+                        <div className="flex justify-center w-fit">
                           <img
-                            src={
-                              archivedPapers.includes(paper._id)
-                                ? "https://cdn-icons-png.flaticon.com/512/5668/5668020.png"
-                                : "https://cdn-icons-png.flaticon.com/512/5662/5662990.png"
-                            }
-                            alt="Save to Archive"
-                            className={`w-5 h-5 cursor-pointer ${
-                              archivedPapers.includes(paper._id)
-                                ? "text-blue-500"
-                                : ""
-                            }`}
-                            onClick={(e) => {
-                              e.preventDefault();
-                              showModal(paper);
-                            }}
+                            src={paper.cover_image}
+                            className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
+                            alt={paper.title_vn || "No Title"}
                           />
                         </div>
-                      </div>
-                    </article>
-                  </Link>
-                ))}
+
+                        <div className="grid grid-cols-1 gap-2 w-full">
+                          {/* Title */}
+                          <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
+                            <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
+                              {paper.title_vn || "No Title"}
+                            </h2>
+                            <div className="flex flex-col items-center ml-auto">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                                  className="object-contain w-4 aspect-square"
+                                  alt="Views icon"
+                                />
+                                <div className="text-xs text-orange-500">
+                                  {typeof paper.views === "number"
+                                    ? paper.views
+                                    : 0}
+                                </div>
+                                <img
+                                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                                  className="object-contain w-4 aspect-[1.2]"
+                                  alt="Downloads icon"
+                                />
+                                <div className="text-xs">
+                                  {typeof paper.downloads === "number"
+                                    ? paper.downloads
+                                    : 0}
+                                </div>
+                              </div>
+                              <div className="text-xs text-neutral-500 mt-1">
+                                {paper.publish_date
+                                  ? new Date(
+                                      paper.publish_date
+                                    ).toLocaleDateString()
+                                  : "No Date"}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Authors */}
+                          <div className="text-sm text-sky-900">
+                            {authors[paper._id] || "Loading authors..."}
+                          </div>
+
+                          {/* Summary */}
+                          <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
+                            {paper.summary || "No Summary"}
+                          </p>
+
+                          {/* Department */}
+                          <div className="text-sm text-sky-900">
+                            {departments[paper.department] ||
+                              "Loading department..."}
+                          </div>
+
+                          {/* Archive Icon */}
+                          <div className="flex justify-end">
+                            <img
+                              src={
+                                archivedPapers.includes(paper._id)
+                                  ? "https://cdn-icons-png.flaticon.com/512/5668/5668020.png"
+                                  : "https://cdn-icons-png.flaticon.com/512/5662/5662990.png"
+                              }
+                              alt="Save to Archive"
+                              className={`w-5 h-5 cursor-pointer ${
+                                archivedPapers.includes(paper._id)
+                                  ? "text-blue-500"
+                                  : ""
+                              }`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                showModal(paper);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </article>
+                    </Link>
+                  ))}
 
                 {researchPapers.length > itemsPerPage && (
                   <div className="flex justify-end mt-4">

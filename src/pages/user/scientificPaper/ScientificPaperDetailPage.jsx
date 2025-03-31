@@ -67,6 +67,7 @@ const ScientificPaperDetailPage = () => {
           magazine_vi: data.magazine_vi || "Không có dữ liệu",
           doi: data.doi || null,
           link: "https://ctujsvn.ctu.edu.vn/index.php/ctujsvn/article/view/5036",
+          fileUrl: data.file || null,
         };
 
         setPaper(transformedPaper);
@@ -155,7 +156,25 @@ const ScientificPaperDetailPage = () => {
                       className="w-[160px] h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
                     />
 
-                    <button className="flex items-center gap-2 bg-[#00A3FF] text-white px-4 py-2 rounded-lg">
+                    <button
+                      className="flex items-center gap-2 bg-[#00A3FF] text-white px-4 py-2 rounded-lg"
+                      onClick={() => {
+                        if (paper.fileUrl) {
+                          const link = document.createElement("a");
+                          link.href = paper.fileUrl; // URL của file từ Cloudinary
+                          console.log("File URL:", paper.fileUrl); // Log URL để kiểm tra
+                          link.download = paper.title
+                            ? `${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf` // Đảm bảo tên file có phần mở rộng .pdf
+                            : "scientific_paper.pdf";
+                          link.target = "_blank"; // Mở file trong tab mới
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        } else {
+                          alert("Không có file để tải!");
+                        }
+                      }}
+                    >
                       <Download className="w-4 h-4" />
                       Tải về
                     </button>

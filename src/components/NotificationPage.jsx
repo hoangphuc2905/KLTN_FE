@@ -58,7 +58,11 @@ const NotificationPage = () => {
           );
         }
 
-        setNotifications(allNotifications);
+        setNotifications(
+          allNotifications.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+          )
+        );
       } catch (error) {
         console.error("Lỗi khi lấy thông tin thông báo:", error);
       }
@@ -70,7 +74,11 @@ const NotificationPage = () => {
   const handleNotificationClick = async (notification) => {
     if (notification.paper_id) {
       try {
-        navigate(`/scientific-paper/${notification.paper_id._id}`);
+        if (notification.message_type === "Request for Edit") {
+          navigate(`/scientific-paper/edit/${notification.paper_id._id}`);
+        } else {
+          navigate(`/scientific-paper/${notification.paper_id._id}`);
+        }
         await userApi.markMessageAsRead(notification._id);
         console.log("Đã đánh dấu thông báo là đã đọc:", notification._id);
       } catch (error) {
