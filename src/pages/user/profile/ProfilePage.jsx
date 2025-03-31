@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
+import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [selectedYear, setSelectedYear] = useState("2024");
   const [departmentName, setDepartmentName] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -72,7 +74,12 @@ const ProfilePage = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
               Thông tin cá nhân

@@ -11,6 +11,7 @@ const ScientificPaperDetailPage = () => {
   const [paper, setPaper] = useState(null);
   const [citation, setCitation] = useState(null); // State for citation
   const [selectedFormat, setSelectedFormat] = useState("APA"); // State to track selected format
+  const [copySuccess, setCopySuccess] = useState(false); // State to track copy success
   const navigate = useNavigate();
 
   const relatedPapers = [
@@ -269,7 +270,12 @@ const ScientificPaperDetailPage = () => {
                             const textToCopy =
                               citation?.[selectedFormat.toLowerCase()] ||
                               "Không có dữ liệu để sao chép!";
-                            navigator.clipboard.writeText(textToCopy);
+                            navigator.clipboard
+                              .writeText(textToCopy)
+                              .then(() => {
+                                setCopySuccess(true); // Show success message
+                                setTimeout(() => setCopySuccess(false), 300); // Hide after 1.5 seconds
+                              });
                           }}
                         >
                           <img
@@ -278,6 +284,14 @@ const ScientificPaperDetailPage = () => {
                             className="w-4 h-4"
                           />
                         </button>
+                        {copySuccess && (
+                          <span
+                            className="absolute top-2 right-12 text-xs text-white bg-green-500 px-2 py-1 rounded shadow-md transition-opacity duration-500 ease-in-out"
+                            style={{ opacity: copySuccess ? 1 : 0 }}
+                          >
+                            Copy thành công
+                          </span>
+                        )}
 
                         {/* Tiêu đề */}
                         <div className="text-center font-bold text-[#00A3FF]">
@@ -287,7 +301,7 @@ const ScientificPaperDetailPage = () => {
                         <div
                           className="text-sm mt-2 break-words leading-relaxed"
                           style={{
-                            height: "200px",
+                            height: "300px",
                             overflow: "hidden",
                             width: "250px",
                           }} // Set a consistent fixed height

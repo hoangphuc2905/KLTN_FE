@@ -577,20 +577,16 @@ const AddScientificPaperPage = () => {
                         };
                         if (authors.length > 0) {
                           authors.forEach((author) => {
-                            if (author.role === "primary") counts.primary++;
-                            if (author.role === "corresponding")
+                            if (author.role === "MainAuthor") counts.primary++;
+                            if (author.role === "CorrespondingAuthor")
                               counts.corresponding++;
-                            if (author.role === "primaryCorresponding")
+                            if (author.role === "MainAndCorrespondingAuthor")
                               counts.primaryCorresponding++;
-                            if (author.role === "contributor")
+                            if (author.role === "Participant")
                               counts.contributor++;
                           });
                         }
-                        return `${authors.length || 0}(${counts.primary},${
-                          counts.corresponding
-                        },${counts.primaryCorresponding},${
-                          counts.contributor
-                        })`;
+                        return `${authors.length}(${counts.primary},${counts.corresponding},${counts.primaryCorresponding},${counts.contributor})`;
                       })()}
                       readOnly
                     />

@@ -4,10 +4,12 @@ import userApi from "../../../api/api";
 import Header from "../../../components/header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
 import Footer from "../../../components/footer";
+import { useNavigate } from "react-router-dom";
 
 const WorkProcessPage = () => {
   const [workProcesses, setWorkProcesses] = useState([]);
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchWorkProcesses = async () => {
@@ -77,7 +79,12 @@ const WorkProcessPage = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
               Quá trình công tác
@@ -110,7 +117,6 @@ const WorkProcessPage = () => {
       )}
       <Footer />
     </div>
-    
   );
 };
 

@@ -447,53 +447,67 @@ const ManagementTable = () => {
   };
 
   const handleDownload = () => {
-    const tableData = filteredPapers.map((paper, index) => {
-      const rowData = { STT: index + 1 };
-      visibleColumns.forEach((col) => {
-        switch (col) {
-          case "paperType":
-            rowData["Loại bài báo"] = paper.paperType;
-            break;
-          case "group":
-            rowData["Nhóm"] = paper.group;
-            break;
-          case "title":
-            rowData["Tên bài báo nghiên cứu khoa học"] = paper.title;
-            break;
-          case "authors":
-            rowData["Tác giả"] = paper.authors;
-            break;
-          case "authorCount":
-            rowData["Số tác giả"] = paper.authorCount;
-            break;
-          case "role":
-            rowData["Vai trò"] = paper.role;
-            break;
-          case "institution":
-            rowData["CQ đứng tên"] = paper.institution;
-            break;
-          case "publicationDate":
-            rowData["Ngày công bố"] = paper.publicationDate;
-            break;
-          case "dateAdded":
-            rowData["Ngày thêm"] = paper.dateAdded;
-            break;
-          default:
-            break;
-        }
+    // Lấy các cột được chọn
+    const selectedColumns = columns
+      .filter((col) => col.dataIndex) // Ensure dataIndex exists
+      .map((col) => col.dataIndex);
+
+    // Lọc dữ liệu theo các cột được chọn
+    const filteredData = filteredPapers.map((paper) => {
+      const filteredPaper = {};
+      selectedColumns.forEach((col) => {
+        filteredPaper[col] = paper[col] || ""; // Ensure no undefined values
       });
-      return rowData;
+      return filteredPaper;
     });
 
-    const worksheet = XLSX.utils.json_to_sheet(tableData);
+    // Thêm tiêu đề (header)
+    const title = [["BÁO CÁO DANH SÁCH"], []]; // Tiêu đề chính và dòng trống
+
+    // Thêm header cột
+    const headers = columns
+      .filter((col) => selectedColumns.includes(col.dataIndex))
+      .map((col) => col.title);
+
+    // Kết hợp tiêu đề và dữ liệu
+    const finalData = [
+      ...title,
+      headers,
+      ...filteredData.map((row) => selectedColumns.map((col) => row[col])),
+    ];
+
+    // Tạo worksheet
+    const worksheet = XLSX.utils.aoa_to_sheet(finalData);
+
+    // Tự động điều chỉnh độ rộng cột
+    const columnWidths = headers.map((header, index) => ({
+      wch: Math.max(
+        header.length,
+        ...filteredData.map((row) =>
+          row[selectedColumns[index]]
+            ? row[selectedColumns[index]].toString().length
+            : 10
+        )
+      ),
+    }));
+    worksheet["!cols"] = columnWidths;
+
+    // Tạo workbook và thêm worksheet
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Papers");
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Báo cáo");
+
+    // Xuất file Excel
     const excelBuffer = XLSX.write(workbook, {
       bookType: "xlsx",
       type: "array",
     });
     const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, "papers.xlsx");
+
+    // Tên file
+    const fileName = `BaoCao_DanhSach_${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`;
+    saveAs(data, fileName);
   };
 
   const filterRef = useRef(null);
