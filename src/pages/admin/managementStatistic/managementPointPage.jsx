@@ -4,7 +4,7 @@ import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox } from "antd";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
-import * as XLSX from "xlsx";
+import * as ExcelJS from "exceljs";
 
 const ManagementPoint = () => {
   const papers = [
@@ -291,68 +291,69 @@ const ManagementPoint = () => {
     },
   ].filter((column) => visibleColumns.includes(column.key));
 
-  const downloadExcel = () => {
-    // Lấy các cột được chọn
-    const selectedColumns = columns
-      .filter((col) => col.dataIndex) // Ensure dataIndex exists
-      .map((col) => col.dataIndex);
+  const downloadExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Báo cáo");
 
-    // Lọc dữ liệu theo các cột được chọn
-    const filteredData = filteredPapers.map((paper) => {
-      const filteredPaper = {};
-      selectedColumns.forEach((col) => {
-        filteredPaper[col] = paper[col] || ""; // Ensure no undefined values
-      });
-      return filteredPaper;
+    // Add title
+    worksheet.mergeCells("A1", "J1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = "BÁO CÁO ĐIỂM ĐÓNG GÓP";
+    titleCell.font = { name: "Times New Roman", size: 16, bold: true };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+    // Add headers
+    const headers = columns
+      .filter((col) => col.dataIndex)
+      .map((col) => col.title);
+    worksheet.addRow(headers);
+    headers.forEach((header, index) => {
+      const cell = worksheet.getRow(2).getCell(index + 1);
+      cell.font = { name: "Times New Roman", size: 12, bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9E1F2" }, // Light blue background
+      };
     });
 
-    // Thêm tiêu đề (header)
-    const title = [["BÁO CÁO ĐIỂM ĐÓNG GÓP"], []]; // Tiêu đề chính và dòng trống
+    // Add data rows
+    const selectedColumns = columns.map((col) => col.dataIndex).filter(Boolean);
+    filteredPapers.forEach((paper) => {
+      const rowData = selectedColumns.map((col) => paper[col] || "");
+      worksheet.addRow(rowData);
+    });
 
-    // Thêm header cột
-    const headers = columns
-      .filter((col) => selectedColumns.includes(col.dataIndex))
-      .map((col) => col.title);
+    // Style data rows
+    worksheet.eachRow((row, rowIndex) => {
+      if (rowIndex > 2) {
+        row.eachCell((cell) => {
+          cell.font = { name: "Times New Roman", size: 12 };
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+        });
+      }
+    });
 
-    // Kết hợp tiêu đề và dữ liệu
-    const finalData = [
-      ...title,
-      headers,
-      ...filteredData.map((row) => selectedColumns.map((col) => row[col])),
-    ];
-
-    // Tạo worksheet
-    const worksheet = XLSX.utils.aoa_to_sheet(finalData);
-
-    // Tự động điều chỉnh độ rộng cột
-    const columnWidths = headers.map((header, index) => ({
-      wch: Math.max(
+    // Adjust column widths
+    worksheet.columns = headers.map((header, index) => ({
+      width: Math.max(
         header.length,
-        ...filteredData.map((row) =>
-          row[selectedColumns[index]]
-            ? row[selectedColumns[index]].toString().length
+        ...filteredPapers.map((paper) =>
+          paper[selectedColumns[index]]
+            ? paper[selectedColumns[index]].toString().length
             : 10
         )
       ),
     }));
-    worksheet["!cols"] = columnWidths;
 
-    // Tạo workbook và thêm worksheet
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Báo cáo");
-
-    // Xuất file Excel
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-
-    // Tên file
+    // Save the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
     const fileName = `BaoCao_DiemDongGop_${new Date()
       .toISOString()
       .slice(0, 10)}.xlsx`;
-    saveAs(data, fileName);
+    saveAs(blob, fileName);
   };
 
   const filterRef = useRef(null);
@@ -447,9 +448,9 @@ const ManagementPoint = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[85px]">
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
+            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[130px]">
+              <option value="2024">2024-2025</option>
+              <option value="2023">2023-2024</option>
             </select>
             <button
               onClick={downloadExcel}

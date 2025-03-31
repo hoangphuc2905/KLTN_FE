@@ -14,6 +14,7 @@ import {
 } from "antd";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 import userApi from "../../../api/api";
 
 const ManagementTable = () => {
@@ -372,51 +373,69 @@ const ManagementTable = () => {
     }
   };
 
-  const handleDownload = () => {
-    const selectedColumns = columns
-      .filter((col) => visibleColumns.includes(col.key))
-      .map((col) => col.dataIndex);
+  const downloadExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Báo cáo");
 
+    // Add title
+    worksheet.mergeCells("A1", "J1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = "BÁO CÁO DANH SÁCH";
+    titleCell.font = { name: "Times New Roman", size: 16, bold: true };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+    // Add headers
     const headers = columns
-      .filter((col) => visibleColumns.includes(col.key))
+      .filter((col) => col.dataIndex)
       .map((col) => col.title);
-
-    const tableData = filteredPapers.map((paper) => {
-      const rowData = {};
-      selectedColumns.forEach((col) => {
-        rowData[col] = paper[col] || "";
-      });
-      return rowData;
+    worksheet.addRow(headers);
+    headers.forEach((header, index) => {
+      const cell = worksheet.getRow(2).getCell(index + 1);
+      cell.font = { name: "Times New Roman", size: 12, bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9E1F2" }, // Light blue background
+      };
     });
 
-    const finalData = [
-      headers,
-      ...tableData.map((row) => selectedColumns.map((col) => row[col])),
-    ];
+    // Add data rows
+    const selectedColumns = columns.map((col) => col.dataIndex).filter(Boolean);
+    filteredPapers.forEach((paper) => {
+      const rowData = selectedColumns.map((col) => paper[col] || "");
+      worksheet.addRow(rowData);
+    });
 
-    const worksheet = XLSX.utils.aoa_to_sheet(finalData);
+    // Style data rows
+    worksheet.eachRow((row, rowIndex) => {
+      if (rowIndex > 2) {
+        row.eachCell((cell) => {
+          cell.font = { name: "Times New Roman", size: 12 };
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+        });
+      }
+    });
 
-    const columnWidths = headers.map((header, index) => ({
-      wch: Math.max(
+    // Adjust column widths
+    worksheet.columns = headers.map((header, index) => ({
+      width: Math.max(
         header.length,
-        ...tableData.map((row) =>
-          row[selectedColumns[index]]
-            ? row[selectedColumns[index]].toString().length
+        ...filteredPapers.map((paper) =>
+          paper[selectedColumns[index]]
+            ? paper[selectedColumns[index]].toString().length
             : 10
         )
       ),
     }));
-    worksheet["!cols"] = columnWidths;
 
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Papers");
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
-    const data = new Blob([excelBuffer], { type: "application/octet-stream" });
-    saveAs(data, `Papers_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    // Save the file
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    const fileName = `BaoCao_DanhSach_${new Date()
+      .toISOString()
+      .slice(0, 10)}.xlsx`;
+    saveAs(blob, fileName);
   };
 
   const filterRef = useRef(null);
@@ -521,14 +540,14 @@ const ManagementTable = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[85px]">
-              <option value="2025">2025</option>
-              <option value="2024">2024</option>
-              <option value="2023">2023</option>
+            <select className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]">
+              <option value="2025">2025-2026</option>
+              <option value="2024">2024-2025</option>
+              <option value="2023">2023-2024</option>
             </select>
             <button
               className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
-              onClick={handleDownload}
+              onClick={downloadExcel}
             >
               Download
             </button>
