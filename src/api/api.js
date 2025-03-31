@@ -454,6 +454,20 @@ const userApi = {
     }
   },
 
+  updateScientificPaperById: async (paper_id, paperData) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/scientificPapers/${paper_id}`,
+        paperData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating scientific paper:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   getScientificPapersByAuthorId: async (user_id) => {
     try {
       const response = await axios.get(

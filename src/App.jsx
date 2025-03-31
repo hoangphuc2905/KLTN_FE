@@ -26,6 +26,7 @@ import RoleSelectionPage from "./components/RoleSelectionPage";
 import ErrorPage from "./components/ErrorPage";
 import DetailArticlePage from "./pages/admin/managementArticle/detailArticlePage";
 import StorageScientificPage from "./pages/user/storage/StorageScientificPage";
+import EditScientificPaperPage from "./pages/user/scientificPaper/EditScientificPaperPage";
 
 const App = () => {
   const [userRoles, setUserRoles] = useState([]);
@@ -156,6 +157,17 @@ const App = () => {
               element={
                 <ProtectedRoute roles={userRoles} path="/scientific-paper/:id">
                   <ScientificPaperDetailPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scientific-paper/edit/:id"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/scientific-paper/edit/:id"
+                >
+                  <EditScientificPaperPage />
                 </ProtectedRoute>
               }
             />

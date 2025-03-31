@@ -30,6 +30,7 @@ const permissions = {
     "/statistics-point",
     "/notifications",
     "/storage-scientific-paper",
+    "/scientific-paper/edit/:id",
   ],
   lecturer: [
     "/admin/management/chart",
@@ -50,6 +51,7 @@ const permissions = {
     "/statistics-point",
     "/notifications",
     "/storage-scientific-paper",
+    "/scientific-paper/edit/:id",
   ],
   head_of_department: [
     "/admin/management/chart",
