@@ -82,8 +82,15 @@ const DetailArticlePage = () => {
         await userApi.createMessage(messageData);
       });
 
+      // Update the status of the article to "revision"
+      await userApi.updateScientificPaperStatus(id, "revision");
+      setPaper((prevPaper) => ({ ...prevPaper, status: "revision" }));
+
       message.success("Yêu cầu chỉnh sửa đã được gửi thành công!");
       setIsEditModalVisible(false);
+
+      // Navigate to the "revision" tab
+      navigate("/admin/management/ariticle");
     } catch (error) {
       console.error("Error sending edit request:", error);
       message.error("Gửi yêu cầu chỉnh sửa thất bại.");
@@ -118,6 +125,7 @@ const DetailArticlePage = () => {
 
       message.success("Yêu cầu từ chối đã được gửi thành công!");
       setIsRejectModalVisible(false);
+      navigate("/admin/management/ariticle");
     } catch (error) {
       console.error("Error sending rejection request:", error);
       message.error("Gửi yêu cầu từ chối thất bại.");
@@ -510,20 +518,83 @@ const DetailArticlePage = () => {
                         </>
                       )}
                       {paper.status === "approved" && (
-                        <Button
-                          style={{ backgroundColor: "#FFD700", color: "black" }}
-                          onClick={showEditModal}
-                        >
-                          Yêu cầu chỉnh sửa
-                        </Button>
+                        <>
+                          <Button
+                            style={{
+                              backgroundColor: "#FFD700",
+                              color: "black",
+                            }}
+                            onClick={showEditModal}
+                          >
+                            Yêu cầu chỉnh sửa
+                          </Button>
+                          <Button
+                            style={{
+                              backgroundColor: "#FF0000",
+                              color: "white",
+                            }}
+                            onClick={showRejectModal}
+                          >
+                            Từ chối
+                          </Button>
+                        </>
                       )}
                       {paper.status === "refused" && (
-                        <Button
-                          style={{ backgroundColor: "#FFD700", color: "black" }}
-                          onClick={showEditModal}
-                        >
-                          Yêu cầu chỉnh sửa
-                        </Button>
+                        <>
+                          <Button
+                            style={{
+                              backgroundColor: "#FFD700",
+                              color: "black",
+                            }}
+                            onClick={showEditModal}
+                          >
+                            Yêu cầu chỉnh sửa
+                          </Button>
+                          <Button
+                            style={{
+                              backgroundColor: "#008000",
+                              color: "white",
+                            }}
+                            onClick={() =>
+                              updateScientificPaperStatus("approved")
+                            }
+                          >
+                            Duyệt bài
+                          </Button>
+                        </>
+                      )}
+                      {paper.status === "revision" && (
+                        <>
+                          <Button
+                            style={{
+                              backgroundColor: "#FFD700",
+                              color: "black",
+                            }}
+                            onClick={showEditModal}
+                          >
+                            Yêu cầu chỉnh sửa
+                          </Button>
+                          <Button
+                            style={{
+                              backgroundColor: "#FF0000",
+                              color: "white",
+                            }}
+                            onClick={showRejectModal}
+                          >
+                            Từ chối
+                          </Button>
+                          <Button
+                            style={{
+                              backgroundColor: "#008000",
+                              color: "white",
+                            }}
+                            onClick={() =>
+                              updateScientificPaperStatus("approved")
+                            }
+                          >
+                            Duyệt bài
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>

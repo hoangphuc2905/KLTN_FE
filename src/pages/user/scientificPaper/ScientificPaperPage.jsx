@@ -169,6 +169,7 @@ const ScientificPaperPage = () => {
     { value: "approved", label: "Đã duyệt", color: "text-green-600" },
     { value: "pending", label: "Đang chờ", color: "text-yellow-600" },
     { value: "refused", label: "Từ chối", color: "text-red-600" },
+    { value: "revision", label: "Chờ chỉnh sửa", color: "text-orange-600" },
   ];
 
   const handleFilterDropdownOpen = (filterType) => {
@@ -203,6 +204,8 @@ const ScientificPaperPage = () => {
       // Filter papers based on the active tab
       if (activeTab === "Đã duyệt" && paper.status !== "approved") return false;
       if (activeTab === "Đang chờ" && paper.status !== "pending") return false;
+      if (activeTab === "Chờ chỉnh sửa" && paper.status !== "revision")
+        return false;
       if (activeTab === "Từ chối" && paper.status !== "refused") return false;
       return true;
     })
@@ -241,8 +244,20 @@ const ScientificPaperPage = () => {
     });
 
   const handleRowClick = (record) => {
-    setModalContent(record);
-    setIsModalVisible(true);
+    const paperId = record.id || record._id;
+    if (!paperId) {
+      console.error("Paper ID is undefined:", record);
+      return;
+    }
+
+    if (record.status === "approved") {
+      navigate(`/scientific-paper/${paperId}`);
+    } else if (record.status === "revision") {
+      navigate(`/scientific-paper/edit/${paperId}`);
+    } else {
+      setModalContent(record);
+      setIsModalVisible(true);
+    }
   };
 
   const handleChange = (pagination, filters, sorter) => {
@@ -623,6 +638,17 @@ const ScientificPaperPage = () => {
             >
               Chờ duyệt (
               {papers.filter((paper) => paper.status === "pending").length})
+            </button>
+            <button
+              className={`px-4 py-2 text-center text-xs ${
+                activeTab === "Chờ chỉnh sửa"
+                  ? "bg-[#00A3FF] text-white"
+                  : "bg-white text-gray-700"
+              } rounded-lg`}
+              onClick={() => setActiveTab("Chờ chỉnh sửa")}
+            >
+              Chờ chỉnh sửa (
+              {papers.filter((paper) => paper.status === "revision").length})
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${
@@ -1070,7 +1096,7 @@ const ScientificPaperPage = () => {
                     total: filteredPapers.length,
                     onChange: (page) => setCurrentPage(page),
                   }}
-                  rowKey="id" // Ensure rowKey is unique and matches the data
+                  rowKey="id"
                   className="text-sm"
                   scroll={{
                     x: newColumns.reduce(

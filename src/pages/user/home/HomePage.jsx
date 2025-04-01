@@ -93,6 +93,7 @@ const HomePage = () => {
   const [departmentsList, setDepartmentsList] = useState([]); // State for departments list
   const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
   const [searchQuery, setSearchQuery] = useState(""); // State for search query
+  const [collections, setCollections] = useState([]); // State for collections
 
   const itemsPerPage = 10;
 
@@ -134,6 +135,20 @@ const HomePage = () => {
     };
 
     fetchResearchPapers();
+  }, []);
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        const userId = localStorage.getItem("user_id");
+        const userCollections = await userApi.getCollectionsByUserId(userId);
+        setCollections(userCollections);
+      } catch (error) {
+        console.error("Error fetching collections:", error);
+      }
+    };
+
+    fetchCollections();
   }, []);
 
   const fetchAuthors = async (paperId) => {
@@ -211,48 +226,6 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    const fetchAuthorsForCurrentPapers = async () => {
-      for (const paper of currentPapers) {
-        if (!authors[paper._id]) {
-          await fetchAuthors(paper._id); // Fetch authors only if not already fetched
-        }
-      }
-    };
-
-    fetchAuthorsForCurrentPapers();
-  }, [currentPapers, authors]);
-
-  useEffect(() => {
-    const fetchDepartmentsForCurrentPapers = async () => {
-      for (const paper of currentPapers) {
-        if (paper.department && !departments[paper.department]) {
-          await fetchDepartment(paper.department); // Fetch department using 'department' field
-        }
-      }
-    };
-
-    fetchDepartmentsForCurrentPapers();
-  }, [currentPapers, departments]);
-
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const departments = await userApi.getAllDepartments(); // Fetch all departments
-        const departmentMapping = departments.reduce((acc, department) => {
-          acc[department.id] = department.department_name; // Map department ID to name
-          return acc;
-        }, {});
-        setDepartments(departmentMapping); // Update state with the mapping
-        setDepartmentsList(departments); // Update the dropdown list
-      } catch (error) {
-        console.error("Error fetching departments:", error);
-      }
-    };
-
-    fetchDepartments();
-  }, []);
-
-  useEffect(() => {
     const fetchCountsForCurrentPapers = async () => {
       try {
         const updatedPapers = await Promise.all(
@@ -266,16 +239,11 @@ const HomePage = () => {
         );
 
         setResearchPapers((prev) => {
-          const updatedResearchPapers = [...prev];
-          updatedPapers.forEach((updatedPaper) => {
-            const index = updatedResearchPapers.findIndex(
-              (paper) => paper._id === updatedPaper._id
-            );
-            if (index !== -1) {
-              updatedResearchPapers[index] = updatedPaper;
-            }
-          });
-          return updatedResearchPapers;
+          // Nếu không có thay đổi, không cập nhật state để tránh vòng lặp
+          if (JSON.stringify(prev) === JSON.stringify(updatedPapers)) {
+            return prev;
+          }
+          return updatedPapers;
         });
       } catch (error) {
         console.error("Error fetching counts for current papers:", error);
@@ -285,7 +253,56 @@ const HomePage = () => {
     if (currentPapers.length > 0) {
       fetchCountsForCurrentPapers();
     }
-  }, [currentPapers]);
+  }, [JSON.stringify(currentPapers)]); // Giảm thiểu vòng lặp bằng cách so sánh giá trị chuỗi
+
+  useEffect(() => {
+    const fetchAuthorsForCurrentPapers = async () => {
+      for (const paper of currentPapers) {
+        if (!authors[paper._id]) {
+          await fetchAuthors(paper._id); // Fetch authors only if not already fetched
+        }
+      }
+    };
+
+    fetchAuthorsForCurrentPapers();
+  }, [JSON.stringify(currentPapers), JSON.stringify(authors)]);
+
+  useEffect(() => {
+    const fetchDepartmentsForCurrentPapers = async () => {
+      for (const paper of currentPapers) {
+        if (paper.department && !departments[paper.department]) {
+          await fetchDepartment(paper.department); // Fetch department using 'department' field
+        }
+      }
+    };
+
+    fetchDepartmentsForCurrentPapers();
+  }, [JSON.stringify(currentPapers), JSON.stringify(departments)]);
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const departments = await userApi.getAllDepartments();
+        const departmentMapping = departments.reduce((acc, department) => {
+          acc[department.id] = department.department_name;
+          return acc;
+        }, {});
+        setDepartments((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(departmentMapping))
+            return prev;
+          return departmentMapping;
+        });
+        setDepartmentsList((prevList) => {
+          if (JSON.stringify(prevList) === JSON.stringify(departments))
+            return prevList;
+          return departments;
+        });
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+      }
+    };
+    fetchDepartments();
+  }, []);
 
   const createPaperView = async (paperId) => {
     try {
@@ -304,24 +321,81 @@ const HomePage = () => {
     }
   };
 
-  const showModal = (paper) => {
+  const showModal = async (paper) => {
     setSelectedPaper(paper);
     setIsModalVisible(true);
     setNewCategory(""); // Reset new category state
     setSelectedCategory(""); // Reset selected category state
     setIsAddingCategory(false); // Reset adding category state
+
+    try {
+      const userId = localStorage.getItem("user_id");
+      const userCollections = await userApi.getCollectionsByUserId(userId);
+      setCollections(userCollections); // Update collections state
+      setCategories(userCollections.map((collection) => collection.name)); // Update categories
+    } catch (error) {
+      console.error("Error fetching collections:", error);
+    }
+  };
+
+  const handleCreateCollection = async () => {
+    if (!newCategory.trim()) return;
+
+    try {
+      const userId = localStorage.getItem("user_id");
+      const newCollection = await userApi.createCollection({
+        userId,
+        name: newCategory,
+      });
+      setCollections((prev) => [...prev, newCollection]);
+      setCategories((prev) => [...prev, newCategory]); // Update categories
+      setNewCategory(""); // Reset input
+      setIsAddingCategory(false);
+    } catch (error) {
+      console.error("Error creating collection:", error);
+    }
+  };
+
+  const handleAddPaperToCollection = async () => {
+    if (!selectedCategory || !selectedPaper) {
+      console.error("Selected category or paper is missing.");
+      return;
+    }
+
+    try {
+      const collection = collections.find(
+        (col) => col.name === selectedCategory
+      );
+
+      if (!collection) {
+        console.error(
+          `No matching collection found for the selected category: ${selectedCategory}`
+        );
+        return;
+      }
+
+      console.log(
+        `Adding paper ${selectedPaper.id} to collection ${collection.id}`
+      );
+      await userApi.addPaperToCollection(collection.id, selectedPaper.id);
+      setArchivedPapers((prev) => [...prev, selectedPaper.id]); // Mark paper as archived
+      setIsModalVisible(false); // Close modal
+    } catch (error) {
+      console.error("Error adding paper to collection:", error);
+    }
+  };
+
+  // Ensure selectedCategory is updated when the user selects a category
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
   };
 
   const handleOk = () => {
-    if (selectedPaper) {
-      setArchivedPapers((prev) => [...prev, selectedPaper.id]);
-    }
     if (newCategory.trim() && !categories.includes(newCategory)) {
-      setCategories([...categories, newCategory]);
+      handleCreateCollection(); // Create new collection
+    } else {
+      handleAddPaperToCollection(); // Add paper to existing collection
     }
-    setIsModalVisible(false);
-    setNewCategory(""); // Reset new category state
-    setIsAddingCategory(false); // Reset adding category state
   };
 
   const handleCancel = () => {
@@ -669,12 +743,12 @@ const HomePage = () => {
           </Button>,
         ]}
       >
-        <p>Title: {selectedPaper?.title}</p>
+        <p>Title: {selectedPaper?.title}</p>egory
         <p>Các danh mục lưu trữ:</p>
         <select
           className="p-2 border rounded-lg w-full text-sm"
           value={selectedCategory}
-          onChange={(e) => setSelectedCategory(e.target.value)}
+          onChange={handleCategoryChange}
         >
           <option value="">Chọn danh mục</option>
           {categories.map((category, index) => (
