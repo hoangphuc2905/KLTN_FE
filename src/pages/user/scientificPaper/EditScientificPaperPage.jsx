@@ -60,22 +60,24 @@ const EditScientificPaperPage = () => {
   const { id } = useParams(); // Get the paper ID from the URL
 
   useEffect(() => {
-    const fetchPaperData = async () => {
+    const fetchData = async () => {
       try {
-        const types = await userApi.getAllPaperTypes();
-        const groups = await userApi.getAllPaperGroups();
-        const departmentsData = await userApi.getAllDepartments(); // Fetch departments
+        const [types, groups, departmentsData] = await Promise.all([
+          userApi.getAllPaperTypes(),
+          userApi.getAllPaperGroups(),
+          userApi.getAllDepartments(),
+        ]);
 
         setPaperTypes(types);
         setPaperGroups(groups);
-        setDepartments(departmentsData); // Set departments
+        setDepartments(departmentsData);
       } catch (error) {
         console.error("Error fetching data:", error);
         message.error("Không thể tải dữ liệu.");
       }
     };
 
-    fetchPaperData();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -277,8 +279,6 @@ const EditScientificPaperPage = () => {
       });
       const authorCount = `${authors.length}(${roleCounts.primary},${roleCounts.corresponding},${roleCounts.primaryCorresponding},${roleCounts.contributor})`;
 
-      console.log("Authors:", authors);
-      console.log("Selected Department:", selectedDepartment);
       // Prepare JSON payload
       const payload = {
         article_type: selectedPaperType || "",
@@ -286,7 +286,7 @@ const EditScientificPaperPage = () => {
         title_vn: titleVn || "",
         title_en: titleEn || "",
         author_count: authorCount,
-        author: authors.map((author) => ({
+        authors: authors.map((author) => ({
           user_id: author.mssvMsgv || "",
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
@@ -395,24 +395,16 @@ const EditScientificPaperPage = () => {
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-4 mt-4">
-          <div className="flex gap-4">
-            {/* Left Column */}
-            <div className="w-1/2 relative">
-              {/* Icon */}
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/16921/16921785.png"
-                alt="AI Technology Icon"
-                className="absolute top-0 right-0 w-5 h-5 m-3 cursor-pointer"
-                onClick={showIconModal}
-              />
+          <div className="flex flex-col gap-4">
+            <div className="w-full relative">
               {/* Khối "Nhập thông tin" */}
-              <section className="flex flex-col bg-white rounded-lg p-4 mb-4">
-                <h2 className="text-sm font-medium leading-none text-black uppercase mb-4 pl-[210px]">
+              <section className="flex flex-col bg-white rounded-lg p-6 mb-3">
+                <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin
                 </h2>
-
                 <div className="flex gap-4">
-                  <div className="w-1/3 flex justify-center">
+                  {/*Ảnh img bài báo */}
+                  <div className="flex justify-center">
                     <label
                       htmlFor="cover-upload"
                       className="cursor-pointer relative"
@@ -423,7 +415,7 @@ const EditScientificPaperPage = () => {
                           "https://via.placeholder.com/180x200?text=Bìa+Bài+Báo"
                         }
                         alt="Bìa bài báo"
-                        className="w-[180px] h-[200px] object-cover border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
+                        className="w-[260px] h-[315px] object-cover border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 text-white font-semibold text-sm rounded-lg transition duration-300">
                         Chọn ảnh
@@ -437,165 +429,291 @@ const EditScientificPaperPage = () => {
                       className="hidden"
                     />
                   </div>
-
-                  <div className="w-2/3 grid grid-cols-1">
-                    <Select
-                      className="w-full h-10"
-                      placeholder="Loại bài báo"
-                      required
-                      showSearch
-                      optionFilterProp="children"
-                      filterOption={(input, option) =>
-                        option?.children
-                          ?.toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      value={selectedPaperType} // Bind state to input value
-                      onChange={(value) => setSelectedPaperType(value)} // Lưu `_id` vào state
-                    >
-                      {paperTypes.map((type) => (
-                        <Option key={type._id} value={type._id}>
-                          {" "}
-                          {/* Sử dụng `_id` làm value */}
-                          {type.type_name}
-                        </Option>
-                      ))}
-                    </Select>
-
-                    <Select
-                      className="w-full h-10"
-                      placeholder="Thuộc nhóm"
-                      required
-                      showSearch
-                      optionFilterProp="children"
-                      filterOption={(input, option) =>
-                        option?.children
-                          ?.toLowerCase()
-                          .includes(input.toLowerCase())
-                      }
-                      value={selectedPaperGroup} // Bind state to input value
-                      onChange={(value) => setSelectedPaperGroup(value)} // Lưu `_id` vào state
-                    >
-                      {paperGroups.map((group) => (
-                        <Option key={group._id} value={group._id}>
-                          {" "}
-                          {/* Sử dụng `_id` làm value */}
-                          {group.group_name}
-                        </Option>
-                      ))}
-                    </Select>
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên bài báo (Tiếng Việt)"
-                      suffix={<span style={{ color: "red" }}>*</span>}
-                      required
-                      value={titleVn} // Bind state to input value
-                      onChange={(e) => setTitleVn(e.target.value)}
-                    />
+                  {/* Các input bên cạnh ảnh */}
+                  <div className="w-full grid grid-cols-1 pl-4">
+                    {/* Loại bài báo */}
+                    <div className="mb-2">
+                      <label
+                        htmlFor="paperType"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Loại bài báo <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <Select
+                        id="paperType"
+                        className="w-full h-10"
+                        placeholder="Chọn loại bài báo"
+                        required
+                        showSearch
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          option?.children
+                            ?.toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        value={selectedPaperType}
+                        onChange={(value) => setSelectedPaperType(value)}
+                      >
+                        {paperTypes.map((type) => (
+                          <Option key={type._id} value={type._id}>
+                            {type.type_name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                    {/* Nhóm bài báo */}
+                    <div className="mb-2">
+                      <label
+                        htmlFor="paperGroup"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Thuộc nhóm <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <Select
+                        id="paperGroup"
+                        className="w-full h-10"
+                        placeholder="Chọn nhóm bài báo"
+                        required
+                        showSearch
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          option?.children
+                            ?.toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        value={selectedPaperGroup}
+                        onChange={(value) => setSelectedPaperGroup(value)}
+                      >
+                        {paperGroups.map((group) => (
+                          <Option key={group._id} value={group._id}>
+                            {group.group_name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                    {/* Tên(Vn) bài báo */}
+                    <div className="mb-2">
+                      <label
+                        htmlFor="titleVn"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Tên bài báo (Tiếng Việt){" "}
+                        <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <TextArea
+                        id="titleVn"
+                        className="w-full"
+                        placeholder="Nhập tên bài báo (Tiếng Việt)"
+                        rows={2} // Adjust the number of rows as needed
+                        required
+                        onChange={(e) => setTitleVn(e.target.value)}
+                      />
+                    </div>
+                    {/* Tên(En) bài báo */}
+                    <div className="mb-2">
+                      <label
+                        htmlFor="titleEn"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Tên bài báo (Tiếng Anh)
+                      </label>
+                      <TextArea
+                        id="titleEn"
+                        className="w-full"
+                        placeholder="Tên bài báo (Tiếng Anh)"
+                        rows={2} // Adjust the number of rows as needed
+                        onChange={(e) => setTitleEn(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-4 mt-4 ml-3">
+
+                <div className="flex gap-4 mt-4">
                   {/* Bên dưới ảnh: 4 input xếp dọc (bằng ảnh) */}
-                  <div className="flex flex-col w-[180px] gap-4">
-                    <DatePicker
-                      className="w-full h-10"
-                      placeholder="Ngày công bố"
-                      value={publishDate ? moment(publishDate) : null} // Bind state to input value
-                      onChange={(date, dateString) =>
-                        setPublishDate(dateString)
-                      }
-                    />
-
-                    <InputNumber
-                      className="w-full h-10"
-                      placeholder="Số trang"
-                      suffix={<span style={{ color: "red" }}>*</span>}
-                      min={1}
-                      value={pageCount} // Bind state to input value
-                      onChange={(value) => setPageCount(value)}
-                    />
-
-                    <InputNumber
-                      className="w-full h-10"
-                      placeholder="Thứ tự"
-                      min={1}
-                      onChange={(value) => setOrderNo(value)}
-                    />
-
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Số ISSN / ISBN"
-                      suffix={<span style={{ color: "red" }}>*</span>}
-                      value={issnIsbn} // Bind state to input value
-                      onChange={(e) => setIssnIsbn(e.target.value)}
-                    />
+                  <div className="flex flex-col w-[320px] gap-4">
+                    {/* Ngày cô bố */}
+                    <div className="">
+                      <label
+                        htmlFor="publishDate"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Ngày công bố <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <DatePicker
+                        id="publishDate"
+                        className="w-full h-10"
+                        placeholder="Ngày công bố"
+                        onChange={(date, dateString) =>
+                          setPublishDate(dateString)
+                        }
+                      />
+                    </div>
+                    {/* Số trang */}
+                    <div className="">
+                      <label
+                        htmlFor="pageCount"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Số trang <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <InputNumber
+                        id="pageCount"
+                        className="w-full h-10"
+                        placeholder="Số trang"
+                        min={1}
+                        onChange={(value) => setPageCount(value)}
+                      />
+                    </div>
+                    {/* Thứ tự */}
+                    <div className="pb-7">
+                      <label
+                        htmlFor="orderNo"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Thứ tự
+                      </label>
+                      <InputNumber
+                        id="orderNo"
+                        className="w-full h-10"
+                        placeholder="Thứ tự"
+                        min={1}
+                        onChange={(value) => setOrderNo(value)}
+                      />
+                    </div>
+                    {/* Bài tiêu biểu */}
+                    <div className="pb-4">
+                      <div className="flex items-center">
+                        <label
+                          htmlFor="featured"
+                          className="text-sm font-medium text-gray-700 mr-2"
+                        >
+                          Bài tiêu biểu
+                        </label>
+                        <input
+                          id="featured"
+                          type="checkbox"
+                          className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                          checked={featured}
+                          onChange={(e) => setFeatured(e.target.checked)}
+                        />
+                      </div>
+                    </div>
+                    {/* Số ISSN / ISBN */}
+                    <div className="">
+                      <label
+                        htmlFor="issnIsbn"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Số ISSN / ISBN <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <Input
+                        id="issnIsbn"
+                        className="w-full h-10"
+                        placeholder="Số ISSN / ISBN"
+                        onChange={(e) => setIssnIsbn(e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   {/* Bên phải ảnh: 4 input xếp dọc (bằng ID ở trên) */}
-                  <div className="flex flex-col gap-4 w-2/3">
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên bài báo (Tiếng Anh)"
-                      value={titleEn} // Bind state to input value
-                      onChange={(e) => setTitleEn(e.target.value)}
-                    />
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt) "
-                      suffix={<span style={{ color: "red" }}>*</span>}
-                      value={magazineVi} // Bind state to input value
-                      onChange={(e) => setMagazineVi(e.target.value)}
-                    />
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tên tạp chí / kỷ yếu (Tiếng Anh) "
-                      value={magazineEn} // Bind state to input value
-                      onChange={(e) => setMagazineEn(e.target.value)}
-                    />
-
-                    <Input
-                      className="w-full h-10"
-                      placeholder="Tập / quyển (nếu có)"
-                      value={magazineType} // Bind state to input value
-                      onChange={(e) => setMagazineType(e.target.value)}
-                    />
+                  <div className="flex flex-col gap-4 w-full pl-6">
+                    {/* Tên tạp chí / kỷ yếu (Vn) */}
+                    <div className="">
+                      <label
+                        htmlFor="magazineVi"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Tên tạp chí / kỷ yếu (Tiếng Việt){" "}
+                        <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <Input
+                        id="magazineVi"
+                        className="w-full h-10"
+                        placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt)"
+                        suffix={<span style={{ color: "red" }}>*</span>}
+                        onChange={(e) => setMagazineVi(e.target.value)}
+                      />
+                    </div>
+                    {/* Tên tạp chí / kỷ yếu (En) */}
+                    <div className="">
+                      <label
+                        htmlFor="magazineEn"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Tên tạp chí / kỷ yếu (Tiếng Anh)
+                      </label>
+                      <Input
+                        id="magazineEn"
+                        className="w-full h-10"
+                        placeholder="Tên tạp chí / kỷ yếu (Tiếng Anh)"
+                        onChange={(e) => setMagazineEn(e.target.value)}
+                      />
+                    </div>
+                    {/* Tập / quyển */}
+                    <div className="">
+                      <label
+                        htmlFor="magazineType"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Tập / quyển (nếu có)
+                      </label>
+                      <Input
+                        id="magazineType"
+                        className="w-full h-10"
+                        placeholder="Tập / quyển (nếu có)"
+                        onChange={(e) => setMagazineType(e.target.value)}
+                      />
+                    </div>
+                    {/* Khoa / viện */}
+                    <div className="">
+                      <label
+                        htmlFor="department"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Khoa / Viện <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <Select
+                        id="department"
+                        className="w-full h-10"
+                        placeholder="Chọn Khoa / Viện"
+                        required
+                        showSearch
+                        optionFilterProp="children"
+                        filterOption={(input, option) =>
+                          option?.children
+                            ?.toLowerCase()
+                            .includes(input.toLowerCase())
+                        }
+                        value={selectedDepartment}
+                        onChange={(value) => setSelectedDepartment(value)}
+                      >
+                        {departments.map((department) => (
+                          <Option key={department._id} value={department._id}>
+                            {department.department_name}
+                          </Option>
+                        ))}
+                      </Select>
+                    </div>
+                    {/* Từ khóa */}
+                    <div className="pb-2">
+                      <label
+                        htmlFor="keywords"
+                        className="block text-sm font-medium text-gray-700 pb-1"
+                      >
+                        Từ khóa <span style={{ color: "red" }}>*</span>
+                      </label>
+                      <TextArea
+                        id="keywords"
+                        placeholder="Nhập từ khóa"
+                        rows={2}
+                        onChange={(e) => setKeywords(e.target.value)}
+                      />
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4 ml-3">
-                  <Select
-                    className="w-full h-10"
-                    placeholder="Khoa / Viện"
-                    required
-                    showSearch
-                    optionFilterProp="children"
-                    value={selectedDepartment} // Bind state to input value
-                    filterOption={(input, option) =>
-                      option?.children
-                        ?.toLowerCase()
-                        .includes(input.toLowerCase())
-                    }
-                    onChange={(value) => setSelectedDepartment(value)} // Lưu `_id` vào state
-                  >
-                    {departments.map((department) => (
-                      <Option key={department._id} value={department._id}>
-                        {" "}
-                        {/* Sử dụng `_id` làm value */}
-                        {department.department_name}
-                      </Option>
-                    ))}
-                  </Select>
-                </div>
-                <div className="mt-4 ml-3">
-                  <TextArea
-                    placeholder="Từ khóa"
-                    rows={1}
-                    value={keywords} // Bind state to input value
-                    onChange={(e) => setKeywords(e.target.value)}
-                  />
                 </div>
 
                 {/* Lưu ý */}
-                <div className="mt-2 p-2 text-xs text-gray-700 italic">
+                <div className="mt-2 text-xs text-gray-700 italic">
                   (<span className="font-bold">LƯU Ý</span>: KHÔNG CẦN đánh chữ
                   <span className="font-bold"> ISSN </span> vào. Với các
                   <span className="font-bold"> TẠP CHÍ </span>, bắt buộc điền
@@ -605,21 +723,26 @@ const EditScientificPaperPage = () => {
                   duyệt nội dung)
                 </div>
 
-                <div className="mt-4 ml-3">
+                <div className="mt-4">
+                  <label
+                    htmlFor="summary"
+                    className="block text-sm font-medium text-gray-700 pb-1"
+                  >
+                    Tóm tắt <span style={{ color: "red" }}>*</span>
+                  </label>
                   <TextArea
-                    placeholder="Tóm tắt"
+                    id="summary"
+                    placeholder="Nhập tóm tắt"
                     rows={4}
-                    value={summary} // Bind state to input value
                     onChange={(e) => setSummary(e.target.value)}
                   />
                 </div>
               </section>
             </div>
 
-            {/* Right Column */}
-            <div className="w-1/2">
+            <div className="w-full">
               {/* Khối "Nhập thông tin tác giả" */}
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-3 h-[480px] overflow-y-auto">
+              <section className="flex flex-col bg-white rounded-lg p-6 mb-3">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin TÁC GIẢ
                 </h2>
@@ -656,81 +779,132 @@ const EditScientificPaperPage = () => {
                       className="grid grid-cols-6 gap-4 col-span-2"
                     >
                       {/* Row 1 */}
-                      <div className="grid grid-cols-6 gap-4 col-span-6">
-                        <Input
-                          placeholder="MSSV/MSGV"
-                          suffix={<span style={{ color: "red" }}>*</span>}
-                          value={author.mssvMsgv}
-                          onChange={(e) =>
-                            handleAuthorChange(
-                              index,
-                              "mssvMsgv",
-                              e.target.value
-                            )
-                          }
-                          required
-                        />
-                        <Input
-                          className="col-span-2"
-                          placeholder="Tên sinh viên / giảng viên"
-                          value={author.full_name}
-                          suffix={<span style={{ color: "red" }}>*</span>}
-                          readOnly
-                        />
-                        <Input
-                          className="col-span-2"
-                          placeholder="Tên sinh viên / giảng viên (English)"
-                          value={author.full_name_eng}
-                          onChange={(e) =>
-                            handleAuthorChange(
-                              index,
-                              "full_name_eng",
-                              e.target.value
-                            )
-                          }
-                        />
-                        <Button
-                          icon={<MinusOutlined />}
-                          onClick={() => handleRemoveAuthor(index)}
-                          size="small"
-                        />
+                      <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
+                        {/* Mã số SV /GV */}
+                        <div className="col-span-3">
+                          <label
+                            htmlFor={`mssvMsgv-${index}`}
+                            className="block text-sm font-medium text-gray-700 pb-1"
+                          >
+                            Mã số SV/GV <span style={{ color: "red" }}>*</span>
+                          </label>
+                          <Input
+                            id={`mssvMsgv-${index}`}
+                            placeholder="MSSV/MSGV"
+                            value={author.mssvMsgv}
+                            onChange={(e) =>
+                              handleAuthorChange(
+                                index,
+                                "mssvMsgv",
+                                e.target.value
+                              )
+                            }
+                            required
+                          />
+                        </div>
+                        {/* Tên SV /GV Vn */}
+                        <div className="col-span-4">
+                          <label
+                            htmlFor={`fullName-${index}`}
+                            className="block text-sm font-medium text-gray-700 pb-1"
+                          >
+                            Tên SV/GV (Tiếng Việt){" "}
+                            <span style={{ color: "red" }}>*</span>
+                          </label>
+                          <Input
+                            id={`fullName-${index}`}
+                            placeholder="Tên sinh viên / giảng viên"
+                            value={author.full_name}
+                            readOnly
+                          />
+                        </div>
+                        {/* Tên SV /GV En */}
+                        <div className="col-span-4">
+                          <label
+                            htmlFor={`fullNameEng-${index}`}
+                            className="block text-sm font-medium text-gray-700 pb-1"
+                          >
+                            Tên sinh viên / giảng viên (English)
+                          </label>
+                          <Input
+                            id={`fullNameEng-${index}`}
+                            placeholder="Tên sinh viên / giảng viên (English)"
+                            value={author.full_name_eng}
+                            onChange={(e) =>
+                              handleAuthorChange(
+                                index,
+                                "full_name_eng",
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                        {/* Button xóa */}
+                        <div className="col-span-1 flex items-center justify-end pt-5">
+                          <Button
+                            icon={<MinusOutlined />}
+                            onClick={() => handleRemoveAuthor(index)}
+                            size="small"
+                          />
+                        </div>
                       </div>
                       {/* Row 2 */}
-                      <div className="grid grid-cols-5 gap-4 col-span-6 mt-2 ml-24">
-                        <Select
-                          className="col-span-2"
-                          placeholder="Vai trò"
-                          value={author.role}
-                          onChange={(value) =>
-                            handleAuthorChange(index, "role", value)
-                          }
-                          required
-                        >
-                          <Option value="MainAuthor">Chính</Option>
-                          <Option value="CorrespondingAuthor">Liên hệ</Option>
-                          <Option value="MainAndCorrespondingAuthor">
-                            Vừa chính vừa liên hệ
-                          </Option>
-                          <Option value="Participant">Tham gia</Option>
-                        </Select>
-                        <Select
-                          className="col-span-2"
-                          placeholder="CQ công tác"
-                          value={author.institution}
-                          onChange={(value) =>
-                            handleAuthorChange(index, "institution", value)
-                          }
-                          required
-                        >
-                          {departments.map((department) => (
-                            <Option
-                              key={department._id}
-                              value={department.department_name}
-                            >
-                              {department.department_name}
+                      <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
+                        <div className="col-span-3"></div>
+                        {/* Vai trò */}
+                        <div className="col-span-4">
+                          <label
+                            htmlFor={`role-${index}`}
+                            className="block text-sm font-medium text-gray-700 pb-1"
+                          >
+                            Vai trò <span style={{ color: "red" }}>*</span>
+                          </label>
+                          <Select
+                            id={`role-${index}`}
+                            className="w-full"
+                            placeholder="Vai trò"
+                            value={author.role}
+                            onChange={(value) =>
+                              handleAuthorChange(index, "role", value)
+                            }
+                            required
+                          >
+                            <Option value="MainAuthor">Chính</Option>
+                            <Option value="CorrespondingAuthor">Liên hệ</Option>
+                            <Option value="MainAndCorrespondingAuthor">
+                              Vừa chính vừa liên hệ
                             </Option>
-                          ))}
-                        </Select>
+                            <Option value="Participant">Tham gia</Option>
+                          </Select>
+                        </div>
+                        {/* CQ công tác */}
+                        <div className="col-span-4">
+                          <label
+                            htmlFor={`institution-${index}`}
+                            className="block text-sm font-medium text-gray-700 pb-1"
+                          >
+                            CQ công tác <span style={{ color: "red" }}>*</span>
+                          </label>
+                          <Select
+                            id={`institution-${index}`}
+                            className="w-full"
+                            placeholder="CQ công tác"
+                            value={author.institution}
+                            onChange={(value) =>
+                              handleAuthorChange(index, "institution", value)
+                            }
+                            required
+                          >
+                            {author.institutions?.map((institution) => (
+                              <Option
+                                key={institution._id}
+                                value={institution._id}
+                              >
+                                {institution.name}
+                              </Option>
+                            ))}
+                          </Select>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -748,36 +922,65 @@ const EditScientificPaperPage = () => {
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin Minh chứng
                 </h2>
-                <div className="flex items-center space-x-2 mb-4">
-                  <Input
-                    placeholder="Upload file..."
-                    value={selectedFile || ""}
-                    readOnly
-                  />
-                  <Button type="primary" onClick={handleFileChange}>
-                    Choose
-                  </Button>
-                  {selectedFile && (
-                    <Button
-                      icon={<CloseCircleOutlined />}
-                      onClick={handleRemoveFile}
-                      danger
+                {/*File*/}
+                <div className="mb-4">
+                  <label
+                    htmlFor="file-upload"
+                    className="block text-sm font-medium text-gray-700 pb-1"
+                  >
+                    Tải lên file <span style={{ color: "red" }}>*</span>
+                  </label>
+                  <div className="flex items-center space-x-2">
+                    <Input
+                      id="file-upload"
+                      placeholder="Upload file..."
+                      value={selectedFile || ""}
+                      readOnly
                     />
-                  )}
+                    <Button type="primary" onClick={handleFileChange}>
+                      Choose
+                    </Button>
+                    {selectedFile && (
+                      <Button
+                        icon={<CloseCircleOutlined />}
+                        onClick={handleRemoveFile}
+                        danger
+                      />
+                    )}
+                  </div>
                 </div>
-
+                {/* Link và DOI */}
                 <div className="grid grid-cols-2 gap-4">
-                  <Input
-                    placeholder="Link công bố bài báo (http://...)"
-                    required
-                    value={link} // Bind state to input value
-                    onChange={(e) => setLink(e.target.value)}
-                  />
-                  <Input
-                    placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
-                    value={doi} // Bind state to input value
-                    onChange={(e) => setDoi(e.target.value)}
-                  />
+                  {/* Link công bố bài báo */}
+                  <div>
+                    <label
+                      htmlFor="link"
+                      className="block text-sm font-medium text-gray-700 pb-1"
+                    >
+                      Link công bố bài báo{" "}
+                      <span style={{ color: "red" }}>*</span>
+                    </label>
+                    <Input
+                      id="link"
+                      placeholder="Link công bố bài báo (http://...)"
+                      required
+                      onChange={(e) => setLink(e.target.value)}
+                    />
+                  </div>
+                  {/* Số DOI */}
+                  <div>
+                    <label
+                      htmlFor="doi"
+                      className="block text-sm font-medium text-gray-700 pb-1"
+                    >
+                      Số DOI
+                    </label>
+                    <Input
+                      id="doi"
+                      placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
+                      onChange={(e) => setDoi(e.target.value)}
+                    />
+                  </div>
                 </div>
                 <p className="mt-4 text-xs leading-5 text-black">
                   Minh chứng cần file upload full bài báo và link bài báo. Hệ
@@ -786,7 +989,8 @@ const EditScientificPaperPage = () => {
                   file Rar trước khi upload.
                 </p>
                 <div className="flex justify-end space-x-4 mt-6">
-                  <Button type="primary" onClick={handleClear}>
+                  {/*Button xóa trắng*/}
+                  <Button type="default" onClick={handleClear}>
                     Xóa trắng
                   </Button>
                   <Button type="primary" onClick={handleSave}>
