@@ -197,7 +197,13 @@ const ManagementAriticle = () => {
     "Tất cả",
     ...new Set(papers.map((paper) => paper.department)),
   ];
-  const uniqueStatuses = ["Tất cả", "pending", "approved", "refused"]; // Updated status values
+  const uniqueStatuses = [
+    "Tất cả",
+    "pending",
+    "approved",
+    "revision",
+    "refused",
+  ]; // Updated status values
 
   const filteredPapers = papers.filter((paper) => {
     const authorCount = parseInt(paper.author_count?.split("(")[0] || 0); // Adjusted for correct format
@@ -224,7 +230,8 @@ const ManagementAriticle = () => {
       (activeTab === "all" ||
         paper.status.toString() === activeTab ||
         (activeTab === "pending" && paper.status === "pending") ||
-        (activeTab === "approved" && paper.status === "approved") || // Ensure approved papers appear in the "Đã duyệt" tab
+        (activeTab === "approved" && paper.status === "approved") ||
+        (activeTab === "revision" && paper.status === "revision") || // Ensure revision papers appear in the "Chờ chỉnh sửa" tab
         (activeTab === "refused" && paper.status === "refused"))
     );
   });
@@ -401,6 +408,7 @@ const ManagementAriticle = () => {
             approved: "Đã duyệt",
             refused: "Từ chối",
             pending: "Chờ duyệt",
+            revision: "Chờ chỉnh sửa", // Added new status text
           }[status.toString()] || "Không xác định";
 
         const statusColor =
@@ -408,6 +416,7 @@ const ManagementAriticle = () => {
             approved: "text-green-600",
             refused: "text-red-600",
             pending: "text-yellow-600",
+            revision: "text-orange-600", // Added new status color
           }[status.toString()] || "text-gray-600";
 
         return <span className={statusColor}>{statusText}</span>;
@@ -549,6 +558,17 @@ const ManagementAriticle = () => {
             >
               Chờ duyệt (
               {papers.filter((paper) => paper.status === "pending").length})
+            </button>
+            <button
+              className={`px-4 py-2 text-center text-xs ${
+                activeTab === "revision"
+                  ? "bg-[#00A3FF] text-white"
+                  : "bg-white text-gray-700"
+              } rounded-lg`}
+              onClick={() => setActiveTab("revision")}
+            >
+              Chờ chỉnh sửa (
+              {papers.filter((paper) => paper.status === "revision").length})
             </button>
             <button
               className={`px-4 py-2 text-center text-xs ${

@@ -1,213 +1,24 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
-import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 import {
   StepBackwardOutlined,
   StepForwardOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
-import { Modal, Button, Input, Dropdown, Menu } from "antd";
+import { Modal, Button, Input, Dropdown, Menu, message } from "antd";
 import { useSwipeable } from "react-swipeable";
+import userApi from "../../../api/api";
 
 const StorageScientificPage = () => {
-  const navigate = useNavigate(); // Initialize useNavigate
-  const user = {
-    name: "NGUYEN VAN A",
-    role: "User",
-  };
+  const navigate = useNavigate();
 
-  const researchPapers = [
-    {
-      id: "1",
-      title:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
-      department: "Khoa học",
-      publishDate: "20/02/2025",
-      description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 100,
-      commentCount: 27,
-    },
-    {
-      id: "2",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa học",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "3",
-      title: "Ứng dụng công nghệ sinh học trong nông nghiệp",
-      author: "Trần Thị C",
-      department: "Khoa học",
-      publishDate: "10/03/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng công nghệ sinh học trong nông nghiệp, nhằm cải thiện năng suất và chất lượng sản phẩm.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 200,
-      commentCount: 40,
-    },
-    {
-      id: "4",
-      title:
-        "Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động Phát triển hệ thống điều khiển tự động",
-      author: "Lê Văn D",
-      department: "Kỹ thuật",
-      publishDate: "05/04/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc phát triển hệ thống điều khiển tự động, nhằm nâng cao hiệu quả sản xuất công nghiệp.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 250,
-      commentCount: 50,
-    },
-    {
-      id: "5",
-      title: "Ứng dụng công nghệ IoT trong nhà thông minh",
-      author: "Phạm Thị E",
-      department: "Kỹ thuật",
-      publishDate: "20/05/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng công nghệ IoT trong nhà thông minh, nhằm nâng cao tiện ích và an toàn cho người sử dụng.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 300,
-      commentCount: 60,
-    },
-    {
-      id: "6",
-      title: "Phát triển công nghệ pin năng lượng mặt trời",
-      author: "Nguyễn Văn F",
-      department: "Kỹ thuật",
-      publishDate: "30/06/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc phát triển công nghệ pin năng lượng mặt trời, nhằm nâng cao hiệu suất và giảm chi phí sản xuất.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 350,
-      commentCount: 70,
-    },
-    {
-      id: "7",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "8",
-      title:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
-      department: "Khoa CNHH",
-      publishDate: "20/02/2025",
-      description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 100,
-      commentCount: 27,
-    },
-    {
-      id: "9",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "10",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "11",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "12",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "13",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-    {
-      id: "14",
-      title: "Nghiên cứu về ứng dụng của AI trong giáo dục",
-      author: "Nguyễn Văn B",
-      department: "Khoa CNTT",
-      publishDate: "15/01/2025",
-      description:
-        "Nghiên cứu này tập trung vào việc ứng dụng trí tuệ nhân tạo trong giáo dục, nhằm cải thiện chất lượng giảng dạy và học tập.",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/a04d6d485480099550615127de58c6d07737c012442ce3910711c9780504ac0e?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-      viewCount: 150,
-      commentCount: 35,
-    },
-  ];
-  const initialCategories = ["Khoa học", "Kỹ thuật"];
-  const [categories, setCategories] = useState(initialCategories);
+  const [categories, setCategories] = useState([]); // Initialize as empty array
   const [selectedCategory, setSelectedCategory] = useState("");
-  const [papers, setPapers] = useState(researchPapers);
+  const [papers, setPapers] = useState([]);
+  const user_id = localStorage.getItem("user_id");
+  const user_type = localStorage.getItem("user_type");
 
   const [activeTab, setActiveTab] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
@@ -218,8 +29,8 @@ const StorageScientificPage = () => {
   const indexOfFirstPaper = indexOfLastPaper - itemsPerPage;
 
   const filteredPapers = selectedCategory
-    ? papers.filter((paper) => paper.department === selectedCategory) // Fix category filtering
-    : papers;
+    ? papers.filter((paper) => paper.department === selectedCategory) // Filter papers by selected category
+    : papers; // Show all papers if no category is selected
 
   const currentPapers = filteredPapers.slice(
     indexOfFirstPaper,
@@ -241,11 +52,25 @@ const StorageScientificPage = () => {
     setIsModalVisible(true);
   };
 
-  const handleOk = () => {
+  const handleOk = async () => {
     if (newCategory.trim()) {
-      setCategories([...categories, newCategory.trim()]);
-      setNewCategory("");
-      setIsModalVisible(false);
+      try {
+        const response = await userApi.createCollection({
+          name: newCategory.trim(),
+          user_id: user_id,
+          user_type: user_type,
+        });
+        setCategories((prevCategories) => [
+          ...prevCategories,
+          { id: response._id, name: response.name },
+        ]);
+        setNewCategory("");
+        setIsModalVisible(false);
+        message.success("Tạo danh mục thành công!");
+      } catch (error) {
+        console.error("Failed to create collection:", error);
+        message.error("Tạo danh mục thất bại!");
+      }
     }
   };
 
@@ -295,6 +120,47 @@ const StorageScientificPage = () => {
     setInputPage(currentPage);
   }, [currentPage]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const fetchedCategories = await userApi.getCollectionsByUserId(user_id);
+        setCategories(
+          fetchedCategories.map((category) => ({
+            id: category._id,
+            name: category.name,
+          }))
+        ); // Extract id and name
+        setPapers(
+          fetchedCategories.flatMap((category) =>
+            category.papers.map((paper) => ({
+              id: paper._id,
+              title: paper.title_vn,
+              author: paper.author.map((a) => a.author_name_vi).join(", "), // Combine author names
+              department: category.name, // Use category name as department
+              publishDate: new Date(paper.publish_date).toLocaleDateString(
+                "vi-VN"
+              ),
+              description: paper.summary,
+              thumbnailUrl: paper.cover_image,
+              viewCount: paper.views || 0, // Handle null views
+              commentCount: paper.downloads || 0, // Handle null downloads
+            }))
+          )
+        );
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+      }
+    };
+
+    fetchCategories();
+  }, []); // Fetch categories and papers on component mount
+
+  useEffect(() => {
+    if (selectedCategory) {
+      setCurrentPage(1); // Reset to the first page when a category is selected
+    }
+  }, [selectedCategory]);
+
   const handlers = useSwipeable({
     onSwipedLeft: (eventData) => {
       const element = eventData.event.target.closest(".swipeable");
@@ -316,7 +182,7 @@ const StorageScientificPage = () => {
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto">
         <div className="w-full bg-white">
-          <Header user={user} />
+          <Header />
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-3 bg-[#E7ECF0] z-10">
@@ -338,9 +204,9 @@ const StorageScientificPage = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
               <option value="">Chọn danh mục</option>
-              {categories.map((category, index) => (
-                <option key={index} value={category}>
-                  {category}
+              {categories.map((category) => (
+                <option key={category.id} value={category.name}>
+                  {category.name}
                 </option>
               ))}
             </select>

@@ -667,6 +667,44 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getCollectionsByUserId: async (userId) => {
+    try {
+      const response = await axios.get(`${API_URL}/papercollections/${userId}`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching collections:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  createCollection: async (collectionData) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/papercollections`,
+        collectionData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating collection:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  addPaperToCollection: async (collectionId, paperId) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/papercollections/addpaper/${collectionId}`,
+        { paperId }
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error adding paper to collection:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
