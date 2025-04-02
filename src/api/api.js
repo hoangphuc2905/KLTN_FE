@@ -692,16 +692,71 @@ const userApi = {
     }
   },
 
-  addPaperToCollection: async (collectionId, paperId) => {
+  addPaperToCollection: async (payload) => {
     try {
       const response = await axios.post(
-        `${API_URL}/papercollections/addpaper/${collectionId}`,
-        { paperId }
+        `${API_URL}/papercollections/addpaper`,
+        payload
       );
+
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error adding paper to collection:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  removePaperFromCollection: async (payload) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/papercollections/removepaper`,
+        payload
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error removing paper from collection:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updateCollection: async (collectionId, collectionData) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/papercollections/${collectionId}`,
+        collectionData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating collection:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  deleteCollection: async (collectionId) => {
+    try {
+      const response = await axios.delete(
+        `${API_URL}/papercollections/${collectionId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  isPaperInCollection: async (userId, paperId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/papercollections/check/${userId}/${paperId}`
+      );
+      console.log("API Response for isPaperInCollection:", response.data); // Debugging log
+      return response.data;
+    } catch (error) {
+      console.error("Error checking paper in collection:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
