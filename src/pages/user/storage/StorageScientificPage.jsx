@@ -294,7 +294,12 @@ const StorageScientificPage = () => {
               alt="Home Icon"
               className="w-5 h-5"
             />
-            <span>Trang chủ</span>
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">Danh mục lưu trữ</span>
           </div>
@@ -414,7 +419,7 @@ const StorageScientificPage = () => {
                       <div className="text-sm text-sky-900">{paper.author}</div>
 
                       {/* Hàng 3: Mô tả */}
-                      <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
+                      <p className="text-sm text-justify text-neutral-800 break-words w-full line-clamp-2 h-11">
                         {paper.description}
                       </p>
 
