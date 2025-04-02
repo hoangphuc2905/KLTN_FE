@@ -87,6 +87,22 @@ const ManagementTable = () => {
                 paper.author?.find((author) => author.user_id === user_id)
                   ?.role || "N/A";
 
+              // Map role to display values
+              const displayRole = (() => {
+                switch (userRole) {
+                  case "MainAndCorrespondingAuthor":
+                    return "Vừa chính vừa liên hệ";
+                  case "CorrespondingAuthor":
+                    return "Liên hệ";
+                  case "MainAuthor":
+                    return "Chính";
+                  case "Participant":
+                    return "Tham gia";
+                  default:
+                    return "N/A";
+                }
+              })();
+
               return {
                 id: paper.paper_id,
                 paperType: paper.article_type?.type_name || "N/A",
@@ -97,7 +113,7 @@ const ManagementTable = () => {
                     ?.map((author) => author.author_name_vi)
                     .join(", ") || "Không có tác giả",
                 authorCount: paper.author_count || "0",
-                role: userRole, // Use the role of the logged-in user
+                role: displayRole, // Use the mapped display role
                 institution: departmentName, // Use the fetched department name
                 publicationDate: paper.publish_date || "N/A",
                 dateAdded: paper.createdAt || "N/A",

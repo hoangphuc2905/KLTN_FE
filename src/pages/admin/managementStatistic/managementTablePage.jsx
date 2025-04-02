@@ -212,9 +212,6 @@ const ManagementTable = () => {
   const [filterInstitution, setFilterInstitution] =
     useState(uniqueInstitutions);
   const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
-  const uniqueStatuses = ["Đã duyệt", "Đang chờ", "Từ chối"];
-  const [filterStatus, setFilterStatus] = useState(uniqueStatuses);
-  const [showStatusFilter, setShowStatusFilter] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
@@ -236,8 +233,7 @@ const ManagementTable = () => {
       (toAuthorCount === "" || authorCount <= toAuthorCount) &&
       (filterRole.includes("Tất cả") || filterRole.includes(paper.role)) &&
       (filterInstitution.length === 0 ||
-        filterInstitution.includes(paper.institution)) &&
-      (filterStatus.length === 0 || filterStatus.includes(paper.status))
+        filterInstitution.includes(paper.institution))
     );
   });
 
@@ -564,7 +560,6 @@ const ManagementTable = () => {
   const groupFilterRef = useRef(null);
   const roleFilterRef = useRef(null);
   const institutionFilterRef = useRef(null);
-  const statusFilterRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -603,13 +598,6 @@ const ManagementTable = () => {
       ) {
         setShowInstitutionFilter(false);
       }
-      if (
-        showStatusFilter &&
-        statusFilterRef.current &&
-        !statusFilterRef.current.contains(event.target)
-      ) {
-        setShowStatusFilter(false);
-      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -622,7 +610,6 @@ const ManagementTable = () => {
     showGroupFilter,
     showRoleFilter,
     showInstitutionFilter,
-    showStatusFilter,
   ]);
 
   return (
@@ -939,68 +926,6 @@ const ManagementTable = () => {
                         </div>
                       </div>
 
-                      <div>
-                        <label className="block text-gray-700 text-xs">
-                          Trạng thái:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowStatusFilter(!showStatusFilter)
-                            }
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
-                          >
-                            Chọn trạng thái
-                          </button>
-                          {showStatusFilter && (
-                            <div
-                              ref={statusFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
-                            >
-                              <Checkbox
-                                indeterminate={
-                                  filterStatus.length > 0 &&
-                                  filterStatus.length < uniqueStatuses.length
-                                }
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setFilterStatus(uniqueStatuses);
-                                  } else {
-                                    setFilterStatus([]);
-                                  }
-                                }}
-                                checked={
-                                  filterStatus.length === uniqueStatuses.length
-                                }
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniqueStatuses.map((status) => ({
-                                  label: status,
-                                  value: status,
-                                }))}
-                                value={filterStatus}
-                                onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterStatus([]); // Khi không chọn gì, dữ liệu sẽ trống
-                                  } else if (
-                                    checkedValues.length ===
-                                    uniqueStatuses.length
-                                  ) {
-                                    setFilterStatus(uniqueStatuses); // Chọn lại tất cả
-                                  } else {
-                                    setFilterStatus(checkedValues);
-                                  }
-                                }}
-                                className="flex flex-col gap-2 mt-2"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
                       <button
                         type="button"
                         onClick={() => {
@@ -1011,7 +936,6 @@ const ManagementTable = () => {
                           setFilterAuthorCount("");
                           setFilterRole(uniqueRoles);
                           setFilterInstitution([]);
-                          setFilterStatus(uniqueStatuses);
                         }}
                         className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
                       >
