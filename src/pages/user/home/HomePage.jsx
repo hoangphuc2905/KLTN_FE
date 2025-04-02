@@ -3,8 +3,9 @@ import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
 import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
-import { Modal, Button, Input } from "antd";
+import { Modal, Button, Input, message } from "antd";
 import userApi from "../../../api/api";
+import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 
 const HomePage = () => {
   const recentPapers = [
@@ -83,18 +84,19 @@ const HomePage = () => {
   const [activeTab, setActiveTab] = useState("recent");
   const [currentPage, setCurrentPage] = useState(1);
   const [inputPage, setInputPage] = useState(currentPage);
-  const [isModalVisible, setIsModalVisible] = useState(false); // State for modal visibility
-  const [selectedPaper, setSelectedPaper] = useState(null); // State for selected paper
-  const [archivedPapers, setArchivedPapers] = useState([]); // State for archived papers
-  const [newCategory, setNewCategory] = useState(""); // State for new category
-  const [isAddingCategory, setIsAddingCategory] = useState(false); // State to toggle input field
-  const [selectedCategory, setSelectedCategory] = useState(""); // State for selected category
-  const [categories, setCategories] = useState(["Khoa học", "Sinh học"]); // Initial categories
-  const [departmentsList, setDepartmentsList] = useState([]); // State for departments list
-  const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
-  const [searchQuery, setSearchQuery] = useState(""); // State for search query
-  const [collections, setCollections] = useState([]); // State for collections
-
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedPaper, setSelectedPaper] = useState(null);
+  const [archivedPapers, setArchivedPapers] = useState([]);
+  const [newCategory, setNewCategory] = useState("");
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [categories, setCategories] = useState([]);
+  const [departmentsList, setDepartmentsList] = useState([]);
+  const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [collections, setCollections] = useState([]);
+  const userId = localStorage.getItem("user_id");
+  const userType = localStorage.getItem("user_type");
   const itemsPerPage = 10;
 
   const indexOfLastPaper = currentPage * itemsPerPage;
@@ -321,17 +323,113 @@ const HomePage = () => {
     }
   };
 
+  const isPaperInCollection = async (userId, paperId) => {
+    try {
+      const response = await userApi.isPaperInCollection(userId, paperId); // Call API to check
+      return response.exists; // Return true if the paper exists in a collection
+    } catch (error) {
+      console.error(`Error checking paper in collection:`, error);
+      return false; // Default to false in case of an error
+    }
+  };
+
+  useEffect(() => {
+    const checkArchivedPapers = async () => {
+      const userId = localStorage.getItem("user_id");
+      const archivedStatuses = await Promise.all(
+        researchPapers.map(async (paper) => {
+          const isArchived = await isPaperInCollection(userId, paper._id);
+          return { paperId: paper._id, isArchived };
+        })
+      );
+
+      setArchivedPapers(
+        archivedStatuses
+          .filter((status) => status.isArchived)
+          .map((status) => status.paperId)
+      );
+    };
+
+    if (researchPapers.length > 0) {
+      checkArchivedPapers();
+    }
+  }, [JSON.stringify(researchPapers)]);
+
+  const removePaperFromCollection = async (paperId) => {
+    try {
+      // Ensure collections are up-to-date
+      const userId = localStorage.getItem("user_id");
+      const userCollections = await userApi.getCollectionsByUserId(userId);
+      setCollections(userCollections);
+
+      // Debug: Log collections to verify structure
+      console.log("Fetched collections:", userCollections);
+
+      // Find the collection containing the paper
+      const collection = userCollections.find((col) => {
+        // Log the papers array for debugging
+        console.log(`Checking collection: ${col.name}`, col.papers);
+
+        // Check if papers array contains the paper ID
+        return col.papers.some((paper) =>
+          typeof paper === "string" ? paper === paperId : paper._id === paperId
+        );
+      });
+
+      if (!collection || !collection._id) {
+        console.error("Collection not found for paper ID:", paperId);
+        message.error("Không tìm thấy danh mục chứa bài báo này.");
+        return;
+      }
+
+      const payload = {
+        collection_id: collection._id,
+        paper_id: paperId,
+      };
+
+      await userApi.removePaperFromCollection(payload); // Call API to remove the paper
+      setArchivedPapers((prev) => prev.filter((id) => id !== paperId)); // Remove paper from archived list
+
+      // Update the collections state to reflect the removal
+      setCollections((prev) =>
+        prev.map((col) =>
+          col._id === collection._id
+            ? {
+                ...col,
+                papers: col.papers.filter((paper) =>
+                  typeof paper === "string"
+                    ? paper !== paperId
+                    : paper._id !== paperId
+                ),
+              }
+            : col
+        )
+      );
+
+      message.success("Bài nghiên cứu đã được xóa khỏi danh mục lưu trữ!");
+    } catch (error) {
+      console.error("Error removing paper from collection:", error);
+      message.error("Lỗi khi xóa bài nghiên cứu khỏi danh mục.");
+    }
+  };
+
   const showModal = async (paper) => {
+    if (archivedPapers.includes(paper._id)) {
+      // If the paper is already archived, remove it
+      await removePaperFromCollection(paper._id);
+      return;
+    }
+
     setSelectedPaper(paper);
     setIsModalVisible(true);
-    setNewCategory(""); // Reset new category state
-    setSelectedCategory(""); // Reset selected category state
-    setIsAddingCategory(false); // Reset adding category state
+    setNewCategory("");
+    setSelectedCategory("");
+    setIsAddingCategory(false);
 
     try {
       const userId = localStorage.getItem("user_id");
       const userCollections = await userApi.getCollectionsByUserId(userId);
-      setCollections(userCollections); // Update collections state
+      setCollections(userCollections);
       setCategories(userCollections.map((collection) => collection.name)); // Update categories
     } catch (error) {
       console.error("Error fetching collections:", error);
@@ -339,49 +437,106 @@ const HomePage = () => {
   };
 
   const handleCreateCollection = async () => {
-    if (!newCategory.trim()) return;
-
-    try {
-      const userId = localStorage.getItem("user_id");
-      const newCollection = await userApi.createCollection({
-        userId,
-        name: newCategory,
-      });
-      setCollections((prev) => [...prev, newCollection]);
-      setCategories((prev) => [...prev, newCategory]); // Update categories
-      setNewCategory(""); // Reset input
-      setIsAddingCategory(false);
-    } catch (error) {
-      console.error("Error creating collection:", error);
-    }
-  };
-
-  const handleAddPaperToCollection = async () => {
-    if (!selectedCategory || !selectedPaper) {
-      console.error("Selected category or paper is missing.");
+    if (!newCategory.trim()) {
+      message.error("Tên danh mục không được để trống.");
       return;
     }
 
     try {
-      const collection = collections.find(
-        (col) => col.name === selectedCategory
-      );
-
-      if (!collection) {
-        console.error(
-          `No matching collection found for the selected category: ${selectedCategory}`
+      if (!userId || !userType) {
+        throw new Error(
+          "User ID hoặc User Type bị thiếu. Vui lòng đăng nhập lại."
         );
-        return;
       }
 
-      console.log(
-        `Adding paper ${selectedPaper.id} to collection ${collection.id}`
-      );
-      await userApi.addPaperToCollection(collection.id, selectedPaper.id);
-      setArchivedPapers((prev) => [...prev, selectedPaper.id]); // Mark paper as archived
-      setIsModalVisible(false); // Close modal
+      const payload = {
+        user_id: localStorage.getItem("user_id"),
+        user_type: localStorage.getItem("user_type"),
+        name: newCategory,
+      };
+
+      const response = await userApi.createCollection(payload); // Call API to create the collection
+
+      // Validate the API response
+      if (
+        !response ||
+        !response.collection ||
+        !response.collection._id ||
+        !response.collection.name
+      ) {
+        throw new Error("API response is missing essential fields.");
+      }
+
+      const newCollection = response.collection;
+
+      if (selectedPaper) {
+        const addPaperPayload = {
+          collection_id: newCollection._id,
+          paper_id: selectedPaper._id,
+        };
+        await userApi.addPaperToCollection(addPaperPayload);
+      }
+
+      setCollections((prev) => [...prev, newCollection]);
+      setCategories((prev) => [...prev, newCollection.name]);
+      setSelectedCategory(newCollection.name);
+      if (selectedPaper) {
+        setArchivedPapers((prev) => [...prev, selectedPaper._id]); // Mark paper as archived
+      }
+      setNewCategory("");
+      setIsAddingCategory(false);
+      setIsModalVisible(false);
+      message.success("Danh mục mới đã được tạo và bài báo đã được lưu!");
     } catch (error) {
-      console.error("Error adding paper to collection:", error);
+      if (
+        error.response?.data?.message ===
+        "Collection with this name already exists."
+      ) {
+        message.error(
+          "Danh mục với tên này đã tồn tại. Vui lòng chọn tên khác."
+        );
+      } else {
+        console.error("Error creating collection:", error);
+        message.error(error.message || "Lỗi kết nối đến server");
+      }
+    }
+  };
+
+  const handleAddPaperToCollection = async () => {
+    if (!selectedCategory) {
+      console.error("Error: No category selected.");
+      return;
+    }
+    if (!selectedPaper || !selectedPaper._id) {
+      console.error("Error: No paper selected or paper ID is missing.");
+      return;
+    }
+
+    const collection = collections.find((col) => col.name === selectedCategory);
+
+    if (!collection || !collection._id) {
+      console.error(
+        `Error: No matching collection found for the selected category: ${selectedCategory}`
+      );
+      message.error("Không tìm thấy danh mục phù hợp. Vui lòng thử lại.");
+      return;
+    }
+
+    try {
+      const payload = {
+        collection_id: collection._id,
+        paper_id: selectedPaper._id,
+      };
+
+      await userApi.addPaperToCollection(payload);
+      setArchivedPapers((prev) => [...prev, selectedPaper._id]); // Mark paper as archived
+      setIsModalVisible(false);
+      message.success("Bài nghiên cứu đã được thêm vào danh mục lưu trữ!");
+    } catch (error) {
+      console.error(
+        "Error adding paper to collection:",
+        error.response?.data || error
+      );
     }
   };
 
@@ -394,7 +549,7 @@ const HomePage = () => {
     if (newCategory.trim() && !categories.includes(newCategory)) {
       handleCreateCollection(); // Create new collection
     } else {
-      handleAddPaperToCollection(); // Add paper to existing collection
+      handleAddPaperToCollection();
     }
   };
 
@@ -403,7 +558,7 @@ const HomePage = () => {
   };
 
   const handleAddCategoryClick = () => {
-    setIsAddingCategory(true);
+    setIsAddingCategory(true); // Enable the input field for adding a new category
   };
 
   // Filter research papers by selected department and search query
@@ -564,42 +719,39 @@ const HomePage = () => {
                               </div>
                             </div>
                           </div>
-
                           {/* Authors */}
                           <div className="text-sm text-sky-900">
                             {authors[paper._id] || "Loading authors..."}
                           </div>
-
                           {/* Summary */}
                           <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
                             {paper.summary || "No Summary"}
                           </p>
-
                           {/* Department */}
                           <div className="text-sm text-sky-900">
                             {departments[paper.department] ||
                               "Loading department..."}
                           </div>
-
                           {/* Archive Icon */}
+
                           <div className="flex justify-end">
-                            <img
-                              src={
-                                archivedPapers.includes(paper._id)
-                                  ? "https://cdn-icons-png.flaticon.com/512/5668/5668020.png"
-                                  : "https://cdn-icons-png.flaticon.com/512/5662/5662990.png"
-                              }
-                              alt="Save to Archive"
-                              className={`w-5 h-5 cursor-pointer ${
-                                archivedPapers.includes(paper._id)
-                                  ? "text-blue-500"
-                                  : ""
-                              }`}
-                              onClick={(e) => {
-                                e.preventDefault();
-                                showModal(paper);
-                              }}
-                            />
+                            {archivedPapers.includes(paper._id) ? (
+                              <FaArchive
+                                className="w-5 h-5 cursor-pointer text-yellow-500" // Icon màu vàng
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  showModal(paper);
+                                }}
+                              />
+                            ) : (
+                              <FaRegFileArchive
+                                className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500" // Icon màu xám, hover chuyển vàng
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  showModal(paper);
+                                }}
+                              />
+                            )}
                           </div>
                         </div>
                       </article>
@@ -615,7 +767,7 @@ const HomePage = () => {
                       onClick={() => {
                         if (currentPage > 1) {
                           setCurrentPage((prev) => Math.max(prev - 1, 1));
-                          window.scrollTo(0, 0); // Cuộn lên đầu trang
+                          window.scrollTo(0, 0);
                         }
                       }}
                     />
@@ -743,28 +895,30 @@ const HomePage = () => {
           </Button>,
         ]}
       >
-        <p>Title: {selectedPaper?.title}</p>egory
+        <p>Bài nghiên cứu khoa học: {selectedPaper?.title_vn}</p>
         <p>Các danh mục lưu trữ:</p>
-        <select
-          className="p-2 border rounded-lg w-full text-sm"
-          value={selectedCategory}
-          onChange={handleCategoryChange}
-        >
-          <option value="">Chọn danh mục</option>
-          {categories.map((category, index) => (
-            <option key={index} value={category}>
-              {category}
-            </option>
-          ))}
-        </select>
+        {isAddingCategory ? (
+          <Input
+            placeholder="Nhập tên danh mục mới"
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+          />
+        ) : (
+          <select
+            className="p-2 border rounded-lg w-full text-sm"
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+          >
+            <option value="">Chọn danh mục</option>
+            {categories.map((category, index) => (
+              <option key={index} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        )}
         <div className="mt-4">
-          {isAddingCategory ? (
-            <Input
-              placeholder="Nhập tên danh mục mới"
-              value={newCategory}
-              onChange={(e) => setNewCategory(e.target.value)}
-            />
-          ) : (
+          {!isAddingCategory && (
             <Button
               type="primary"
               className="mt-2"

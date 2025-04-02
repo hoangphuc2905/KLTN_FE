@@ -29,8 +29,8 @@ const StorageScientificPage = () => {
   const indexOfFirstPaper = indexOfLastPaper - itemsPerPage;
 
   const filteredPapers = selectedCategory
-    ? papers.filter((paper) => paper.department === selectedCategory) // Filter papers by selected category
-    : papers; // Show all papers if no category is selected
+    ? papers.filter((paper) => paper.categoryName === selectedCategory)
+    : papers; // Hiển thị tất cả nếu không chọn danh mục
 
   const currentPapers = filteredPapers.slice(
     indexOfFirstPaper,
@@ -47,6 +47,10 @@ const StorageScientificPage = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editCategoryName, setEditCategoryName] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState(null);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -79,31 +83,127 @@ const StorageScientificPage = () => {
     setIsModalVisible(false);
   };
 
-  const handleDelete = (id) => {
-    setPapers((prevPapers) => {
-      const newPapers = prevPapers.filter((paper) => paper.id !== id);
-      const newTotalPages = Math.ceil(newPapers.length / itemsPerPage);
-
-      // If currentPage is greater than total pages, set it to the last page
-      if (currentPage > newTotalPages) {
-        setCurrentPage(newTotalPages);
-        setInputPage(newTotalPages);
-      }
-
-      return newPapers;
-    });
+  const showEditModal = (categoryId, currentName) => {
+    setEditCategoryId(categoryId);
+    setEditCategoryName(currentName);
+    setIsEditModalVisible(true);
   };
 
-  const handleMenuClick = (e, paperId) => {
-    e.domEvent.stopPropagation(); // Prevent event propagation
-    if (e.key === "1") {
-      handleDelete(paperId); // Call handleDelete to remove the paper
+  const reloadPageData = async () => {
+    try {
+      const fetchedCategories = await userApi.getCollectionsByUserId(user_id);
+      setCategories(
+        fetchedCategories.map((category) => ({
+          id: category._id,
+          name: category.name,
+        }))
+      );
+      setPapers(
+        fetchedCategories.flatMap((category) =>
+          category.papers.map((paper) => ({
+            id: paper._id,
+            title: paper.title_vn,
+            author: paper.author.map((a) => a.author_name_vi).join(", "),
+            department: paper.department.department_name,
+            categoryName: category.name,
+            collectionId: category._id,
+            publishDate: new Date(paper.publish_date).toLocaleDateString(
+              "vi-VN"
+            ),
+            description: paper.summary,
+            thumbnailUrl: paper.cover_image,
+            viewCount: paper.views || 0,
+            commentCount: paper.downloads || 0,
+          }))
+        )
+      );
+    } catch (error) {
+      console.error("Failed to reload data:", error);
+      message.error("Không thể tải lại dữ liệu. Vui lòng thử lại sau.");
     }
   };
 
-  const menu = (paperId) => (
-    <Menu onClick={(e) => handleMenuClick(e, paperId)}>
+  const handleEditOk = async () => {
+    if (editCategoryName.trim()) {
+      try {
+        await userApi.updateCollection(editCategoryId, {
+          name: editCategoryName.trim(),
+        });
+        message.success("Cập nhật danh mục thành công!");
+        setIsEditModalVisible(false);
+        await reloadPageData(); // Reload data after update
+      } catch (error) {
+        console.error("Error updating collection:", error);
+        message.error(error || "Cập nhật danh mục thất bại!");
+      }
+    }
+  };
+
+  const handleEditCancel = () => {
+    setIsEditModalVisible(false);
+    setEditCategoryName("");
+  };
+
+  const handleDeleteCategory = async (categoryId) => {
+    try {
+      await userApi.deleteCollection(categoryId);
+      message.success("Xóa danh mục thành công!");
+      await reloadPageData(); // Reload data after deletion
+    } catch (error) {
+      console.error("Error deleting collection:", error);
+      message.error(error || "Xóa danh mục thất bại!");
+    }
+  };
+
+  const handleDelete = async (paperId, collectionId) => {
+    try {
+      console.log(
+        "Attempting to remove paper with ID:",
+        paperId,
+        "from collection ID:",
+        collectionId
+      ); // Debug log
+      await userApi.removePaperFromCollection({
+        collection_id: collectionId,
+        paper_id: paperId,
+      });
+      message.success("Hủy lưu thành công!");
+      await reloadPageData(); // Reload data after paper removal
+    } catch (error) {
+      console.error(
+        "Failed to remove paper from collection:",
+        error.response?.data || error
+      );
+      message.error(
+        error.response?.data?.message || "Hủy lưu thất bại! Vui lòng thử lại."
+      );
+    }
+  };
+
+  const handleMenuClick = (e, paperId, collectionId) => {
+    e.domEvent.stopPropagation(); // Prevent event propagation
+    if (e.key === "1") {
+      handleDelete(paperId, collectionId); // Pass both paperId and collectionId
+    }
+  };
+
+  const menu = (paperId, collectionId) => (
+    <Menu onClick={(e) => handleMenuClick(e, paperId, collectionId)}>
       <Menu.Item key="1">Hủy lưu</Menu.Item>
+    </Menu>
+  );
+
+  const categoryMenu = (categoryId, categoryName) => (
+    <Menu>
+      <Menu.Item
+        key="rename"
+        onClick={() => showEditModal(categoryId, categoryName)}
+      >
+        Đổi tên
+      </Menu.Item>
+      <Menu.Item key="delete" onClick={() => handleDeleteCategory(categoryId)}>
+        Xóa
+      </Menu.Item>
     </Menu>
   );
 
@@ -136,7 +236,9 @@ const StorageScientificPage = () => {
               id: paper._id,
               title: paper.title_vn,
               author: paper.author.map((a) => a.author_name_vi).join(", "), // Combine author names
-              department: category.name, // Use category name as department
+              department: paper.department.department_name,
+              categoryName: category.name,
+              collectionId: category._id, // Include collectionId
               publishDate: new Date(paper.publish_date).toLocaleDateString(
                 "vi-VN"
               ),
@@ -227,6 +329,20 @@ const StorageScientificPage = () => {
             <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">
               Tìm kiếm
             </button>
+
+            {selectedCategory && (
+              <Dropdown
+                overlay={categoryMenu(
+                  categories.find(
+                    (category) => category.name === selectedCategory
+                  )?.id,
+                  selectedCategory
+                )}
+                trigger={["click"]}
+              >
+                <MoreOutlined className="cursor-pointer text-lg" />
+              </Dropdown>
+            )}
           </div>
         </div>
 
@@ -309,7 +425,10 @@ const StorageScientificPage = () => {
                     </div>
 
                     {/* Three dots icon with menu */}
-                    <Dropdown overlay={menu(paper.id)} trigger={["click"]}>
+                    <Dropdown
+                      overlay={menu(paper.id, paper.collectionId)}
+                      trigger={["click"]}
+                    >
                       <MoreOutlined
                         className="absolute top-2 right-2 text-lg cursor-pointer three-dots-icon" // Add className
                         style={{ fontSize: "16px", right: "1px" }} // Adjust the size here
@@ -395,6 +514,26 @@ const StorageScientificPage = () => {
           placeholder="Nhập tên danh mục"
           value={newCategory}
           onChange={(e) => setNewCategory(e.target.value)}
+        />
+      </Modal>
+      <Modal
+        title="Đổi tên danh mục"
+        visible={isEditModalVisible}
+        onOk={handleEditOk}
+        onCancel={handleEditCancel}
+        footer={[
+          <Button key="cancel" onClick={handleEditCancel}>
+            Hủy
+          </Button>,
+          <Button key="rename" type="primary" onClick={handleEditOk}>
+            Lưu
+          </Button>,
+        ]}
+      >
+        <Input
+          placeholder="Nhập tên danh mục mới"
+          value={editCategoryName}
+          onChange={(e) => setEditCategoryName(e.target.value)}
         />
       </Modal>
     </div>
