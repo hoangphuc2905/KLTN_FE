@@ -435,7 +435,7 @@ const EditScientificPaperPage = () => {
                     <div className="mb-2">
                       <label
                         htmlFor="paperType"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Loại bài báo <span style={{ color: "red" }}>*</span>
                       </label>
@@ -465,7 +465,7 @@ const EditScientificPaperPage = () => {
                     <div className="mb-2">
                       <label
                         htmlFor="paperGroup"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Thuộc nhóm <span style={{ color: "red" }}>*</span>
                       </label>
@@ -495,7 +495,7 @@ const EditScientificPaperPage = () => {
                     <div className="mb-2">
                       <label
                         htmlFor="titleVn"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Tên bài báo (Tiếng Việt){" "}
                         <span style={{ color: "red" }}>*</span>
@@ -513,7 +513,7 @@ const EditScientificPaperPage = () => {
                     <div className="mb-2">
                       <label
                         htmlFor="titleEn"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Tên bài báo (Tiếng Anh)
                       </label>
@@ -530,12 +530,12 @@ const EditScientificPaperPage = () => {
 
                 <div className="flex gap-4 mt-4">
                   {/* Bên dưới ảnh: 4 input xếp dọc (bằng ảnh) */}
-                  <div className="flex flex-col w-[320px] gap-4">
+                  <div className="flex flex-col w-[260px] gap-4">
                     {/* Ngày cô bố */}
                     <div className="">
                       <label
                         htmlFor="publishDate"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Ngày công bố <span style={{ color: "red" }}>*</span>
                       </label>
@@ -552,7 +552,7 @@ const EditScientificPaperPage = () => {
                     <div className="">
                       <label
                         htmlFor="pageCount"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Số trang <span style={{ color: "red" }}>*</span>
                       </label>
@@ -568,7 +568,7 @@ const EditScientificPaperPage = () => {
                     <div className="pb-7">
                       <label
                         htmlFor="orderNo"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Thứ tự
                       </label>
@@ -585,7 +585,7 @@ const EditScientificPaperPage = () => {
                       <div className="flex items-center">
                         <label
                           htmlFor="featured"
-                          className="text-sm font-medium text-gray-700 mr-2"
+                          className="text-sm font-medium text-black mr-2"
                         >
                           Bài tiêu biểu
                         </label>
@@ -602,7 +602,7 @@ const EditScientificPaperPage = () => {
                     <div className="">
                       <label
                         htmlFor="issnIsbn"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Số ISSN / ISBN <span style={{ color: "red" }}>*</span>
                       </label>
@@ -616,12 +616,12 @@ const EditScientificPaperPage = () => {
                   </div>
 
                   {/* Bên phải ảnh: 4 input xếp dọc (bằng ID ở trên) */}
-                  <div className="flex flex-col gap-4 w-full pl-6">
+                  <div className="flex flex-col gap-4 w-full pl-4">
                     {/* Tên tạp chí / kỷ yếu (Vn) */}
                     <div className="">
                       <label
                         htmlFor="magazineVi"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Tên tạp chí / kỷ yếu (Tiếng Việt){" "}
                         <span style={{ color: "red" }}>*</span>
@@ -638,7 +638,7 @@ const EditScientificPaperPage = () => {
                     <div className="">
                       <label
                         htmlFor="magazineEn"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Tên tạp chí / kỷ yếu (Tiếng Anh)
                       </label>
@@ -653,7 +653,7 @@ const EditScientificPaperPage = () => {
                     <div className="">
                       <label
                         htmlFor="magazineType"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Tập / quyển (nếu có)
                       </label>
@@ -668,7 +668,7 @@ const EditScientificPaperPage = () => {
                     <div className="">
                       <label
                         htmlFor="department"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Khoa / Viện <span style={{ color: "red" }}>*</span>
                       </label>
@@ -698,7 +698,7 @@ const EditScientificPaperPage = () => {
                     <div className="pb-2">
                       <label
                         htmlFor="keywords"
-                        className="block text-sm font-medium text-gray-700 pb-1"
+                        className="block text-sm font-medium text-black pb-1"
                       >
                         Từ khóa <span style={{ color: "red" }}>*</span>
                       </label>
@@ -726,7 +726,7 @@ const EditScientificPaperPage = () => {
                 <div className="mt-4">
                   <label
                     htmlFor="summary"
-                    className="block text-sm font-medium text-gray-700 pb-1"
+                    className="block text-sm font-medium text-black pb-1"
                   >
                     Tóm tắt <span style={{ color: "red" }}>*</span>
                   </label>
@@ -784,7 +784,7 @@ const EditScientificPaperPage = () => {
                         <div className="col-span-3">
                           <label
                             htmlFor={`mssvMsgv-${index}`}
-                            className="block text-sm font-medium text-gray-700 pb-1"
+                            className="block text-sm font-medium text-black pb-1"
                           >
                             Mã số SV/GV <span style={{ color: "red" }}>*</span>
                           </label>
@@ -806,7 +806,7 @@ const EditScientificPaperPage = () => {
                         <div className="col-span-4">
                           <label
                             htmlFor={`fullName-${index}`}
-                            className="block text-sm font-medium text-gray-700 pb-1"
+                            className="block text-sm font-medium text-black pb-1"
                           >
                             Tên SV/GV (Tiếng Việt){" "}
                             <span style={{ color: "red" }}>*</span>
@@ -822,7 +822,7 @@ const EditScientificPaperPage = () => {
                         <div className="col-span-4">
                           <label
                             htmlFor={`fullNameEng-${index}`}
-                            className="block text-sm font-medium text-gray-700 pb-1"
+                            className="block text-sm font-medium text-black pb-1"
                           >
                             Tên sinh viên / giảng viên (English)
                           </label>
@@ -855,7 +855,7 @@ const EditScientificPaperPage = () => {
                         <div className="col-span-4">
                           <label
                             htmlFor={`role-${index}`}
-                            className="block text-sm font-medium text-gray-700 pb-1"
+                            className="block text-sm font-medium text-blackpb-1"
                           >
                             Vai trò <span style={{ color: "red" }}>*</span>
                           </label>
@@ -881,7 +881,7 @@ const EditScientificPaperPage = () => {
                         <div className="col-span-4">
                           <label
                             htmlFor={`institution-${index}`}
-                            className="block text-sm font-medium text-gray-700 pb-1"
+                            className="block text-sm font-medium text-black pb-1"
                           >
                             CQ công tác <span style={{ color: "red" }}>*</span>
                           </label>
@@ -926,7 +926,7 @@ const EditScientificPaperPage = () => {
                 <div className="mb-4">
                   <label
                     htmlFor="file-upload"
-                    className="block text-sm font-medium text-gray-700 pb-1"
+                    className="block text-sm font-medium text-black pb-1"
                   >
                     Tải lên file <span style={{ color: "red" }}>*</span>
                   </label>
@@ -955,7 +955,7 @@ const EditScientificPaperPage = () => {
                   <div>
                     <label
                       htmlFor="link"
-                      className="block text-sm font-medium text-gray-700 pb-1"
+                      className="block text-sm font-medium text-black pb-1"
                     >
                       Link công bố bài báo{" "}
                       <span style={{ color: "red" }}>*</span>
@@ -971,7 +971,7 @@ const EditScientificPaperPage = () => {
                   <div>
                     <label
                       htmlFor="doi"
-                      className="block text-sm font-medium text-gray-700 pb-1"
+                      className="block text-sm font-medium text-black pb-1"
                     >
                       Số DOI
                     </label>
