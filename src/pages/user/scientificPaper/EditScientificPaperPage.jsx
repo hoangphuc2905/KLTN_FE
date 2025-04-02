@@ -42,7 +42,7 @@ const EditScientificPaperPage = () => {
   const [isHelpModalVisible, setIsHelpModalVisible] = useState(false); // State for help modal visibility
   const [selectedPaperType, setSelectedPaperType] = useState(""); // State for selected paper type
   const [selectedPaperGroup, setSelectedPaperGroup] = useState(""); // State for selected paper group
-  const [titleVn, setTitleVn] = useState(""); // State for title in Vietnamese
+  const [titleVn, setTitleVn] = useState("");
   const [titleEn, setTitleEn] = useState(""); // State for title in English
   const [publishDate, setPublishDate] = useState(""); // State for publish date
   const [magazineVi, setMagazineVi] = useState(""); // State for magazine name in Vietnamese
@@ -86,7 +86,7 @@ const EditScientificPaperPage = () => {
         const paperData = await userApi.getScientificPaperById(id); // Fetch paper data by ID
         setTitleVn(paperData.title_vn || "");
         setTitleEn(paperData.title_en || "");
-        setPublishDate(paperData.publish_date || "");
+        setPublishDate(moment(paperData.publish_date)); // Use moment for date formatting
         setMagazineVi(paperData.magazine_vi || "");
         setMagazineEn(paperData.magazine_en || "");
         setMagazineType(paperData.magazine_type || "");
@@ -109,7 +109,7 @@ const EditScientificPaperPage = () => {
             full_name: author.author_name_vi || "",
             full_name_eng: author.author_name_en || "",
             role: author.role || "",
-            institution: author.work_unit_id.name_vi || "",
+            institution: author.work_unit_id?.name_vi || "",
           }))
         );
         setLink(paperData.link || "");
@@ -304,7 +304,7 @@ const EditScientificPaperPage = () => {
         file: selectedFile || "",
         link: link || "",
         doi: doi || "",
-        status: "pending",
+        status: "revision",
         order_no: orderNo,
         featured: featured,
         keywords: keywords || "",
@@ -389,7 +389,7 @@ const EditScientificPaperPage = () => {
             </span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
-              Thêm bài báo nghiên cứu khoa học
+              Cập nhật bài báo khoa học
             </span>
           </div>
         </div>
@@ -504,9 +504,10 @@ const EditScientificPaperPage = () => {
                         id="titleVn"
                         className="w-full"
                         placeholder="Nhập tên bài báo (Tiếng Việt)"
-                        rows={2} // Adjust the number of rows as needed
+                        rows={2}
                         required
                         onChange={(e) => setTitleVn(e.target.value)}
+                        value={titleVn}
                       />
                     </div>
                     {/* Tên(En) bài báo */}
@@ -523,6 +524,7 @@ const EditScientificPaperPage = () => {
                         placeholder="Tên bài báo (Tiếng Anh)"
                         rows={2} // Adjust the number of rows as needed
                         onChange={(e) => setTitleEn(e.target.value)}
+                        value={titleEn}
                       />
                     </div>
                   </div>
@@ -543,6 +545,7 @@ const EditScientificPaperPage = () => {
                         id="publishDate"
                         className="w-full h-10"
                         placeholder="Ngày công bố"
+                        value={publishDate ? moment(publishDate) : null}
                         onChange={(date, dateString) =>
                           setPublishDate(dateString)
                         }
@@ -561,6 +564,7 @@ const EditScientificPaperPage = () => {
                         className="w-full h-10"
                         placeholder="Số trang"
                         min={1}
+                        value={pageCount}
                         onChange={(value) => setPageCount(value)}
                       />
                     </div>
@@ -577,6 +581,7 @@ const EditScientificPaperPage = () => {
                         className="w-full h-10"
                         placeholder="Thứ tự"
                         min={1}
+                        value={orderNo}
                         onChange={(value) => setOrderNo(value)}
                       />
                     </div>
@@ -595,6 +600,7 @@ const EditScientificPaperPage = () => {
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           checked={featured}
                           onChange={(e) => setFeatured(e.target.checked)}
+                          value={featured}
                         />
                       </div>
                     </div>
@@ -611,6 +617,7 @@ const EditScientificPaperPage = () => {
                         className="w-full h-10"
                         placeholder="Số ISSN / ISBN"
                         onChange={(e) => setIssnIsbn(e.target.value)}
+                        value={issnIsbn}
                       />
                     </div>
                   </div>
@@ -630,8 +637,8 @@ const EditScientificPaperPage = () => {
                         id="magazineVi"
                         className="w-full h-10"
                         placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt)"
-                        suffix={<span style={{ color: "red" }}>*</span>}
                         onChange={(e) => setMagazineVi(e.target.value)}
+                        value={magazineVi}
                       />
                     </div>
                     {/* Tên tạp chí / kỷ yếu (En) */}
@@ -647,6 +654,7 @@ const EditScientificPaperPage = () => {
                         className="w-full h-10"
                         placeholder="Tên tạp chí / kỷ yếu (Tiếng Anh)"
                         onChange={(e) => setMagazineEn(e.target.value)}
+                        value={magazineEn}
                       />
                     </div>
                     {/* Tập / quyển */}
@@ -662,6 +670,7 @@ const EditScientificPaperPage = () => {
                         className="w-full h-10"
                         placeholder="Tập / quyển (nếu có)"
                         onChange={(e) => setMagazineType(e.target.value)}
+                        value={magazineType}
                       />
                     </div>
                     {/* Khoa / viện */}
@@ -707,6 +716,7 @@ const EditScientificPaperPage = () => {
                         placeholder="Nhập từ khóa"
                         rows={2}
                         onChange={(e) => setKeywords(e.target.value)}
+                        value={keywords}
                       />
                     </div>
                   </div>
@@ -735,6 +745,7 @@ const EditScientificPaperPage = () => {
                     placeholder="Nhập tóm tắt"
                     rows={4}
                     onChange={(e) => setSummary(e.target.value)}
+                    value={summary}
                   />
                 </div>
               </section>
@@ -965,6 +976,7 @@ const EditScientificPaperPage = () => {
                       placeholder="Link công bố bài báo (http://...)"
                       required
                       onChange={(e) => setLink(e.target.value)}
+                      value={link}
                     />
                   </div>
                   {/* Số DOI */}
@@ -979,6 +991,7 @@ const EditScientificPaperPage = () => {
                       id="doi"
                       placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
                       onChange={(e) => setDoi(e.target.value)}
+                      value={doi}
                     />
                   </div>
                 </div>
