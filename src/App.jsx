@@ -27,6 +27,7 @@ import ErrorPage from "./components/ErrorPage";
 import DetailArticlePage from "./pages/admin/managementArticle/detailArticlePage";
 import StorageScientificPage from "./pages/user/storage/StorageScientificPage";
 import EditScientificPaperPage from "./pages/user/scientificPaper/EditScientificPaperPage";
+import ManagementChartMini from "./pages/admin/managementStatistic/managementChartMiniPage";
 
 const App = () => {
   const [userRoles, setUserRoles] = useState([]);
@@ -265,6 +266,17 @@ const App = () => {
                   path="/admin/management/chart"
                 >
                   <ManagementChart />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/chartMini"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/chartMini"
+                >
+                  <ManagementChartMini />
                 </ProtectedRoute>
               }
             />

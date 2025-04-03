@@ -95,8 +95,17 @@ const AdminMenu = ({ currentRole }) => {
           </div>
           {isStatsOpen && (
             <div className="submenu">
+              {currentRole === "admin" && (
+                <Link
+                  to="/admin/management/chart"
+                  className="submenu-item"
+                  onClick={toggleMenu}
+                >
+                  <FaChartPie /> Dạng Biểu Đồ
+                </Link>
+              )}
               <Link
-                to="/admin/management/chart"
+                to="/admin/management/chartMini"
                 className="submenu-item"
                 onClick={toggleMenu}
               >
