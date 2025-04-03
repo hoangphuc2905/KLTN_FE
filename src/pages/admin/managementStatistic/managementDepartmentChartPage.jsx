@@ -275,7 +275,7 @@ const columns = [
   },
 ];
 
-const DashboardMini = () => {
+const ManagementDepartmentChart = () => {
   const [selectedQuarters, setSelectedQuarters] = useState(["All"]);
   const [showFilter, setShowFilter] = useState(false);
   const [selectedFields, setSelectedFields] = useState(["All"]);
@@ -592,4 +592,4 @@ const DashboardMini = () => {
   );
 };
 
-export default DashboardMini;
+export default ManagementDepartmentChart;
