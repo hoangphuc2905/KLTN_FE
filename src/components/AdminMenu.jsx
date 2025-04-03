@@ -95,22 +95,22 @@ const AdminMenu = ({ currentRole }) => {
           </div>
           {isStatsOpen && (
             <div className="submenu">
-              {currentRole === "admin" && (
+              {(currentRole === "admin" ||
+                currentRole === "head_of_department" ||
+                currentRole === "deputy_head_of_department" ||
+                currentRole === "department_in_charge") && (
                 <Link
-                  to="/admin/management/chart"
+                  to={
+                    currentRole === "admin"
+                      ? "/admin/management/chart"
+                      : "/management/chart"
+                  }
                   className="submenu-item"
                   onClick={toggleMenu}
                 >
                   <FaChartPie /> Dạng Biểu Đồ
                 </Link>
               )}
-              <Link
-                to="/admin/management/chartMini"
-                className="submenu-item"
-                onClick={toggleMenu}
-              >
-                <FaChartPie /> Dạng Biểu Đồ
-              </Link>
               <Link
                 to="/admin/management/table"
                 className="submenu-item"

@@ -48,9 +48,9 @@ const RoleSelectionPage = () => {
     const routes = {
       admin: "/admin/management/chart",
       lecturer: "/home",
-      head_of_department: "/admin/management/chart",
-      deputy_head_of_department: "/admin/management/chart",
-      department_in_charge: "/admin/management/chart",
+      head_of_department: "/management/chart",
+      deputy_head_of_department: "/management/chart",
+      department_in_charge: "/management/chart",
     };
 
     localStorage.setItem("current_role", role);
