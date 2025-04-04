@@ -760,6 +760,35 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getTop5NewestScientificPapers: async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/top5-newest`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching top 5 newest scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getTop5MostViewedAndDownloadedPapers: async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/top5-most-viewed-downloaded`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error fetching top 5 most viewed and downloaded papers:",
+        error
+      );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
