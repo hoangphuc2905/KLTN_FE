@@ -12,7 +12,8 @@ import {
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Table, Checkbox } from "antd";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import userApi from "../../../api/api";
+import { useEffect, useState } from "react";
 
 ChartJS.register(
   CategoryScale,
@@ -275,7 +276,7 @@ const columnOptions = columns.map((col) => ({
   value: col.key,
 }));
 
-const Dashboard = () => {
+const StatisticsChartPage = () => {
   const navigate = useNavigate();
   const [selectedTypeFilters, setSelectedTypeFilters] = useState(
     Object.keys(typeCounts)
@@ -301,6 +302,62 @@ const Dashboard = () => {
     label,
     value: label,
   }));
+  const userId = localStorage.getItem("user_id");
+  const [totalPapers, setTotalPapers] = useState(stats.totalPapers);
+  const [totalViews, setTotalViews] = useState(stats.totalViews);
+  const [totalDownloads, setTotalDownloads] = useState(stats.totalDownloads);
+  const [top3Papers, setTop3Papers] = useState(topPapers);
+  const [totalPoints, setTotalPoints] = useState(stats.totalPoints);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        if (userId) {
+          // Fetch total papers
+          const papersResponse = await userApi.getTotalPapersByAuthorId(userId);
+          console.log("Total Papers API Response:", papersResponse);
+          setTotalPapers(papersResponse.total_papers);
+
+          // Fetch total views
+          const viewsResponse = await userApi.getTotalViewsByAuthorId(userId);
+          console.log("Total Views API Response:", viewsResponse);
+          setTotalViews(viewsResponse.total_views);
+
+          // Fetch total downloads
+          const downloadsResponse = await userApi.getTotalDownloadsByAuthorId(
+            userId
+          );
+          console.log("Total Downloads API Response:", downloadsResponse);
+          setTotalDownloads(downloadsResponse.total_downloads);
+
+          // Fetch total points
+          const pointsResponse = await userApi.getTotalPointByAuthorId(userId);
+          console.log("Total Points API Response:", pointsResponse);
+          setTotalPoints(pointsResponse.total_points);
+
+          // Fetch top 3 papers
+          const top3Response = await userApi.getTop3PapersByAuthorId(userId);
+          console.log("Top 3 Papers API Response:", top3Response);
+
+          // Transform the API response to match the table format
+          if (top3Response && top3Response.papers) {
+            const formattedPapers = top3Response.papers.map((paper, index) => ({
+              id: index + 1,
+              title: paper.title_vn || paper.title_en,
+              views: paper.viewCount,
+              downloads: paper.downloadCount,
+              contributions: paper.contributionScore,
+            }));
+            setTop3Papers(formattedPapers);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching statistics:", error);
+      }
+    };
+
+    fetchData();
+  }, [userId]);
 
   const handleTypeFilterChange = (selectedFilters) => {
     setSelectedTypeFilters(selectedFilters);
@@ -388,7 +445,7 @@ const Dashboard = () => {
                 style={{ width: "200px", height: "50px" }}
               >
                 <div className="text-lg font-bold text-gray-700">
-                  {stats.totalPapers}
+                  {totalPapers}
                 </div>
                 <div className="text-gray-500 mt-1 text-sm">Tổng bài báo</div>
               </div>
@@ -397,7 +454,7 @@ const Dashboard = () => {
                 style={{ width: "200px", height: "50px" }}
               >
                 <div className="text-lg font-bold text-gray-700">
-                  {stats.totalPoints}
+                  {totalPoints.toLocaleString()}
                 </div>
                 <div className="text-gray-500 mt-1 text-sm">
                   Tổng điểm đóng góp
@@ -408,7 +465,7 @@ const Dashboard = () => {
                 style={{ width: "200px", height: "50px" }}
               >
                 <div className="text-lg font-bold text-[#00A3FF]">
-                  {stats.totalViews.toLocaleString()}
+                  {totalViews.toLocaleString()}
                 </div>
                 <div className="text-gray-500 mt-1 text-sm">Tổng lượt xem</div>
               </div>
@@ -417,7 +474,7 @@ const Dashboard = () => {
                 style={{ width: "200px", height: "50px" }}
               >
                 <div className="text-lg font-bold text-[#FFB700]">
-                  {stats.totalDownloads.toLocaleString()}
+                  {totalDownloads.toLocaleString()}
                 </div>
                 <div className="text-gray-500 mt-1 text-sm">Tổng lượt tải</div>
               </div>
@@ -641,7 +698,7 @@ const Dashboard = () => {
                 columns={columns.filter((col) =>
                   visibleColumns.includes(col.key)
                 )}
-                dataSource={topPapers}
+                dataSource={top3Papers}
                 pagination={false}
                 rowKey="id"
               />
@@ -653,4 +710,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default StatisticsChartPage;
