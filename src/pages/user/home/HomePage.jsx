@@ -32,35 +32,8 @@ const HomePage = () => {
   const userType = localStorage.getItem("user_type");
   const itemsPerPage = 10;
 
-  const filteredPapers = researchPapers.filter((paper) => {
-    const departmentMatch = selectedDepartment
-      ? departments[paper.department] === selectedDepartment
-      : true;
-
-    const searchMatch = searchQuery
-      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) || // Match title
-        paper.authors?.some((author) =>
-          author.toLowerCase().includes(searchQuery.toLowerCase())
-        ) || // Match authors
-        paper.publish_date?.toString().includes(searchQuery) || // Match year
-        paper.keywords?.some((keyword) =>
-          keyword.toLowerCase().includes(searchQuery.toLowerCase())
-        ) // Match keywords
-      : true;
-
-    return departmentMatch && searchMatch;
-  });
-
-  const totalPages = Math.ceil(filteredPapers.length / itemsPerPage); // Use filteredPapers for total pages calculation
   const indexOfLastPaper = currentPage * itemsPerPage;
   const indexOfFirstPaper = indexOfLastPaper - itemsPerPage;
-  const currentPapers = filteredPapers.slice(
-    indexOfFirstPaper,
-    indexOfLastPaper
-  ); // Use filteredPapers for current page data
-
-  const displayedPapers =
-    activeTab === "recent" ? recentPapers : featuredPapers;
 
   const scrollRef = useRef(null);
 
@@ -242,6 +215,33 @@ const HomePage = () => {
     }
   };
 
+  const filteredPapers = researchPapers.filter((paper) => {
+    const departmentMatch = selectedDepartment
+      ? departments[paper.department] === selectedDepartment
+      : true;
+
+    const searchMatch = searchQuery
+      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) || // Match title
+        paper.authors?.some((author) =>
+          author.toLowerCase().includes(searchQuery.toLowerCase())
+        ) || // Match authors
+        paper.publish_date?.toString().includes(searchQuery) || // Match year
+        paper.keywords?.some((keyword) =>
+          keyword.toLowerCase().includes(searchQuery.toLowerCase())
+        ) // Match keywords
+      : true;
+
+    return departmentMatch && searchMatch;
+  });
+
+  const currentPapers = filteredPapers.slice(
+    indexOfFirstPaper,
+    indexOfLastPaper
+  ); // Định nghĩa currentPapers từ filteredPapers
+
+  const displayedPapers =
+    activeTab === "recent" ? recentPapers : featuredPapers; // Thêm lại định nghĩa displayedPapers
+
   useEffect(() => {
     const fetchCountsForCurrentPapers = async () => {
       try {
@@ -256,7 +256,6 @@ const HomePage = () => {
         );
 
         setResearchPapers((prev) => {
-          // Nếu không có thay đổi, không cập nhật state để tránh vòng lặp
           if (JSON.stringify(prev) === JSON.stringify(updatedPapers)) {
             return prev;
           }
@@ -270,7 +269,7 @@ const HomePage = () => {
     if (currentPapers.length > 0) {
       fetchCountsForCurrentPapers();
     }
-  }, [JSON.stringify(currentPapers)]); // Giảm thiểu vòng lặp bằng cách so sánh giá trị chuỗi
+  }, [JSON.stringify(currentPapers)]); // Sử dụng currentPapers đã được định nghĩa
 
   useEffect(() => {
     const fetchAuthorsForCurrentPapers = async () => {
@@ -576,6 +575,13 @@ const HomePage = () => {
     setIsAddingCategory(true); // Enable the input field for adding a new category
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0); // Cuộn lên đầu trang khi chuyển trang
+  };
+
+  const totalPages = Math.ceil(filteredPapers.length / itemsPerPage); // Sử dụng filteredPapers thay vì researchPapers
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <style>
@@ -654,118 +660,112 @@ const HomePage = () => {
           <div className="flex gap-5 max-md:flex-col">
             <section className="w-[71%] max-md:ml-0 max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
-                {filteredPapers
-                  .slice(indexOfFirstPaper, indexOfLastPaper)
-                  .map((paper, index) => (
-                    <Link
-                      to={`/scientific-paper/${paper._id}`}
+                {currentPapers.map((paper, index) => (
+                  <Link
+                    to={`/scientific-paper/${paper._id}`}
+                    key={paper._id}
+                    onClick={() => createPaperView(paper._id)} // Trigger view creation on click
+                  >
+                    <article
                       key={paper._id}
-                      onClick={() => createPaperView(paper._id)} // Trigger view creation on click
+                      className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
+                        index > 0 ? "mt-3" : ""
+                      }`}
                     >
-                      <article
-                        key={paper._id}
-                        className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
-                          index > 0 ? "mt-3" : ""
-                        }`}
-                      >
-                        <div className="flex justify-center w-fit">
-                          <img
-                            src={paper.cover_image}
-                            className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
-                            alt={paper.title_vn || "No Title"}
-                          />
-                        </div>
+                      <div className="flex justify-center w-fit">
+                        <img
+                          src={paper.cover_image}
+                          className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
+                          alt={paper.title_vn || "No Title"}
+                        />
+                      </div>
 
-                        <div className="grid grid-cols-1 gap-2 w-full">
-                          {/* Title */}
-                          <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
-                            <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
-                              {paper.title_vn || "No Title"}
-                            </h2>
-                            <div className="flex flex-col items-center ml-auto">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                                  className="object-contain w-4 aspect-square"
-                                  alt="Views icon"
-                                />
-                                <div className="text-xs text-orange-500">
-                                  {typeof paper.views === "number"
-                                    ? paper.views
-                                    : 0}
-                                </div>
-                                <img
-                                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                                  className="object-contain w-4 aspect-[1.2]"
-                                  alt="Downloads icon"
-                                />
-                                <div className="text-xs">
-                                  {typeof paper.downloads === "number"
-                                    ? paper.downloads
-                                    : 0}
-                                </div>
+                      <div className="grid grid-cols-1 gap-2 w-full">
+                        {/* Title */}
+                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
+                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
+                            {paper.title_vn || "No Title"}
+                          </h2>
+                          <div className="flex flex-col items-center ml-auto">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                                className="object-contain w-4 aspect-square"
+                                alt="Views icon"
+                              />
+                              <div className="text-xs text-orange-500">
+                                {typeof paper.views === "number"
+                                  ? paper.views
+                                  : 0}
                               </div>
-                              <div className="text-xs text-neutral-500 mt-1">
-                                {paper.publish_date
-                                  ? new Date(
-                                      paper.publish_date
-                                    ).toLocaleDateString()
-                                  : "No Date"}
+                              <img
+                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                                className="object-contain w-4 aspect-[1.2]"
+                                alt="Downloads icon"
+                              />
+                              <div className="text-xs">
+                                {typeof paper.downloads === "number"
+                                  ? paper.downloads
+                                  : 0}
                               </div>
                             </div>
-                          </div>
-                          {/* Authors */}
-                          <div className="text-sm text-sky-900">
-                            {authors[paper._id] || "Loading authors..."}
-                          </div>
-                          {/* Summary */}
-                          <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
-                            {paper.summary || "No Summary"}
-                          </p>
-                          {/* Department */}
-                          <div className="text-sm text-sky-900">
-                            {departments[paper.department] ||
-                              "Loading department..."}
-                          </div>
-                          {/* Archive Icon */}
-
-                          <div className="flex justify-end">
-                            {archivedPapers.includes(paper._id) ? (
-                              <FaArchive
-                                className="w-5 h-5 cursor-pointer text-yellow-500" // Icon màu vàng
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  showModal(paper);
-                                }}
-                              />
-                            ) : (
-                              <FaRegFileArchive
-                                className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500" // Icon màu xám, hover chuyển vàng
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  showModal(paper);
-                                }}
-                              />
-                            )}
+                            <div className="text-xs text-neutral-500 mt-1">
+                              {paper.publish_date
+                                ? new Date(
+                                    paper.publish_date
+                                  ).toLocaleDateString()
+                                : "No Date"}
+                            </div>
                           </div>
                         </div>
-                      </article>
-                    </Link>
-                  ))}
+                        {/* Authors */}
+                        <div className="text-sm text-sky-900">
+                          {authors[paper._id] || "Loading authors..."}
+                        </div>
+                        {/* Summary */}
+                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
+                          {paper.summary || "No Summary"}
+                        </p>
+                        {/* Department */}
+                        <div className="text-sm text-sky-900">
+                          {departments[paper.department] ||
+                            "Loading department..."}
+                        </div>
+                        {/* Archive Icon */}
 
-                {filteredPapers.length > 0 && (
+                        <div className="flex justify-end">
+                          {archivedPapers.includes(paper._id) ? (
+                            <FaArchive
+                              className="w-5 h-5 cursor-pointer text-yellow-500" // Icon màu vàng
+                              onClick={(e) => {
+                                e.preventDefault();
+                                showModal(paper);
+                              }}
+                            />
+                          ) : (
+                            <FaRegFileArchive
+                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500" // Icon màu xám, hover chuyển vàng
+                              onClick={(e) => {
+                                e.preventDefault();
+                                showModal(paper);
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    </article>
+                  </Link>
+                ))}
+
+                {filteredPapers.length > itemsPerPage && totalPages > 1 && (
                   <div className="flex justify-end mt-4">
                     <StepBackwardOutlined
                       className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
                         currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                       }`}
-                      onClick={() => {
-                        if (currentPage > 1) {
-                          setCurrentPage((prev) => Math.max(prev - 1, 1));
-                          setInputPage((prev) => Math.max(prev - 1, 1)); // Sync inputPage
-                          window.scrollTo(0, 0);
-                        }
-                      }}
+                      onClick={() =>
+                        handlePageChange(Math.max(currentPage - 1, 1))
+                      }
                     />
                     <input
                       type="text"
@@ -774,17 +774,12 @@ const HomePage = () => {
                       onChange={(e) => setInputPage(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                          const value = e.target.value;
-                          const page =
-                            value === ""
-                              ? 1
-                              : Math.max(
-                                  1,
-                                  Math.min(totalPages, Number(value))
-                                );
-                          setCurrentPage(page);
-                          setInputPage(page); // Sync inputPage
-                          window.scrollTo(0, 0); // Scroll to top
+                          const page = Math.max(
+                            1,
+                            Math.min(totalPages, Number(e.target.value) || 1)
+                          );
+                          handlePageChange(page);
+                          setInputPage(page);
                         }
                       }}
                     />
@@ -795,17 +790,9 @@ const HomePage = () => {
                           ? "opacity-50 cursor-not-allowed"
                           : ""
                       }`}
-                      onClick={() => {
-                        if (currentPage < totalPages) {
-                          setCurrentPage((prev) =>
-                            Math.min(prev + 1, totalPages)
-                          );
-                          setInputPage((prev) =>
-                            Math.min(prev + 1, totalPages)
-                          ); // Sync inputPage
-                          window.scrollTo(0, 0); // Scroll to top
-                        }
-                      }}
+                      onClick={() =>
+                        handlePageChange(Math.min(currentPage + 1, totalPages))
+                      }
                     />
                   </div>
                 )}
@@ -861,14 +848,27 @@ const HomePage = () => {
                         displayedPapers.map((paper, index) => (
                           <React.Fragment key={`details-${index}`}>
                             <h3
-                              className={`self-stretch text-sm font-bold tracking-tight leading-4 text-blue-950 ${
-                                index > 0 ? "mt-8" : ""
-                              }`}
+                              className={`mt-1 w-[210px] h-[60px] text-justify text-black ${
+                                index > 0 ? "mt-1" : ""
+                              }`} 
                             >
-                              {paper.title}
+                              <strong>
+                                {paper.title
+                                  ? paper.title.split(" ").length > 15
+                                    ? paper.title
+                                        .split(" ")
+                                        .slice(0, 15)
+                                        .join(" ") + "..."
+                                    : paper.title
+                                  : "No Title"}
+                              </strong>
                             </h3>
-                            <div className="mt-3">{paper.author}</div>
-                            <div className="mt-6">{paper.department}</div>
+                            <div className="mt-3">
+                              {paper.author || "Unknown Author"}
+                            </div>
+                            <div className="mt-3 mb-6">
+                              {paper.department || "Unknown Department"}
+                            </div>
                           </React.Fragment>
                         ))}
                     </div>
