@@ -609,7 +609,7 @@ const HomePage = () => {
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-3 bg-[#E7ECF0] z-10 max-md:px-4">
+        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4">
           <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -623,7 +623,7 @@ const HomePage = () => {
 
           <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-2">
             <select
-              className="p-2 border rounded-lg w-60 text-sm max-md:w-full"
+              className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[90%]" // Adjusted width for mobile
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
             >
@@ -634,7 +634,9 @@ const HomePage = () => {
                 </option>
               ))}
             </select>
-            <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full">
+            <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[90%]">
+              {" "}
+              {/* Adjusted width */}
               <option value="">Tất cả</option>
               <option value="title">Tiêu đề</option>
               <option value="author">Tác giả</option>
@@ -644,13 +646,15 @@ const HomePage = () => {
 
             <input
               type="text"
-              className="p-2 border rounded-lg flex-1 text-sm max-md:w-full"
+              className="p-2 border rounded-lg flex-1 text-sm max-md:w-full max-md:max-w-[90%]" // Adjusted width
               placeholder="Nhập từ khóa tìm kiếm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
 
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full">
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[90%]">
+              {" "}
+              {/* Adjusted width */}
               Tìm kiếm
             </button>
           </div>
@@ -679,40 +683,40 @@ const HomePage = () => {
                       >
                         <img
                           src={paper.cover_image}
-                          className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
+                          className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[120px] max-md:max-w-[100px] m-0"
                           alt={paper.title_vn || "No Title"}
                         />
                       </div>
                       <div className="grid grid-cols-1 gap-2 w-full">
                         {/* Title */}
                         <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full max-md:flex max-md:flex-col max-md:items-start">
-                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full">
+                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-base">
                             {paper.title_vn || "No Title"}
                           </h2>
                           <div className="flex flex-col items-center ml-auto max-md:ml-0 max-md:mt-2">
                             <div className="flex items-center gap-2">
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                                className="object-contain w-4 aspect-square"
+                                className="object-contain w-4 aspect-square max-md:w-3"
                                 alt="Views icon"
                               />
-                              <div className="text-xs text-orange-500">
+                              <div className="text-xs text-orange-500 max-md:text-sm">
                                 {typeof paper.views === "number"
                                   ? paper.views
                                   : 0}
                               </div>
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                                className="object-contain w-4 aspect-[1.2]"
+                                className="object-contain w-4 aspect-[1.2] max-md:w-3"
                                 alt="Downloads icon"
                               />
-                              <div className="text-xs">
+                              <div className="text-xs max-md:text-sm">
                                 {typeof paper.downloads === "number"
                                   ? paper.downloads
                                   : 0}
                               </div>
                             </div>
-                            <div className="text-xs text-neutral-500 mt-1">
+                            <div className="text-xs text-neutral-500 mt-1 max-md:text-sm">
                               {paper.publish_date
                                 ? new Date(
                                     paper.publish_date
@@ -738,7 +742,7 @@ const HomePage = () => {
                         <div className="flex justify-end">
                           {archivedPapers.includes(paper._id) ? (
                             <FaArchive
-                              className="w-5 h-5 cursor-pointer text-yellow-500"
+                              className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-4 max-md:h-4"
                               onClick={(e) => {
                                 e.preventDefault();
                                 showModal(paper);
@@ -746,7 +750,7 @@ const HomePage = () => {
                             />
                           ) : (
                             <FaRegFileArchive
-                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500"
+                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500 max-md:w-4 max-md:h-4"
                               onClick={(e) => {
                                 e.preventDefault();
                                 showModal(paper);
@@ -764,14 +768,14 @@ const HomePage = () => {
                     <StepBackwardOutlined
                       className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
                         currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                      }`}
+                      } max-md:px-1 max-md:py-1`}
                       onClick={() =>
                         handlePageChange(Math.max(currentPage - 1, 1))
                       }
                     />
                     <input
                       type="text"
-                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center max-md:w-12"
+                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center max-md:w-12 max-md:px-2 max-md:py-1"
                       value={inputPage}
                       onChange={(e) => setInputPage(e.target.value)}
                       onKeyDown={(e) => {
@@ -785,7 +789,7 @@ const HomePage = () => {
                         }
                       }}
                     />
-                    <span className="px-4 py-2 text-sm max-md:px-2">
+                    <span className="px-4 py-2 text-sm max-md:px-2 max-md:py-1">
                       / {totalPages}
                     </span>
                     <StepForwardOutlined
@@ -793,7 +797,7 @@ const HomePage = () => {
                         currentPage === totalPages
                           ? "opacity-50 cursor-not-allowed"
                           : ""
-                      }`}
+                      } max-md:px-1 max-md:py-1`}
                       onClick={() =>
                         handlePageChange(Math.min(currentPage + 1, totalPages))
                       }
@@ -803,8 +807,8 @@ const HomePage = () => {
               </div>
             </section>
 
-            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full max-md:hidden">
-              <section className="sticky top-[195px] z-9">
+            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
+              <section>
                 <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl max-md:px-5 max-md:mt-4 max-md:max-w-full">
                   <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
                     <button
