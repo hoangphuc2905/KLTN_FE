@@ -672,7 +672,11 @@ const HomePage = () => {
                         index > 0 ? "mt-3" : ""
                       }`}
                     >
-                      <div className="flex justify-center w-fit max-md:mb-4">
+                      <div
+                        className={`flex justify-center w-fit max-md:mb-4 ${
+                          window.innerWidth <= 768 ? "hidden" : ""
+                        }`}
+                      >
                         <img
                           src={paper.cover_image}
                           className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
