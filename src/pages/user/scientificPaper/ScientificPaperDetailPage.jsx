@@ -151,8 +151,8 @@ const ScientificPaperDetailPage = () => {
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <Header />
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-16px)] mx-auto lg:max-w-[calc(100%-40px)]">
-        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-4">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
           <div className="flex items-center gap-2 text-gray-600 flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -172,20 +172,21 @@ const ScientificPaperDetailPage = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-6">
+        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Main Content */}
             <div className="col-span-1 lg:col-span-3">
-              <div className="bg-white rounded-xl p-4 sm:p-6">
-                <div className="flex flex-col lg:flex-row gap-4 sm:gap-6">
+              <div className="bg-white rounded-xl p-4">
+                <div className="flex flex-col lg:flex-row gap-6">
                   <div className="flex flex-col items-center gap-4">
                     <img
                       src={paper.cover_image}
                       alt="Form illustration"
-                      className="w-[120px] h-[160px] sm:w-[160px] sm:h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
+                      className="w-[160px] h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
                     />
+
                     <button
-                      className="flex items-center gap-2 bg-[#00A3FF] text-white px-3 py-2 sm:px-4 sm:py-2 rounded-lg"
+                      className="flex items-center gap-2 bg-[#00A3FF] text-white px-4 py-2 rounded-lg"
                       onClick={async () => {
                         if (paper.fileUrl) {
                           const link = document.createElement("a");
@@ -224,18 +225,18 @@ const ScientificPaperDetailPage = () => {
                   <div className="flex-1">
                     <div className="flex flex-col lg:flex-row justify-between items-start">
                       <div>
-                        <h1 className="text-lg sm:text-xl font-bold text-sky-900 mb-4 break-words">
+                        <h1 className="text-xl font-bold text-sky-900 mb-4">
                           {paper.title || "Không có tiêu đề"}
                         </h1>
-                        <p className="text-gray-600 mb-4 text-sm sm:text-base w-full lg:w-[96%] text-justify break-words">
+                        <p className="text-gray-600 mb-4 text-sm w-full lg:w-[96%] text-justify">
                           {paper.description || "Không có mô tả"}
                         </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 sm:mt-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
                           <div className="flex items-center">
-                            <p className="text-sm text-gray-500 flex-shrink-0">
+                            <p className="text-sm text-gray-500">
                               Loại bài báo:
                             </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371] break-words">
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
                               {paper.type || "Không có dữ liệu"}
                             </p>
                           </div>
@@ -243,15 +244,15 @@ const ScientificPaperDetailPage = () => {
                             <p className="text-sm text-gray-500 flex-shrink-0">
                               Thuộc nhóm:
                             </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371] truncate overflow-hidden whitespace-normal">
+                            <p className="text-sm ml-2 font-medium text-[#174371] truncate overflow-hidden whitespace-nowrap">
                               {paper.group || "Không có dữ liệu"}
                             </p>
                           </div>
                           <div className="flex items-center">
-                            <p className="text-sm text-gray-500 flex-shrink-0">
+                            <p className="text-sm text-gray-500">
                               Tên tác giả:
                             </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371] break-words">
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
                               {paper.authors?.join(", ") || "Không có dữ liệu"}
                             </p>
                           </div>
@@ -291,11 +292,11 @@ const ScientificPaperDetailPage = () => {
                           </div>
                         </div>
 
-                        <div className="flex mt-4 items-center flex-wrap gap-2">
+                        <div className="flex mt-4 items-center flex-nowrap overflow-hidden whitespace-nowrap">
                           <p className="text-sm text-gray-500 flex-shrink-0">
                             Từ khóa:
                           </p>
-                          <p className="text-sm font-medium text-[#174371] break-words">
+                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
                             {paper.keywords?.join(", ") || "Không có dữ liệu"}
                           </p>
                         </div>
@@ -453,8 +454,8 @@ const ScientificPaperDetailPage = () => {
         </div>
 
         {/* Related Papers */}
-        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-6">
-          <h2 className="text-base sm:text-lg font-semibold text-sky-900 mb-4">
+        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
+          <h2 className="text-lg font-semibold text-sky-900 mb-4">
             Các bài nghiên cứu liên quan
           </h2>
           <div className="space-y-4">
@@ -462,23 +463,19 @@ const ScientificPaperDetailPage = () => {
               <div key={paper.id} className="bg-white rounded-xl p-4">
                 <div className="flex flex-col sm:flex-row gap-4">
                   <img
-                    src={paper.thumbnail}
+                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/0563f14b44500ff5b83245fb9a6af2b57eb332ec4bbe05eafafe76a4e02af753?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
                     alt="Form illustration"
-                    className="w-[80px] h-[120px] sm:w-[100px] sm:h-[150px] object-cover rounded-lg"
+                    className="w-[100px] h-[150px] object-cover rounded-lg"
                   />
                   <div className="flex-1">
-                    <h3 className="font-medium text-sky-900 mb-2 break-words">
+                    <h3 className="font-medium text-sky-900 mb-2">
                       {paper.title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-2 break-words">
-                      {paper.author}
-                    </p>
-                    <p className="text-sm text-gray-600 mb-4 break-words">
+                    <p className="text-sm text-gray-600 mb-2">{paper.author}</p>
+                    <p className="text-sm text-gray-600 mb-4">
                       {paper.description}
                     </p>
-                    <p className="text-sm text-sky-900 break-words">
-                      {paper.department}
-                    </p>
+                    <p className="text-sm  text-sky-900">{paper.department}</p>
                   </div>
                   <div className="flex flex-col items-end justify-between">
                     <div className="flex items-center gap-2">
@@ -501,7 +498,7 @@ const ScientificPaperDetailPage = () => {
                           : 0}
                       </div>
                     </div>
-                    <p className="text-sm text-gray-500 break-words">
+                    <p className="text-sm text-gray-500">
                       Ngày đăng: {paper.date}
                     </p>
                   </div>
