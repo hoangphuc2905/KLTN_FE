@@ -62,17 +62,17 @@ const ProfilePage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-md:max-w-full">
         <div className="w-full bg-white">
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
-              className="w-5 h-5"
+              className="w-5 h-5 max-md:w-4 max-md:h-4"
             />
             <span
               onClick={() => navigate("/home")}
@@ -87,25 +87,23 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <section className="flex flex-wrap items-start max-md:max-w-full">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4">
+          <section className="flex flex-wrap items-start max-md:flex-col max-md:max-w-full">
             <section className="flex flex-col self-stretch py-6 pr-px pl-11 bg-white rounded-lg max-md:pl-5 max-md:max-w-full">
               <div className="flex items-start gap-10 flex-nowrap max-md:flex-wrap">
                 <img
                   src={user?.avatar}
-                  className="object-contain shrink-0 self-end rounded-full w-[150px] h-[150px]"
+                  className="object-contain shrink-0 self-end rounded-full w-[150px] h-[150px] max-md:w-[100px] max-md:h-[100px]"
                   alt="Profile photo"
                 />
-
-                <div className="flex flex-col w-[calc(100%-220px)] max-w-full">
-                  <h2 className="text-sm font-medium leading-none text-black">
+                <div className="flex flex-col w-[calc(100%-220px)] max-w-full max-md:w-full">
+                  <h2 className="text-sm font-medium leading-none text-black max-md:text-base">
                     THÔNG TIN LÝ LỊCH KHOA HỌC
                   </h2>
                   <hr className="object-contain self-stretch mt-3 w-full max-md:max-w-full" />
-
-                  <div className="mt-4 max-w-full w-[1110px]">
+                  <div className="mt-4 max-w-full w-[1110px] max-md:w-full">
                     <div className="flex gap-5 max-md:flex-col">
-                      <div className="w-[32%] max-md:ml-0 max-md:w-full">
+                      <div className="w-[32%] max-md:w-full">
                         <div className="flex flex-col grow text-sm font-medium leading-none text-black max-md:mt-10">
                           <div className="mr-7 max-md:mr-2.5">
                             Mã số sinh viên:{" "}
@@ -167,25 +165,24 @@ const ProfilePage = () => {
                   </div>
                 </div>
               </div>
-
-              <h2 className="self-center mt-6 text-sm font-medium leading-none text-black">
+              {/* Adjustments for mobile responsiveness */}
+              <h2 className="self-center mt-6 text-sm font-medium leading-none text-black max-md:text-base">
                 TRAO ĐỔI GẦN ĐÂY
               </h2>
               <hr className="object-contain self-stretch mt-3 w-full max-md:max-w-full" />
-
               <div className="mt-4 mr-9 max-md:mr-2.5 max-md:max-w-full">
                 <div className="flex gap-5 max-md:flex-col">
-                  <div className="w-[28%] max-md:ml-0 max-md:w-full">
+                  <div className="w-[28%] max-md:w-full">
                     <div className="flex flex-col pt-7 w-full max-md:mt-10">
-                      <div className="flex flex-col items-center px-6 pt-6 pb-1.5 mt-0 bg-white rounded-3xl border border-black min-h-[474px] max-md:px-5">
+                      <div className="flex flex-col items-center px-6 pt-6 pb-1.5 mt-0 bg-white rounded-3xl border border-black min-h-[474px] max-md:px-4">
                         <div className="flex justify-between w-full">
-                          <h3 className="text-sm font-bold leading-none text-black">
+                          <h3 className="text-sm font-bold leading-none text-black max-md:text-base">
                             Thành tích đóng góp
                           </h3>
                           <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="flex z-10 gap-2 items-center pr-10 pl-3 text-sm font-bold leading-none text-black whitespace-nowrap rounded-md border border-solid bg-zinc-100 border-gray-300 h-[19px] w-[116px] max-md:pr-5"
+                            className="flex z-10 gap-2 items-center pr-10 pl-3 text-sm font-bold leading-none text-black whitespace-nowrap rounded-md border border-solid bg-zinc-100 border-gray-300 h-[19px] w-[116px] max-md:h-[36px] max-md:w-[100px]"
                           >
                             <option value="2024">2024</option>
                             <option value="2023">2023</option>
@@ -234,37 +231,35 @@ const ProfilePage = () => {
                       </div>
                     </div>
                   </div>
-
                   <div className="ml-5 w-[72%] max-md:ml-0 max-md:w-full">
-                    <div className="mt-2.5 w-full text-xl text-black max-md:mt-10 max-md:max-w-full">
+                    <div className="mt-2.5 w-full text-xl text-black max-md:mt-10 max-md:text-base">
                       <div className="relative flex flex-col pl-8 border-gray-300">
                         {Array(5)
                           .fill(0)
                           .map((_, index) => (
                             <div
                               key={index}
-                              className="relative flex items-start gap-2"
+                              className="relative flex items-start gap-2 max-md:gap-1"
                             >
                               {/* Avatar + Đường dọc */}
                               <div className="relative flex flex-col items-center">
-                                <div className="w-11 h-11 rounded-full bg-white border border-gray-300 flex items-center justify-center">
+                                <div className="w-11 h-11 rounded-full bg-white border border-gray-300 flex items-center justify-center max-md:w-8 max-md:h-8">
                                   <img
                                     src="https://cdn.builder.io/api/v1/image/assets/TEMP/aed835d36a2dd64ee06f5306c36e2c710acd8eb301ba94120a7c5fc6b7e141b0"
-                                    className="w-10 h-10 rounded-full"
+                                    className="w-10 h-10 rounded-full max-md:w-6 max-md:h-6"
                                     alt="Profile"
                                   />
                                 </div>
                                 {index < 4 && (
-                                  <div className="w-[2px] h-12 bg-gray-300"></div>
+                                  <div className="w-[2px] h-12 bg-gray-300 max-md:h-8"></div>
                                 )}
                               </div>
-
                               {/* Nội dung bên phải */}
-                              <div className="relative flex-auto p-2 bg-white rounded-lg shadow-md w-[700px] max-md:w-full text-sm">
+                              <div className="relative flex-auto p-2 bg-white rounded-lg shadow-md w-[700px] max-md:w-full text-sm max-md:text-xs">
                                 <span className="font-bold">Admin</span>
                                 <br />
                                 Duyệt thông tin bài báo
-                                <div className="absolute top-3 right-3 text-gray-500 text-sm">
+                                <div className="absolute top-3 right-3 text-gray-500 text-sm max-md:text-xs">
                                   2 tháng
                                 </div>
                               </div>

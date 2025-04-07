@@ -602,14 +602,20 @@ const HomePage = () => {
           .custom-scrollbar:hover::-webkit-scrollbar {
             width: 8px; /* Safari and Chrome */
           }
+
+          @media (max-width: 640px) {
+            body {
+              min-width: 320px;
+            }
+          }
         `}
       </style>
-      <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
         <div className="w-full bg-white">
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4">
+        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4 max-sm:px-4 max-sm:pt-[60px]">
           <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -621,9 +627,9 @@ const HomePage = () => {
             <span className="font-semibold text-sky-900">Tìm kiếm</span>
           </div>
 
-          <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-2">
+          <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-3">
             <select
-              className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[90%]" // Adjusted width for mobile
+              className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
               value={selectedDepartment}
               onChange={(e) => setSelectedDepartment(e.target.value)}
             >
@@ -634,9 +640,7 @@ const HomePage = () => {
                 </option>
               ))}
             </select>
-            <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[90%]">
-              {" "}
-              {/* Adjusted width */}
+            <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base">
               <option value="">Tất cả</option>
               <option value="title">Tiêu đề</option>
               <option value="author">Tác giả</option>
@@ -646,21 +650,19 @@ const HomePage = () => {
 
             <input
               type="text"
-              className="p-2 border rounded-lg flex-1 text-sm max-md:w-full max-md:max-w-[90%]" // Adjusted width
+              className="p-2 border rounded-lg flex-1 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
               placeholder="Nhập từ khóa tìm kiếm..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
 
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[90%]">
-              {" "}
-              {/* Adjusted width */}
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-3 max-md:text-base max-md:h-[44px] hover:bg-blue-600">
               Tìm kiếm
             </button>
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
           <div className="flex gap-5 max-md:flex-col">
             <section className="w-[71%] max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
@@ -669,31 +671,28 @@ const HomePage = () => {
                     to={`/scientific-paper/${paper._id}`}
                     key={paper._id}
                     onClick={() => createPaperView(paper._id)}
+                    className="w-full block"
                   >
                     <article
                       key={paper._id}
-                      className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 ${
+                      className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-4 max-md:w-full ${
                         index > 0 ? "mt-3" : ""
                       }`}
                     >
-                      <div
-                        className={`flex justify-center w-fit max-md:mb-4 ${
-                          window.innerWidth <= 768 ? "hidden" : ""
-                        }`}
-                      >
+                      <div className="flex justify-center w-fit lg:block max-lg:hidden">
                         <img
                           src={paper.cover_image}
                           className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[120px] max-md:max-w-[100px] m-0"
                           alt={paper.title_vn || "No Title"}
                         />
                       </div>
-                      <div className="grid grid-cols-1 gap-2 w-full">
+                      <div className="grid grid-cols-1 gap-2 w-full max-md:overflow-hidden">
                         {/* Title */}
-                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full max-md:flex max-md:flex-col max-md:items-start">
-                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-base">
+                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full max-md:flex max-md:flex-col max-md:items-start max-md:w-full">
+                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
                             {paper.title_vn || "No Title"}
                           </h2>
-                          <div className="flex flex-col items-center ml-auto max-md:ml-0 max-md:mt-2">
+                          <div className="flex flex-col items-center ml-auto max-md:ml-0 max-md:mt-2 max-md:w-full">
                             <div className="flex items-center gap-2">
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
@@ -726,15 +725,15 @@ const HomePage = () => {
                           </div>
                         </div>
                         {/* Authors */}
-                        <div className="text-sm text-sky-900 max-md:text-xs">
+                        <div className="text-sm text-sky-900 max-md:text-[14px]">
                           {authors[paper._id] || "Loading authors..."}
                         </div>
                         {/* Summary */}
-                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-xs">
+                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[14px]">
                           {paper.summary || "No Summary"}
                         </p>
                         {/* Department */}
-                        <div className="text-sm text-sky-900 max-md:text-xs">
+                        <div className="text-sm text-sky-900 max-md:text-[14px]">
                           {departments[paper.department] ||
                             "Loading department..."}
                         </div>
@@ -742,7 +741,7 @@ const HomePage = () => {
                         <div className="flex justify-end">
                           {archivedPapers.includes(paper._id) ? (
                             <FaArchive
-                              className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-4 max-md:h-4"
+                              className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-5 max-md:h-5"
                               onClick={(e) => {
                                 e.preventDefault();
                                 showModal(paper);
@@ -750,7 +749,7 @@ const HomePage = () => {
                             />
                           ) : (
                             <FaRegFileArchive
-                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500 max-md:w-4 max-md:h-4"
+                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500 max-md:w-5 max-md:h-5"
                               onClick={(e) => {
                                 e.preventDefault();
                                 showModal(paper);
@@ -768,14 +767,14 @@ const HomePage = () => {
                     <StepBackwardOutlined
                       className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
                         currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                      } max-md:px-1 max-md:py-1`}
+                      } max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:w-[40px] max-md:flex max-md:items-center max-md:justify-center`}
                       onClick={() =>
                         handlePageChange(Math.max(currentPage - 1, 1))
                       }
                     />
                     <input
                       type="text"
-                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center max-md:w-12 max-md:px-2 max-md:py-1"
+                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center max-md:w-14 max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:text-base"
                       value={inputPage}
                       onChange={(e) => setInputPage(e.target.value)}
                       onKeyDown={(e) => {
@@ -789,7 +788,7 @@ const HomePage = () => {
                         }
                       }}
                     />
-                    <span className="px-4 py-2 text-sm max-md:px-2 max-md:py-1">
+                    <span className="px-4 py-2 text-sm max-md:px-3 max-md:py-2 max-md:flex max-md:items-center max-md:text-base">
                       / {totalPages}
                     </span>
                     <StepForwardOutlined
@@ -797,7 +796,7 @@ const HomePage = () => {
                         currentPage === totalPages
                           ? "opacity-50 cursor-not-allowed"
                           : ""
-                      } max-md:px-1 max-md:py-1`}
+                      } max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:w-[40px] max-md:flex max-md:items-center max-md:justify-center`}
                       onClick={() =>
                         handlePageChange(Math.min(currentPage + 1, totalPages))
                       }
@@ -807,7 +806,7 @@ const HomePage = () => {
               </div>
             </section>
 
-            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
+            <div className="ml-5 w-[29%] max-md:ml-0 max-md:hidden">
               <section>
                 <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl max-md:px-5 max-md:mt-4 max-md:max-w-full">
                   <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
@@ -837,7 +836,7 @@ const HomePage = () => {
                     className="flex gap-4 mt-5 overflow-y-auto max-h-[400px] custom-scrollbar"
                     ref={scrollRef}
                   >
-                    <div className="max-md:hidden">
+                    <div className="lg:block max-lg:hidden">
                       {Array.isArray(displayedPapers) &&
                         displayedPapers.map((paper, index) => (
                           <img
@@ -896,13 +895,23 @@ const HomePage = () => {
         onOk={handleOk}
         onCancel={handleCancel}
         footer={[
-          <Button key="back" onClick={handleCancel}>
+          <Button
+            key="back"
+            onClick={handleCancel}
+            className="h-[40px] max-md:text-base"
+          >
             Hủy
           </Button>,
-          <Button key="submit" type="primary" onClick={handleOk}>
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleOk}
+            className="h-[40px] max-md:text-base"
+          >
             Thêm vào mục lưu
           </Button>,
         ]}
+        className="max-md:w-[95%]"
       >
         <p>Bài nghiên cứu khoa học: {selectedPaper?.title_vn}</p>
         <p>Các danh mục lưu trữ:</p>
@@ -930,7 +939,7 @@ const HomePage = () => {
           {!isAddingCategory && (
             <Button
               type="primary"
-              className="mt-2"
+              className="mt-2 h-[40px] max-md:text-base"
               onClick={handleAddCategoryClick}
             >
               Thêm danh mục mới
