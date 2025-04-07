@@ -99,14 +99,32 @@ const HomePage = () => {
   const userType = localStorage.getItem("user_type");
   const itemsPerPage = 10;
 
+  const filteredPapers = researchPapers.filter((paper) => {
+    const departmentMatch = selectedDepartment
+      ? departments[paper.department] === selectedDepartment
+      : true;
+
+    const searchMatch = searchQuery
+      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) || // Match title
+        paper.authors?.some((author) =>
+          author.toLowerCase().includes(searchQuery.toLowerCase())
+        ) || // Match authors
+        paper.publish_date?.toString().includes(searchQuery) || // Match year
+        paper.keywords?.some((keyword) =>
+          keyword.toLowerCase().includes(searchQuery.toLowerCase())
+        ) // Match keywords
+      : true;
+
+    return departmentMatch && searchMatch;
+  });
+
+  const totalPages = Math.ceil(filteredPapers.length / itemsPerPage); // Use filteredPapers for total pages calculation
   const indexOfLastPaper = currentPage * itemsPerPage;
   const indexOfFirstPaper = indexOfLastPaper - itemsPerPage;
-  const currentPapers = researchPapers.slice(
+  const currentPapers = filteredPapers.slice(
     indexOfFirstPaper,
     indexOfLastPaper
-  );
-
-  const totalPages = Math.ceil(researchPapers.length / itemsPerPage);
+  ); // Use filteredPapers for current page data
 
   const displayedPapers =
     activeTab === "recent" ? recentPapers : featuredPapers;
@@ -561,26 +579,6 @@ const HomePage = () => {
     setIsAddingCategory(true); // Enable the input field for adding a new category
   };
 
-  // Filter research papers by selected department and search query
-  const filteredPapers = researchPapers.filter((paper) => {
-    const departmentMatch = selectedDepartment
-      ? departments[paper.department] === selectedDepartment
-      : true;
-
-    const searchMatch = searchQuery
-      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) || // Match title
-        paper.authors?.some((author) =>
-          author.toLowerCase().includes(searchQuery.toLowerCase())
-        ) || // Match authors
-        paper.publish_date?.toString().includes(searchQuery) || // Match year
-        paper.keywords?.some((keyword) =>
-          keyword.toLowerCase().includes(searchQuery.toLowerCase())
-        ) // Match keywords
-      : true;
-
-    return departmentMatch && searchMatch;
-  });
-
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <style>
@@ -758,7 +756,7 @@ const HomePage = () => {
                     </Link>
                   ))}
 
-                {researchPapers.length > itemsPerPage && (
+                {filteredPapers.length > 0 && (
                   <div className="flex justify-end mt-4">
                     <StepBackwardOutlined
                       className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
@@ -767,6 +765,7 @@ const HomePage = () => {
                       onClick={() => {
                         if (currentPage > 1) {
                           setCurrentPage((prev) => Math.max(prev - 1, 1));
+                          setInputPage((prev) => Math.max(prev - 1, 1)); // Sync inputPage
                           window.scrollTo(0, 0);
                         }
                       }}
@@ -787,7 +786,7 @@ const HomePage = () => {
                                   Math.min(totalPages, Number(value))
                                 );
                           setCurrentPage(page);
-                          setInputPage(page);
+                          setInputPage(page); // Sync inputPage
                           window.scrollTo(0, 0); // Scroll to top
                         }
                       }}
@@ -804,7 +803,10 @@ const HomePage = () => {
                           setCurrentPage((prev) =>
                             Math.min(prev + 1, totalPages)
                           );
-                          window.scrollTo(0, 0); // Cuộn lên đầu trang
+                          setInputPage((prev) =>
+                            Math.min(prev + 1, totalPages)
+                          ); // Sync inputPage
+                          window.scrollTo(0, 0); // Scroll to top
                         }
                       }}
                     />
