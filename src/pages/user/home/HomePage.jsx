@@ -8,75 +8,8 @@ import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 
 const HomePage = () => {
-  const recentPapers = [
-    {
-      id: "1",
-      title: "The DA Vince Code The DA Vince Code AI Plus",
-      author: "Dan Brown",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-    {
-      id: "1",
-      title: "The DA Vince Code The DA Vince Code AI Plus",
-      author: "Dan Brown",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-    {
-      id: "1",
-      title: "The DA Vince Code The DA Vince Code AI Plus",
-      author: "Dan Brown",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-    {
-      id: "1",
-      title: "The DA Vince Code The DA Vince Code AI Plus",
-      author: "Dan Brown",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-  ];
-
-  const featuredPapers = [
-    {
-      id: "1",
-      title: "Featured Research Paper 1",
-      author: "Author Name",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-    {
-      id: "2",
-      title: "Featured Research Paper 1",
-      author: "Author Name",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-    {
-      id: "1",
-      title: "The DA Vince Code The DA Vince Code AI Plus",
-      author: "Dan Brown",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-    {
-      id: "1",
-      title: "The DA Vince Code The DA Vince Code AI Plus",
-      author: "Dan Brown",
-      department: "Khoa Công nghệ thông tin",
-      thumbnailUrl:
-        "https://cdn.builder.io/api/v1/image/assets/TEMP/b4958f67927f8fdc0ae0ebda3f620b0e7c4664399fd5bf71176c81b26b41ed07?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47",
-    },
-  ];
+  const [recentPapers, setRecentPapers] = useState([]);
+  const [featuredPapers, setFeaturedPapers] = useState([]); // Replace hardcoded array with state
 
   const [researchPapers, setResearchPapers] = useState([]);
   const [authors, setAuthors] = useState({});
@@ -171,6 +104,60 @@ const HomePage = () => {
     fetchCollections();
   }, []);
 
+  useEffect(() => {
+    const fetchRecentPapers = async () => {
+      try {
+        const response = await userApi.getTop5NewestScientificPapers();
+        if (response && response.papers) {
+          const papers = await Promise.all(
+            response.papers.map(async (paper) => ({
+              id: paper._id,
+              title: paper.title_vn || paper.title_en || "No Title",
+              author: paper.author
+                .map((a) => a.author_name_vi || a.author_name_en)
+                .join(", "),
+              department: await getDepartmentById(paper.department),
+              thumbnailUrl: paper.cover_image || "",
+              summary: paper.summary || "No Summary",
+              publish_date: paper.publish_date,
+            }))
+          );
+          setRecentPapers(papers);
+        }
+      } catch (error) {
+        console.error("Error fetching recent papers:", error);
+      }
+    };
+
+    fetchRecentPapers();
+  }, []);
+
+  useEffect(() => {
+    const fetchFeaturedPapers = async () => {
+      try {
+        const response = await userApi.getTop5MostViewedAndDownloadedPapers();
+        if (response && response.papers) {
+          const papers = await Promise.all(
+            response.papers.map(async (paper) => ({
+              id: paper._id,
+              title: paper.title_vn || paper.title_en || "No Title",
+              author: paper.author
+                .map((a) => a.author_name_vi || a.author_name_en)
+                .join(", "),
+              department: await getDepartmentById(paper.department),
+              thumbnailUrl: paper.cover_image || "",
+            }))
+          );
+          setFeaturedPapers(papers);
+        }
+      } catch (error) {
+        console.error("Error fetching featured papers:", error);
+      }
+    };
+
+    fetchFeaturedPapers();
+  }, []);
+
   const fetchAuthors = async (paperId) => {
     if (authors[paperId]) return; // Skip if authors are already fetched
 
@@ -200,6 +187,16 @@ const HomePage = () => {
           [paperId]: "Error fetching authors",
         }));
       }
+    }
+  };
+
+  const getDepartmentById = async (departmentId) => {
+    try {
+      const response = await userApi.getDepartmentById(departmentId);
+      return response.department_name || "Unknown Department";
+    } catch (error) {
+      console.error(`Error fetching department for ID ${departmentId}:`, error);
+      return "Unknown Department"; // Fallback in case of error
     }
   };
 
@@ -846,32 +843,34 @@ const HomePage = () => {
                     ref={scrollRef}
                   >
                     <div className="max-md:hidden">
-                      {displayedPapers.map((paper, index) => (
-                        <img
-                          key={index}
-                          src={paper.thumbnailUrl}
-                          className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
-                            index > 0 ? "mt-5" : ""
-                          }`}
-                          alt={paper.title}
-                        />
-                      ))}
+                      {Array.isArray(displayedPapers) &&
+                        displayedPapers.map((paper, index) => (
+                          <img
+                            key={`thumbnail-${index}`}
+                            src={paper.thumbnailUrl}
+                            className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
+                              index > 0 ? "mt-5" : ""
+                            }`}
+                            alt={paper.title}
+                          />
+                        ))}
                     </div>
 
                     <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
-                      {displayedPapers.map((paper, index) => (
-                        <React.Fragment key={index}>
-                          <h3
-                            className={`self-stretch text-sm font-bold tracking-tight leading-4 text-blue-950 ${
-                              index > 0 ? "mt-8" : ""
-                            }`}
-                          >
-                            {paper.title}
-                          </h3>
-                          <div className="mt-3">{paper.author}</div>
-                          <div className="mt-6">{paper.department}</div>
-                        </React.Fragment>
-                      ))}
+                      {Array.isArray(displayedPapers) &&
+                        displayedPapers.map((paper, index) => (
+                          <React.Fragment key={`details-${index}`}>
+                            <h3
+                              className={`self-stretch text-sm font-bold tracking-tight leading-4 text-blue-950 ${
+                                index > 0 ? "mt-8" : ""
+                              }`}
+                            >
+                              {paper.title}
+                            </h3>
+                            <div className="mt-3">{paper.author}</div>
+                            <div className="mt-6">{paper.department}</div>
+                          </React.Fragment>
+                        ))}
                     </div>
                   </div>
                 </aside>
@@ -885,7 +884,7 @@ const HomePage = () => {
       {/* Modal for adding to archive */}
       <Modal
         title="Thêm vào Lưu trữ"
-        visible={isModalVisible}
+        open={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
         footer={[
@@ -912,8 +911,8 @@ const HomePage = () => {
             onChange={handleCategoryChange}
           >
             <option value="">Chọn danh mục</option>
-            {categories.map((category, index) => (
-              <option key={index} value={category}>
+            {categories.map((category) => (
+              <option key={category} value={category}>
                 {category}
               </option>
             ))}

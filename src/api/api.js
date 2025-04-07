@@ -760,6 +760,96 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getTop5NewestScientificPapers: async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/top5-newest`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching top 5 newest scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getTop5MostViewedAndDownloadedPapers: async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/top5-most-viewed-downloaded`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error fetching top 5 most viewed and downloaded papers:",
+        error
+      );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getTotalPapersByAuthorId: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/total-by-author/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching total papers by author ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getTotalViewsByAuthorId: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/total-views-by-author/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching total views by author ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getTotalDownloadsByAuthorId: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/total-downloads-by-author/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching total downloads by author ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getTotalPointByAuthorId: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/total-points-by-author/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching total points by author ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getTop3PapersByAuthorId: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/top3-papers-by-author/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching top 3 papers by author ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;

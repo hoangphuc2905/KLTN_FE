@@ -54,7 +54,7 @@ const permissions = {
     "/scientific-paper/edit/:id",
   ],
   head_of_department: [
-    "/admin/management/chartMini",
+    "/management/chart",
     "/role-selection",
     "/home",
     "/profile",
@@ -70,7 +70,7 @@ const permissions = {
     "/notifications",
   ],
   deputy_head_of_department: [
-    "/admin/management/chartMini",
+    "/management/chart",
     "/role-selection",
     "/home",
     "/profile",
@@ -86,7 +86,7 @@ const permissions = {
     "/notifications",
   ],
   department_in_charge: [
-    "/admin/management/chartMini",
+    "/management/chart",
     "/role-selection",
     "/home",
     "/profile",

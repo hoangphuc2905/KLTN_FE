@@ -1,66 +1,103 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Select, Table, Checkbox, Tooltip, Modal } from "antd"; // Added Tooltip and Modal import
+import { Input, Table, Checkbox, Tooltip, Modal } from "antd"; // Added Tooltip and Modal import
 import { saveAs } from "file-saver";
 import ExcelJS from "exceljs"; // Import ExcelJS
 import { useNavigate } from "react-router-dom";
+import userApi from "../../../api/api";
 
 const ManagementPoint = () => {
-  const papers = [
-    {
-      id: 1,
-      type: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q1",
-      title:
-        "Quản trị thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authorCount: "3 (0-0-1-2)",
-      role: "Vừa chính vừa liên hệ",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      featured: true,
-      points: 8,
-    },
-    {
-      id: 2,
-      type: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q3",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "EUH",
-      publicationDate: "25/11/2024",
-      featured: true,
-      points: 5,
-    },
-    {
-      id: 3,
-      type: "Bài báo Khoa học trẻ IUH (toàn văn, có ISSN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "EUH",
-      publicationDate: "25/11/2024",
-      featured: true,
-      points: 3,
-    },
-    {
-      id: 4,
-      type: "Bài báo đăng ký yêu Hội nghị KH Việt Nam (toàn văn, có ISBN)",
-      group: "Q2",
-      title:
-        "Công nghệ thông tin dụng trong các cơ quan khoa học ứng dụng tại các địa phương theo tiêu chí 115S của bộ luật phòng sự",
-      authorCount: "5 (1-1-0-3)",
-      role: "T/g chính",
-      institution: "IUH",
-      publicationDate: "25/11/2024",
-      featured: true,
-      points: 2,
-    },
-  ];
+  const [papers, setPapers] = useState([]);
+
+  useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        const user_id = localStorage.getItem("user_id");
+        if (!user_id) {
+          console.error("Missing user_id");
+          return;
+        }
+
+        const response = await userApi.getScientificPapersByAuthorId(user_id);
+        console.log("Full API Response:", response);
+
+        if (Array.isArray(response)) {
+          const mappedPapers = await Promise.all(
+            response.map(async (paper) => {
+              // Fetch department name
+              let departmentName = "N/A";
+              if (paper.department) {
+                try {
+                  const departmentResponse = await userApi.getDepartmentById(
+                    paper.department
+                  );
+                  departmentName = departmentResponse?.department_name || "N/A";
+                } catch (error) {
+                  console.error(
+                    `Error fetching department for ID ${paper.department}:`,
+                    error
+                  );
+                }
+              }
+
+              // Filter role for the logged-in user
+              const userAuthor = paper.author?.find(
+                (author) => author.user_id === user_id
+              );
+              const userRole = userAuthor?.role || "N/A";
+
+              // Get the point value directly from the API response
+              const points = userAuthor?.point || 0;
+
+              // Map role to display values
+              const displayRole = (() => {
+                switch (userRole) {
+                  case "MainAndCorrespondingAuthor":
+                    return "Vừa chính vừa liên hệ";
+                  case "CorrespondingAuthor":
+                    return "Liên hệ";
+                  case "MainAuthor":
+                    return "Chính";
+                  case "Participant":
+                    return "Tham gia";
+                  default:
+                    return "N/A";
+                }
+              })();
+
+              return {
+                id: paper.paper_id,
+                type: paper.article_type?.type_name || "N/A",
+                group: paper.article_group?.group_name || "N/A",
+                title: paper.title_vn || "N/A",
+                authors:
+                  paper.author
+                    ?.map((author) => author.author_name_vi)
+                    .join(", ") || "Không có tác giả",
+                authorCount: paper.author_count || "0",
+                role: displayRole, // Use the mapped display role
+                institution: departmentName, // Use the fetched department name
+                publicationDate: paper.publish_date || "N/A",
+                dateAdded: paper.createdAt || "N/A",
+                featured: true, // Set default value
+                points: points, // Use the point value from the API
+              };
+            })
+          );
+          setPapers(mappedPapers); // Map API response to match table structure
+        } else {
+          console.error("Unexpected API response structure:", response);
+          setPapers([]); // Fallback to an empty array
+        }
+      } catch (error) {
+        console.error("Error fetching scientific papers:", error);
+        setPapers([]); // Fallback to an empty array on error
+      }
+    };
+
+    fetchPapers();
+  }, []);
 
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnFilter, setShowColumnFilter] = useState(false);
