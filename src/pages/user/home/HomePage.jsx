@@ -609,23 +609,23 @@ const HomePage = () => {
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-3 bg-[#E7ECF0] z-10">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-3 bg-[#E7ECF0] z-10 max-md:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
-              className="w-5 h-5"
+              className="w-5 h-5 max-md:w-4 max-md:h-4"
             />
             <span>Trang chủ</span>
             <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">Tìm kiếm</span>
           </div>
 
-          <div className="flex gap-4 rounded-lg items-center mt-4 mb-3">
+          <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-2">
             <select
-              className="p-2 border rounded-lg w-60 text-sm"
+              className="p-2 border rounded-lg w-60 text-sm max-md:w-full"
               value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)} // Update selected department
+              onChange={(e) => setSelectedDepartment(e.target.value)}
             >
               <option value="">Chọn Khoa</option>
               {departmentsList.map((department) => (
@@ -634,7 +634,7 @@ const HomePage = () => {
                 </option>
               ))}
             </select>
-            <select className="p-2 border rounded-lg w-60 text-sm">
+            <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full">
               <option value="">Tất cả</option>
               <option value="title">Tiêu đề</option>
               <option value="author">Tác giả</option>
@@ -644,13 +644,13 @@ const HomePage = () => {
 
             <input
               type="text"
-              className="p-2 border rounded-lg flex-1 text-sm"
+              className="p-2 border rounded-lg flex-1 text-sm max-md:w-full"
               placeholder="Nhập từ khóa tìm kiếm..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)} // Update search query
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
 
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm">
+            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full">
               Tìm kiếm
             </button>
           </div>
@@ -658,13 +658,13 @@ const HomePage = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex gap-5 max-md:flex-col">
-            <section className="w-[71%] max-md:ml-0 max-md:w-full">
+            <section className="w-[71%] max-md:w-full">
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
                 {currentPapers.map((paper, index) => (
                   <Link
                     to={`/scientific-paper/${paper._id}`}
                     key={paper._id}
-                    onClick={() => createPaperView(paper._id)} // Trigger view creation on click
+                    onClick={() => createPaperView(paper._id)}
                   >
                     <article
                       key={paper._id}
@@ -672,21 +672,20 @@ const HomePage = () => {
                         index > 0 ? "mt-3" : ""
                       }`}
                     >
-                      <div className="flex justify-center w-fit">
+                      <div className="flex justify-center w-fit max-md:mb-4">
                         <img
                           src={paper.cover_image}
                           className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] m-0"
                           alt={paper.title_vn || "No Title"}
                         />
                       </div>
-
                       <div className="grid grid-cols-1 gap-2 w-full">
                         {/* Title */}
-                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full">
-                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2">
+                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full max-md:flex max-md:flex-col max-md:items-start">
+                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full">
                             {paper.title_vn || "No Title"}
                           </h2>
-                          <div className="flex flex-col items-center ml-auto">
+                          <div className="flex flex-col items-center ml-auto max-md:ml-0 max-md:mt-2">
                             <div className="flex items-center gap-2">
                               <img
                                 src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
@@ -719,24 +718,23 @@ const HomePage = () => {
                           </div>
                         </div>
                         {/* Authors */}
-                        <div className="text-sm text-sky-900">
+                        <div className="text-sm text-sky-900 max-md:text-xs">
                           {authors[paper._id] || "Loading authors..."}
                         </div>
                         {/* Summary */}
-                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2">
+                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-xs">
                           {paper.summary || "No Summary"}
                         </p>
                         {/* Department */}
-                        <div className="text-sm text-sky-900">
+                        <div className="text-sm text-sky-900 max-md:text-xs">
                           {departments[paper.department] ||
                             "Loading department..."}
                         </div>
                         {/* Archive Icon */}
-
                         <div className="flex justify-end">
                           {archivedPapers.includes(paper._id) ? (
                             <FaArchive
-                              className="w-5 h-5 cursor-pointer text-yellow-500" // Icon màu vàng
+                              className="w-5 h-5 cursor-pointer text-yellow-500"
                               onClick={(e) => {
                                 e.preventDefault();
                                 showModal(paper);
@@ -744,7 +742,7 @@ const HomePage = () => {
                             />
                           ) : (
                             <FaRegFileArchive
-                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500" // Icon màu xám, hover chuyển vàng
+                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500"
                               onClick={(e) => {
                                 e.preventDefault();
                                 showModal(paper);
@@ -756,9 +754,9 @@ const HomePage = () => {
                     </article>
                   </Link>
                 ))}
-
+                {/* Pagination */}
                 {filteredPapers.length > itemsPerPage && totalPages > 1 && (
-                  <div className="flex justify-end mt-4">
+                  <div className="flex justify-end mt-4 max-md:justify-center">
                     <StepBackwardOutlined
                       className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
                         currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
@@ -769,7 +767,7 @@ const HomePage = () => {
                     />
                     <input
                       type="text"
-                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center"
+                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center max-md:w-12"
                       value={inputPage}
                       onChange={(e) => setInputPage(e.target.value)}
                       onKeyDown={(e) => {
@@ -783,7 +781,9 @@ const HomePage = () => {
                         }
                       }}
                     />
-                    <span className="px-4 py-2 text-sm">/ {totalPages}</span>
+                    <span className="px-4 py-2 text-sm max-md:px-2">
+                      / {totalPages}
+                    </span>
                     <StepForwardOutlined
                       className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
                         currentPage === totalPages
@@ -799,7 +799,7 @@ const HomePage = () => {
               </div>
             </section>
 
-            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
+            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full max-md:hidden">
               <section className="sticky top-[195px] z-9">
                 <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl max-md:px-5 max-md:mt-4 max-md:max-w-full">
                   <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
@@ -850,7 +850,7 @@ const HomePage = () => {
                             <h3
                               className={`mt-1 w-[210px] h-[60px] text-justify text-black ${
                                 index > 0 ? "mt-1" : ""
-                              }`} 
+                              }`}
                             >
                               <strong>
                                 {paper.title
