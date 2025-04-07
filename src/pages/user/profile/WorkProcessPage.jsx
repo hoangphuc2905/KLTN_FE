@@ -67,17 +67,17 @@ const WorkProcessPage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div className="w-full bg-white">
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] mt-4 px-6">
+          <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5"
             />
             <span
               onClick={() => navigate("/home")}
@@ -92,7 +92,7 @@ const WorkProcessPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-end mb-4 mr-6">
+        <div className="flex justify-end mb-4 mr-4 sm:mr-6">
           <Button
             type="primary"
             onClick={() => setShowAddWorkProcessPopup(true)}
@@ -101,13 +101,14 @@ const WorkProcessPage = () => {
           </Button>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="bg-white p-6 rounded-lg shadow">
+        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-4">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
             <Table
               dataSource={dataSource}
               columns={columns}
               pagination={false}
               bordered={false}
+              scroll={{ x: 320 }} // Enable horizontal scrolling for small screens
             />
           </div>
         </div>
