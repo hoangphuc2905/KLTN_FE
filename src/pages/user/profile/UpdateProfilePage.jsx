@@ -113,17 +113,17 @@ const UpdateProfilePage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-md:max-w-full max-md:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
-              className="w-5 h-5"
+              className="w-5 h-5 max-md:w-4 max-md:h-4"
             />
             <span
               onClick={() => navigate("/home")}
@@ -138,86 +138,86 @@ const UpdateProfilePage = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4">
           <section className="flex flex-col self-stretch py-2 pr-px pl-11 bg-white rounded-lg max-md:pl-5 max-md:max-w-full">
-            <section className="flex relative flex-col items-center self-stretch px-20 pb-11 rounded-lg min-h-fit max-md:px-5 max-md:max-w-full">
+            <section className="flex relative flex-col items-center self-stretch px-20 pb-11 rounded-lg min-h-fit max-md:px-4">
               <div className="flex relative flex-col max-w-full w-[1300px] max-md:w-full">
                 <img
                   src={user?.avatar}
-                  className="object-contain self-center max-w-full aspect-[0.94] rounded-[250px] w-[150px] h-[150px]"
+                  className="object-contain self-center max-w-full aspect-[0.94] rounded-[250px] w-[150px] h-[150px] max-md:w-[100px] max-md:h-[100px]"
                   alt="User avatar"
                 />
-                <p className="mt-4 mr-20 ml-10 text-sm font-semibold leading-none text-red-600 max-md:mr-2.5 max-md:max-w-full">
+                <p className="mt-4 mr-20 ml-10 text-sm font-semibold leading-none text-red-600 max-md:mr-2.5 max-md:ml-0 max-md:text-xs">
                   Lưu ý: Để chỉnh sửa những thông tin có ô (màu xám) Thầy/ cô và
                   sinh viên liên hệ Chuyên viên phòng CTHC để cập nhật từ phần
                   mềm nhân sự.
                 </p>
 
-                <div className="grid grid-cols-4 gap-7 mt-4 w-full text-sm leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-4 w-full text-sm leading-none text-black max-md:grid-cols-1 max-md:gap-4">
                   {/* Mã số sinh viên */}
-                  <label className="font-medium flex items-center text-sm">
+                  <label className="font-medium flex items-center text-sm max-md:text-xs">
                     Mã số sinh viên:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm max-md:text-xs">
                     {user?.lecturer_id || user?.student_id}
                   </div>
 
                   {/* Ngày vào trường */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Ngày vào trường:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm max-md:text-xs">
                     {formatDate(user?.start_date)}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black max-md:grid-cols-1 max-md:gap-4">
                   {/* Họ và tên */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Họ và tên:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm max-md:text-xs">
                     {user?.full_name}
                   </div>
 
                   {/* Giới tính */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Giới tính:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm max-md:text-xs">
                     {translateGender(user?.gender)}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black max-md:grid-cols-1 max-md:gap-4">
                   {/* Ngày sinh */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Ngày sinh:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm max-md:text-xs">
                     {formatDate(user?.date_of_birth)}
                   </div>
 
                   {/* Khoa */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Khoa:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm max-md:text-xs">
                     {departmentName}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black max-md:grid-cols-1 max-md:gap-4">
                   {/* CCCD */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     CCCD:
                   </label>
-                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm">
+                  <div className="font-bold bg-zinc-100 border border-gray-300 rounded-md p-3 h-[20px] flex items-center col-span-1 text-sm max-md:text-xs">
                     {user?.cccd}
                   </div>
 
                   {/* Số điện thoại */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Số điện thoại:
                   </label>
                   <input
@@ -225,13 +225,13 @@ const UpdateProfilePage = () => {
                     name="phone"
                     value={user?.phone}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm"
+                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs"
                   />
                 </div>
 
-                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black">
+                <div className="grid grid-cols-4 gap-7 mt-5 w-full text-sm leading-none text-black max-md:grid-cols-1 max-md:gap-4">
                   {/* Địa chỉ liên hệ */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Địa chỉ liên hệ:
                   </label>
                   <input
@@ -239,11 +239,11 @@ const UpdateProfilePage = () => {
                     name="address"
                     value={user?.address}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm"
+                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs"
                   />
 
                   {/* Email */}
-                  <label className="font-medium flex items-center col-span-1 text-sm">
+                  <label className="font-medium flex items-center col-span-1 text-sm max-md:text-xs">
                     Email:
                   </label>
                   <input
@@ -251,24 +251,24 @@ const UpdateProfilePage = () => {
                     name="email"
                     value={user?.email}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm"
+                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs"
                   />
                 </div>
 
-                <div className="flex gap-9 self-end mt-8 max-w-full text-sm font-semibold leading-none text-white w-[257px] max-md:mr-1">
+                <div className="flex gap-9 self-end mt-8 max-w-full text-sm font-semibold leading-none text-white w-[257px] max-md:gap-4 max-md:w-full">
                   <button
-                    className="flex flex-1 justify-center items-center whitespace-nowrap bg-red-600 rounded-md h-[35px]"
+                    className="flex flex-1 justify-center items-center whitespace-nowrap bg-red-600 rounded-md h-[40px] max-md:h-[48px]"
                     onClick={handleCancel}
                   >
-                    <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5">
+                    <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5 max-md:text-xs">
                       Hủy
                     </span>
                   </button>
                   <button
-                    className="flex flex-1 justify-center items-center bg-sky-500 rounded-md h-[35px]"
+                    className="flex flex-1 justify-center items-center bg-sky-500 rounded-md h-[40px] max-md:h-[48px]"
                     onClick={handleSave}
                   >
-                    <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5">
+                    <span className="gap-2.5 self-stretch px-10 my-auto max-md:px-5 max-md:text-xs">
                       Lưu
                     </span>
                   </button>

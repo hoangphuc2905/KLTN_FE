@@ -582,7 +582,7 @@ const ScientificPaperPage = () => {
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4 max-sm:px-2">
           <div className="flex items-center gap-2 text-gray-600">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -602,17 +602,22 @@ const ScientificPaperPage = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4 max-sm:px-2">
           <div
             className="flex border-b"
-            style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
+            style={{
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "12px",
+              flexWrap: "wrap", // Allow wrapping for smaller screens
+            }}
           >
             <button
               className={`px-4 py-2 text-center text-xs ${
                 activeTab === "all"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
-              } rounded-lg`}
+              } rounded-lg max-sm:px-3 max-sm:py-1`}
               onClick={() => setActiveTab("all")}
             >
               Tất cả ({papers.length})
@@ -622,7 +627,7 @@ const ScientificPaperPage = () => {
                 activeTab === "Đã duyệt"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
-              } rounded-lg`}
+              } rounded-lg max-sm:px-3 max-sm:py-1`}
               onClick={() => setActiveTab("Đã duyệt")}
             >
               Đã duyệt (
@@ -633,7 +638,7 @@ const ScientificPaperPage = () => {
                 activeTab === "Đang chờ"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
-              } rounded-lg`}
+              } rounded-lg max-sm:px-3 max-sm:py-1`}
               onClick={() => setActiveTab("Đang chờ")}
             >
               Chờ duyệt (
@@ -644,7 +649,7 @@ const ScientificPaperPage = () => {
                 activeTab === "Chờ chỉnh sửa"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
-              } rounded-lg`}
+              } rounded-lg max-sm:px-3 max-sm:py-1`}
               onClick={() => setActiveTab("Chờ chỉnh sửa")}
             >
               Chờ chỉnh sửa (
@@ -655,7 +660,7 @@ const ScientificPaperPage = () => {
                 activeTab === "Từ chối"
                   ? "bg-[#00A3FF] text-white"
                   : "bg-white text-gray-700"
-              } rounded-lg`}
+              } rounded-lg max-sm:px-3 max-sm:py-1`}
               onClick={() => setActiveTab("Từ chối")}
             >
               Từ chối (
@@ -664,19 +669,19 @@ const ScientificPaperPage = () => {
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:px-4 max-sm:px-2 overflow-x-auto">
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative gap-2">
+            <div className="bg-white rounded-xl shadow-sm p-4 max-sm:p-3">
+              <div className="flex justify-end mb-4 relative gap-2 max-sm:gap-1">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5"
                   onClick={() => {
                     setShowFilter(!showFilter);
                     setShowColumnFilter(false);
                   }}
                 >
-                  <Filter className="w-4 h-4" />
-                  <span className="text-xs">Bộ lọc</span>
+                  <Filter className="w-4 h-4 max-sm:w-3 max-sm:h-3" />
+                  <span className="text-xs max-sm:text-[10px]">Bộ lọc</span>
                 </button>
                 {showFilter && (
                   <div
@@ -729,6 +734,7 @@ const ScientificPaperPage = () => {
                                   .map((type) => ({
                                     label: type,
                                     value: type,
+                                    key: `paperType-${type}`,
                                   }))}
                                 value={filterPaperType}
                                 onChange={(checkedValues) => {
@@ -785,6 +791,7 @@ const ScientificPaperPage = () => {
                                   .map((group) => ({
                                     label: group,
                                     value: group,
+                                    key: `group-${group}`,
                                   }))}
                                 value={filterGroup}
                                 onChange={(checkedValues) => {
@@ -900,6 +907,7 @@ const ScientificPaperPage = () => {
                                 options={uniqueRoles.map((role) => ({
                                   label: role,
                                   value: role,
+                                  key: `role-${role}`,
                                 }))}
                                 value={filterRole}
                                 onChange={(checkedValues) =>
@@ -959,6 +967,7 @@ const ScientificPaperPage = () => {
                                   .map((institution) => ({
                                     label: institution,
                                     value: institution,
+                                    key: `institution-${institution}`,
                                   }))}
                                 value={filterInstitution}
                                 onChange={(checkedValues) =>
@@ -1013,6 +1022,7 @@ const ScientificPaperPage = () => {
                                   .map((status) => ({
                                     label: status.label,
                                     value: status.value,
+                                    key: `status-${status.value}`,
                                   }))}
                                 value={filterStatus}
                                 onChange={(checkedValues) =>
@@ -1046,14 +1056,14 @@ const ScientificPaperPage = () => {
                   </div>
                 )}
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5"
                   onClick={() => {
                     setShowColumnFilter(!showColumnFilter);
                     setShowFilter(false);
                   }}
                 >
-                  <Filter className="w-4 h-4" />
-                  <span className="text-xs">Chọn cột</span>
+                  <Filter className="w-4 h-4 max-sm:w-3 max-sm:h-3" />
+                  <span className="text-xs max-sm:text-[10px]">Chọn cột</span>
                 </button>
                 {showColumnFilter && (
                   <div
@@ -1068,7 +1078,10 @@ const ScientificPaperPage = () => {
                         Chọn tất cả
                       </Checkbox>
                       <Checkbox.Group
-                        options={options}
+                        options={options.map((option) => ({
+                          ...option,
+                          key: `column-${option.value}`,
+                        }))}
                         value={checkedList}
                         onChange={(value) => {
                           setCheckedList(value);
@@ -1083,31 +1096,33 @@ const ScientificPaperPage = () => {
               {papers.length === 0 ? (
                 <p>Loading or no data available...</p> // Add a fallback UI for empty data
               ) : (
-                <Table
-                  columns={newColumns}
-                  dataSource={filteredPapers.map((paper, index) => ({
-                    ...paper,
-                    key: index, // Ensure each row has a unique key
-                  }))}
-                  onChange={handleChange}
-                  pagination={{
-                    current: currentPage,
-                    pageSize: itemsPerPage,
-                    total: filteredPapers.length,
-                    onChange: (page) => setCurrentPage(page),
-                  }}
-                  rowKey="id"
-                  className="text-sm"
-                  scroll={{
-                    x: newColumns.reduce(
-                      (total, col) => total + (col.width || 0),
-                      0
-                    ),
-                  }} // Add horizontal scroll for wide tables
-                  onRow={(record) => ({
-                    onClick: () => handleRowClick(record),
-                  })}
-                />
+                <div className="overflow-x-auto">
+                  <Table
+                    columns={newColumns}
+                    dataSource={filteredPapers.map((paper, index) => ({
+                      ...paper,
+                      key: paper.id || paper._id || index, // Ensure a unique key for each row
+                    }))}
+                    onChange={handleChange}
+                    pagination={{
+                      current: currentPage,
+                      pageSize: itemsPerPage,
+                      total: filteredPapers.length,
+                      onChange: (page) => setCurrentPage(page),
+                    }}
+                    rowKey="id"
+                    className="text-sm max-sm:text-xs"
+                    scroll={{
+                      x: newColumns.reduce(
+                        (total, col) => total + (col.width || 0),
+                        0
+                      ),
+                    }} // Add horizontal scroll for wide tables
+                    onRow={(record) => ({
+                      onClick: () => handleRowClick(record),
+                    })}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -1115,7 +1130,7 @@ const ScientificPaperPage = () => {
       </div>
       <Modal
         title="Chi tiết"
-        visible={isModalVisible}
+        open={isModalVisible} // Replace `visible` with `open`
         onCancel={() => setIsModalVisible(false)}
         footer={null}
       >
