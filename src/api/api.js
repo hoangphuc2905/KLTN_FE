@@ -850,6 +850,36 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getAllPaperAuthorsByTolalPointsAndTotalPapers: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/paperauthor/summary`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error fetching all paper authors by total points and total papers:",
+        error
+      );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getPaperAuthorsByDepartment: async (department) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/paperauthor/department/${department}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error(
+        "Error fetching paper authors by department:",
+        error.response?.data || error.message
+      );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;

@@ -5,141 +5,69 @@ import { Input, Select, Table, Checkbox } from "antd";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
+import userApi from "../../../api/api";
 
 const ManagementPoint = () => {
-  const papers = [
-    {
-      id: 1,
-      author: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      totalPapers: 10,
-      journalType: "Tất cả",
-      totalPoints: 90,
-    },
-    {
-      id: 2,
-      author: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      totalPapers: 8,
-      journalType: "Tất cả",
-      totalPoints: 43,
-    },
-    {
-      id: 3,
-      author: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      totalPapers: 5,
-      journalType: "Tất cả",
-      totalPoints: 25,
-    },
-    {
-      id: 4,
-      author: "Nguyễn Văn B",
-      position: "Giảng viên",
-      department: "NGOẠI NGỮ",
-      totalPapers: 3,
-      journalType: "Tất cả",
-      totalPoints: 12,
-    },
-    {
-      id: 5,
-      author: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      totalPapers: 10,
-      journalType: "Tất cả",
-      totalPoints: 90,
-    },
-    {
-      id: 6,
-      author: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      totalPapers: 8,
-      journalType: "Tất cả",
-      totalPoints: 43,
-    },
-    {
-      id: 7,
-      author: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      totalPapers: 5,
-      journalType: "Tất cả",
-      totalPoints: 25,
-    },
-    {
-      id: 8,
-      author: "Nguyễn Văn B",
-      position: "Giảng viên",
-      department: "NGOẠI NGỮ",
-      totalPapers: 3,
-      journalType: "Tất cả",
-      totalPoints: 12,
-    },
-    {
-      id: 9,
-      author: "Nguyễn Văn A",
-      position: "Giảng viên",
-      department: "CÔNG NGHỆ THÔNG TIN",
-      totalPapers: 10,
-      journalType: "Tất cả",
-      totalPoints: 90,
-    },
-    {
-      id: 10,
-      author: "Nguyễn Duy Thanh",
-      position: "Sinh viên",
-      department: "QUẢN TRỊ KINH DOANH",
-      totalPapers: 8,
-      journalType: "Tất cả",
-      totalPoints: 43,
-    },
-    {
-      id: 11,
-      author: "Huỳnh Hoàng Phúc",
-      position: "Sinh viên",
-      department: "TÀI CHÍNH KẾ TOÁN",
-      totalPapers: 5,
-      journalType: "Tất cả",
-      totalPoints: 25,
-    },
-    {
-      id: 12,
-      author: "Nguyễn Văn B",
-      position: "Trưởng khoa",
-      department: "NGOẠI NGỮ",
-      totalPapers: 3,
-      journalType: "Tất cả",
-      totalPoints: 12,
-    },
-  ];
-
+  const [papers, setPapers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnFilter, setShowColumnFilter] = useState(false);
   const navigate = useNavigate();
   const [visibleColumns, setVisibleColumns] = useState([
     "checkbox",
     "id",
+    "authorId",
     "author",
-    "position",
     "department",
     "totalPapers",
-    "journalType",
     "totalPoints",
     "action",
   ]);
+  const departmentId = localStorage.getItem("department");
+  const [userRole] = useState(localStorage.getItem("current_role") || "");
+
+  useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        setLoading(true);
+        let data;
+        if (userRole === "admin") {
+          data = await userApi.getAllPaperAuthorsByTolalPointsAndTotalPapers();
+        } else if (
+          [
+            "head_of_department",
+            "deputy_head_of_department",
+            "department_in_charge",
+          ].includes(userRole)
+        ) {
+          data = await userApi.getPaperAuthorsByDepartment(departmentId);
+        }
+        setPapers(
+          data.map((item, index) => ({
+            id: index + 1,
+            authorId: item["MÃ_TÁC_GIẢ"],
+            author: item["TÁC_GIẢ"],
+            department: item["KHOA"],
+            totalPapers: item["TỔNG_BÀI"],
+            totalPoints: item["TỔNG_ĐIỂM"],
+          }))
+        );
+      } catch (error) {
+        console.error("Error fetching papers:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPapers();
+  }, [userRole, departmentId]);
 
   const columnOptions = [
     { label: "STT", value: "id" },
+    { label: "MÃ TÁC GIẢ", value: "authorId" },
     { label: "TÁC GIẢ", value: "author" },
-    { label: "CHỨC VỤ", value: "position" },
     { label: "KHOA", value: "department" },
     { label: "TỔNG BÀI", value: "totalPapers" },
-    { label: "LOẠI TẠP CHÍ", value: "journalType" },
     { label: "TỔNG ĐIỂM", value: "totalPoints" },
     { label: "XEM CHI TIẾT", value: "action" },
   ];
@@ -228,20 +156,20 @@ const ManagementPoint = () => {
       width: 65,
     },
     {
-      title: "TÁC GIẢ",
+      title: "MÃ TÁC GIẢ",
+      dataIndex: "authorId",
+      key: "authorId",
+      sorter: (a, b) => a.authorId.localeCompare(b.authorId),
+      sortOrder: sortedInfo.columnKey === "authorId" ? sortedInfo.order : null,
+      width: 150,
+    },
+    {
+      title: "TÊN TÁC GIẢ",
       dataIndex: "author",
       key: "author",
       sorter: (a, b) => a.author.localeCompare(b.author),
       sortOrder: sortedInfo.columnKey === "author" ? sortedInfo.order : null,
       width: 250,
-    },
-    {
-      title: "CHỨC VỤ",
-      dataIndex: "position",
-      key: "position",
-      sorter: (a, b) => a.position.localeCompare(b.position),
-      sortOrder: sortedInfo.columnKey === "position" ? sortedInfo.order : null,
-      width: 150,
     },
     {
       title: "KHOA",
@@ -260,15 +188,6 @@ const ManagementPoint = () => {
       sortOrder:
         sortedInfo.columnKey === "totalPapers" ? sortedInfo.order : null,
       width: 120,
-    },
-    {
-      title: "LOẠI TẠP CHÍ",
-      dataIndex: "journalType",
-      key: "journalType",
-      sorter: (a, b) => a.journalType.localeCompare(b.journalType),
-      sortOrder:
-        sortedInfo.columnKey === "journalType" ? sortedInfo.order : null,
-      width: 140,
     },
     {
       title: "TỔNG ĐIỂM",
@@ -793,19 +712,23 @@ const ManagementPoint = () => {
                 )}
               </div>
 
-              <Table
-                columns={columns}
-                dataSource={filteredPapers}
-                pagination={{
-                  current: currentPage,
-                  pageSize: itemsPerPage,
-                  total: filteredPapers.length,
-                  onChange: (page) => setCurrentPage(page),
-                }}
-                rowKey="id"
-                className="text-sm"
-                onChange={handleChange}
-              />
+              {loading ? (
+                <div className="text-center mt-10">Loading...</div>
+              ) : (
+                <Table
+                  columns={columns}
+                  dataSource={filteredPapers}
+                  pagination={{
+                    current: currentPage,
+                    pageSize: itemsPerPage,
+                    total: filteredPapers.length,
+                    onChange: (page) => setCurrentPage(page),
+                  }}
+                  rowKey="id"
+                  className="text-sm"
+                  onChange={handleChange}
+                />
+              )}
             </div>
           </div>
         </div>
