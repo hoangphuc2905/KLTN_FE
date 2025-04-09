@@ -340,30 +340,30 @@ const Dashboard = () => {
             <div className="flex gap-4 justify-center w-full">
               <div
                 className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-gray-700">
+                <div className="text-lg font-bold text-gray-700 pt-4">
                   {stats.totalPapers}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng bài báo</div>
+                <div className="text-gray-500 text-sm pb-4">Tổng bài báo</div>
               </div>
               <div
                 className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#00A3FF]">
+                <div className="text-lg font-bold text-[#00A3FF] pt-4">
                   {stats.totalViews.toLocaleString()}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng lượt xem</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
               <div
                 className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#FFB700]">
+                <div className="text-lg font-bold text-[#FFB700] pt-4">
                   {stats.totalDownloads.toLocaleString()}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng lượt tải</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
               </div>
             </div>
             <div className="ml-4">
