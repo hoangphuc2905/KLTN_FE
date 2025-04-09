@@ -257,6 +257,7 @@ const AddScientificPaperPage = () => {
         full_name: "", // Add validation for full_name
         role: "",
         institution: "",
+        name_mismatch: false, // New flag to track name mismatches
       }))
     );
 
@@ -268,6 +269,14 @@ const AddScientificPaperPage = () => {
         institution: false,
       }))
     );
+  }, [authors.length]);
+
+  // Store original names from database for comparison
+  const [originalNames, setOriginalNames] = useState([]);
+
+  useEffect(() => {
+    // Initialize original names array with empty strings for each author
+    setOriginalNames(authors.map(() => ""));
   }, [authors.length]);
 
   useEffect(() => {
@@ -368,61 +377,89 @@ const AddScientificPaperPage = () => {
 
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
-        // Gọi cả hai hàm để lấy dữ liệu từ giảng viên và sinh viên
         const lecturerData = await userApi
           .getLecturerById(value)
-          .catch((error) => {
-            console.error("Error fetching lecturer:", error.message);
-            return null; // Trả về null nếu không tìm thấy giảng viên
-          });
+          .catch(() => null);
 
         const studentData = await userApi
           .getStudentById(value)
-          .catch((error) => {
-            console.error("Error fetching student:", error.message);
-            return null; // Trả về null nếu không tìm thấy sinh viên
-          });
+          .catch(() => null);
 
-        // Ưu tiên dữ liệu từ giảng viên nếu có, nếu không thì lấy từ sinh viên
         const userData = lecturerData || studentData;
 
         if (userData) {
-          // Chỉ cập nhật nếu tìm thấy dữ liệu
-          const institutionsResponse = await userApi.getUserWorksByUserId(
-            value
-          ); // Fetch user-work mappings
-          const institutions = await Promise.all(
-            institutionsResponse.map(async (item) => {
-              const workUnit = await userApi.getWorkUnitById(item.work_unit_id); // Fetch work unit details
-              return {
-                _id: workUnit._id, // Use the _id from the work unit database
-                name: workUnit.name_vi || item.work_unit_id, // Display the name
-              };
-            })
-          );
+          const originalName = userData.full_name || userData.name || "";
+          const newOriginalNames = [...originalNames];
+          newOriginalNames[index] = originalName;
+          setOriginalNames(newOriginalNames);
 
-          updatedAuthors[index].full_name =
-            userData.full_name || userData.name || "";
-          updatedAuthors[index].institutions = institutions || []; // Set institutions
+          updatedAuthors[index].full_name = originalName;
 
-          // Clear validation errors since we found valid user data
+          // Automatically generate English name from Vietnamese name
+          const nameParts = originalName
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+            .split(" ");
+          const firstName = nameParts.shift(); // Remove the first word
+          updatedAuthors[index].full_name_eng = [...nameParts, firstName]
+            .map(
+              (word) =>
+                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+            )
+            .join(" ");
+
+          updatedAuthors[index].institutions = []; // Clear institutions for simplicity
+
           const newErrors = [...authorErrors];
           if (!newErrors[index]) newErrors[index] = {};
           newErrors[index].mssvMsgv = "";
           newErrors[index].full_name = "";
           setAuthorErrors(newErrors);
         } else {
-          // Không tìm thấy, chỉ đặt institutions làm mảng rỗng, giữ nguyên full_name
+          updatedAuthors[index].full_name = ""; // Clear full_name if mssvMsgv is not found
+          updatedAuthors[index].full_name_eng = ""; // Clear full_name_eng as well
           updatedAuthors[index].institutions = [];
+          const newOriginalNames = [...originalNames];
+          newOriginalNames[index] = ""; // Reset original name to empty
+          setOriginalNames(newOriginalNames);
         }
       } catch (error) {
-        console.error("Không tìm thấy thông tin:", error.message);
         updatedAuthors[index].institutions = [];
-        // Không đặt lại full_name, cho phép người dùng nhập thủ công
       }
+    } else if (field === "full_name") {
+      // Name validation when user manually edits the name field
+      const newErrors = [...authorErrors];
+      if (!newErrors[index]) newErrors[index] = {};
+
+      // Check if we have an original name to compare with
+      if (originalNames[index] && originalNames[index].trim() !== "") {
+        // Compare the edited name with the original name from API
+        if (value.trim() !== originalNames[index].trim()) {
+          newErrors[index].full_name = "Tên không đúng";
+        } else {
+          newErrors[index].full_name = "";
+        }
+        setAuthorErrors(newErrors);
+      }
+
+      // Automatically populate English name based on Vietnamese name
+      const nameParts = value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+        .split(" ");
+      const firstName = nameParts.shift(); // Remove the first word
+      updatedAuthors[index].full_name_eng = [...nameParts, firstName]
+        .map(
+          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        )
+        .join(" ");
     }
 
     setAuthors(updatedAuthors);
+  };
+
+  const isNameEditable = (index) => {
+    return !originalNames[index] || originalNames[index].trim() === "";
   };
 
   const handleClear = () => {
@@ -1363,6 +1400,7 @@ const AddScientificPaperPage = () => {
                                 setAuthorTouched(newTouched);
                               }}
                               required
+                              disabled={!isNameEditable(index)}
                             />
                           </div>
                         </div>
