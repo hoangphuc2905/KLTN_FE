@@ -85,6 +85,12 @@ const Header = () => {
         // Call the API with receiverId
         const response = await userApi.getMessagesByReceiverId(receiverId);
 
+        if (response.length === 0) {
+          console.log("No unread notifications found.");
+          setUnreadCount(0); // Set unread count to 0 if no messages are found
+          return;
+        }
+
         console.log("Thông báo chưa đọc:", response);
 
         // Filter unread messages

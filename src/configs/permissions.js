@@ -16,7 +16,7 @@ const permissions = {
     "/work-process",
     "/notifications",
     "/scientific-paper/:id",
-    "/admin/management/point/department",
+    "/admin/management/point/detail/:id",
   ],
   Student: [
     "/home",
@@ -53,6 +53,7 @@ const permissions = {
     "/notifications",
     "/storage-scientific-paper",
     "/admin/management/point/department",
+    "/admin/management/point/detail/:id",
     "/scientific-paper/edit/:id",
   ],
   head_of_department: [

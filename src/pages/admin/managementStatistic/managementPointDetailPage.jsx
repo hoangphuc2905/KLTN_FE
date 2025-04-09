@@ -7,8 +7,9 @@ import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
 import userApi from "../../../api/api";
 
-const ManagementPointDepartmentPage = () => {
-  const { department } = useParams();
+const ManagementPointDetailPage = () => {
+  const { id } = useParams();
+  const departmentId = id;
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
@@ -24,25 +25,18 @@ const ManagementPointDepartmentPage = () => {
     "totalPoints",
     "action",
   ]);
-  const departmentId = localStorage.getItem("department");
-  const [userRole] = useState(localStorage.getItem("current_role") || "");
 
   useEffect(() => {
     const fetchPapers = async () => {
       try {
         setLoading(true);
-        let data;
-        if (userRole === "admin") {
-          data = await userApi.getAllPaperAuthorsByTolalPointsAndTotalPapers();
-        } else if (
-          [
-            "head_of_department",
-            "deputy_head_of_department",
-            "department_in_charge",
-          ].includes(userRole)
-        ) {
-          data = await userApi.getPaperAuthorsByDepartment(departmentId);
+        if (!departmentId) {
+          console.error("Error: departmentId is undefined");
+          return;
         }
+        console.log("Fetching papers for departmentId:", departmentId);
+        const data = await userApi.getPaperAuthorsByDepartment(departmentId);
+        console.log("API Response:", data);
         setPapers(
           data.map((item, index) => ({
             id: index + 1,
@@ -61,7 +55,7 @@ const ManagementPointDepartmentPage = () => {
     };
 
     fetchPapers();
-  }, [userRole, departmentId]);
+  }, [departmentId]);
 
   const columnOptions = [
     { label: "STT", value: "id" },
@@ -211,9 +205,9 @@ const ManagementPointDepartmentPage = () => {
                 id: paper.paper_id,
                 title_vn: paper.title_vn || "N/A",
                 magazine_type: paper.article_type?.type_name || "N/A",
-                point: points,
-                role: displayRole,
-                institution: departmentName,
+                point: points, // Use the point value from the API
+                role: displayRole, // Use the mapped display role
+                institution: departmentName, // Use the fetched department name
               };
             })
         );
@@ -233,17 +227,17 @@ const ManagementPointDepartmentPage = () => {
   const paperColumns = [
     {
       title: "Tên bài viết",
-      dataIndex: "title_vn",
-      key: "title_vn",
+      dataIndex: "title_vn", // Ensure this matches the key in the data
+      key: "title",
     },
     {
       title: "Loại bài",
-      dataIndex: "magazine_type",
-      key: "magazine_type",
+      dataIndex: "magazine_type", // Ensure this matches the key in the data
+      key: "type",
     },
     {
       title: "Điểm",
-      dataIndex: "point",
+      dataIndex: "point", // Ensure this matches the key in the data
       key: "point",
     },
   ];
@@ -830,7 +824,7 @@ const ManagementPointDepartmentPage = () => {
                     total: filteredPapers.length,
                     onChange: (page) => setCurrentPage(page),
                   }}
-                  rowKey="id"
+                  rowKey={(record) => record.id} // Ensure each row has a unique key
                   className="text-sm"
                   onChange={handleChange}
                 />
@@ -879,7 +873,7 @@ const ManagementPointDepartmentPage = () => {
                 columns={paperColumns}
                 dataSource={authorPapers}
                 pagination={{ pageSize: 5 }}
-                rowKey="id"
+                rowKey={(record) => record.id || record._id} // Ensure a unique key is used
                 scroll={{ y: 400 }}
                 size="small"
               />
@@ -891,4 +885,4 @@ const ManagementPointDepartmentPage = () => {
   );
 };
 
-export default ManagementPointDepartmentPage;
+export default ManagementPointDetailPage;
