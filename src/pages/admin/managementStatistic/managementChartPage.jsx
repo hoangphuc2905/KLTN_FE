@@ -15,6 +15,7 @@ import {
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Table } from "antd";
 import { useNavigate } from "react-router-dom";
+import userApi from "../../../api/api";
 
 ChartJS.register(
   CategoryScale,
@@ -27,12 +28,34 @@ ChartJS.register(
 );
 
 const Dashboard = () => {
-  const stats = {
-    totalPapers: 200,
-    totalViews: 111200,
-    totalDownloads: 12112,
+  const [stats, setStats] = useState({
+    totalPapers: 0,
+    totalViews: 0,
+    totalDownloads: 0,
     year: 2024,
-  };
+  });
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        const response = await userApi.getStatisticsForAll(); // Corrected API call
+        if (response) {
+          setStats((prevStats) => ({
+            ...prevStats,
+            totalPapers: response.total_papers,
+            totalViews: response.total_views,
+            totalDownloads: response.total_downloads,
+          }));
+        } else {
+          console.error("Unexpected API response structure:", response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch statistics:", error);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
 
   const typeChartData = {
     labels: ["Q1", "Q2", "Q3", "Q4", "None"],
@@ -133,55 +156,46 @@ const Dashboard = () => {
     cutout: "70%",
   };
 
-  const topPapers = [
-    {
-      id: 1,
-      title: "Bài báo siêu nổi hot",
-      views: 154,
-      downloads: 28,
-      contributions: 10,
-    },
-    {
-      id: 2,
-      title: "Nghiên cứu bài báo không lỗi thoát",
-      views: 148,
-      downloads: 21,
-      contributions: 9,
-    },
-    {
-      id: 3,
-      title: "Bài báo siêu dài phải xuống tận 3 bên vòng mới được",
-      views: 126,
-      downloads: 10,
-      contributions: 7,
-    },
-  ];
+  const [topPapers, setTopPapers] = useState([]);
+
+  useEffect(() => {
+    const fetchTopPapers = async () => {
+      try {
+        const response = await userApi.getTop3MostViewedAndDownloadedPapers();
+        if (response && response.papers) {
+          setTopPapers(response.papers);
+        } else {
+          console.error("Unexpected API response structure:", response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch top papers:", error);
+      }
+    };
+
+    fetchTopPapers();
+  }, []);
 
   const columns = [
     {
       title: "STT",
       dataIndex: "id",
       key: "id",
+      render: (_, __, index) => index + 1,
     },
     {
       title: "Tên bài nghiên cứu",
-      dataIndex: "title",
-      key: "title",
+      dataIndex: "title_vn",
+      key: "title_vn",
     },
     {
       title: "Lượt xem",
-      dataIndex: "views",
-      key: "views",
+      dataIndex: "viewCount",
+      key: "viewCount",
     },
     {
       title: "Lượt tải",
-      dataIndex: "downloads",
-      key: "downloads",
-    },
-    {
-      title: "Điểm đóng góp",
-      dataIndex: "contributions",
-      key: "contributions",
+      dataIndex: "downloadCount",
+      key: "downloadCount",
     },
   ];
 
@@ -530,7 +544,7 @@ const Dashboard = () => {
                 columns={columns}
                 dataSource={topPapers}
                 pagination={false}
-                rowKey="id"
+                rowKey="_id"
               />
             </div>
           </div>

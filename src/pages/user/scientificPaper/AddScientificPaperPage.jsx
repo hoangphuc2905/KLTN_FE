@@ -59,6 +59,64 @@ const AddScientificPaperPage = () => {
   const [doi, setDoi] = useState(""); // State for DOI
   const navigate = useNavigate();
 
+  // State để lưu điểm
+  const [scores, setScores] = useState({
+    total: 0,
+    perAuthor: {},
+  });
+
+  // Hàm gọi API để tính điểm
+  const calculateAndSetScore = async (inputData) => {
+    try {
+      // Chuẩn hóa dữ liệu gửi lên API
+      const payload = {
+        createdAt: new Date().toISOString(),
+        doi: inputData.doi || false,
+        featured: inputData.featured || false,
+        article_group: inputData.article_group || "",
+        authors: inputData.authors.map((author) => ({
+          role: author.role,
+          degree: author.degree || "Bachelor",
+          point: author.point || 0,
+          institutions: author.institutions || [],
+        })),
+      };
+
+      const response = await userApi.calculateScoreFromInput(payload);
+      const { totalScore, authorScores } = response;
+
+      console.log("✅ Điểm tổng:", totalScore);
+      console.log("✅ Điểm từng tác giả:", authorScores);
+
+      setScores({ total: totalScore, perAuthor: authorScores });
+    } catch (err) {
+      console.error("❌ Lỗi tính điểm:", err.response?.data || err.message);
+      message.error("Không thể tính điểm. Vui lòng kiểm tra dữ liệu đầu vào.");
+    }
+  };
+
+  // Hàm xử lý khi thay đổi các trường
+  const handleFieldChange = (updatedField) => {
+    const updatedInput = {
+      article_type: selectedPaperType,
+      article_group:
+        paperGroups.find((group) => group.group_name === selectedPaperGroup)
+          ?.group_name || "", // Sử dụng group_name để tính điểm
+      authors: authors.map((author, index) => ({
+        id: `author_${index + 1}`,
+        role: author.role,
+        degree: "Bachelor",
+        point: 0,
+        institutions: author.institutions || [],
+      })),
+      doi: doi || false,
+      featured,
+      ...updatedField,
+    };
+
+    calculateAndSetScore(updatedInput);
+  };
+
   // Validation function for paper type
   const validatePaperType = () => {
     if (!selectedPaperType) {
@@ -619,18 +677,20 @@ const AddScientificPaperPage = () => {
       // Prepare JSON payload
       const payload = {
         article_type: selectedPaperType || "",
-        article_group: selectedPaperGroup || "",
+        article_group:
+          paperGroups.find((group) => group.group_name === selectedPaperGroup)
+            ?._id || "", // Lưu ObjectId xuống DB
         title_vn: titleVn || "",
         title_en: titleEn || "",
         author_count: authorCount, // Use the computed author_count
-        author: authors.map((author) => ({
+        author: authors.map((author, index) => ({
           user_id: author.mssvMsgv || "",
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
           work_unit_id: author.institution || null, // Ensure this is the ObjectId (_id)
           degree: "Bachelor",
-          point: 0,
+          point: parseFloat(scores.perAuthor[`author_${index + 1}`]) || 0,
         })),
         publish_date: publishDate || "",
         magazine_vi: magazineVi || "",
@@ -810,6 +870,7 @@ const AddScientificPaperPage = () => {
                           onChange={(value) => {
                             setSelectedPaperType(value);
                             setPaperTypeError("");
+                            handleFieldChange({ article_type: value });
                           }}
                           onBlur={() => {
                             setPaperTypeTouched(true);
@@ -861,8 +922,9 @@ const AddScientificPaperPage = () => {
                               .includes(input.toLowerCase())
                           }
                           onChange={(value) => {
-                            setSelectedPaperGroup(value);
+                            setSelectedPaperGroup(value); // Cập nhật giá trị nhóm bài báo (group_name)
                             setPaperGroupError("");
+                            handleFieldChange({ article_group: value }); // Gửi giá trị nhóm bài báo (group_name)
                           }}
                           onBlur={() => {
                             setPaperGroupTouched(true);
@@ -875,7 +937,7 @@ const AddScientificPaperPage = () => {
                           }}
                         >
                           {paperGroups.map((group) => (
-                            <Option key={group._id} value={group._id}>
+                            <Option key={group._id} value={group.group_name}>
                               {group.group_name}
                             </Option>
                           ))}
@@ -1062,7 +1124,10 @@ const AddScientificPaperPage = () => {
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           checked={featured}
-                          onChange={(e) => setFeatured(e.target.checked)}
+                          onChange={(e) => {
+                            setFeatured(e.target.checked);
+                            handleFieldChange({ featured: e.target.checked });
+                          }}
                         />
                       </div>
                     </div>
@@ -1548,6 +1613,11 @@ const AddScientificPaperPage = () => {
                               status={authorErrors[index]?.role ? "error" : ""}
                               onChange={(value) => {
                                 handleAuthorChange(index, "role", value);
+                                handleFieldChange({
+                                  authors: authors.map((a, i) =>
+                                    i === index ? { ...a, role: value } : a
+                                  ),
+                                });
                                 const newErrors = [...authorErrors];
                                 if (!newErrors[index]) newErrors[index] = {};
                                 newErrors[index].role = "";
@@ -1680,6 +1750,9 @@ const AddScientificPaperPage = () => {
                               className="w-1/2 text-center"
                               readOnly
                               id={`contribution-${index}`}
+                              value={
+                                scores.perAuthor[`author_${index + 1}`] || 0
+                              }
                             ></Input>
                           </div>
                         </div>
