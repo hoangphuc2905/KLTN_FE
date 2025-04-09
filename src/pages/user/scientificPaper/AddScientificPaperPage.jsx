@@ -40,6 +40,8 @@ const AddScientificPaperPage = () => {
   const [uploadedImage, setUploadedImage] = useState(null); // State for uploaded image
   const [isHelpModalVisible, setIsHelpModalVisible] = useState(false); // State for help modal visibility
   const [selectedPaperType, setSelectedPaperType] = useState(""); // State for selected paper type
+  const [paperTypeError, setPaperTypeError] = useState(""); // State for paper type error message
+  const [paperTypeTouched, setPaperTypeTouched] = useState(false); // State to track if paper type field was touched
   const [selectedPaperGroup, setSelectedPaperGroup] = useState(""); // State for selected paper group
   const [titleVn, setTitleVn] = useState(""); // State for title in Vietnamese
   const [titleEn, setTitleEn] = useState(""); // State for title in English
@@ -56,6 +58,217 @@ const AddScientificPaperPage = () => {
   const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
   const [doi, setDoi] = useState(""); // State for DOI
   const navigate = useNavigate();
+
+  // Validation function for paper type
+  const validatePaperType = () => {
+    if (!selectedPaperType) {
+      setPaperTypeError("Vui lòng chọn loại bài báo");
+      return false;
+    }
+    setPaperTypeError("");
+    return true;
+  };
+
+  // Validation functions for other required fields
+  const validatePaperGroup = () => {
+    if (!selectedPaperGroup) {
+      setPaperGroupError("Vui lòng chọn nhóm bài báo");
+      return false;
+    }
+    setPaperGroupError("");
+    return true;
+  };
+
+  const validateTitleVn = () => {
+    if (!titleVn) {
+      setTitleVnError("Vui lòng nhập tên bài báo tiếng Việt");
+      return false;
+    }
+    setTitleVnError("");
+    return true;
+  };
+
+  const validateDepartment = () => {
+    if (!selectedDepartment) {
+      setDepartmentError("Vui lòng chọn Khoa/Viện");
+      return false;
+    }
+    setDepartmentError("");
+    return true;
+  };
+
+  const validatePublishDate = () => {
+    if (!publishDate) {
+      setPublishDateError("Vui lòng chọn");
+      return false;
+    }
+    setPublishDateError("");
+    return true;
+  };
+
+  const validatePageCount = () => {
+    if (!pageCount) {
+      setPageCountError("Vui lòng nhập");
+      return false;
+    }
+    setPageCountError("");
+    return true;
+  };
+
+  const validateIssnIsbn = () => {
+    if (!issnIsbn) {
+      setIssnIsbnError("Vui lòng nhập");
+      return false;
+    }
+    setIssnIsbnError("");
+    return true;
+  };
+
+  const validateMagazineVi = () => {
+    if (!magazineVi) {
+      setMagazineViError("Vui lòng nhập tên tạp chí/kỷ yếu");
+      return false;
+    }
+    setMagazineViError("");
+    return true;
+  };
+
+  const validateKeywords = () => {
+    if (!keywords) {
+      setKeywordsError("Vui lòng nhập từ khóa");
+      return false;
+    }
+    setKeywordsError("");
+    return true;
+  };
+
+  const validateSummary = () => {
+    if (!summary) {
+      setSummaryError("Vui lòng nhập tóm tắt");
+      return false;
+    }
+    setSummaryError("");
+    return true;
+  };
+
+  const validateLink = () => {
+    if (!link) {
+      setLinkError("Vui lòng nhập link công bố bài báo");
+      return false;
+    }
+    setLinkError("");
+    return true;
+  };
+
+  // Validation function for authors
+  const validateAuthors = () => {
+    const newErrors = [...authorErrors];
+    let isValid = true;
+
+    authors.forEach((author, index) => {
+      // Reset errors for this author
+      newErrors[index] = {
+        mssvMsgv: "",
+        full_name: "",
+        role: "",
+        institution: "",
+      };
+
+      // Validate MSSV/MSGV
+      if (!author.mssvMsgv) {
+        newErrors[index].mssvMsgv = "Vui lòng nhập MSSV/MSGV";
+        isValid = false;
+      }
+
+      // Validate full_name
+      if (!author.full_name) {
+        newErrors[index].full_name = "error"; // Just set to trigger red styling
+        isValid = false;
+      }
+
+      // Validate role
+      if (!author.role) {
+        newErrors[index].role = "Vui lòng chọn vai trò";
+        isValid = false;
+      }
+
+      // Validate institution
+      if (!author.institution) {
+        newErrors[index].institution = "Vui lòng chọn cơ quan";
+        isValid = false;
+      }
+    });
+
+    setAuthorErrors(newErrors);
+    return isValid;
+  };
+
+  const validateFile = () => {
+    if (!selectedFile) {
+      setFileError("Vui lòng tải lên file");
+      return false;
+    }
+    setFileError("");
+    return true;
+  };
+
+  // Add validation states for other required fields
+  const [paperGroupError, setPaperGroupError] = useState("");
+  const [paperGroupTouched, setPaperGroupTouched] = useState(false);
+
+  const [titleVnError, setTitleVnError] = useState("");
+  const [titleVnTouched, setTitleVnTouched] = useState(false);
+
+  const [departmentError, setDepartmentError] = useState("");
+  const [departmentTouched, setDepartmentTouched] = useState(false);
+
+  const [publishDateError, setPublishDateError] = useState("");
+  const [publishDateTouched, setPublishDateTouched] = useState(false);
+
+  const [pageCountError, setPageCountError] = useState("");
+  const [pageCountTouched, setPageCountTouched] = useState(false);
+
+  const [issnIsbnError, setIssnIsbnError] = useState("");
+  const [issnIsbnTouched, setIssnIsbnTouched] = useState(false);
+
+  const [magazineViError, setMagazineViError] = useState("");
+  const [magazineViTouched, setMagazineViTouched] = useState(false);
+
+  const [keywordsError, setKeywordsError] = useState("");
+  const [keywordsTouched, setKeywordsTouched] = useState(false);
+
+  const [summaryError, setSummaryError] = useState("");
+  const [summaryTouched, setSummaryTouched] = useState(false);
+
+  const [linkError, setLinkError] = useState("");
+  const [linkTouched, setLinkTouched] = useState(false);
+
+  // Adding author fields validation states
+  const [authorErrors, setAuthorErrors] = useState([]);
+  const [authorTouched, setAuthorTouched] = useState([]);
+  const [fileError, setFileError] = useState("");
+  const [fileTouched, setFileTouched] = useState(false);
+
+  // Initialize author validation states when authors change
+  useEffect(() => {
+    setAuthorErrors(
+      authors.map(() => ({
+        mssvMsgv: "",
+        full_name: "", // Add validation for full_name
+        role: "",
+        institution: "",
+      }))
+    );
+
+    setAuthorTouched(
+      authors.map(() => ({
+        mssvMsgv: false,
+        full_name: false, // Add touched state for full_name
+        role: false,
+        institution: false,
+      }))
+    );
+  }, [authors.length]);
 
   useEffect(() => {
     const fetchPaperData = async () => {
@@ -104,6 +317,7 @@ const AddScientificPaperPage = () => {
         try {
           const response = await userApi.uploadFile(file); // Call uploadFile function
           setSelectedFile(response.url); // Use the uploaded file's URL
+          setFileError(""); // Clear error when file is selected
           message.success("File đã được tải lên thành công!");
           console.log("Uploaded file response:", response);
         } catch (error) {
@@ -114,7 +328,10 @@ const AddScientificPaperPage = () => {
           message.error("Không thể tải file lên. Vui lòng thử lại.");
         }
       }
+      // Removed validation that showed error when no file was selected
     };
+
+    // Show file selector dialog
     input.click();
   };
 
@@ -169,30 +386,39 @@ const AddScientificPaperPage = () => {
         // Ưu tiên dữ liệu từ giảng viên nếu có, nếu không thì lấy từ sinh viên
         const userData = lecturerData || studentData;
 
-        if (!userData) {
-          throw new Error(
-            "Không tìm thấy thông tin giảng viên hoặc sinh viên."
+        if (userData) {
+          // Chỉ cập nhật nếu tìm thấy dữ liệu
+          const institutionsResponse = await userApi.getUserWorksByUserId(
+            value
+          ); // Fetch user-work mappings
+          const institutions = await Promise.all(
+            institutionsResponse.map(async (item) => {
+              const workUnit = await userApi.getWorkUnitById(item.work_unit_id); // Fetch work unit details
+              return {
+                _id: workUnit._id, // Use the _id from the work unit database
+                name: workUnit.name_vi || item.work_unit_id, // Display the name
+              };
+            })
           );
+
+          updatedAuthors[index].full_name =
+            userData.full_name || userData.name || "";
+          updatedAuthors[index].institutions = institutions || []; // Set institutions
+
+          // Clear validation errors since we found valid user data
+          const newErrors = [...authorErrors];
+          if (!newErrors[index]) newErrors[index] = {};
+          newErrors[index].mssvMsgv = "";
+          newErrors[index].full_name = "";
+          setAuthorErrors(newErrors);
+        } else {
+          // Không tìm thấy, chỉ đặt institutions làm mảng rỗng, giữ nguyên full_name
+          updatedAuthors[index].institutions = [];
         }
-
-        const institutionsResponse = await userApi.getUserWorksByUserId(value); // Fetch user-work mappings
-        const institutions = await Promise.all(
-          institutionsResponse.map(async (item) => {
-            const workUnit = await userApi.getWorkUnitById(item.work_unit_id); // Fetch work unit details
-            return {
-              _id: workUnit._id, // Use the _id from the work unit database
-              name: workUnit.name_vi || item.work_unit_id, // Display the name
-            };
-          })
-        );
-
-        updatedAuthors[index].full_name =
-          userData.full_name || userData.name || "";
-        updatedAuthors[index].institutions = institutions || []; // Set institutions
       } catch (error) {
         console.error("Không tìm thấy thông tin:", error.message);
-        updatedAuthors[index].full_name = "";
         updatedAuthors[index].institutions = [];
+        // Không đặt lại full_name, cho phép người dùng nhập thủ công
       }
     }
 
@@ -211,40 +437,38 @@ const AddScientificPaperPage = () => {
 
   const handleSave = async () => {
     try {
-      // Validate required fields
-      const requiredFields = {
-        coverImage,
-        selectedFile,
-        authors,
-        selectedDepartment,
-        summary,
-        keywords,
-        selectedPaperType,
-        selectedPaperGroup,
-        titleVn,
-        titleEn,
-        publishDate,
-        magazineVi,
-        magazineEn,
-        magazineType,
-        pageCount,
-        issnIsbn,
-        doi,
-        link,
-      };
+      // Validate all required fields
+      const isPaperTypeValid = validatePaperType();
+      const isPaperGroupValid = validatePaperGroup();
+      const isTitleVnValid = validateTitleVn();
+      const isDepartmentValid = validateDepartment();
+      const isPublishDateValid = validatePublishDate();
+      const isPageCountValid = validatePageCount();
+      const isIssnIsbnValid = validateIssnIsbn();
+      const isMagazineViValid = validateMagazineVi();
+      const isKeywordsValid = validateKeywords();
+      const isSummaryValid = validateSummary();
+      const isLinkValid = validateLink();
+      const areAuthorsValid = validateAuthors();
+      const isFileValid = validateFile();
 
-      const missingFields = Object.entries(requiredFields)
-        .filter(
-          ([key, value]) =>
-            value === null ||
-            value === undefined ||
-            value === "" ||
-            (Array.isArray(value) && value.length === 0)
-        )
-        .map(([key]) => key);
-
-      if (missingFields.length > 0) {
-        message.error(`Thiếu các trường bắt buộc: ${missingFields.join(", ")}`);
+      // Check if all validations passed
+      if (
+        !isPaperTypeValid ||
+        !isPaperGroupValid ||
+        !isTitleVnValid ||
+        !isDepartmentValid ||
+        !isPublishDateValid ||
+        !isPageCountValid ||
+        !isIssnIsbnValid ||
+        !isMagazineViValid ||
+        !isKeywordsValid ||
+        !isSummaryValid ||
+        !isLinkValid ||
+        !areAuthorsValid ||
+        !isFileValid
+      ) {
+        message.error("Vui lòng điền đầy đủ thông tin bắt buộc");
         return;
       }
 
@@ -439,26 +663,50 @@ const AddScientificPaperPage = () => {
                       >
                         Loại bài báo <span style={{ color: "red" }}>*</span>
                       </label>
-                      <Select
-                        id="paperType"
-                        className="w-full h-10"
-                        placeholder="Chọn loại bài báo"
-                        required
-                        showSearch
-                        optionFilterProp="children"
-                        filterOption={(input, option) =>
-                          option?.children
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
-                        onChange={(value) => setSelectedPaperType(value)} // Lưu `_id` vào state
-                      >
-                        {paperTypes.map((type) => (
-                          <Option key={type._id} value={type._id}>
-                            {type.type_name}
-                          </Option>
-                        ))}
-                      </Select>
+                      <div className="relative">
+                        <Select
+                          id="paperType"
+                          className={`w-full h-10 ${
+                            paperTypeError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Chọn loại bài báo"
+                          required
+                          showSearch
+                          status={paperTypeError ? "error" : ""}
+                          optionFilterProp="children"
+                          filterOption={(input, option) =>
+                            option?.children
+                              ?.toLowerCase()
+                              .includes(input.toLowerCase())
+                          }
+                          onChange={(value) => {
+                            setSelectedPaperType(value);
+                            setPaperTypeError("");
+                          }}
+                          onBlur={() => {
+                            setPaperTypeTouched(true);
+                            validatePaperType();
+                          }}
+                          onClick={() => {
+                            if (!paperTypeTouched) {
+                              setPaperTypeTouched(true);
+                            }
+                          }}
+                        >
+                          {paperTypes.map((type) => (
+                            <Option key={type._id} value={type._id}>
+                              {type.type_name}
+                            </Option>
+                          ))}
+                        </Select>
+                        {paperTypeError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {paperTypeError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Nhóm bài báo */}
                     <div className="mb-2">
@@ -468,26 +716,50 @@ const AddScientificPaperPage = () => {
                       >
                         Thuộc nhóm <span style={{ color: "red" }}>*</span>
                       </label>
-                      <Select
-                        id="paperGroup"
-                        className="w-full h-10"
-                        placeholder="Chọn nhóm bài báo"
-                        required
-                        showSearch
-                        optionFilterProp="children"
-                        filterOption={(input, option) =>
-                          option?.children
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
-                        onChange={(value) => setSelectedPaperGroup(value)} // Lưu `_id` vào state
-                      >
-                        {paperGroups.map((group) => (
-                          <Option key={group._id} value={group._id}>
-                            {group.group_name}
-                          </Option>
-                        ))}
-                      </Select>
+                      <div className="relative">
+                        <Select
+                          id="paperGroup"
+                          className={`w-full h-10 ${
+                            paperGroupError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Chọn nhóm bài báo"
+                          required
+                          showSearch
+                          status={paperGroupError ? "error" : ""}
+                          optionFilterProp="children"
+                          filterOption={(input, option) =>
+                            option?.children
+                              ?.toLowerCase()
+                              .includes(input.toLowerCase())
+                          }
+                          onChange={(value) => {
+                            setSelectedPaperGroup(value);
+                            setPaperGroupError("");
+                          }}
+                          onBlur={() => {
+                            setPaperGroupTouched(true);
+                            validatePaperGroup();
+                          }}
+                          onClick={() => {
+                            if (!paperGroupTouched) {
+                              setPaperGroupTouched(true);
+                            }
+                          }}
+                        >
+                          {paperGroups.map((group) => (
+                            <Option key={group._id} value={group._id}>
+                              {group.group_name}
+                            </Option>
+                          ))}
+                        </Select>
+                        {paperGroupError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {paperGroupError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Tên(Vn) bài báo */}
                     <div className="mb-2">
@@ -498,14 +770,38 @@ const AddScientificPaperPage = () => {
                         Tên bài báo (Tiếng Việt){" "}
                         <span style={{ color: "red" }}>*</span>
                       </label>
-                      <TextArea
-                        id="titleVn"
-                        className="w-full"
-                        placeholder="Nhập tên bài báo (Tiếng Việt)"
-                        rows={2} // Adjust the number of rows as needed
-                        required
-                        onChange={(e) => setTitleVn(e.target.value)}
-                      />
+                      <div className="relative">
+                        <TextArea
+                          id="titleVn"
+                          className={`w-full ${
+                            titleVnError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Nhập tên bài báo (Tiếng Việt)"
+                          rows={2}
+                          required
+                          status={titleVnError ? "error" : ""}
+                          onChange={(e) => {
+                            setTitleVn(e.target.value);
+                            setTitleVnError("");
+                          }}
+                          onBlur={() => {
+                            setTitleVnTouched(true);
+                            validateTitleVn();
+                          }}
+                          onClick={() => {
+                            if (!titleVnTouched) {
+                              setTitleVnTouched(true);
+                            }
+                          }}
+                        />
+                        {titleVnError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {titleVnError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Tên(En) bài báo */}
                     <div className="mb-2">
@@ -537,14 +833,36 @@ const AddScientificPaperPage = () => {
                       >
                         Ngày công bố <span style={{ color: "red" }}>*</span>
                       </label>
-                      <DatePicker
-                        id="publishDate"
-                        className="w-full h-10"
-                        placeholder="Ngày công bố"
-                        onChange={(date, dateString) =>
-                          setPublishDate(dateString)
-                        }
-                      />
+                      <div className="relative">
+                        <DatePicker
+                          id="publishDate"
+                          className={`w-full h-10 ${
+                            publishDateError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Ngày công bố"
+                          status={publishDateError ? "error" : ""}
+                          onChange={(date, dateString) => {
+                            setPublishDate(dateString);
+                            setPublishDateError("");
+                          }}
+                          onBlur={() => {
+                            setPublishDateTouched(true);
+                            validatePublishDate();
+                          }}
+                          onClick={() => {
+                            if (!publishDateTouched) {
+                              setPublishDateTouched(true);
+                            }
+                          }}
+                        />
+                        {publishDateError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {publishDateError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Số trang */}
                     <div className="">
@@ -554,13 +872,37 @@ const AddScientificPaperPage = () => {
                       >
                         Số trang <span style={{ color: "red" }}>*</span>
                       </label>
-                      <InputNumber
-                        id="pageCount"
-                        className="w-full h-10"
-                        placeholder="Số trang"
-                        min={1}
-                        onChange={(value) => setPageCount(value)}
-                      />
+                      <div className="relative">
+                        <InputNumber
+                          id="pageCount"
+                          className={`w-full h-10 ${
+                            pageCountError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Số trang"
+                          status={pageCountError ? "error" : ""}
+                          min={1}
+                          onChange={(value) => {
+                            setPageCount(value);
+                            setPageCountError("");
+                          }}
+                          onBlur={() => {
+                            setPageCountTouched(true);
+                            validatePageCount();
+                          }}
+                          onClick={() => {
+                            if (!pageCountTouched) {
+                              setPageCountTouched(true);
+                            }
+                          }}
+                        />
+                        {pageCountError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {pageCountError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Thứ tự */}
                     <div className="pb-7">
@@ -604,12 +946,36 @@ const AddScientificPaperPage = () => {
                       >
                         Số ISSN / ISBN <span style={{ color: "red" }}>*</span>
                       </label>
-                      <Input
-                        id="issnIsbn"
-                        className="w-full h-10"
-                        placeholder="Số ISSN / ISBN"
-                        onChange={(e) => setIssnIsbn(e.target.value)}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="issnIsbn"
+                          className={`w-full h-10 ${
+                            issnIsbnError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Số ISSN / ISBN"
+                          status={issnIsbnError ? "error" : ""}
+                          onChange={(e) => {
+                            setIssnIsbn(e.target.value);
+                            setIssnIsbnError("");
+                          }}
+                          onBlur={() => {
+                            setIssnIsbnTouched(true);
+                            validateIssnIsbn();
+                          }}
+                          onClick={() => {
+                            if (!issnIsbnTouched) {
+                              setIssnIsbnTouched(true);
+                            }
+                          }}
+                        />
+                        {issnIsbnError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {issnIsbnError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
@@ -624,13 +990,36 @@ const AddScientificPaperPage = () => {
                         Tên tạp chí / kỷ yếu (Tiếng Việt){" "}
                         <span style={{ color: "red" }}>*</span>
                       </label>
-                      <Input
-                        id="magazineVi"
-                        className="w-full h-10"
-                        placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt)"
-                        suffix={<span style={{ color: "red" }}>*</span>}
-                        onChange={(e) => setMagazineVi(e.target.value)}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="magazineVi"
+                          className={`w-full h-10 ${
+                            magazineViError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Tên tạp chí / kỷ yếu (Tiếng Việt)"
+                          status={magazineViError ? "error" : ""}
+                          onChange={(e) => {
+                            setMagazineVi(e.target.value);
+                            setMagazineViError("");
+                          }}
+                          onBlur={() => {
+                            setMagazineViTouched(true);
+                            validateMagazineVi();
+                          }}
+                          onClick={() => {
+                            if (!magazineViTouched) {
+                              setMagazineViTouched(true);
+                            }
+                          }}
+                        />
+                        {magazineViError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {magazineViError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Tên tạp chí / kỷ yếu (En) */}
                     <div className="">
@@ -670,26 +1059,50 @@ const AddScientificPaperPage = () => {
                       >
                         Khoa / Viện <span style={{ color: "red" }}>*</span>
                       </label>
-                      <Select
-                        id="department"
-                        className="w-full h-10"
-                        placeholder="Chọn Khoa / Viện"
-                        required
-                        showSearch
-                        optionFilterProp="children"
-                        filterOption={(input, option) =>
-                          option?.children
-                            ?.toLowerCase()
-                            .includes(input.toLowerCase())
-                        }
-                        onChange={(value) => setSelectedDepartment(value)} // Lưu `_id` vào state
-                      >
-                        {departments.map((department) => (
-                          <Option key={department._id} value={department._id}>
-                            {department.department_name}
-                          </Option>
-                        ))}
-                      </Select>
+                      <div className="relative">
+                        <Select
+                          id="department"
+                          className={`w-full h-10 ${
+                            departmentError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Chọn Khoa / Viện"
+                          required
+                          showSearch
+                          status={departmentError ? "error" : ""}
+                          optionFilterProp="children"
+                          filterOption={(input, option) =>
+                            option?.children
+                              ?.toLowerCase()
+                              .includes(input.toLowerCase())
+                          }
+                          onChange={(value) => {
+                            setSelectedDepartment(value);
+                            setDepartmentError("");
+                          }}
+                          onBlur={() => {
+                            setDepartmentTouched(true);
+                            validateDepartment();
+                          }}
+                          onClick={() => {
+                            if (!departmentTouched) {
+                              setDepartmentTouched(true);
+                            }
+                          }}
+                        >
+                          {departments.map((department) => (
+                            <Option key={department._id} value={department._id}>
+                              {department.department_name}
+                            </Option>
+                          ))}
+                        </Select>
+                        {departmentError && (
+                          <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {departmentError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {/* Từ khóa */}
                     <div className="pb-2">
@@ -699,12 +1112,37 @@ const AddScientificPaperPage = () => {
                       >
                         Từ khóa <span style={{ color: "red" }}>*</span>
                       </label>
-                      <TextArea
-                        id="keywords"
-                        placeholder="Nhập từ khóa"
-                        rows={2}
-                        onChange={(e) => setKeywords(e.target.value)}
-                      />
+                      <div className="relative">
+                        <TextArea
+                          id="keywords"
+                          className={`w-full ${
+                            keywordsError ? "border-red-500" : ""
+                          }`}
+                          placeholder="Nhập từ khóa"
+                          rows={2}
+                          status={keywordsError ? "error" : ""}
+                          onChange={(e) => {
+                            setKeywords(e.target.value);
+                            setKeywordsError("");
+                          }}
+                          onBlur={() => {
+                            setKeywordsTouched(true);
+                            validateKeywords();
+                          }}
+                          onClick={() => {
+                            if (!keywordsTouched) {
+                              setKeywordsTouched(true);
+                            }
+                          }}
+                        />
+                        {keywordsError && (
+                          <div className="absolute right-0 top-0 h-10 flex items-center pr-2">
+                            <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                              {keywordsError}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -727,12 +1165,37 @@ const AddScientificPaperPage = () => {
                   >
                     Tóm tắt <span style={{ color: "red" }}>*</span>
                   </label>
-                  <TextArea
-                    id="summary"
-                    placeholder="Nhập tóm tắt"
-                    rows={4}
-                    onChange={(e) => setSummary(e.target.value)}
-                  />
+                  <div className="relative">
+                    <TextArea
+                      id="summary"
+                      className={`w-full ${
+                        summaryError ? "border-red-500" : ""
+                      }`}
+                      placeholder="Nhập tóm tắt"
+                      rows={4}
+                      status={summaryError ? "error" : ""}
+                      onChange={(e) => {
+                        setSummary(e.target.value);
+                        setSummaryError("");
+                      }}
+                      onBlur={() => {
+                        setSummaryTouched(true);
+                        validateSummary();
+                      }}
+                      onClick={() => {
+                        if (!summaryTouched) {
+                          setSummaryTouched(true);
+                        }
+                      }}
+                    />
+                    {summaryError && (
+                      <div className="absolute right-0 top-0 h-10 flex items-center pr-2">
+                        <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                          {summaryError}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </section>
             </div>
@@ -785,19 +1248,63 @@ const AddScientificPaperPage = () => {
                           >
                             Mã số SV/GV <span style={{ color: "red" }}>*</span>
                           </label>
-                          <Input
-                            id={`mssvMsgv-${index}`}
-                            placeholder="MSSV/MSGV"
-                            value={author.mssvMsgv}
-                            onChange={(e) =>
-                              handleAuthorChange(
-                                index,
-                                "mssvMsgv",
-                                e.target.value
-                              )
-                            }
-                            required
-                          />
+                          <div className="relative">
+                            <Input
+                              id={`mssvMsgv-${index}`}
+                              placeholder="MSSV/MSGV"
+                              value={author.mssvMsgv}
+                              onChange={(e) => {
+                                handleAuthorChange(
+                                  index,
+                                  "mssvMsgv",
+                                  e.target.value
+                                );
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                newErrors[index].mssvMsgv = "";
+                                setAuthorErrors(newErrors);
+                              }}
+                              onBlur={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].mssvMsgv = true;
+                                setAuthorTouched(newTouched);
+
+                                // Validate on blur
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                if (!author.mssvMsgv) {
+                                  newErrors[index].mssvMsgv =
+                                    "Vui lòng nhập MSSV/MSGV";
+                                } else {
+                                  newErrors[index].mssvMsgv = "";
+                                }
+                                setAuthorErrors(newErrors);
+                              }}
+                              onClick={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].mssvMsgv = true;
+                                setAuthorTouched(newTouched);
+                              }}
+                              required
+                              status={
+                                authorErrors[index]?.mssvMsgv ? "error" : ""
+                              }
+                              className={
+                                authorErrors[index]?.mssvMsgv
+                                  ? "border-red-500"
+                                  : ""
+                              }
+                            />
+                            {authorErrors[index]?.mssvMsgv && (
+                              <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                                <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                                  {authorErrors[index].mssvMsgv}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         {/* Tên SV /GV Vn */}
                         <div className="col-span-4">
@@ -808,12 +1315,56 @@ const AddScientificPaperPage = () => {
                             Tên SV/GV (Tiếng Việt){" "}
                             <span style={{ color: "red" }}>*</span>
                           </label>
-                          <Input
-                            id={`fullName-${index}`}
-                            placeholder="Tên sinh viên / giảng viên"
-                            value={author.full_name}
-                            readOnly
-                          />
+                          <div className="relative">
+                            <Input
+                              id={`fullName-${index}`}
+                              placeholder="Tên sinh viên / giảng viên"
+                              value={author.full_name}
+                              status={
+                                authorErrors[index]?.full_name ? "error" : ""
+                              }
+                              className={`${
+                                authorErrors[index]?.full_name
+                                  ? "border-red-500"
+                                  : ""
+                              }`}
+                              onChange={(e) => {
+                                handleAuthorChange(
+                                  index,
+                                  "full_name",
+                                  e.target.value
+                                );
+                                // Clear error when value is entered
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                newErrors[index].full_name = "";
+                                setAuthorErrors(newErrors);
+                              }}
+                              onBlur={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].full_name = true;
+                                setAuthorTouched(newTouched);
+
+                                // Validate on blur - set error to trigger red styling only
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                if (!author.full_name) {
+                                  newErrors[index].full_name = "error";
+                                } else {
+                                  newErrors[index].full_name = "";
+                                }
+                                setAuthorErrors(newErrors);
+                              }}
+                              onClick={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].full_name = true;
+                                setAuthorTouched(newTouched);
+                              }}
+                              required
+                            />
+                          </div>
                         </div>
                         {/* Tên SV /GV En */}
                         <div className="col-span-4">
@@ -856,23 +1407,66 @@ const AddScientificPaperPage = () => {
                           >
                             Vai trò <span style={{ color: "red" }}>*</span>
                           </label>
-                          <Select
-                            id={`role-${index}`}
-                            className="w-full"
-                            placeholder="Vai trò"
-                            value={author.role}
-                            onChange={(value) =>
-                              handleAuthorChange(index, "role", value)
-                            }
-                            required
-                          >
-                            <Option value="MainAuthor">Chính</Option>
-                            <Option value="CorrespondingAuthor">Liên hệ</Option>
-                            <Option value="MainAndCorrespondingAuthor">
-                              Vừa chính vừa liên hệ
-                            </Option>
-                            <Option value="Participant">Tham gia</Option>
-                          </Select>
+                          <div className="relative">
+                            <Select
+                              id={`role-${index}`}
+                              className={`w-full ${
+                                authorErrors[index]?.role
+                                  ? "border-red-500"
+                                  : ""
+                              }`}
+                              placeholder="Vai trò"
+                              value={author.role}
+                              status={authorErrors[index]?.role ? "error" : ""}
+                              onChange={(value) => {
+                                handleAuthorChange(index, "role", value);
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                newErrors[index].role = "";
+                                setAuthorErrors(newErrors);
+                              }}
+                              onBlur={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].role = true;
+                                setAuthorTouched(newTouched);
+
+                                // Validate on blur
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                if (!author.role) {
+                                  newErrors[index].role =
+                                    "Vui lòng chọn vai trò";
+                                } else {
+                                  newErrors[index].role = "";
+                                }
+                                setAuthorErrors(newErrors);
+                              }}
+                              onClick={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].role = true;
+                                setAuthorTouched(newTouched);
+                              }}
+                              required
+                            >
+                              <Option value="MainAuthor">Chính</Option>
+                              <Option value="CorrespondingAuthor">
+                                Liên hệ
+                              </Option>
+                              <Option value="MainAndCorrespondingAuthor">
+                                Vừa chính vừa liên hệ
+                              </Option>
+                              <Option value="Participant">Tham gia</Option>
+                            </Select>
+                            {authorErrors[index]?.role && (
+                              <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                                <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                                  {authorErrors[index].role}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         {/* CQ công tác */}
                         <div className="col-span-4">
@@ -882,25 +1476,68 @@ const AddScientificPaperPage = () => {
                           >
                             CQ công tác <span style={{ color: "red" }}>*</span>
                           </label>
-                          <Select
-                            id={`institution-${index}`}
-                            className="w-full"
-                            placeholder="CQ công tác"
-                            value={author.institution}
-                            onChange={(value) =>
-                              handleAuthorChange(index, "institution", value)
-                            }
-                            required
-                          >
-                            {author.institutions?.map((institution) => (
-                              <Option
-                                key={institution._id}
-                                value={institution._id}
-                              >
-                                {institution.name}
-                              </Option>
-                            ))}
-                          </Select>
+                          <div className="relative">
+                            <Select
+                              id={`institution-${index}`}
+                              className={`w-full ${
+                                authorErrors[index]?.institution
+                                  ? "border-red-500"
+                                  : ""
+                              }`}
+                              placeholder="CQ công tác"
+                              value={author.institution}
+                              status={
+                                authorErrors[index]?.institution ? "error" : ""
+                              }
+                              onChange={(value) => {
+                                handleAuthorChange(index, "institution", value);
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                newErrors[index].institution = "";
+                                setAuthorErrors(newErrors);
+                              }}
+                              onBlur={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].institution = true;
+                                setAuthorTouched(newTouched);
+
+                                // Validate on blur
+                                const newErrors = [...authorErrors];
+                                if (!newErrors[index]) newErrors[index] = {};
+                                if (!author.institution) {
+                                  newErrors[index].institution =
+                                    "Vui lòng chọn cơ quan";
+                                } else {
+                                  newErrors[index].institution = "";
+                                }
+                                setAuthorErrors(newErrors);
+                              }}
+                              onClick={() => {
+                                const newTouched = [...authorTouched];
+                                if (!newTouched[index]) newTouched[index] = {};
+                                newTouched[index].institution = true;
+                                setAuthorTouched(newTouched);
+                              }}
+                              required
+                            >
+                              {author.institutions?.map((institution) => (
+                                <Option
+                                  key={institution._id}
+                                  value={institution._id}
+                                >
+                                  {institution.name}
+                                </Option>
+                              ))}
+                            </Select>
+                            {authorErrors[index]?.institution && (
+                              <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                                <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                                  {authorErrors[index].institution}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -927,23 +1564,25 @@ const AddScientificPaperPage = () => {
                   >
                     Tải lên file <span style={{ color: "red" }}>*</span>
                   </label>
-                  <div className="flex items-center space-x-2">
-                    <Input
-                      id="file-upload"
-                      placeholder="Upload file..."
-                      value={selectedFile || ""}
-                      readOnly
-                    />
-                    <Button type="primary" onClick={handleFileChange}>
-                      Choose
-                    </Button>
-                    {selectedFile && (
-                      <Button
-                        icon={<CloseCircleOutlined />}
-                        onClick={handleRemoveFile}
-                        danger
+                  <div className="relative">
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        id="file-upload"
+                        placeholder="Upload file..."
+                        value={selectedFile || ""}
+                        readOnly
                       />
-                    )}
+                      <Button type="primary" onClick={handleFileChange}>
+                        Choose
+                      </Button>
+                      {selectedFile && (
+                        <Button
+                          icon={<CloseCircleOutlined />}
+                          onClick={handleRemoveFile}
+                          danger
+                        />
+                      )}
+                    </div>
                   </div>
                 </div>
                 {/* Link và DOI */}
@@ -957,12 +1596,37 @@ const AddScientificPaperPage = () => {
                       Link công bố bài báo{" "}
                       <span style={{ color: "red" }}>*</span>
                     </label>
-                    <Input
-                      id="link"
-                      placeholder="Link công bố bài báo (http://...)"
-                      required
-                      onChange={(e) => setLink(e.target.value)}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="link"
+                        className={`w-full ${
+                          linkError ? "border-red-500" : ""
+                        }`}
+                        placeholder="Link công bố bài báo (http://...)"
+                        required
+                        status={linkError ? "error" : ""}
+                        onChange={(e) => {
+                          setLink(e.target.value);
+                          setLinkError("");
+                        }}
+                        onBlur={() => {
+                          setLinkTouched(true);
+                          validateLink();
+                        }}
+                        onClick={() => {
+                          if (!linkTouched) {
+                            setLinkTouched(true);
+                          }
+                        }}
+                      />
+                      {linkError && (
+                        <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                          <div className="bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                            {linkError}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {/* Số DOI */}
                   <div>
