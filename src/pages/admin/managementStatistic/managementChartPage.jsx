@@ -181,23 +181,56 @@ const Dashboard = () => {
       dataIndex: "id",
       key: "id",
       render: (_, __, index) => index + 1,
+      width: 60,
     },
     {
       title: "Tên bài nghiên cứu",
       dataIndex: "title_vn",
       key: "title_vn",
+      width: 320,
+      ellipsis: true,
+      render: (text, record) => (
+        <div
+          className="cursor-pointer hover:text-blue-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/scientific-paper/${record._id}`);
+          }}
+          style={{
+            maxWidth: "300px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={text}
+        >
+          {text}
+        </div>
+      ),
     },
     {
       title: "Lượt xem",
       dataIndex: "viewCount",
       key: "viewCount",
+      width: 95,
     },
     {
       title: "Lượt tải",
       dataIndex: "downloadCount",
       key: "downloadCount",
+      width: 95,
     },
   ];
+
+  // Add the row click handler for the entire table
+  const onRowClick = (record) => {
+    return {
+      onClick: () => {
+        navigate(`/scientific-paper/${record._id}`);
+      },
+      style: { cursor: "pointer" },
+    };
+  };
 
   const [selectedQuarters, setSelectedQuarters] = useState(["All"]);
   const [showFilter, setShowFilter] = useState(false);
@@ -545,6 +578,7 @@ const Dashboard = () => {
                 dataSource={topPapers}
                 pagination={false}
                 rowKey="_id"
+                onRow={onRowClick}
               />
             </div>
           </div>
