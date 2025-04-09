@@ -18,6 +18,7 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AddScoringFormulaPage from "./AddScoringFormulaPage";
 import { useNavigate } from "react-router-dom";
+import dayjs from "dayjs"; // Import dayjs for date handling
 
 const ItemTypes = {
   ATTRIBUTE: "attribute",
@@ -240,10 +241,12 @@ const ManagementFormulas = () => {
 
   const filteredFormulas = recentFormulas.filter((formula) => {
     const startDateMatch =
-      !filterStartDate || new Date(formula.startDate) >= filterStartDate;
+      !filterStartDate ||
+      dayjs(formula.startDate).isSameOrAfter(filterStartDate, "day");
     const endDateMatch =
       !filterEndDate ||
-      (formula.endDate && new Date(formula.endDate) <= filterEndDate);
+      (formula.endDate &&
+        dayjs(formula.endDate).isSameOrBefore(filterEndDate, "day"));
     return startDateMatch && endDateMatch;
   });
 
@@ -325,8 +328,8 @@ const ManagementFormulas = () => {
     try {
       const formulaData = {
         formula: currentFormula,
-        startDate: new Date().toISOString(), // Set start date to current date
-        endDate: null, // Set end date to null
+        startDate: startDate ? dayjs(startDate).toISOString() : null, // Save start date
+        endDate: endDate ? dayjs(endDate).toISOString() : null, // Save end date
       };
 
       const response = await userApi.createFormula(formulaData);
@@ -341,12 +344,7 @@ const ManagementFormulas = () => {
   };
 
   const formatDate = (isoDate) => {
-    const date = new Date(isoDate);
-    return `${date.getDate().toString().padStart(2, "0")}-${(
-      date.getMonth() + 1
-    )
-      .toString()
-      .padStart(2, "0")}-${date.getFullYear()}`;
+    return dayjs(isoDate).format("DD-MM-YYYY");
   };
 
   const getAttributeNameById = async (attributeId) => {
@@ -404,10 +402,16 @@ const ManagementFormulas = () => {
       try {
         const response = await userApi.getAllFormula();
         const formulasWithNames = await attachAttributeNames(response || []);
+
+        // Select the formula with an endDate that hasn't passed or is null
         const defaultFormula = formulasWithNames.find(
-          (formula) => formula.endDate === null
+          (formula) =>
+            !formula.endDate || dayjs(formula.endDate).isAfter(dayjs(), "day")
         );
+
         setCurrentFormula(defaultFormula?.formula || []);
+        setStartDate(defaultFormula?.startDate || null);
+        setEndDate(defaultFormula?.endDate || null);
       } catch (error) {
         console.error("Error fetching default formula:", error);
         setCurrentFormula([]);
@@ -442,14 +446,21 @@ const ManagementFormulas = () => {
   }, [recentFormulas]);
 
   const handleFilterStartDateChange = (date) => {
-    setFilterStartDate(date);
-    if (filterEndDate && date && date >= filterEndDate) {
-      setFilterEndDate(null);
+    console.log("Selected Start Date:", date?.format("YYYY-MM-DD")); // Debugging log
+    if (filterEndDate && date && date.isSameOrAfter(filterEndDate, "day")) {
+      message.error("Ngày bắt đầu phải trước ngày kết thúc.");
+      return;
     }
+    setFilterStartDate(date);
   };
 
   const handleFilterEndDateChange = (date) => {
-    if (filterStartDate && date && date <= filterStartDate) {
+    console.log("Selected End Date:", date?.format("YYYY-MM-DD")); // Debugging log
+    if (
+      filterStartDate &&
+      date &&
+      date.isSameOrBefore(filterStartDate, "day")
+    ) {
       message.error("Ngày kết thúc phải sau ngày bắt đầu.");
       return;
     }
@@ -467,7 +478,7 @@ const ManagementFormulas = () => {
       title: "NGÀY KẾT THÚC",
       dataIndex: "endDate",
       key: "endDate",
-      render: (text) => (text ? formatDate(text) : "Đến nay"),
+      render: (text) => (text ? formatDate(text) : formatDate(new Date())), // Always format the date
     },
     {
       title: "CÔNG THỨC",
@@ -568,8 +579,8 @@ const ManagementFormulas = () => {
                         CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP
                         {startDate && (
                           <span className="text-sm text-gray-500 ml-2">
-                            ({formatDate(startDate)} -{" "}
-                            {endDate ? formatDate(endDate) : "Đến nay"})
+                            ({formatDate(startDate)} đến{" "}
+                            {formatDate(endDate || new Date())})
                           </span>
                         )}
                       </h2>
@@ -580,6 +591,34 @@ const ManagementFormulas = () => {
                         {isEditing ? "Lưu" : "Chỉnh sửa"}
                       </Button>
                     </div>
+                    {isEditing && (
+                      <div className="flex gap-4 mb-4">
+                        <div>
+                          <label className="block text-gray-700 text-sm mb-1">
+                            Ngày bắt đầu:
+                          </label>
+                          <DatePicker
+                            value={startDate ? dayjs(startDate) : null} // Use dayjs object directly
+                            onChange={(date) =>
+                              setStartDate(date ? date.toISOString() : null)
+                            } // Convert back to ISO string
+                            className="w-full"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-gray-700 text-sm mb-1">
+                            Ngày kết thúc:
+                          </label>
+                          <DatePicker
+                            value={endDate ? dayjs(endDate) : null} // Use dayjs object directly
+                            onChange={(date) =>
+                              setEndDate(date ? date.toISOString() : null)
+                            } // Convert back to ISO string
+                            className="w-full"
+                          />
+                        </div>
+                      </div>
+                    )}
                     <DroppableFormulaArea
                       formula={currentFormula}
                       setFormula={setCurrentFormula}
@@ -611,7 +650,7 @@ const ManagementFormulas = () => {
                                   Ngày bắt đầu:
                                 </label>
                                 <DatePicker
-                                  value={filterStartDate}
+                                  value={filterStartDate} // Use dayjs object directly
                                   onChange={handleFilterStartDateChange}
                                   className="w-full date-picker"
                                   getPopupContainer={(triggerNode) =>
@@ -622,13 +661,16 @@ const ManagementFormulas = () => {
                                   Ngày kết thúc:
                                 </label>
                                 <DatePicker
-                                  value={filterEndDate}
+                                  value={filterEndDate} // Use dayjs object directly
                                   onChange={handleFilterEndDateChange}
                                   className="w-full date-picker"
                                   disabledDate={(current) =>
                                     filterStartDate &&
                                     current &&
-                                    current <= filterStartDate
+                                    current.isSameOrBefore(
+                                      filterStartDate,
+                                      "day"
+                                    )
                                   }
                                   getPopupContainer={(triggerNode) =>
                                     triggerNode.parentNode

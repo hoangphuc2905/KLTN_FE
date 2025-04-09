@@ -97,6 +97,20 @@ const userApi = {
     }
   },
 
+  updateFormulaById: async (formulaId, formulaData) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/formulas/update/${formulaId}`,
+        formulaData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating formula:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   // Lấy công thức theo khoảng thời gian
   getFormulaByDateRange: async (startDate, endDate) => {
     try {

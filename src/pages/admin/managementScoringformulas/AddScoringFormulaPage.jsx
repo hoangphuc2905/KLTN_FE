@@ -116,11 +116,11 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
                 placeholder="Chọn tiêu chí"
                 className="w-full"
               >
-                <Option value="journal_group">NHÓM TẠP CHÍ</Option>
+                <Option value="article_group">NHÓM TẠP CHÍ</Option>
                 <Option value="author_role">VAI TRÒ</Option>
                 <Option value="institution_count">CƠ QUAN ĐỨNG TÊN</Option>
                 <Option value="doi">DOI</Option>
-                <Option value="exemplary_paper">TIÊU BIỂU</Option>
+                <Option value="featured">TIÊU BIỂU</Option>
               </Select>
             </div>
 
