@@ -191,6 +191,46 @@ const ManagementPoint = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
 
+  // Function to generate point formula explanation
+  const getPointFormula = (paper) => {
+    // Default values if data is missing
+    const basePoints = 10; // Example base point
+    const authorCount = parseInt(paper.authorCount) || 1;
+    const roleMultiplier = getRoleMultiplier(paper.role);
+
+    // Calculate points based on role and author count
+    let formula = `Điểm cơ bản cho bài báo ${paper.type}: ${basePoints} điểm`;
+
+    if (authorCount > 1) {
+      formula += `\nSố tác giả: ${authorCount} người → Hệ số chia: ${authorCount}`;
+    }
+
+    if (paper.role !== "Tham gia") {
+      formula += `\nVai trò ${paper.role}: Hệ số nhân ${roleMultiplier}`;
+    }
+
+    formula += `\n\nCông thức: ${basePoints}`;
+    if (authorCount > 1) formula += ` ÷ ${authorCount}`;
+    if (roleMultiplier !== 1) formula += ` × ${roleMultiplier}`;
+    formula += ` = ${paper.points} điểm`;
+
+    return formula;
+  };
+
+  // Helper function to get role multiplier
+  const getRoleMultiplier = (role) => {
+    switch (role) {
+      case "Vừa chính vừa liên hệ":
+        return 1.5;
+      case "Chính":
+        return 1.3;
+      case "Liên hệ":
+        return 1.2;
+      default:
+        return 1;
+    }
+  };
+
   const handleRowClick = (record) => {
     setModalContent(record);
     setIsModalVisible(true);
@@ -912,35 +952,63 @@ const ManagementPoint = () => {
         </div>
       </div>
       <Modal
-        title="Chi tiết"
+        title="Chi tiết điểm"
         visible={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={null}
+        width={700}
       >
-        <p>
-          <strong>Loại bài báo:</strong> {modalContent.type}
-        </p>
-        <p>
-          <strong>Thuộc nhóm:</strong> {modalContent.group}
-        </p>
-        <p>
-          <strong>Tên bài báo nghiên cứu khoa học:</strong> {modalContent.title}
-        </p>
-        <p>
-          <strong>Số tác giả:</strong> {modalContent.authorCount}
-        </p>
-        <p>
-          <strong>Vai trò:</strong> {modalContent.role}
-        </p>
-        <p>
-          <strong>CQ đứng tên:</strong> {modalContent.institution}
-        </p>
-        <p>
-          <strong>Ngày công bố:</strong> {modalContent.publicationDate}
-        </p>
-        <p>
-          <strong>Điểm:</strong> {modalContent.points}
-        </p>
+        <div className="mb-4">
+          <p>
+            <strong>Loại bài báo:</strong> {modalContent.type}
+          </p>
+          <p>
+            <strong>Thuộc nhóm:</strong> {modalContent.group}
+          </p>
+          <p>
+            <strong>Tên bài báo nghiên cứu khoa học:</strong>{" "}
+            {modalContent.title}
+          </p>
+          <p>
+            <strong>Số tác giả:</strong> {modalContent.authorCount}
+          </p>
+          <p>
+            <strong>Vai trò:</strong> {modalContent.role}
+          </p>
+          <p>
+            <strong>CQ đứng tên:</strong> {modalContent.institution}
+          </p>
+          <p>
+            <strong>Ngày công bố:</strong> {modalContent.publicationDate}
+          </p>
+        </div>
+
+        <h3 className="font-bold text-lg mb-3">Bảng điểm chi tiết</h3>
+        <Table
+          dataSource={[
+            {
+              key: "1",
+              points: modalContent.points,
+              formula: getPointFormula(modalContent),
+            },
+          ]}
+          columns={[
+            {
+              title: "Điểm",
+              dataIndex: "points",
+              key: "points",
+              width: "30%",
+            },
+            {
+              title: "Công thức tính điểm",
+              dataIndex: "formula",
+              key: "formula",
+              width: "70%",
+            },
+          ]}
+          pagination={false}
+          bordered
+        />
       </Modal>
     </div>
   );
