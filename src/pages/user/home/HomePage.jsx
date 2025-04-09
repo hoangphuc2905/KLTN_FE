@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
-import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
+// import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
 import { Modal, Button, Input, message } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
@@ -15,8 +15,6 @@ const HomePage = () => {
   const [authors, setAuthors] = useState({});
   const [departments, setDepartments] = useState({});
   const [activeTab, setActiveTab] = useState("recent");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [inputPage, setInputPage] = useState(currentPage);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [archivedPapers, setArchivedPapers] = useState([]);
@@ -30,10 +28,8 @@ const HomePage = () => {
   const [collections, setCollections] = useState([]);
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
-  const itemsPerPage = 10;
-
-  const indexOfLastPaper = currentPage * itemsPerPage;
-  const indexOfFirstPaper = indexOfLastPaper - itemsPerPage;
+  const [currentPage, setCurrentPage] = useState(1);
+  const papersPerPage = 7;
 
   const scrollRef = useRef(null);
 
@@ -42,10 +38,6 @@ const HomePage = () => {
       scrollRef.current.scrollTop = 0;
     }
   }, [activeTab]);
-
-  useEffect(() => {
-    setInputPage(currentPage);
-  }, [currentPage]);
 
   useEffect(() => {
     const fetchResearchPapers = async () => {
@@ -220,24 +212,33 @@ const HomePage = () => {
       ? departments[paper.department] === selectedDepartment
       : true;
 
+    console.log(
+      `Paper ${paper._id} department: ${paper.department}, mapped: ${
+        departments[paper.department]
+      }`
+    );
+    console.log(`Department match: ${departmentMatch}`);
+
     const searchMatch = searchQuery
-      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) || // Match title
+      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         paper.authors?.some((author) =>
           author.toLowerCase().includes(searchQuery.toLowerCase())
-        ) || // Match authors
-        paper.publish_date?.toString().includes(searchQuery) || // Match year
+        ) ||
+        paper.publish_date?.toString().includes(searchQuery) ||
         paper.keywords?.some((keyword) =>
           keyword.toLowerCase().includes(searchQuery.toLowerCase())
-        ) // Match keywords
+        )
       : true;
+
+    console.log(`Search match: ${searchMatch}`);
 
     return departmentMatch && searchMatch;
   });
 
-  const currentPapers = filteredPapers.slice(
-    indexOfFirstPaper,
-    indexOfLastPaper
-  ); // Định nghĩa currentPapers từ filteredPapers
+  console.log("All research papers:", researchPapers.length);
+  console.log("After filtering:", filteredPapers.length);
+  console.log("selectedDepartment:", selectedDepartment);
+  console.log("searchQuery:", searchQuery);
 
   const displayedPapers =
     activeTab === "recent" ? recentPapers : featuredPapers; // Thêm lại định nghĩa displayedPapers
@@ -246,7 +247,7 @@ const HomePage = () => {
     const fetchCountsForCurrentPapers = async () => {
       try {
         const updatedPapers = await Promise.all(
-          currentPapers.map(async (paper) => {
+          filteredPapers.map(async (paper) => {
             const [viewCount, downloadCount] = await Promise.all([
               fetchViewCount(paper._id),
               fetchDownloadCount(paper._id),
@@ -266,14 +267,14 @@ const HomePage = () => {
       }
     };
 
-    if (currentPapers.length > 0) {
+    if (filteredPapers.length > 0) {
       fetchCountsForCurrentPapers();
     }
-  }, [JSON.stringify(currentPapers)]); // Sử dụng currentPapers đã được định nghĩa
+  }, [JSON.stringify(filteredPapers)]); // Using filteredPapers instead of currentPapers
 
   useEffect(() => {
     const fetchAuthorsForCurrentPapers = async () => {
-      for (const paper of currentPapers) {
+      for (const paper of filteredPapers) {
         if (!authors[paper._id]) {
           await fetchAuthors(paper._id); // Fetch authors only if not already fetched
         }
@@ -281,11 +282,11 @@ const HomePage = () => {
     };
 
     fetchAuthorsForCurrentPapers();
-  }, [JSON.stringify(currentPapers), JSON.stringify(authors)]);
+  }, [JSON.stringify(filteredPapers), JSON.stringify(authors)]);
 
   useEffect(() => {
     const fetchDepartmentsForCurrentPapers = async () => {
-      for (const paper of currentPapers) {
+      for (const paper of filteredPapers) {
         if (paper.department && !departments[paper.department]) {
           await fetchDepartment(paper.department); // Fetch department using 'department' field
         }
@@ -293,7 +294,7 @@ const HomePage = () => {
     };
 
     fetchDepartmentsForCurrentPapers();
-  }, [JSON.stringify(currentPapers), JSON.stringify(departments)]);
+  }, [JSON.stringify(filteredPapers), JSON.stringify(departments)]);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -319,6 +320,20 @@ const HomePage = () => {
     };
     fetchDepartments();
   }, []);
+
+  useEffect(() => {
+    // Reset current page when filters change
+    setCurrentPage(1);
+  }, [searchQuery, selectedDepartment]);
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredPapers.length / papersPerPage);
+  const indexOfLastPaper = currentPage * papersPerPage;
+  const indexOfFirstPaper = indexOfLastPaper - papersPerPage;
+  const currentPapers = filteredPapers.slice(
+    indexOfFirstPaper,
+    indexOfLastPaper
+  );
 
   const createPaperView = async (paperId) => {
     try {
@@ -575,13 +590,6 @@ const HomePage = () => {
     setIsAddingCategory(true); // Enable the input field for adding a new category
   };
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo(0, 0); // Cuộn lên đầu trang khi chuyển trang
-  };
-
-  const totalPages = Math.ceil(filteredPapers.length / itemsPerPage); // Sử dụng filteredPapers thay vì researchPapers
-
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <style>
@@ -615,7 +623,7 @@ const HomePage = () => {
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4 max-sm:px-4 max-sm:pt-[60px]">
+        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20">
           <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -679,6 +687,7 @@ const HomePage = () => {
                         index > 0 ? "mt-3" : ""
                       }`}
                     >
+                      {/* Paper content remains unchanged */}
                       <div className="flex justify-center w-fit lg:block max-lg:hidden">
                         <img
                           src={paper.cover_image}
@@ -761,54 +770,57 @@ const HomePage = () => {
                     </article>
                   </Link>
                 ))}
-                {/* Pagination */}
-                {filteredPapers.length > itemsPerPage && totalPages > 1 && (
-                  <div className="flex justify-end mt-4 max-md:justify-center">
-                    <StepBackwardOutlined
-                      className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
-                        currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                      } max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:w-[40px] max-md:flex max-md:items-center max-md:justify-center`}
-                      onClick={() =>
-                        handlePageChange(Math.max(currentPage - 1, 1))
-                      }
-                    />
-                    <input
-                      type="text"
-                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center max-md:w-14 max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:text-base"
-                      value={inputPage}
-                      onChange={(e) => setInputPage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const page = Math.max(
-                            1,
-                            Math.min(totalPages, Number(e.target.value) || 1)
-                          );
-                          handlePageChange(page);
-                          setInputPage(page);
-                        }
-                      }}
-                    />
-                    <span className="px-4 py-2 text-sm max-md:px-3 max-md:py-2 max-md:flex max-md:items-center max-md:text-base">
-                      / {totalPages}
-                    </span>
-                    <StepForwardOutlined
-                      className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
-                        currentPage === totalPages
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      } max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:w-[40px] max-md:flex max-md:items-center max-md:justify-center`}
-                      onClick={() =>
-                        handlePageChange(Math.min(currentPage + 1, totalPages))
-                      }
-                    />
+
+                {/* Pagination Controls */}
+                <div className="flex justify-center mt-6 gap-2">
+                  <button
+                    className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                  >
+                    Trước
+                  </button>
+
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      className={`px-3 py-1 border rounded-md ${
+                        currentPage === i + 1
+                          ? "bg-blue-500 text-white"
+                          : "bg-white"
+                      }`}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                  >
+                    Sau
+                  </button>
+                </div>
+
+                {/* Always show total count */}
+                <div className="flex justify-end items-center mt-6 max-md:justify-center">
+                  <div className="mr-4 text-sm text-gray-600 bg-white rounded-lg p-3 shadow-md border border-gray-200">
+                    <span className="font-medium">{filteredPapers.length}</span>{" "}
+                    bài báo
                   </div>
-                )}
+                </div>
               </div>
             </section>
 
-            <div className="ml-5 w-[29%] max-md:ml-0 max-md:hidden">
-              <section>
-                <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl max-md:px-5 max-md:mt-4 max-md:max-w-full">
+            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
+              <section className="sticky top-[195px] z-10">
+                <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-5 max-md:mt-4 max-md:max-w-full">
                   <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
                     <button
                       className={`px-4 pt-1.5 pb-3.5 rounded-lg ${
@@ -839,44 +851,55 @@ const HomePage = () => {
                     <div className="lg:block max-lg:hidden">
                       {Array.isArray(displayedPapers) &&
                         displayedPapers.map((paper, index) => (
-                          <img
+                          <Link
+                            to={`/scientific-paper/${paper.id}`}
                             key={`thumbnail-${index}`}
-                            src={paper.thumbnailUrl}
-                            className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
-                              index > 0 ? "mt-5" : ""
-                            }`}
-                            alt={paper.title}
-                          />
+                            onClick={() => createPaperView(paper.id)}
+                          >
+                            <img
+                              src={paper.thumbnailUrl}
+                              className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
+                                index > 0 ? "mt-5" : ""
+                              }`}
+                              alt={paper.title}
+                            />
+                          </Link>
                         ))}
                     </div>
 
                     <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
                       {Array.isArray(displayedPapers) &&
                         displayedPapers.map((paper, index) => (
-                          <React.Fragment key={`details-${index}`}>
-                            <h3
-                              className={`mt-1 w-[210px] h-[60px] text-justify text-black ${
-                                index > 0 ? "mt-1" : ""
-                              }`}
+                          <article
+                            key={`details-${index}`}
+                            className="w-full block"
+                          >
+                            <Link
+                              to={`/scientific-paper/${paper.id}`}
+                              onClick={() => createPaperView(paper.id)}
                             >
-                              <strong>
-                                {paper.title
-                                  ? paper.title.split(" ").length > 15
-                                    ? paper.title
-                                        .split(" ")
-                                        .slice(0, 15)
-                                        .join(" ") + "..."
-                                    : paper.title
-                                  : "No Title"}
-                              </strong>
-                            </h3>
-                            <div className="mt-3">
-                              {paper.author || "Unknown Author"}
-                            </div>
-                            <div className="mt-3 mb-6">
-                              {paper.department || "Unknown Department"}
-                            </div>
-                          </React.Fragment>
+                              <React.Fragment>
+                                <div className="paper-details-container flex flex-col gap-2 pt-0">
+                                  <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2 w-[220px]">
+                                    {paper.title
+                                      ? paper.title.split(" ").length > 18
+                                        ? paper.title
+                                            .split(" ")
+                                            .slice(0, 18)
+                                            .join(" ") + "..."
+                                        : paper.title
+                                      : "No Title"}
+                                  </h3>
+                                  <div className="text-gray-600 text-xs pt-0.5">
+                                    {paper.author || "Unknown Author"}
+                                  </div>
+                                  <div className="text-gray-500 text-xs pb-8">
+                                    {paper.department || "Unknown Department"}
+                                  </div>
+                                </div>
+                              </React.Fragment>
+                            </Link>
+                          </article>
                         ))}
                     </div>
                   </div>
