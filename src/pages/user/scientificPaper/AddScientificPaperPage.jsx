@@ -377,82 +377,173 @@ const AddScientificPaperPage = () => {
 
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
+        // Gọi cả hai hàm để lấy dữ liệu từ giảng viên và sinh viên
         const lecturerData = await userApi
           .getLecturerById(value)
-          .catch(() => null);
+          .catch((error) => {
+            console.log("Error fetching lecturer:", error.message);
+            return null; // Trả về null nếu không tìm thấy giảng viên
+          });
 
         const studentData = await userApi
           .getStudentById(value)
-          .catch(() => null);
+          .catch((error) => {
+            console.log("Error fetching student:", error.message);
+            return null; // Trả về null nếu không tìm thấy sinh viên
+          });
 
+        // Ưu tiên dữ liệu từ giảng viên nếu có, nếu không thì lấy từ sinh viên
         const userData = lecturerData || studentData;
 
         if (userData) {
-          const originalName = userData.full_name || userData.name || "";
-          const newOriginalNames = [...originalNames];
-          newOriginalNames[index] = originalName;
-          setOriginalNames(newOriginalNames);
+          // Set name information if user data was found
+          updatedAuthors[index].full_name =
+            userData.full_name || userData.name || "";
 
-          updatedAuthors[index].full_name = originalName;
+          try {
+            // Fetch user workplaces
+            const institutionsResponse = await userApi.getUserWorksByUserId(
+              value
+            );
+            console.log("User works response:", institutionsResponse);
 
-          // Automatically generate English name from Vietnamese name
-          const nameParts = originalName
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-            .split(" ");
-          const firstName = nameParts.shift(); // Remove the first word
-          updatedAuthors[index].full_name_eng = [...nameParts, firstName]
-            .map(
-              (word) =>
-                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-            )
-            .join(" ");
+            if (
+              institutionsResponse &&
+              Array.isArray(institutionsResponse) &&
+              institutionsResponse.length > 0
+            ) {
+              // Map the institution IDs to fetch their details
+              const institutions = await Promise.all(
+                institutionsResponse.map(async (item) => {
+                  try {
+                    const workUnit = await userApi.getWorkUnitById(
+                      item.work_unit_id
+                    );
+                    return {
+                      _id: workUnit._id,
+                      name:
+                        workUnit.name_vi ||
+                        workUnit.name ||
+                        "Unknown Institution",
+                    };
+                  } catch (workUnitError) {
+                    console.error(
+                      "Error fetching work unit details:",
+                      workUnitError
+                    );
+                    return {
+                      _id: item.work_unit_id,
+                      name: "Unknown Institution",
+                    };
+                  }
+                })
+              );
 
-          updatedAuthors[index].institutions = []; // Clear institutions for simplicity
+              updatedAuthors[index].institutions = institutions;
 
-          const newErrors = [...authorErrors];
-          if (!newErrors[index]) newErrors[index] = {};
-          newErrors[index].mssvMsgv = "";
-          newErrors[index].full_name = "";
-          setAuthorErrors(newErrors);
+              // If user has institutions, set the first one as default
+              if (institutions.length > 0) {
+                updatedAuthors[index].institution = institutions[0]._id;
+              }
+
+              console.log("Fetched institutions:", institutions);
+            } else {
+              console.log(
+                "No institutions found, fetching all work units as fallback"
+              );
+              // Fallback: if no specific institutions, fetch all work units
+              const allWorkUnits = await userApi.getAllWorkUnits();
+
+              if (allWorkUnits && Array.isArray(allWorkUnits)) {
+                updatedAuthors[index].institutions = allWorkUnits.map(
+                  (unit) => ({
+                    _id: unit._id,
+                    name: unit.name_vi || unit.name || "Unknown",
+                  })
+                );
+              } else {
+                updatedAuthors[index].institutions = [];
+                console.error("Failed to fetch work units:", allWorkUnits);
+              }
+            }
+          } catch (institutionsError) {
+            console.error("Error fetching institutions:", institutionsError);
+
+            // Fallback: fetch all work units if specific user institutions failed
+            try {
+              const allWorkUnits = await userApi.getAllWorkUnits();
+              if (allWorkUnits && Array.isArray(allWorkUnits)) {
+                updatedAuthors[index].institutions = allWorkUnits.map(
+                  (unit) => ({
+                    _id: unit._id,
+                    name: unit.name_vi || unit.name || "Unknown",
+                  })
+                );
+              } else {
+                updatedAuthors[index].institutions = [];
+              }
+            } catch (workUnitsError) {
+              console.error("Error fetching all work units:", workUnitsError);
+              updatedAuthors[index].institutions = [];
+            }
+          }
+
+          // Generate English name from Vietnamese name
+          if (updatedAuthors[index].full_name) {
+            const nameParts = updatedAuthors[index].full_name
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+              .split(" ");
+            const firstName = nameParts.shift(); // Remove the first word
+            updatedAuthors[index].full_name_eng = [...nameParts, firstName]
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
+              .join(" ");
+          }
         } else {
-          updatedAuthors[index].full_name = ""; // Clear full_name if mssvMsgv is not found
-          updatedAuthors[index].full_name_eng = ""; // Clear full_name_eng as well
-          updatedAuthors[index].institutions = [];
-          const newOriginalNames = [...originalNames];
-          newOriginalNames[index] = ""; // Reset original name to empty
-          setOriginalNames(newOriginalNames);
+          // No user found - clear fields
+          updatedAuthors[index].full_name = "";
+          updatedAuthors[index].full_name_eng = "";
+
+          // Still try to fetch all work units
+          try {
+            const allWorkUnits = await userApi.getAllWorkUnits();
+            if (allWorkUnits && Array.isArray(allWorkUnits)) {
+              updatedAuthors[index].institutions = allWorkUnits.map((unit) => ({
+                _id: unit._id,
+                name: unit.name_vi || unit.name || "Unknown",
+              }));
+            } else {
+              updatedAuthors[index].institutions = [];
+            }
+          } catch (error) {
+            console.error("Error fetching all work units:", error);
+            updatedAuthors[index].institutions = [];
+          }
         }
       } catch (error) {
-        updatedAuthors[index].institutions = [];
-      }
-    } else if (field === "full_name") {
-      // Name validation when user manually edits the name field
-      const newErrors = [...authorErrors];
-      if (!newErrors[index]) newErrors[index] = {};
+        console.error("Error in handleAuthorChange:", error);
+        // On any error, clear author name and try to fetch all work units
+        updatedAuthors[index].full_name = "";
+        updatedAuthors[index].full_name_eng = "";
 
-      // Check if we have an original name to compare with
-      if (originalNames[index] && originalNames[index].trim() !== "") {
-        // Compare the edited name with the original name from API
-        if (value.trim() !== originalNames[index].trim()) {
-          newErrors[index].full_name = "Tên không đúng";
-        } else {
-          newErrors[index].full_name = "";
+        try {
+          const allWorkUnits = await userApi.getAllWorkUnits();
+          if (allWorkUnits && Array.isArray(allWorkUnits)) {
+            updatedAuthors[index].institutions = allWorkUnits.map((unit) => ({
+              _id: unit._id,
+              name: unit.name_vi || unit.name || "Unknown",
+            }));
+          } else {
+            updatedAuthors[index].institutions = [];
+          }
+        } catch (workUnitsError) {
+          console.error("Error fetching all work units:", workUnitsError);
+          updatedAuthors[index].institutions = [];
         }
-        setAuthorErrors(newErrors);
       }
-
-      // Automatically populate English name based on Vietnamese name
-      const nameParts = value
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
-        .split(" ");
-      const firstName = nameParts.shift(); // Remove the first word
-      updatedAuthors[index].full_name_eng = [...nameParts, firstName]
-        .map(
-          (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-        )
-        .join(" ");
     }
 
     setAuthors(updatedAuthors);
@@ -1436,9 +1527,8 @@ const AddScientificPaperPage = () => {
                       </div>
                       {/* Row 2 */}
                       <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
-                        <div className="col-span-3"></div>
                         {/* Vai trò */}
-                        <div className="col-span-4">
+                        <div className="col-span-3">
                           <label
                             htmlFor={`role-${index}`}
                             className="block text-sm font-medium text-black pb-1"
@@ -1575,6 +1665,22 @@ const AddScientificPaperPage = () => {
                                 </div>
                               </div>
                             )}
+                          </div>
+                        </div>
+                        {/* Điểm đóng góp */}
+                        <div className="col-span-3">
+                          <label
+                            htmlFor={`role-${index}`}
+                            className="block text-sm font-medium text-black pb-1"
+                          >
+                            Điểm đóng góp:
+                          </label>
+                          <div className="relative">
+                            <Input
+                              className="w-1/2 text-center"
+                              readOnly
+                              id={`contribution-${index}`}
+                            ></Input>
                           </div>
                         </div>
                       </div>

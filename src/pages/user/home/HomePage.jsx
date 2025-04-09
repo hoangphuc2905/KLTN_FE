@@ -763,44 +763,78 @@ const HomePage = () => {
                 ))}
                 {/* Pagination */}
                 {filteredPapers.length > itemsPerPage && totalPages > 1 && (
-                  <div className="flex justify-end mt-4 max-md:justify-center">
-                    <StepBackwardOutlined
-                      className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
-                        currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                      } max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:w-[40px] max-md:flex max-md:items-center max-md:justify-center`}
-                      onClick={() =>
-                        handlePageChange(Math.max(currentPage - 1, 1))
-                      }
-                    />
-                    <input
-                      type="text"
-                      className="px-4 py-2 text-sm border rounded-lg w-16 text-center max-md:w-14 max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:text-base"
-                      value={inputPage}
-                      onChange={(e) => setInputPage(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          const page = Math.max(
-                            1,
-                            Math.min(totalPages, Number(e.target.value) || 1)
-                          );
-                          handlePageChange(page);
-                          setInputPage(page);
+                  <div className="flex justify-end items-center mt-6 max-md:justify-center">
+                    <div className="flex items-center bg-white rounded-lg p-3 shadow-md border border-gray-200 w-fit">
+                      <button
+                        className={`flex items-center justify-center px-3 py-2 mr-2 rounded-lg text-sm ${
+                          currentPage === 1
+                            ? "opacity-50 cursor-not-allowed bg-gray-100"
+                            : "bg-blue-100 hover:bg-blue-200 cursor-pointer text-blue-700"
+                        } max-md:h-[40px] max-md:w-[40px]`}
+                        onClick={() =>
+                          currentPage > 1 && handlePageChange(currentPage - 1)
                         }
-                      }}
-                    />
-                    <span className="px-4 py-2 text-sm max-md:px-3 max-md:py-2 max-md:flex max-md:items-center max-md:text-base">
-                      / {totalPages}
-                    </span>
-                    <StepForwardOutlined
-                      className={`px-2 py-2 text-black rounded-lg text-sm cursor-pointer ${
-                        currentPage === totalPages
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      } max-md:px-2 max-md:py-2 max-md:h-[40px] max-md:w-[40px] max-md:flex max-md:items-center max-md:justify-center`}
-                      onClick={() =>
-                        handlePageChange(Math.min(currentPage + 1, totalPages))
-                      }
-                    />
+                        disabled={currentPage === 1}
+                      >
+                        <StepBackwardOutlined />
+                      </button>
+
+                      <div className="flex items-center">
+                        <input
+                          type="number"
+                          min="1"
+                          max={totalPages}
+                          className="px-3 py-2 text-sm border border-gray-300 rounded-lg w-16 text-center max-md:w-14 max-md:h-[40px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          value={inputPage}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "" || /^\d+$/.test(value)) {
+                              setInputPage(value);
+                            }
+                          }}
+                          onBlur={(e) => {
+                            const page = Math.max(
+                              1,
+                              Math.min(totalPages, Number(e.target.value) || 1)
+                            );
+                            handlePageChange(page);
+                            setInputPage(page);
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              const page = Math.max(
+                                1,
+                                Math.min(
+                                  totalPages,
+                                  Number(e.target.value) || 1
+                                )
+                              );
+                              handlePageChange(page);
+                              setInputPage(page);
+                            }
+                          }}
+                        />
+
+                        <span className="px-3 py-2 text-sm font-medium max-md:flex max-md:items-center">
+                          / {totalPages}
+                        </span>
+                      </div>
+
+                      <button
+                        className={`flex items-center justify-center px-3 py-2 ml-2 rounded-lg text-sm ${
+                          currentPage === totalPages
+                            ? "opacity-50 cursor-not-allowed bg-gray-100"
+                            : "bg-blue-100 hover:bg-blue-200 cursor-pointer text-blue-700"
+                        } max-md:h-[40px] max-md:w-[40px]`}
+                        onClick={() =>
+                          currentPage < totalPages &&
+                          handlePageChange(currentPage + 1)
+                        }
+                        disabled={currentPage === totalPages}
+                      >
+                        <StepForwardOutlined />
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
