@@ -326,6 +326,17 @@ const HomePage = () => {
     setCurrentPage(1);
   }, [searchQuery, selectedDepartment]);
 
+  // Create a ref for the papers section to scroll to
+  const papersListRef = useRef(null);
+
+  // Function to handle page change and scroll to top
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+
+    // Scroll to the top of the page
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // Calculate pagination values
   const totalPages = Math.ceil(filteredPapers.length / papersPerPage);
   const indexOfLastPaper = currentPage * papersPerPage;
@@ -672,7 +683,7 @@ const HomePage = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
           <div className="flex gap-5 max-md:flex-col">
-            <section className="w-[71%] max-md:w-full">
+            <section className="w-[71%] max-md:w-full" ref={papersListRef}>
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
                 {currentPapers.map((paper, index) => (
                   <Link
@@ -777,7 +788,7 @@ const HomePage = () => {
                     className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={currentPage === 1}
                     onClick={() =>
-                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                      handlePageChange(Math.max(currentPage - 1, 1))
                     }
                   >
                     Trước
@@ -791,7 +802,7 @@ const HomePage = () => {
                           ? "bg-blue-500 text-white"
                           : "bg-white"
                       }`}
-                      onClick={() => setCurrentPage(i + 1)}
+                      onClick={() => handlePageChange(i + 1)}
                     >
                       {i + 1}
                     </button>
@@ -801,19 +812,11 @@ const HomePage = () => {
                     className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={currentPage === totalPages || totalPages === 0}
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                      handlePageChange(Math.min(currentPage + 1, totalPages))
                     }
                   >
                     Sau
                   </button>
-                </div>
-
-                {/* Always show total count */}
-                <div className="flex justify-end items-center mt-6 max-md:justify-center">
-                  <div className="mr-4 text-sm text-gray-600 bg-white rounded-lg p-3 shadow-md border border-gray-200">
-                    <span className="font-medium">{filteredPapers.length}</span>{" "}
-                    bài báo
-                  </div>
                 </div>
               </div>
             </section>
