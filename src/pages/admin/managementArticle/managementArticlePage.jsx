@@ -103,7 +103,7 @@ const ManagementAriticle = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusFilterRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const itemsPerPage = 7; // Change to 7 items per page
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -205,34 +205,75 @@ const ManagementAriticle = () => {
     "refused",
   ]; // Updated status values
 
+  // Implement filtering logic with the proper variables
   const filteredPapers = papers.filter((paper) => {
-    const authorCount = parseInt(paper.author_count?.split("(")[0] || 0); // Adjusted for correct format
+    // Filter by tab selection
+    const tabMatch = activeTab === "all" ? true : paper.status === activeTab;
+
+    // Filter by paper type
+    const paperTypeMatch =
+      filterPaperType.includes("Tất cả") ||
+      filterPaperType.includes(paper.article_type?.type_name);
+
+    // Filter by group
+    const groupMatch =
+      filterGroup.includes("Tất cả") ||
+      filterGroup.includes(paper.article_group?.group_name);
+
+    // Filter by paper title
+    const titleMatch =
+      !filterPaperTitle ||
+      paper.title_vn?.toLowerCase().includes(filterPaperTitle.toLowerCase());
+
+    // Filter by author name
+    const authorNameMatch =
+      !filterAuthorName ||
+      paper.author?.some(
+        (a) =>
+          (a.author_name_vi || "")
+            .toLowerCase()
+            .includes(filterAuthorName.toLowerCase()) ||
+          (a.author_name_en || "")
+            .toLowerCase()
+            .includes(filterAuthorName.toLowerCase())
+      );
+
+    // Filter by author count
+    const authorCountFrom = filterAuthorCountFrom
+      ? parseInt(filterAuthorCountFrom)
+      : 0;
+    const authorCountTo = filterAuthorCountTo
+      ? parseInt(filterAuthorCountTo)
+      : Infinity;
+    const authorCountMatch =
+      (!filterAuthorCountFrom && !filterAuthorCountTo) ||
+      (paper.author_count >= authorCountFrom &&
+        paper.author_count <= authorCountTo);
+
+    // Filter by role
+    const roleMatch =
+      filterRole.includes("Tất cả") ||
+      paper.author?.some((a) => filterRole.includes(a.role));
+
+    // Filter by institution
+    const institutionMatch =
+      filterInstitution.includes("Tất cả") ||
+      filterInstitution.includes(paper.department);
+
+    // Filter by status
+    const statusMatch =
+      filterStatus.includes("Tất cả") || filterStatus.includes(paper.status);
+
     return (
-      (filterPaperType.includes("Tất cả") ||
-        filterPaperType.includes(paper.article_type?.type_name)) &&
-      (filterGroup.includes("Tất cả") ||
-        filterGroup.includes(paper.article_group?.group_name)) &&
-      (filterPaperTitle === "" || paper.title_vn.includes(filterPaperTitle)) &&
-      (filterAuthorName === "" ||
-        paper.author.some((a) =>
-          a.author_name_vi.includes(filterAuthorName)
-        )) &&
-      (filterAuthorCountFrom === "" ||
-        authorCount >= parseInt(filterAuthorCountFrom)) &&
-      (filterAuthorCountTo === "" ||
-        authorCount <= parseInt(filterAuthorCountTo)) &&
-      (filterRole.includes("Tất cả") ||
-        paper.author.some((a) => filterRole.includes(a.role))) &&
-      (filterInstitution.includes("Tất cả") ||
-        filterInstitution.includes(paper.department)) &&
-      (filterStatus.includes("Tất cả") ||
-        filterStatus.includes(paper.status.toString())) &&
-      (activeTab === "all" ||
-        paper.status.toString() === activeTab ||
-        (activeTab === "pending" && paper.status === "pending") ||
-        (activeTab === "approved" && paper.status === "approved") ||
-        (activeTab === "revision" && paper.status === "revision") || // Ensure revision papers appear in the "Chờ chỉnh sửa" tab
-        (activeTab === "refused" && paper.status === "refused"))
+      tabMatch &&
+      paperTypeMatch &&
+      groupMatch &&
+      titleMatch &&
+      authorNameMatch &&
+      authorCountMatch &&
+      roleMatch &&
+      institutionMatch &&
+      statusMatch
     );
   });
 
@@ -1004,8 +1045,10 @@ const ManagementAriticle = () => {
                   pageSize: itemsPerPage,
                   total: filteredPapers.length,
                   onChange: (page) => setCurrentPage(page),
+                  showSizeChanger: false, // Disable page size changer
+                  position: ["bottomCenter"], // Center the pagination controls
                 }}
-                rowKey="id"
+                rowKey="_id" // Using _id as the unique key
                 className="text-sm"
                 scroll={{
                   x: newColumns.reduce(
@@ -1015,6 +1058,7 @@ const ManagementAriticle = () => {
                 }}
                 onRow={(record) => ({
                   onClick: () => handleRowClick(record),
+                  style: { cursor: "pointer" },
                 })}
               />
             </div>

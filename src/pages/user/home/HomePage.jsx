@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
-import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
+// import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
 import { Modal, Button, Input, message } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
@@ -15,8 +15,6 @@ const HomePage = () => {
   const [authors, setAuthors] = useState({});
   const [departments, setDepartments] = useState({});
   const [activeTab, setActiveTab] = useState("recent");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [inputPage, setInputPage] = useState(currentPage);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [archivedPapers, setArchivedPapers] = useState([]);
@@ -30,10 +28,8 @@ const HomePage = () => {
   const [collections, setCollections] = useState([]);
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
-  const itemsPerPage = 10;
-
-  const indexOfLastPaper = currentPage * itemsPerPage;
-  const indexOfFirstPaper = indexOfLastPaper - itemsPerPage;
+  const [currentPage, setCurrentPage] = useState(1);
+  const papersPerPage = 7;
 
   const scrollRef = useRef(null);
 
@@ -42,10 +38,6 @@ const HomePage = () => {
       scrollRef.current.scrollTop = 0;
     }
   }, [activeTab]);
-
-  useEffect(() => {
-    setInputPage(currentPage);
-  }, [currentPage]);
 
   useEffect(() => {
     const fetchResearchPapers = async () => {
@@ -220,24 +212,33 @@ const HomePage = () => {
       ? departments[paper.department] === selectedDepartment
       : true;
 
+    console.log(
+      `Paper ${paper._id} department: ${paper.department}, mapped: ${
+        departments[paper.department]
+      }`
+    );
+    console.log(`Department match: ${departmentMatch}`);
+
     const searchMatch = searchQuery
-      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) || // Match title
+      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         paper.authors?.some((author) =>
           author.toLowerCase().includes(searchQuery.toLowerCase())
-        ) || // Match authors
-        paper.publish_date?.toString().includes(searchQuery) || // Match year
+        ) ||
+        paper.publish_date?.toString().includes(searchQuery) ||
         paper.keywords?.some((keyword) =>
           keyword.toLowerCase().includes(searchQuery.toLowerCase())
-        ) // Match keywords
+        )
       : true;
+
+    console.log(`Search match: ${searchMatch}`);
 
     return departmentMatch && searchMatch;
   });
 
-  const currentPapers = filteredPapers.slice(
-    indexOfFirstPaper,
-    indexOfLastPaper
-  ); // Định nghĩa currentPapers từ filteredPapers
+  console.log("All research papers:", researchPapers.length);
+  console.log("After filtering:", filteredPapers.length);
+  console.log("selectedDepartment:", selectedDepartment);
+  console.log("searchQuery:", searchQuery);
 
   const displayedPapers =
     activeTab === "recent" ? recentPapers : featuredPapers; // Thêm lại định nghĩa displayedPapers
@@ -246,7 +247,7 @@ const HomePage = () => {
     const fetchCountsForCurrentPapers = async () => {
       try {
         const updatedPapers = await Promise.all(
-          currentPapers.map(async (paper) => {
+          filteredPapers.map(async (paper) => {
             const [viewCount, downloadCount] = await Promise.all([
               fetchViewCount(paper._id),
               fetchDownloadCount(paper._id),
@@ -266,14 +267,14 @@ const HomePage = () => {
       }
     };
 
-    if (currentPapers.length > 0) {
+    if (filteredPapers.length > 0) {
       fetchCountsForCurrentPapers();
     }
-  }, [JSON.stringify(currentPapers)]); // Sử dụng currentPapers đã được định nghĩa
+  }, [JSON.stringify(filteredPapers)]); // Using filteredPapers instead of currentPapers
 
   useEffect(() => {
     const fetchAuthorsForCurrentPapers = async () => {
-      for (const paper of currentPapers) {
+      for (const paper of filteredPapers) {
         if (!authors[paper._id]) {
           await fetchAuthors(paper._id); // Fetch authors only if not already fetched
         }
@@ -281,11 +282,11 @@ const HomePage = () => {
     };
 
     fetchAuthorsForCurrentPapers();
-  }, [JSON.stringify(currentPapers), JSON.stringify(authors)]);
+  }, [JSON.stringify(filteredPapers), JSON.stringify(authors)]);
 
   useEffect(() => {
     const fetchDepartmentsForCurrentPapers = async () => {
-      for (const paper of currentPapers) {
+      for (const paper of filteredPapers) {
         if (paper.department && !departments[paper.department]) {
           await fetchDepartment(paper.department); // Fetch department using 'department' field
         }
@@ -293,7 +294,7 @@ const HomePage = () => {
     };
 
     fetchDepartmentsForCurrentPapers();
-  }, [JSON.stringify(currentPapers), JSON.stringify(departments)]);
+  }, [JSON.stringify(filteredPapers), JSON.stringify(departments)]);
 
   useEffect(() => {
     const fetchDepartments = async () => {
@@ -319,6 +320,20 @@ const HomePage = () => {
     };
     fetchDepartments();
   }, []);
+
+  useEffect(() => {
+    // Reset current page when filters change
+    setCurrentPage(1);
+  }, [searchQuery, selectedDepartment]);
+
+  // Calculate pagination values
+  const totalPages = Math.ceil(filteredPapers.length / papersPerPage);
+  const indexOfLastPaper = currentPage * papersPerPage;
+  const indexOfFirstPaper = indexOfLastPaper - papersPerPage;
+  const currentPapers = filteredPapers.slice(
+    indexOfFirstPaper,
+    indexOfLastPaper
+  );
 
   const createPaperView = async (paperId) => {
     try {
@@ -575,13 +590,6 @@ const HomePage = () => {
     setIsAddingCategory(true); // Enable the input field for adding a new category
   };
 
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
-    window.scrollTo(0, 0); // Cuộn lên đầu trang khi chuyển trang
-  };
-
-  const totalPages = Math.ceil(filteredPapers.length / itemsPerPage); // Sử dụng filteredPapers thay vì researchPapers
-
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <style>
@@ -679,6 +687,7 @@ const HomePage = () => {
                         index > 0 ? "mt-3" : ""
                       }`}
                     >
+                      {/* Paper content remains unchanged */}
                       <div className="flex justify-center w-fit lg:block max-lg:hidden">
                         <img
                           src={paper.cover_image}
@@ -761,82 +770,51 @@ const HomePage = () => {
                     </article>
                   </Link>
                 ))}
-                {/* Pagination */}
-                {filteredPapers.length > itemsPerPage && totalPages > 1 && (
-                  <div className="flex justify-end items-center mt-6 max-md:justify-center">
-                    <div className="flex items-center bg-white rounded-lg p-3 shadow-md border border-gray-200 w-fit">
-                      <button
-                        className={`flex items-center justify-center px-3 py-2 mr-2 rounded-lg text-sm ${
-                          currentPage === 1
-                            ? "opacity-50 cursor-not-allowed bg-gray-100"
-                            : "bg-blue-100 hover:bg-blue-200 cursor-pointer text-blue-700"
-                        } max-md:h-[40px] max-md:w-[40px]`}
-                        onClick={() =>
-                          currentPage > 1 && handlePageChange(currentPage - 1)
-                        }
-                        disabled={currentPage === 1}
-                      >
-                        <StepBackwardOutlined />
-                      </button>
 
-                      <div className="flex items-center">
-                        <input
-                          type="number"
-                          min="1"
-                          max={totalPages}
-                          className="px-3 py-2 text-sm border border-gray-300 rounded-lg w-16 text-center max-md:w-14 max-md:h-[40px] focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                          value={inputPage}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            if (value === "" || /^\d+$/.test(value)) {
-                              setInputPage(value);
-                            }
-                          }}
-                          onBlur={(e) => {
-                            const page = Math.max(
-                              1,
-                              Math.min(totalPages, Number(e.target.value) || 1)
-                            );
-                            handlePageChange(page);
-                            setInputPage(page);
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              const page = Math.max(
-                                1,
-                                Math.min(
-                                  totalPages,
-                                  Number(e.target.value) || 1
-                                )
-                              );
-                              handlePageChange(page);
-                              setInputPage(page);
-                            }
-                          }}
-                        />
+                {/* Pagination Controls */}
+                <div className="flex justify-center mt-6 gap-2">
+                  <button
+                    className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={currentPage === 1}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                  >
+                    Trước
+                  </button>
 
-                        <span className="px-3 py-2 text-sm font-medium max-md:flex max-md:items-center">
-                          / {totalPages}
-                        </span>
-                      </div>
+                  {[...Array(totalPages)].map((_, i) => (
+                    <button
+                      key={i}
+                      className={`px-3 py-1 border rounded-md ${
+                        currentPage === i + 1
+                          ? "bg-blue-500 text-white"
+                          : "bg-white"
+                      }`}
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </button>
+                  ))}
 
-                      <button
-                        className={`flex items-center justify-center px-3 py-2 ml-2 rounded-lg text-sm ${
-                          currentPage === totalPages
-                            ? "opacity-50 cursor-not-allowed bg-gray-100"
-                            : "bg-blue-100 hover:bg-blue-200 cursor-pointer text-blue-700"
-                        } max-md:h-[40px] max-md:w-[40px]`}
-                        onClick={() =>
-                          currentPage < totalPages &&
-                          handlePageChange(currentPage + 1)
-                        }
-                        disabled={currentPage === totalPages}
-                      >
-                        <StepForwardOutlined />
-                      </button>
-                    </div>
+                  <button
+                    className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={currentPage === totalPages || totalPages === 0}
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                  >
+                    Sau
+                  </button>
+                </div>
+
+                {/* Always show total count */}
+                <div className="flex justify-end items-center mt-6 max-md:justify-center">
+                  <div className="mr-4 text-sm text-gray-600 bg-white rounded-lg p-3 shadow-md border border-gray-200">
+                    <span className="font-medium">{filteredPapers.length}</span>{" "}
+                    bài báo
                   </div>
-                )}
+                </div>
               </div>
             </section>
 
