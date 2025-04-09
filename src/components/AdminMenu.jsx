@@ -119,7 +119,11 @@ const AdminMenu = ({ currentRole }) => {
                 <FaTable /> Dạng Bảng
               </Link>
               <Link
-                to="/admin/management/point"
+                to={
+                  currentRole === "admin"
+                    ? "/admin/management/point"
+                    : "/admin/management/point/department"
+                }
                 className="submenu-item"
                 onClick={toggleMenu}
               >
