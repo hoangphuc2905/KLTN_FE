@@ -839,44 +839,55 @@ const HomePage = () => {
                     <div className="lg:block max-lg:hidden">
                       {Array.isArray(displayedPapers) &&
                         displayedPapers.map((paper, index) => (
-                          <img
+                          <Link
+                            to={`/scientific-paper/${paper.id}`}
                             key={`thumbnail-${index}`}
-                            src={paper.thumbnailUrl}
-                            className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
-                              index > 0 ? "mt-5" : ""
-                            }`}
-                            alt={paper.title}
-                          />
+                            onClick={() => createPaperView(paper.id)}
+                          >
+                            <img
+                              src={paper.thumbnailUrl}
+                              className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
+                                index > 0 ? "mt-5" : ""
+                              }`}
+                              alt={paper.title}
+                            />
+                          </Link>
                         ))}
                     </div>
 
                     <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
                       {Array.isArray(displayedPapers) &&
                         displayedPapers.map((paper, index) => (
-                          <React.Fragment key={`details-${index}`}>
-                            <h3
-                              className={`mt-1 w-[210px] h-[60px] text-justify text-black ${
-                                index > 0 ? "mt-1" : ""
-                              }`}
+                          <article
+                            key={`details-${index}`}
+                            className="w-full block"
+                          >
+                            <Link
+                              to={`/scientific-paper/${paper.id}`}
+                              onClick={() => createPaperView(paper.id)}
                             >
-                              <strong>
-                                {paper.title
-                                  ? paper.title.split(" ").length > 15
-                                    ? paper.title
-                                        .split(" ")
-                                        .slice(0, 15)
-                                        .join(" ") + "..."
-                                    : paper.title
-                                  : "No Title"}
-                              </strong>
-                            </h3>
-                            <div className="mt-3">
-                              {paper.author || "Unknown Author"}
-                            </div>
-                            <div className="mt-3 mb-6">
-                              {paper.department || "Unknown Department"}
-                            </div>
-                          </React.Fragment>
+                              <React.Fragment>
+                                <div className="paper-details-container flex flex-col gap-2 pt-0">
+                                  <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2">
+                                    {paper.title
+                                      ? paper.title.split(" ").length > 18
+                                        ? paper.title
+                                            .split(" ")
+                                            .slice(0, 18)
+                                            .join(" ") + "..."
+                                        : paper.title
+                                      : "No Title"}
+                                  </h3>
+                                  <div className="text-gray-600 text-xs pt-0.5">
+                                    {paper.author || "Unknown Author"}
+                                  </div>
+                                  <div className="text-gray-500 text-xs pb-8">
+                                    {paper.department || "Unknown Department"}
+                                  </div>
+                                </div>
+                              </React.Fragment>
+                            </Link>
+                          </article>
                         ))}
                     </div>
                   </div>
