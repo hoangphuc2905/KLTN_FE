@@ -281,6 +281,7 @@ const ManagementDepartmentChart = () => {
         if (response && response.papers) {
           const formattedPapers = response.papers.map((paper, index) => ({
             id: index + 1,
+            _id: paper._id, // Add the _id property for navigation
             title: paper.title_vn,
             views: paper.viewCount,
             downloads: paper.downloadCount,
@@ -402,23 +403,56 @@ const ManagementDepartmentChart = () => {
       title: "STT",
       dataIndex: "id",
       key: "id",
+      width: 60,
     },
     {
       title: "Tên bài nghiên cứu",
       dataIndex: "title",
       key: "title",
+      width: 320,
+      ellipsis: true,
+      render: (text, record) => (
+        <div
+          className="cursor-pointer hover:text-blue-500"
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/scientific-paper/${record._id}`);
+          }}
+          style={{
+            maxWidth: "300px",
+            whiteSpace: "nowrap",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+          }}
+          title={text}
+        >
+          {text}
+        </div>
+      ),
     },
     {
       title: "Lượt xem",
       dataIndex: "views",
       key: "views",
+      width: 95,
     },
     {
       title: "Lượt tải",
       dataIndex: "downloads",
       key: "downloads",
+      width: 95,
     },
   ];
+
+  // Add the row click handler for the entire table
+  const onRowClick = (record) => {
+    return {
+      onClick: () => {
+        navigate(`/scientific-paper/${record._id}`);
+      },
+      style: { cursor: "pointer" },
+    };
+  };
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -455,30 +489,30 @@ const ManagementDepartmentChart = () => {
             <div className="flex gap-4 justify-center w-full">
               <div
                 className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-gray-700">
+                <div className="text-lg font-bold text-gray-700 pt-4">
                   {stats.totalPapers ?? 0}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng bài báo</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng bài báo</div>
               </div>
               <div
                 className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#00A3FF]">
+                <div className="text-lg font-bold text-[#00A3FF] pt-4">
                   {(stats.totalViews ?? 0).toLocaleString()}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng lượt xem</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
               <div
                 className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#FFB700]">
+                <div className="text-lg font-bold text-[#FFB700] pt-4">
                   {(stats.totalDownloads ?? 0).toLocaleString()}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng lượt tải</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
               </div>
             </div>
             <div className="ml-4">
@@ -620,6 +654,7 @@ const ManagementDepartmentChart = () => {
                 dataSource={topPapers}
                 pagination={false}
                 rowKey="id"
+                onRow={onRowClick} // Add the row click handler
               />
             </div>
           </div>
