@@ -10,6 +10,16 @@ import userApi from "../../../api/api";
 const ManagementPoint = () => {
   const [papers, setPapers] = useState([]);
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    const date = new Date(dateString);
+    return `${date.getDate().toString().padStart(2, "0")}/${(
+      date.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
+
   useEffect(() => {
     const fetchPapers = async () => {
       try {
@@ -78,7 +88,7 @@ const ManagementPoint = () => {
                 authorCount: paper.author_count || "0",
                 role: displayRole, // Use the mapped display role
                 institution: departmentName, // Use the fetched department name
-                publicationDate: paper.publish_date || "N/A",
+                publicationDate: formatDate(paper.publish_date), // Format publication date
                 dateAdded: paper.createdAt || "N/A",
                 featured: true, // Set default value
                 points: points, // Use the point value from the API
@@ -331,6 +341,7 @@ const ManagementPoint = () => {
       sortOrder:
         sortedInfo.columnKey === "publicationDate" ? sortedInfo.order : null,
       width: 160,
+      render: (date) => <span>{formatDate(date)}</span>, // Ensure consistent format
     },
     {
       title: "ĐIỂM",

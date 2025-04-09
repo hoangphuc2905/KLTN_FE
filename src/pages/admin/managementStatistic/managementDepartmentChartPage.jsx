@@ -14,6 +14,7 @@ import {
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Table } from "antd";
 import { useNavigate } from "react-router-dom";
+import userApi from "../../../api/api";
 
 // Register ChartJS components
 ChartJS.register(
@@ -129,13 +130,6 @@ const mockData = [
   },
 ];
 
-const stats = {
-  totalPapers: mockData.reduce((sum, item) => sum + item.totalPapers, 0),
-  totalViews: mockData.reduce((sum, item) => sum + item.totalViews, 0),
-  totalDownloads: mockData.reduce((sum, item) => sum + item.totalDownloads, 0),
-  year: mockData[0]?.year || new Date().getFullYear(),
-};
-
 const typeChartData = {
   labels: mockData.map((item) => item.selectedPaperType),
   datasets: [
@@ -239,50 +233,71 @@ const donutOptions = {
   cutout: "70%",
 };
 
-const topPapers = mockData.map((item, index) => ({
-  id: index + 1,
-  title: item.titleEn,
-  views: item.totalViews,
-  downloads: item.totalDownloads,
-  contributions: item.point,
-}));
-
-const columns = [
-  {
-    title: "STT",
-    dataIndex: "id",
-    key: "id",
-  },
-  {
-    title: "Tên bài nghiên cứu",
-    dataIndex: "title",
-    key: "title",
-  },
-  {
-    title: "Lượt xem",
-    dataIndex: "views",
-    key: "views",
-  },
-  {
-    title: "Lượt tải",
-    dataIndex: "downloads",
-    key: "downloads",
-  },
-  {
-    title: "Điểm đóng góp",
-    dataIndex: "contributions",
-    key: "contributions",
-  },
-];
-
 const ManagementDepartmentChart = () => {
   const [selectedQuarters, setSelectedQuarters] = useState(["All"]);
   const [showFilter, setShowFilter] = useState(false);
   const [selectedFields, setSelectedFields] = useState(["All"]);
   const [showFieldFilter, setShowFieldFilter] = useState(false);
+  const [stats, setStats] = useState({
+    totalPapers: 0,
+    totalViews: 0,
+    totalDownloads: 0,
+  });
+  const [topPapers, setTopPapers] = useState([]);
   const filterRef = useRef(null);
   const fieldFilterRef = useRef(null);
   const navigate = useNavigate();
+  const departmentId = localStorage.getItem("department");
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        const data = await userApi.getStatisticsByDepartmentId(departmentId);
+
+        const updatedStats = {
+          totalPapers: data.total_papers ?? 0,
+          totalViews: data.total_views ?? 0,
+          totalDownloads: data.total_downloads ?? 0,
+        };
+        console.log("✅ Setting stats:", updatedStats);
+        setStats(updatedStats);
+      } catch (error) {
+        console.error("❌ Failed to fetch statistics:", error);
+      }
+    };
+
+    if (departmentId) {
+      fetchStatistics();
+    }
+  }, [departmentId]);
+
+  useEffect(() => {
+    const fetchTopPapers = async () => {
+      try {
+        const response =
+          await userApi.getTop3MostViewedAndDownloadedPapersByDepartment(
+            departmentId
+          );
+        if (response && response.papers) {
+          const formattedPapers = response.papers.map((paper, index) => ({
+            id: index + 1,
+            title: paper.title_vn,
+            views: paper.viewCount,
+            downloads: paper.downloadCount,
+          }));
+          setTopPapers(formattedPapers);
+        } else {
+          console.error("Unexpected API response structure:", response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch top papers:", error);
+      }
+    };
+
+    if (departmentId) {
+      fetchTopPapers();
+    }
+  }, [departmentId]);
 
   const handleQuarterChange = (event) => {
     const value = event.target.value;
@@ -382,6 +397,29 @@ const ManagementDepartmentChart = () => {
     ],
   };
 
+  const columns = [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "Tên bài nghiên cứu",
+      dataIndex: "title",
+      key: "title",
+    },
+    {
+      title: "Lượt xem",
+      dataIndex: "views",
+      key: "views",
+    },
+    {
+      title: "Lượt tải",
+      dataIndex: "downloads",
+      key: "downloads",
+    },
+  ];
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -420,7 +458,7 @@ const ManagementDepartmentChart = () => {
                 style={{ width: "200px", height: "50px" }}
               >
                 <div className="text-lg font-bold text-gray-700">
-                  {stats.totalPapers}
+                  {stats.totalPapers ?? 0}
                 </div>
                 <div className="text-gray-500 mt-1 text-sm">Tổng bài báo</div>
               </div>
@@ -429,7 +467,7 @@ const ManagementDepartmentChart = () => {
                 style={{ width: "200px", height: "50px" }}
               >
                 <div className="text-lg font-bold text-[#00A3FF]">
-                  {stats.totalViews.toLocaleString()}
+                  {(stats.totalViews ?? 0).toLocaleString()}
                 </div>
                 <div className="text-gray-500 mt-1 text-sm">Tổng lượt xem</div>
               </div>
@@ -438,7 +476,7 @@ const ManagementDepartmentChart = () => {
                 style={{ width: "200px", height: "50px" }}
               >
                 <div className="text-lg font-bold text-[#FFB700]">
-                  {stats.totalDownloads.toLocaleString()}
+                  {(stats.totalDownloads ?? 0).toLocaleString()}
                 </div>
                 <div className="text-gray-500 mt-1 text-sm">Tổng lượt tải</div>
               </div>
@@ -579,7 +617,7 @@ const ManagementDepartmentChart = () => {
               </h2>
               <Table
                 columns={columns}
-                dataSource={topPapers.slice(0, 3)} // Chỉ lấy 3 bài tiêu biểu
+                dataSource={topPapers}
                 pagination={false}
                 rowKey="id"
               />
