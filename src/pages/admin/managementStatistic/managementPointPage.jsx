@@ -155,57 +155,132 @@ const ManagementPoint = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Báo cáo");
 
+    // Lấy danh sách các cột hiển thị có dữ liệu
+    const visibleColumnsList = columns.filter(
+      (col) => col.dataIndex && visibleColumns.includes(col.key)
+    );
+    const headers = visibleColumnsList.map((col) => col.title);
+
+    // Lấy ngày tháng năm hiện tại
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()}/${
+      currentDate.getMonth() + 1
+    }/${currentDate.getFullYear()}`;
+
+    // Gộp 3 dòng đầu để hiển thị tên hệ thống
+    worksheet.mergeCells("A1", `${String.fromCharCode(64 + headers.length)}7`);
+    const systemNameCell = worksheet.getCell("A1");
+    systemNameCell.value =
+      "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
+    systemNameCell.font = { name: "Times New Roman", size: 14, bold: true };
+    systemNameCell.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    // Thêm ngày tháng năm tạo
+    worksheet.mergeCells("A8", "C8");
+    const dateCell = worksheet.getCell("A8");
+    dateCell.value = `Ngày tạo: ${formattedDate}`;
+    dateCell.font = { name: "Times New Roman", size: 11 };
+    dateCell.alignment = { horizontal: "left", vertical: "middle" };
+
     // Add title
-    worksheet.mergeCells("A1", "J1");
-    const titleCell = worksheet.getCell("A1");
+    worksheet.mergeCells(
+      "A11",
+      `${String.fromCharCode(64 + headers.length)}11`
+    );
+    const titleCell = worksheet.getCell("A11");
     titleCell.value = "BÁO CÁO ĐIỂM ĐÓNG GÓP";
     titleCell.font = { name: "Times New Roman", size: 16, bold: true };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFCCEEFF" },
+    };
 
-    // Add headers
-    const headers = columns
-      .filter((col) => col.dataIndex)
-      .map((col) => col.title);
-    worksheet.addRow(headers);
-    headers.forEach((header, index) => {
-      const cell = worksheet.getRow(2).getCell(index + 1);
+    // Thêm header row (dòng 12)
+    const headerRow = worksheet.addRow(headers);
+    headerRow.eachCell((cell, colNumber) => {
       cell.font = { name: "Times New Roman", size: 12, bold: true };
       cell.alignment = { horizontal: "center", vertical: "middle" };
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "D9E1F2" }, // Light blue background
+        fgColor: { argb: "D9E1F2" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
       };
     });
 
     // Add data rows
-    const selectedColumns = columns.map((col) => col.dataIndex).filter(Boolean);
-    filteredPapers.forEach((paper) => {
-      const rowData = selectedColumns.map((col) => paper[col] || "");
-      worksheet.addRow(rowData);
-    });
+    filteredPapers.forEach((paper, index) => {
+      const rowData = visibleColumnsList.map((column) => {
+        if (column.dataIndex === "id") {
+          return index + 1; // STT bắt đầu từ 1
+        }
+        return paper[column.dataIndex] || "";
+      });
 
-    // Style data rows
-    worksheet.eachRow((row, rowIndex) => {
-      if (rowIndex > 2) {
-        row.eachCell((cell) => {
-          cell.font = { name: "Times New Roman", size: 12 };
+      const row = worksheet.addRow(rowData);
+
+      // Style cho từng cell trong row
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: "Times New Roman", size: 12 };
+        // Căn giữa cho STT, căn phải cho số, căn trái cho text
+        if (colNumber === 1) {
+          // STT
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+        } else if (
+          ["totalPapers", "totalPoints"].includes(
+            visibleColumnsList[colNumber - 1].dataIndex
+          )
+        ) {
+          cell.alignment = { horizontal: "right", vertical: "middle" };
+        } else {
           cell.alignment = { horizontal: "left", vertical: "middle" };
-        });
-      }
+        }
+        // Thêm border
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
     });
 
-    // Adjust column widths
-    worksheet.columns = headers.map((header, index) => ({
-      width: Math.max(
-        header.length,
-        ...filteredPapers.map((paper) =>
-          paper[selectedColumns[index]]
-            ? paper[selectedColumns[index]].toString().length
-            : 10
-        )
-      ),
-    }));
+    // Điều chỉnh độ rộng cột
+    worksheet.columns.forEach((column, index) => {
+      let maxLength = 0;
+      // Tính độ rộng dựa trên header
+      maxLength = Math.max(
+        maxLength,
+        headers[index] ? headers[index].length : 0
+      );
+
+      // Tính độ rộng dựa trên dữ liệu
+      filteredPapers.forEach((paper, rowIndex) => {
+        const columnName = visibleColumnsList[index]?.dataIndex;
+        if (columnName === "id") {
+          maxLength = Math.max(maxLength, String(rowIndex + 1).length);
+        } else if (columnName) {
+          const value = paper[columnName];
+          if (value) {
+            maxLength = Math.max(maxLength, String(value).length);
+          }
+        }
+      });
+
+      // Điều chỉnh độ rộng theo nội dung + padding
+      column.width = maxLength + 4;
+    });
 
     // Save the file
     const buffer = await workbook.xlsx.writeBuffer();
