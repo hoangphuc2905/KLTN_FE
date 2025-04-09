@@ -67,12 +67,12 @@ const WorkProcessPage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
         <div className="w-full bg-white">
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] mt-4 px-6">
+        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4 max-sm:px-4 max-sm:pt-[60px]">
           <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -92,7 +92,7 @@ const WorkProcessPage = () => {
           </div>
         </div>
 
-        <div className="flex justify-end mb-4 mr-4 sm:mr-6">
+        <div className="flex justify-end mb-4 mr-4 sm:mr-6 pt-16">
           <Button
             type="primary"
             onClick={() => setShowAddWorkProcessPopup(true)}
@@ -101,7 +101,7 @@ const WorkProcessPage = () => {
           </Button>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-4">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
             <Table
               dataSource={dataSource}
