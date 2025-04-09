@@ -615,7 +615,7 @@ const HomePage = () => {
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4 max-sm:px-4 max-sm:pt-[60px]">
+        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20">
           <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -806,9 +806,9 @@ const HomePage = () => {
               </div>
             </section>
 
-            <div className="ml-5 w-[29%] max-md:ml-0 max-md:hidden">
-              <section>
-                <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl max-md:px-5 max-md:mt-4 max-md:max-w-full">
+            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
+              <section className="sticky top-[195px] z-10">
+                <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-5 max-md:mt-4 max-md:max-w-full">
                   <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
                     <button
                       className={`px-4 pt-1.5 pb-3.5 rounded-lg ${
@@ -868,7 +868,7 @@ const HomePage = () => {
                             >
                               <React.Fragment>
                                 <div className="paper-details-container flex flex-col gap-2 pt-0">
-                                  <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2">
+                                  <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2 w-[220px]">
                                     {paper.title
                                       ? paper.title.split(" ").length > 18
                                         ? paper.title
