@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Select, Table, Checkbox } from "antd";
+import { Input, Select, Table, Checkbox, Modal } from "antd";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
@@ -145,6 +145,64 @@ const ManagementPoint = () => {
     setSortedInfo(sorter);
   };
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedAuthor, setSelectedAuthor] = useState(null);
+  const [authorPapers, setAuthorPapers] = useState([]);
+  const [loadingPapers, setLoadingPapers] = useState(false);
+
+  const handleViewDetails = async (author) => {
+    try {
+      setLoading(true);
+      let authorData;
+
+      // Get detailed author data from the API
+      if (userRole === "admin") {
+        authorData = await userApi.getPapersDetailByAuthorId(author.authorId);
+      } else if (
+        [
+          "head_of_department",
+          "deputy_head_of_department",
+          "department_in_charge",
+        ].includes(userRole)
+      ) {
+        authorData = await userApi.getPapersDetailByAuthorIdAndDepartment(
+          author.authorId,
+          departmentId
+        );
+      }
+
+      // Navigate to the detail page with the author data
+      navigate(`/admin/management/point/detail`, {
+        state: {
+          author: author,
+          authorData: authorData,
+        },
+      });
+    } catch (error) {
+      console.error("Error fetching author papers:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const paperColumns = [
+    {
+      title: "Tên bài viết",
+      dataIndex: "title",
+      key: "title",
+    },
+    {
+      title: "Loại bài",
+      dataIndex: "type",
+      key: "type",
+    },
+    {
+      title: "Điểm",
+      dataIndex: "point",
+      key: "point",
+    },
+  ];
+
   const columns = [
     {
       title: "STT",
@@ -202,9 +260,12 @@ const ManagementPoint = () => {
       title: "XEM CHI TIẾT",
       key: "action",
       render: (text, record) => (
-        <a href={`/details/${record.id}`} className="text-blue-500">
+        <button
+          onClick={() => handleViewDetails(record)}
+          className="text-blue-500 underline"
+        >
           Xem chi tiết
-        </a>
+        </button>
       ),
       width: 130,
     },
@@ -733,6 +794,54 @@ const ManagementPoint = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        title={
+          <div className="font-semibold">
+            Chi tiết bài viết: {selectedAuthor?.author}
+            <div className="text-sm font-normal text-gray-500 mt-1">
+              Khoa: {selectedAuthor?.department} | Mã tác giả:{" "}
+              {selectedAuthor?.authorId}
+            </div>
+          </div>
+        }
+        open={isModalVisible}
+        onCancel={() => setIsModalVisible(false)}
+        footer={null}
+        width={900}
+        className="author-papers-modal"
+      >
+        <div className="mt-4">
+          {loadingPapers ? (
+            <div className="text-center my-4">Đang tải dữ liệu...</div>
+          ) : (
+            <>
+              <div className="flex justify-between mb-4">
+                <div className="text-lg">
+                  Tổng số bài:{" "}
+                  <span className="font-semibold">
+                    {selectedAuthor?.totalPapers || 0}
+                  </span>
+                </div>
+                <div className="text-lg">
+                  Tổng điểm:{" "}
+                  <span className="font-semibold">
+                    {selectedAuthor?.totalPoints || 0}
+                  </span>
+                </div>
+              </div>
+              <Table
+                columns={paperColumns}
+                dataSource={authorPapers}
+                pagination={{ pageSize: 7 }}
+                rowKey="id"
+                scroll={{ y: 400 }}
+                size="small"
+              />
+            </>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 };
