@@ -111,6 +111,20 @@ const userApi = {
     }
   },
 
+  calculateScoreFromInput: async (inputData) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/authorScores/input`,
+        inputData
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error calculating score:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   // Lấy công thức theo khoảng thời gian
   getFormulaByDateRange: async (startDate, endDate) => {
     try {
