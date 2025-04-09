@@ -2,9 +2,10 @@ import Header from "../../../components/header";
 import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
+import { QRCodeSVG } from "qrcode.react";
 
 const ScientificPaperDetailPage = () => {
   const { id } = useParams(); // Extract the _id from the URL
@@ -13,8 +14,12 @@ const ScientificPaperDetailPage = () => {
   const [selectedFormat, setSelectedFormat] = useState("APA"); // State to track selected format
   const [copySuccess, setCopySuccess] = useState(false); // State to track copy success
   const navigate = useNavigate();
+  const location = useLocation(); // Get current location
   const user_id = localStorage.getItem("user_id");
   const user_type = localStorage.getItem("user_type");
+
+  // Get current full URL for QR code
+  const currentUrl = window.location.origin + location.pathname;
 
   const relatedPapers = [
     {
@@ -184,6 +189,11 @@ const ScientificPaperDetailPage = () => {
                       alt="Form illustration"
                       className="w-[160px] h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
                     />
+
+                    {/* QR Code for current page */}
+                    <div className="flex flex-col items-center mt-2 mb-2">
+                      <QRCodeSVG value={currentUrl} size={140} />
+                    </div>
 
                     <button
                       className="flex items-center gap-2 bg-[#00A3FF] text-white px-4 py-2 rounded-lg"

@@ -212,25 +212,24 @@ const HomePage = () => {
       ? departments[paper.department] === selectedDepartment
       : true;
 
-    console.log(
-      `Paper ${paper._id} department: ${paper.department}, mapped: ${
-        departments[paper.department]
-      }`
-    );
-    console.log(`Department match: ${departmentMatch}`);
-
+    // Updated search matching logic to safely handle all possible search cases
     const searchMatch = searchQuery
       ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        paper.authors?.some((author) =>
-          author.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        paper.publish_date?.toString().includes(searchQuery) ||
-        paper.keywords?.some((keyword) =>
-          keyword.toLowerCase().includes(searchQuery.toLowerCase())
-        )
+        paper.title_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (authors[paper._id] &&
+          authors[paper._id]
+            .toLowerCase()
+            .includes(searchQuery.toLowerCase())) ||
+        (paper.publish_date &&
+          paper.publish_date.toString().includes(searchQuery)) ||
+        (paper.keywords &&
+          Array.isArray(paper.keywords) &&
+          paper.keywords.some((keyword) =>
+            keyword.toLowerCase().includes(searchQuery.toLowerCase())
+          )) ||
+        (paper.summary &&
+          paper.summary.toLowerCase().includes(searchQuery.toLowerCase()))
       : true;
-
-    console.log(`Search match: ${searchMatch}`);
 
     return departmentMatch && searchMatch;
   });
