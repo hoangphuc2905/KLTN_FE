@@ -1,7 +1,7 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Header from "../../../components/header";
 import { Filter } from "lucide-react";
-import { Input, Select, Table, Checkbox, Modal } from "antd";
+import { Input, Table, Checkbox } from "antd";
 import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
@@ -16,37 +16,21 @@ const ManagementPoint = () => {
   const [visibleColumns, setVisibleColumns] = useState([
     "checkbox",
     "id",
-    "authorId",
-    "author",
     "department",
     "totalPapers",
     "totalPoints",
     "action",
   ]);
-  const departmentId = localStorage.getItem("department");
-  const [userRole] = useState(localStorage.getItem("current_role") || "");
 
   useEffect(() => {
     const fetchPapers = async () => {
       try {
         setLoading(true);
-        let data;
-        if (userRole === "admin") {
-          data = await userApi.getAllPaperAuthorsByTolalPointsAndTotalPapers();
-        } else if (
-          [
-            "head_of_department",
-            "deputy_head_of_department",
-            "department_in_charge",
-          ].includes(userRole)
-        ) {
-          data = await userApi.getPaperAuthorsByDepartment(departmentId);
-        }
+        const data =
+          await userApi.getAllPaperAuthorsByTolalPointsAndTotalPapers();
         setPapers(
           data.map((item, index) => ({
-            id: index + 1,
-            authorId: item["MÃ_TÁC_GIẢ"],
-            author: item["TÁC_GIẢ"],
+            id: item["DEPARTMENT_ID"],
             department: item["KHOA"],
             totalPapers: item["TỔNG_BÀI"],
             totalPoints: item["TỔNG_ĐIỂM"],
@@ -60,12 +44,10 @@ const ManagementPoint = () => {
     };
 
     fetchPapers();
-  }, [userRole, departmentId]);
+  }, []);
 
   const columnOptions = [
     { label: "STT", value: "id" },
-    { label: "MÃ TÁC GIẢ", value: "authorId" },
-    { label: "TÁC GIẢ", value: "author" },
     { label: "KHOA", value: "department" },
     { label: "TỔNG BÀI", value: "totalPapers" },
     { label: "TỔNG ĐIỂM", value: "totalPoints" },
@@ -93,45 +75,28 @@ const ManagementPoint = () => {
     setSelectAll(checkedValues.length === columnOptions.length);
   };
 
-  const [filterAuthorName, setFilterAuthorName] = useState("");
-  const [filterRole, setFilterRole] = useState(["Tất cả"]);
-  const [showRoleFilter, setShowRoleFilter] = useState(false);
   const [filterInstitution, setFilterInstitution] = useState(["Tất cả"]);
   const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
   const [filterTotalPapersFrom, setFilterTotalPapersFrom] = useState("");
   const [filterTotalPapersTo, setFilterTotalPapersTo] = useState("");
-  const [filterPaperType, setFilterPaperType] = useState(["Tất cả"]);
-  const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
   const [filterTotalPointsFrom, setFilterTotalPointsFrom] = useState("");
   const [filterTotalPointsTo, setFilterTotalPointsTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const uniqueRoles = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.position)),
-  ];
   const uniqueInstitutions = [
     "Tất cả",
     ...new Set(papers.map((paper) => paper.department)),
   ];
-  const uniquePaperTypes = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.journalType)),
-  ];
 
   const filteredPapers = papers.filter((paper) => {
     return (
-      (filterAuthorName === "" || paper.author.includes(filterAuthorName)) &&
-      (filterRole.includes("Tất cả") || filterRole.includes(paper.position)) &&
       (filterInstitution.includes("Tất cả") ||
         filterInstitution.includes(paper.department)) &&
       (filterTotalPapersFrom === "" ||
         paper.totalPapers >= parseInt(filterTotalPapersFrom)) &&
       (filterTotalPapersTo === "" ||
         paper.totalPapers <= parseInt(filterTotalPapersTo)) &&
-      (filterPaperType.includes("Tất cả") ||
-        filterPaperType.includes(paper.journalType)) &&
       (filterTotalPointsFrom === "" ||
         paper.totalPoints >= parseInt(filterTotalPointsFrom)) &&
       (filterTotalPointsTo === "" ||
@@ -139,69 +104,11 @@ const ManagementPoint = () => {
     );
   });
 
-  const [sortedInfo, setSortedInfo] = useState({});
-
-  const handleChange = (pagination, filters, sorter) => {
-    setSortedInfo(sorter);
+  const handleViewDetails = (departmentId, departmentName) => {
+    navigate(`/admin/management/point/detail/${departmentId}`, {
+      state: { departmentId, departmentName },
+    });
   };
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedAuthor, setSelectedAuthor] = useState(null);
-  const [authorPapers, setAuthorPapers] = useState([]);
-  const [loadingPapers, setLoadingPapers] = useState(false);
-
-  const handleViewDetails = async (author) => {
-    try {
-      setLoading(true);
-      let authorData;
-
-      // Get detailed author data from the API
-      if (userRole === "admin") {
-        authorData = await userApi.getPapersDetailByAuthorId(author.authorId);
-      } else if (
-        [
-          "head_of_department",
-          "deputy_head_of_department",
-          "department_in_charge",
-        ].includes(userRole)
-      ) {
-        authorData = await userApi.getPapersDetailByAuthorIdAndDepartment(
-          author.authorId,
-          departmentId
-        );
-      }
-
-      // Navigate to the detail page with the author data
-      navigate(`/admin/management/point/detail`, {
-        state: {
-          author: author,
-          authorData: authorData,
-        },
-      });
-    } catch (error) {
-      console.error("Error fetching author papers:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const paperColumns = [
-    {
-      title: "Tên bài viết",
-      dataIndex: "title",
-      key: "title",
-    },
-    {
-      title: "Loại bài",
-      dataIndex: "type",
-      key: "type",
-    },
-    {
-      title: "Điểm",
-      dataIndex: "point",
-      key: "point",
-    },
-  ];
 
   const columns = [
     {
@@ -209,51 +116,24 @@ const ManagementPoint = () => {
       dataIndex: "id",
       key: "id",
       render: (text, record, index) => index + 1,
-      sorter: (a, b) => a.id - b.id,
-      sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null,
       width: 65,
-    },
-    {
-      title: "MÃ TÁC GIẢ",
-      dataIndex: "authorId",
-      key: "authorId",
-      sorter: (a, b) => a.authorId.localeCompare(b.authorId),
-      sortOrder: sortedInfo.columnKey === "authorId" ? sortedInfo.order : null,
-      width: 150,
-    },
-    {
-      title: "TÊN TÁC GIẢ",
-      dataIndex: "author",
-      key: "author",
-      sorter: (a, b) => a.author.localeCompare(b.author),
-      sortOrder: sortedInfo.columnKey === "author" ? sortedInfo.order : null,
-      width: 250,
     },
     {
       title: "KHOA",
       dataIndex: "department",
       key: "department",
-      sorter: (a, b) => a.department.localeCompare(b.department),
-      sortOrder:
-        sortedInfo.columnKey === "department" ? sortedInfo.order : null,
       width: 270,
     },
     {
       title: "TỔNG BÀI",
       dataIndex: "totalPapers",
       key: "totalPapers",
-      sorter: (a, b) => a.totalPapers - b.totalPapers,
-      sortOrder:
-        sortedInfo.columnKey === "totalPapers" ? sortedInfo.order : null,
       width: 120,
     },
     {
       title: "TỔNG ĐIỂM",
       dataIndex: "totalPoints",
       key: "totalPoints",
-      sorter: (a, b) => a.totalPoints - b.totalPoints,
-      sortOrder:
-        sortedInfo.columnKey === "totalPoints" ? sortedInfo.order : null,
       width: 130,
     },
     {
@@ -261,7 +141,7 @@ const ManagementPoint = () => {
       key: "action",
       render: (text, record) => (
         <button
-          onClick={() => handleViewDetails(record)}
+          onClick={() => handleViewDetails(record.id, record.department)}
           className="text-blue-500 underline"
         >
           Xem chi tiết
@@ -392,63 +272,6 @@ const ManagementPoint = () => {
     printWindow.print();
   };
 
-  const filterRef = useRef(null);
-  const columnFilterRef = useRef(null);
-  const roleFilterRef = useRef(null);
-  const institutionFilterRef = useRef(null);
-  const paperTypeFilterRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        showFilter &&
-        filterRef.current &&
-        !filterRef.current.contains(event.target)
-      ) {
-        setShowFilter(false);
-      }
-      if (
-        showColumnFilter &&
-        columnFilterRef.current &&
-        !columnFilterRef.current.contains(event.target)
-      ) {
-        setShowColumnFilter(false);
-      }
-      if (
-        showRoleFilter &&
-        roleFilterRef.current &&
-        !roleFilterRef.current.contains(event.target)
-      ) {
-        setShowRoleFilter(false);
-      }
-      if (
-        showInstitutionFilter &&
-        institutionFilterRef.current &&
-        !institutionFilterRef.current.contains(event.target)
-      ) {
-        setShowInstitutionFilter(false);
-      }
-      if (
-        showPaperTypeFilter &&
-        paperTypeFilterRef.current &&
-        !paperTypeFilterRef.current.contains(event.target)
-      ) {
-        setShowPaperTypeFilter(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [
-    showFilter,
-    showColumnFilter,
-    showRoleFilter,
-    showInstitutionFilter,
-    showPaperTypeFilter,
-  ]);
-
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -553,71 +376,6 @@ const ManagementPoint = () => {
                     className="absolute top-full mt-2 z-50 shadow-lg"
                   >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Tên tác giả:
-                        </label>
-                        <Input
-                          type="text"
-                          value={filterAuthorName}
-                          onChange={(e) => setFilterAuthorName(e.target.value)}
-                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        />
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Chức vụ:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setShowRoleFilter(!showRoleFilter)}
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
-                          >
-                            Chọn chức vụ
-                          </button>
-                          {showRoleFilter && (
-                            <div
-                              ref={roleFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
-                            >
-                              <Checkbox
-                                indeterminate={
-                                  filterRole.length > 0 &&
-                                  filterRole.length < uniqueRoles.length
-                                }
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setFilterRole(uniqueRoles);
-                                  } else {
-                                    setFilterRole([]);
-                                  }
-                                }}
-                                checked={
-                                  filterRole.length === uniqueRoles.length
-                                }
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniqueRoles
-                                  .filter((role) => role !== "Tất cả")
-                                  .map((role) => ({
-                                    label: role,
-                                    value: role,
-                                  }))}
-                                value={filterRole}
-                                onChange={(checkedValues) =>
-                                  setFilterRole(checkedValues)
-                                }
-                                className="flex flex-col gap-2 mt-2"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
                       <div className="mb-3">
                         <label className="block text-gray-700 text-xs">
                           Khoa:
@@ -755,12 +513,9 @@ const ManagementPoint = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          setFilterAuthorName("");
-                          setFilterRole(["Tất cả"]);
                           setFilterInstitution(["Tất cả"]);
                           setFilterTotalPapersFrom("");
                           setFilterTotalPapersTo("");
-                          setFilterPaperType(["Tất cả"]);
                           setFilterTotalPointsFrom("");
                           setFilterTotalPointsTo("");
                         }}
@@ -787,61 +542,12 @@ const ManagementPoint = () => {
                   }}
                   rowKey="id"
                   className="text-sm"
-                  onChange={handleChange}
                 />
               )}
             </div>
           </div>
         </div>
       </div>
-
-      <Modal
-        title={
-          <div className="font-semibold">
-            Chi tiết bài viết: {selectedAuthor?.author}
-            <div className="text-sm font-normal text-gray-500 mt-1">
-              Khoa: {selectedAuthor?.department} | Mã tác giả:{" "}
-              {selectedAuthor?.authorId}
-            </div>
-          </div>
-        }
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={null}
-        width={900}
-        className="author-papers-modal"
-      >
-        <div className="mt-4">
-          {loadingPapers ? (
-            <div className="text-center my-4">Đang tải dữ liệu...</div>
-          ) : (
-            <>
-              <div className="flex justify-between mb-4">
-                <div className="text-lg">
-                  Tổng số bài:{" "}
-                  <span className="font-semibold">
-                    {selectedAuthor?.totalPapers || 0}
-                  </span>
-                </div>
-                <div className="text-lg">
-                  Tổng điểm:{" "}
-                  <span className="font-semibold">
-                    {selectedAuthor?.totalPoints || 0}
-                  </span>
-                </div>
-              </div>
-              <Table
-                columns={paperColumns}
-                dataSource={authorPapers}
-                pagination={{ pageSize: 7 }}
-                rowKey="id"
-                scroll={{ y: 400 }}
-                size="small"
-              />
-            </>
-          )}
-        </div>
-      </Modal>
     </div>
   );
 };

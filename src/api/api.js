@@ -853,7 +853,9 @@ const userApi = {
 
   getAllPaperAuthorsByTolalPointsAndTotalPapers: async () => {
     try {
-      const response = await axios.get(`${API_URL}/paperauthor/summary`);
+      const response = await axios.get(
+        `${API_URL}/paperauthor/statistics-by-department`
+      );
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
@@ -878,6 +880,19 @@ const userApi = {
         error.response?.data || error.message
       );
       throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getPapersByAuthor: async (authorId) => {
+    try {
+      const response = await fetch(`/api/papers/author/${authorId}`);
+      if (!response.ok) {
+        throw new Error("Failed to fetch papers by author");
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error in getPapersByAuthor:", error);
+      throw error;
     }
   },
 };
