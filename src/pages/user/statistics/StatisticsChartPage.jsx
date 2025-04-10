@@ -248,26 +248,54 @@ const columns = [
     title: "STT",
     dataIndex: "id",
     key: "id",
+    width: 60,
   },
   {
     title: "Tên bài nghiên cứu",
     dataIndex: "title",
     key: "title",
+    ellipsis: true,
+    render: (text, record) => (
+      <div
+        className="cursor-pointer hover:text-blue-500"
+        onClick={(e) => {
+          e.stopPropagation();
+          if (record._id) {
+            navigate(`/scientific-paper/${record._id}`);
+          } else {
+            console.error("Paper ID not found in record:", record);
+          }
+        }}
+        style={{
+          maxWidth: "300px",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+        title={text}
+      >
+        {text}
+      </div>
+    ),
+    width: 200,
   },
   {
     title: "Lượt xem",
     dataIndex: "views",
     key: "views",
+    width: 95,
   },
   {
     title: "Lượt tải",
     dataIndex: "downloads",
     key: "downloads",
+    width: 95,
   },
   {
     title: "Điểm đóng góp",
     dataIndex: "contributions",
     key: "contributions",
+    width: 135,
   },
 ];
 
@@ -343,6 +371,7 @@ const StatisticsChartPage = () => {
           if (top3Response && top3Response.papers) {
             const formattedPapers = top3Response.papers.map((paper, index) => ({
               id: index + 1,
+              _id: paper._id, // Ensure we extract the _id from the paper
               title: paper.title_vn || paper.title_en,
               views: paper.viewCount,
               downloads: paper.downloadCount,
@@ -408,6 +437,20 @@ const StatisticsChartPage = () => {
     setVisibleColumns(selectedKeys);
   };
 
+  // Add onRow click handler for the table
+  const onRowClick = (record) => {
+    return {
+      onClick: () => {
+        if (record._id) {
+          navigate(`/scientific-paper/${record._id}`);
+        } else {
+          console.error("Paper ID not found in record:", record);
+        }
+      },
+      style: { cursor: "pointer" },
+    };
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -442,41 +485,41 @@ const StatisticsChartPage = () => {
             <div className="flex gap-4 justify-center w-full">
               <div
                 className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-gray-700">
+                <div className="text-lg font-bold text-gray-700 pt-4">
                   {totalPapers}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng bài báo</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng bài báo</div>
               </div>
               <div
                 className="bg-[#b0fccd] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-gray-700">
+                <div className="text-lg font-bold text-gray-700 pt-4">
                   {totalPoints.toLocaleString()}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">
+                <div className="text-gray-500 pb-4 text-sm">
                   Tổng điểm đóng góp
                 </div>
               </div>
               <div
                 className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#00A3FF]">
+                <div className="text-lg font-bold text-[#00A3FF] pt-4">
                   {totalViews.toLocaleString()}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng lượt xem</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
               <div
                 className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center"
-                style={{ width: "200px", height: "50px" }}
+                style={{ width: "200px", height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#FFB700]">
+                <div className="text-lg font-bold text-[#FFB700] pt-4">
                   {totalDownloads.toLocaleString()}
                 </div>
-                <div className="text-gray-500 mt-1 text-sm">Tổng lượt tải</div>
+                <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
               </div>
             </div>
             <div className="ml-4">
@@ -701,6 +744,7 @@ const StatisticsChartPage = () => {
                 dataSource={top3Papers}
                 pagination={false}
                 rowKey="id"
+                onRow={onRowClick}
               />
             </div>
           </div>
