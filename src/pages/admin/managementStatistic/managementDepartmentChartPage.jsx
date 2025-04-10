@@ -27,176 +27,6 @@ ChartJS.register(
   Legend
 );
 
-const mockData = [
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file1.pdf",
-    authors: ["Author A", "Author B"],
-    selectedDepartment: "Department 1",
-    summary: "This is a summary of the first paper.",
-    keywords: ["keyword1", "keyword2"],
-    selectedPaperType: "Type 1",
-    selectedPaperGroup: "Group A",
-    titleVn: "Tiêu đề tiếng Việt 1",
-    titleEn: "English Title 1",
-    publishDate: "2023-01-01",
-    magazineVi: "Tạp chí Việt Nam 1",
-    magazineEn: "English Magazine 1",
-    magazineType: "Type A",
-    pageCount: 10,
-    issnIsbn: "1234-5678",
-    doi: "10.1234/example1",
-    link: "https://example.com/paper1",
-    point: 8.5,
-    totalPapers: 50,
-    totalViews: 3000,
-    totalDownloads: 500,
-    year: 2024,
-  },
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file2.pdf",
-    authors: ["Author C", "Author D"],
-    selectedDepartment: "Department 2",
-    summary: "This is a summary of the second paper.",
-    keywords: ["keyword3", "keyword4"],
-    selectedPaperType: "Type 2",
-    selectedPaperGroup: "Group B",
-    titleVn: "Tiêu đề tiếng Việt 2",
-    titleEn: "English Title 2",
-    publishDate: "2023-02-01",
-    magazineVi: "Tạp chí Việt Nam 2",
-    magazineEn: "English Magazine 2",
-    magazineType: "Type B",
-    pageCount: 15,
-    issnIsbn: "2345-6789",
-    doi: "10.1234/example2",
-    link: "https://example.com/paper2",
-    point: 9.0,
-    totalPapers: 60,
-    totalViews: 4000,
-    totalDownloads: 600,
-    year: 2024,
-  },
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file3.pdf",
-    authors: ["Author E", "Author F"],
-    selectedDepartment: "Department 3",
-    summary: "This is a summary of the third paper.",
-    keywords: ["keyword5", "keyword6"],
-    selectedPaperType: "Type 3",
-    selectedPaperGroup: "Group C",
-    titleVn: "Tiêu đề tiếng Việt 3",
-    titleEn: "English Title 3",
-    publishDate: "2023-03-01",
-    magazineVi: "Tạp chí Việt Nam 3",
-    magazineEn: "English Magazine 3",
-    magazineType: "Type C",
-    pageCount: 20,
-    issnIsbn: "3456-7890",
-    doi: "10.1234/example3",
-    link: "https://example.com/paper3",
-    point: 8.0,
-    totalPapers: 70,
-    totalViews: 5000,
-    totalDownloads: 700,
-    year: 2024,
-  },
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file4.pdf",
-    authors: ["Author G", "Author H"],
-    selectedDepartment: "Department 4",
-    summary: "This is a summary of the fourth paper.",
-    keywords: ["keyword7", "keyword8"],
-    selectedPaperType: "Type 4",
-    selectedPaperGroup: "Group D",
-    titleVn: "Tiêu đề tiếng Việt 4",
-    titleEn: "English Title 4",
-    publishDate: "2023-04-01",
-    magazineVi: "Tạp chí Việt Nam 4",
-    magazineEn: "English Magazine 4",
-    magazineType: "Type D",
-    pageCount: 25,
-    issnIsbn: "4567-8901",
-    doi: "10.1234/example4",
-    link: "https://example.com/paper4",
-    point: 9.5,
-    totalPapers: 80,
-    totalViews: 6000,
-    totalDownloads: 800,
-    year: 2024,
-  },
-];
-
-const typeChartData = {
-  labels: mockData.map((item) => item.selectedPaperType),
-  datasets: [
-    {
-      data: mockData.map((item) => item.totalPapers),
-      backgroundColor: ["#00A3FF", "#7239EA", "#F1416C", "#FF0000"],
-      borderWidth: 0,
-      borderRadius: 6,
-    },
-  ],
-};
-
-const donutChartData = {
-  labels: mockData.map((item) => item.selectedDepartment),
-  datasets: [
-    {
-      data: mockData.map((item) => item.totalViews),
-      backgroundColor: [
-        "#ff0000",
-        "#8241f1",
-        "#705b10",
-        "#39eaa3",
-        "#c09624",
-        "#8686d4",
-        "#0cebd8",
-        "#F1416C",
-        "#FFC700",
-        "#856666",
-      ],
-      borderWidth: 0,
-    },
-  ],
-};
-
-const paperPointsChartData = {
-  labels: mockData.map((item) => item.titleEn),
-  datasets: [
-    {
-      data: mockData.map((item) => item.point),
-      backgroundColor: ["#00A3FF", "#7239EA", "#F1416C", "#FF0000"],
-      borderWidth: 0,
-      borderRadius: 6,
-    },
-  ],
-};
-
-// Calculate top 3 contributors based on total points
-const topContributors = mockData
-  .map((item) => ({
-    name: item.authors.join(", "),
-    totalPoints: item.point,
-  }))
-  .sort((a, b) => b.totalPoints - a.totalPoints)
-  .slice(0, 3);
-
-const topContributorsChartData = {
-  labels: topContributors.map((contributor) => contributor.name),
-  datasets: [
-    {
-      data: topContributors.map((contributor) => contributor.totalPoints),
-      backgroundColor: ["#00A3FF", "#7239EA", "#F1416C"],
-      borderWidth: 0,
-      borderRadius: 6,
-    },
-  ],
-};
-
 const chartOptions = {
   responsive: false,
   maintainAspectRatio: false,
@@ -244,6 +74,57 @@ const ManagementDepartmentChart = () => {
     totalDownloads: 0,
   });
   const [topPapers, setTopPapers] = useState([]);
+  const [typeChartData, setTypeChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [
+          "#00A3FF",
+          "#7239EA",
+          "#F1416C",
+          "#FF0000",
+          "#FFC700",
+        ],
+        borderWidth: 0,
+        borderRadius: 6,
+      },
+    ],
+  });
+  const [topContributorsChartData, setTopContributorsChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [
+          "#00A3FF",
+          "#7239EA",
+          "#F1416C",
+          "#FF0000",
+          "#FFC700",
+        ],
+        borderWidth: 0,
+        borderRadius: 6,
+      },
+    ],
+  });
+  const [topResearchFieldsChartData, setTopResearchFieldsChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [
+          "#00A3FF",
+          "#7239EA",
+          "#F1416C",
+          "#FF0000",
+          "#FFC700",
+        ],
+        borderWidth: 0,
+        borderRadius: 6,
+      },
+    ],
+  });
   const filterRef = useRef(null);
   const fieldFilterRef = useRef(null);
   const navigate = useNavigate();
@@ -275,7 +156,7 @@ const ManagementDepartmentChart = () => {
     const fetchTopPapers = async () => {
       try {
         const response =
-          await userApi.getTop3MostViewedAndDownloadedPapersByDepartment(
+          await userApi.getTop5MostViewedAndDownloadedPapersByDepartment(
             departmentId
           );
         if (response && response.papers) {
@@ -300,6 +181,117 @@ const ManagementDepartmentChart = () => {
     }
   }, [departmentId]);
 
+  useEffect(() => {
+    const fetchTypeStatistics = async () => {
+      try {
+        const response = await userApi.getStatisticsByGroupByDepartment(
+          departmentId
+        );
+        if (response && response.data) {
+          const labels = Object.keys(response.data); // Use labels directly from the database response
+          const mappedData = {
+            labels,
+            datasets: [
+              {
+                data: Object.values(response.data),
+                backgroundColor: [
+                  "#00A3FF",
+                  "#7239EA",
+                  "#F1416C",
+                  "#FF0000",
+                  "#FFC700",
+                ],
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          };
+          setTypeChartData(mappedData);
+        }
+      } catch (error) {
+        console.error("❌ Failed to fetch type statistics:", error);
+      }
+    };
+
+    if (departmentId) {
+      fetchTypeStatistics();
+    }
+  }, [departmentId]);
+
+  useEffect(() => {
+    const fetchTopContributors = async () => {
+      try {
+        const response = await userApi.getTop5AuthorsByDepartment(departmentId);
+        if (response && response.data) {
+          const labels = response.data.map((author) => author.authorName);
+          const data = response.data.map((author) => author.totalPoints);
+
+          setTopContributorsChartData({
+            labels,
+            datasets: [
+              {
+                data,
+                backgroundColor: [
+                  "#00A3FF",
+                  "#7239EA",
+                  "#F1416C",
+                  "#FF0000",
+                  "#FFC700",
+                ],
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
+        }
+      } catch (error) {
+        console.error("❌ Failed to fetch top contributors:", error);
+      }
+    };
+
+    if (departmentId) {
+      fetchTopContributors();
+    }
+  }, [departmentId]);
+
+  useEffect(() => {
+    const fetchTopResearchFields = async () => {
+      try {
+        const response = await userApi.getStatisticsTop5ByTypeByDepartment(
+          departmentId
+        );
+        if (response && response.data) {
+          const labels = Object.keys(response.data);
+          const data = Object.values(response.data);
+
+          setTopResearchFieldsChartData({
+            labels,
+            datasets: [
+              {
+                data,
+                backgroundColor: [
+                  "#00A3FF",
+                  "#7239EA",
+                  "#F1416C",
+                  "#FF0000",
+                  "#FFC700",
+                ],
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
+        }
+      } catch (error) {
+        console.error("❌ Failed to fetch top research fields:", error);
+      }
+    };
+
+    if (departmentId) {
+      fetchTopResearchFields();
+    }
+  }, [departmentId]);
+
   const handleQuarterChange = (event) => {
     const value = event.target.value;
     setSelectedQuarters((prevSelected) => {
@@ -321,16 +313,12 @@ const ManagementDepartmentChart = () => {
     const value = event.target.value;
     setSelectedFields((prevSelected) => {
       if (value === "All") {
-        return prevSelected.includes("All")
-          ? []
-          : ["All", ...donutChartData.labels];
+        return prevSelected.includes("All") ? [] : ["All"];
       }
       const updatedSelection = prevSelected.includes(value)
         ? prevSelected.filter((item) => item !== value)
         : [...prevSelected, value];
-      return updatedSelection.length === donutChartData.labels.length
-        ? ["All"]
-        : updatedSelection.filter((item) => item !== "All");
+      return updatedSelection.filter((item) => item !== "All");
     });
   };
 
@@ -359,39 +347,8 @@ const ManagementDepartmentChart = () => {
       {
         ...typeChartData.datasets[0],
         data: typeChartData.labels.map((label, index) =>
-          (selectedQuarters.includes("All") ||
-            selectedQuarters.includes(label)) &&
-          (selectedFields.includes("All") ||
-            selectedFields.some((field) =>
-              mockData.some(
-                (item) =>
-                  item.selectedDepartment === field &&
-                  item.selectedPaperType === label
-              )
-            ))
+          selectedQuarters.includes("All") || selectedQuarters.includes(label)
             ? typeChartData.datasets[0].data[index]
-            : 0
-        ),
-      },
-    ],
-  };
-
-  const filteredDonutChartData = {
-    ...donutChartData,
-    datasets: [
-      {
-        ...donutChartData.datasets[0],
-        data: donutChartData.labels.map((label, index) =>
-          (selectedFields.includes("All") || selectedFields.includes(label)) &&
-          (selectedQuarters.includes("All") ||
-            selectedQuarters.some((quarter) =>
-              mockData.some(
-                (item) =>
-                  item.selectedPaperType === quarter &&
-                  item.selectedDepartment === label
-              )
-            ))
-            ? donutChartData.datasets[0].data[index]
             : 0
         ),
       },
@@ -570,7 +527,7 @@ const ManagementDepartmentChart = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Điểm đóng góp của Top 3
+                  Biểu đồ top 5 tác giả có điểm đóng góp cao nhất
                 </h2>
               </div>
               <Bar
@@ -600,7 +557,7 @@ const ManagementDepartmentChart = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê theo lĩnh vực nghiên cứu
+                  Biểu đồ Thống kê top 5 bài nghiên cứu theo lĩnh vực nghiên cứu
                 </h2>
                 <div className="relative" ref={fieldFilterRef}>
                   <button
@@ -615,21 +572,23 @@ const ManagementDepartmentChart = () => {
                       style={{ width: "200px" }}
                     >
                       <div className="px-4 py-5 w-full max-w-[200px]">
-                        {["All", ...donutChartData.labels].map((field) => (
-                          <label
-                            key={field}
-                            className="flex items-center mb-2 flex-wrap"
-                          >
-                            <input
-                              type="checkbox"
-                              value={field}
-                              checked={selectedFields.includes(field)}
-                              onChange={handleFieldChange}
-                              className="mr-2"
-                            />
-                            {field}
-                          </label>
-                        ))}
+                        {["All", ...topResearchFieldsChartData.labels].map(
+                          (field) => (
+                            <label
+                              key={field}
+                              className="flex items-center mb-2 flex-wrap"
+                            >
+                              <input
+                                type="checkbox"
+                                value={field}
+                                checked={selectedFields.includes(field)}
+                                onChange={handleFieldChange}
+                                className="mr-2"
+                              />
+                              {field}
+                            </label>
+                          )
+                        )}
                       </div>
                     </div>
                   )}
@@ -638,7 +597,7 @@ const ManagementDepartmentChart = () => {
               <div className="flex justify-start items-center relative">
                 <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
                 <Doughnut
-                  data={filteredDonutChartData}
+                  data={topResearchFieldsChartData}
                   options={donutOptions}
                   height={200}
                   width={500}
@@ -647,7 +606,7 @@ const ManagementDepartmentChart = () => {
             </div>
             <div className="bg-white rounded-xl p-6 shadow-md">
               <h2 className="font-semibold text-gray-700 mb-4">
-                TOP 3 BÀI NGHIÊN CỨU KHOA HỌC TIÊU BIỂU
+                Top 5 bài nghiên cứu được nổi bật
               </h2>
               <Table
                 columns={columns}

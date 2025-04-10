@@ -139,11 +139,6 @@ const stats = {
   year: new Date().getFullYear(),
 };
 
-const typeCounts = mockData.reduce((acc, paper) => {
-  acc[paper.selectedPaperType] = (acc[paper.selectedPaperType] || 0) + 1;
-  return acc;
-}, {});
-
 const typeChartOptions = {
   responsive: false,
   maintainAspectRatio: false,
@@ -163,18 +158,6 @@ const typeChartOptions = {
   },
 };
 
-const pointChartData = {
-  labels: mockData.map((paper) => paper.titleEn), // Use paper titles as labels
-  datasets: [
-    {
-      data: mockData.map((paper) => paper.point), // Use points for this chart
-      backgroundColor: ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFB700"],
-      borderWidth: 0,
-      borderRadius: 6,
-    },
-  ],
-};
-
 const pointChartOptions = {
   responsive: false,
   maintainAspectRatio: false,
@@ -192,28 +175,6 @@ const pointChartOptions = {
       },
     },
   },
-};
-
-const donutChartData = {
-  labels: mockData.map((paper) => paper.selectedDepartment),
-  datasets: [
-    {
-      data: mockData.map((paper) => paper.totalViews),
-      backgroundColor: [
-        "#ff0000",
-        "#8241f1",
-        "#705b10",
-        "#39eaa3",
-        "#c09624",
-        "#8686d4",
-        "#0cebd8",
-        "#F1416C",
-        "#FFC700",
-        "#856666",
-      ],
-      borderWidth: 0,
-    },
-  ],
 };
 
 const donutOptions = {
@@ -306,36 +267,71 @@ const columnOptions = columns.map((col) => ({
 
 const StatisticsChartPage = () => {
   const navigate = useNavigate();
-  const [selectedTypeFilters, setSelectedTypeFilters] = useState(
-    Object.keys(typeCounts)
-  );
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState([]);
   const [showTypeFilter, setShowTypeFilter] = useState(false);
+  const [typeCounts, setTypeCounts] = useState({});
   const [visibleColumns, setVisibleColumns] = useState(
     columns.map((col) => col.key)
   );
   const [showColumnFilter, setShowColumnFilter] = useState(false);
   const [showPointFilter, setShowPointFilter] = useState(false);
-  const [selectedPointFilters, setSelectedPointFilters] = useState(
-    pointChartData.labels
-  );
+  const [selectedPointFilters, setSelectedPointFilters] = useState([]);
+  const [pointChartData, setPointChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [
+          "#00A3FF",
+          "#7239EA",
+          "#F1416C",
+          "#39eaa3",
+          "#FFB700",
+        ],
+        borderWidth: 0,
+        borderRadius: 6,
+      },
+    ],
+  });
   const pointFilterOptions = pointChartData.labels.map((label) => ({
     label,
     value: label,
   }));
   const [showDonutFilter, setShowDonutFilter] = useState(false);
-  const [selectedDonutFilters, setSelectedDonutFilters] = useState(
-    donutChartData.labels
-  );
-  const donutFilterOptions = donutChartData.labels.map((label) => ({
-    label,
-    value: label,
-  }));
+  const [selectedDonutFilters, setSelectedDonutFilters] = useState([]);
+  const donutFilterOptions = mockData
+    .map((paper) => paper.selectedDepartment)
+    .map((label) => ({
+      label,
+      value: label,
+    }));
   const userId = localStorage.getItem("user_id");
   const [totalPapers, setTotalPapers] = useState(stats.totalPapers);
   const [totalViews, setTotalViews] = useState(stats.totalViews);
   const [totalDownloads, setTotalDownloads] = useState(stats.totalDownloads);
   const [top3Papers, setTop3Papers] = useState(topPapers);
   const [totalPoints, setTotalPoints] = useState(stats.totalPoints);
+  const [donutChartData, setDonutChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [
+          "#ff0000",
+          "#8241f1",
+          "#705b10",
+          "#39eaa3",
+          "#c09624",
+          "#8686d4",
+          "#0cebd8",
+          "#F1416C",
+          "#FFC700",
+          "#856666",
+        ],
+        borderWidth: 0,
+      },
+    ],
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -386,6 +382,114 @@ const StatisticsChartPage = () => {
     };
 
     fetchData();
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchTypeStatistics = async () => {
+      try {
+        const response = await userApi.getStatisticsByGroupByUser(userId);
+        console.log("Type Statistics API Response:", response);
+        if (response && response.data) {
+          setTypeCounts(response.data);
+          setSelectedTypeFilters(Object.keys(response.data));
+        }
+      } catch (error) {
+        console.error("Error fetching type statistics:", error);
+      }
+    };
+
+    fetchTypeStatistics();
+  }, []);
+
+  useEffect(() => {
+    const fetchTop5Papers = async () => {
+      try {
+        if (userId) {
+          const response = await userApi.getTop5PapersByAuthor(userId);
+          console.log("Top 5 Papers API Response:", response);
+
+          if (response && response.papers) {
+            const formattedData = response.papers.map((paper) => ({
+              title: paper.title_vn || paper.title_en,
+              contributionScore: paper.contributionScore,
+            }));
+
+            setPointChartData({
+              labels: formattedData.map((paper) =>
+                paper.title.length > 20
+                  ? paper.title.substring(0, 20) + "..."
+                  : paper.title
+              ),
+              datasets: [
+                {
+                  data: formattedData.map((paper) => paper.contributionScore),
+                  backgroundColor: [
+                    "#00A3FF",
+                    "#7239EA",
+                    "#F1416C",
+                    "#39eaa3",
+                    "#FFB700",
+                  ],
+                  borderWidth: 0,
+                  borderRadius: 6,
+                },
+              ],
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching top 5 papers:", error);
+      }
+    };
+
+    fetchTop5Papers();
+  }, [userId]);
+
+  useEffect(() => {
+    const fetchTop5PaperTypes = async () => {
+      try {
+        if (userId) {
+          const response = await userApi.getTop5PaperTypesByUser(userId);
+          console.log("Top 5 Paper Types API Response:", response);
+
+          if (response && response.data) {
+            const formattedData = response.data.map((item) => ({
+              type:
+                item.type.length > 20
+                  ? item.type.substring(0, 20) + "..."
+                  : item.type,
+              count: item.count,
+            }));
+
+            setDonutChartData({
+              labels: formattedData.map((item) => item.type),
+              datasets: [
+                {
+                  data: formattedData.map((item) => item.count),
+                  backgroundColor: [
+                    "#ff0000",
+                    "#8241f1",
+                    "#705b10",
+                    "#39eaa3",
+                    "#c09624",
+                    "#8686d4",
+                    "#0cebd8",
+                    "#F1416C",
+                    "#FFC700",
+                    "#856666",
+                  ],
+                  borderWidth: 0,
+                },
+              ],
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching top 5 paper types:", error);
+      }
+    };
+
+    fetchTop5PaperTypes();
   }, [userId]);
 
   const handleTypeFilterChange = (selectedFilters) => {
@@ -595,7 +699,7 @@ const StatisticsChartPage = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê theo điểm bài báo
+                  Biểu đồ Thống kê top 5 bài báo có điểm đóng góp cao nhất
                 </h2>
                 <div className="relative">
                   <div
@@ -619,21 +723,7 @@ const StatisticsChartPage = () => {
                 </div>
               </div>
               <Bar
-                data={{
-                  labels: pointChartData.labels.filter((label) =>
-                    selectedPointFilters.includes(label)
-                  ),
-                  datasets: [
-                    {
-                      ...pointChartData.datasets[0],
-                      data: pointChartData.datasets[0].data.filter((_, index) =>
-                        selectedPointFilters.includes(
-                          pointChartData.labels[index]
-                        )
-                      ),
-                    },
-                  ],
-                }}
+                data={pointChartData}
                 options={pointChartOptions}
                 height={200}
                 width={540}
@@ -643,7 +733,7 @@ const StatisticsChartPage = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê theo lĩnh vực nghiên cứu
+                  Biểu đồ Thống kê top 5 bài báo theo lĩnh vực nghiên cứu
                 </h2>
                 <div className="relative">
                   <div
@@ -669,22 +759,7 @@ const StatisticsChartPage = () => {
               <div className="flex justify-start items-center relative">
                 <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
                 <Doughnut
-                  data={{
-                    labels: donutChartData.labels.filter((label) =>
-                      selectedDonutFilters.includes(label)
-                    ),
-                    datasets: [
-                      {
-                        ...donutChartData.datasets[0],
-                        data: donutChartData.datasets[0].data.filter(
-                          (_, index) =>
-                            selectedDonutFilters.includes(
-                              donutChartData.labels[index]
-                            )
-                        ),
-                      },
-                    ],
-                  }}
+                  data={donutChartData}
                   options={donutOptions}
                   height={200}
                   width={500}
@@ -694,7 +769,7 @@ const StatisticsChartPage = () => {
             <div className="bg-white rounded-xl p-6 shadow-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-semibold text-gray-700">
-                  TOP 3 BÀI NGHIÊN CỨU KHOA HỌC TIÊU BIỂU
+                  Top 5 bài báo nổi bật
                 </h2>
                 <div className="relative">
                   <div

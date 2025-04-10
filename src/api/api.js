@@ -937,21 +937,21 @@ const userApi = {
     }
   },
 
-  getTop3MostViewedAndDownloadedPapers: async () => {
-    try {
-      const response = await axios.get(
-        `${API_URL}/statistics/top3-most-viewed-and-downloaded-papers`
-      );
-      console.log("API Response:", response.data);
-      return response.data;
-    } catch (error) {
-      console.error(
-        "Error fetching top 3 most viewed and downloaded papers:",
-        error
-      );
-      throw error.response?.data || "Lỗi kết nối đến server";
-    }
-  },
+  // getTop5MostViewedAndDownloadedPapers: async () => {
+  //   try {
+  //     const response = await axios.get(
+  //       `${API_URL}/statistics/top5-most-viewed-and-downloaded-papers`
+  //     );
+  //     console.log("API Response:", response.data);
+  //     return response.data;
+  //   } catch (error) {
+  //     console.error(
+  //       "Error fetching top 5 most viewed and downloaded papers:",
+  //       error
+  //     );
+  //     throw error.response?.data || "Lỗi kết nối đến server";
+  //   }
+  // },
 
   getStatisticsForAll: async () => {
     try {
@@ -966,10 +966,10 @@ const userApi = {
     }
   },
 
-  getTop3MostViewedAndDownloadedPapersByDepartment: async (departmentId) => {
+  getTop5MostViewedAndDownloadedPapersByDepartment: async (departmentId) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/top3-papers-by-department/${departmentId}`
+        `${API_URL}/statistics/top5-papers-by-department/${departmentId}`
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -978,6 +978,118 @@ const userApi = {
         "Error fetching top 3 most viewed and downloaded papers by department:",
         error
       );
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getStatisticsByAllGroup: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/statistics/by-all-group`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching statistics by group ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getStatisticsTop5ByAllDepartment: async () => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/top5-by-all-group`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching statistics by department ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getStatisticsTop5ByType: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/statistics/top5-by-type`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching statistics by type:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getStatisticsByGroupByDepartment: async (departmentId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/group-by-department/${departmentId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching statistics by department ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getTop5AuthorsByDepartment: async (departmentId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/top5-authors-by-department/${departmentId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching top 5 authors by department ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getStatisticsTop5ByTypeByDepartment: async (departmentId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/top5-by-type-by-department/${departmentId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching statistics by type:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getStatisticsByGroupByUser: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/group-by-user/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching statistics by user ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getTop5PapersByAuthor: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/top5-papers-by-author/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching top 5 papers by author ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getTop5PaperTypesByUser: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/statistics/top5-paper-types-by-user/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching top 5 paper types by user ID:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
