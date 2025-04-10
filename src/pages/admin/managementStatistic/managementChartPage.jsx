@@ -503,6 +503,17 @@ const Dashboard = () => {
     ],
   };
 
+  const getTypeChartTitle = () => {
+    if (selectedQuarters.includes("All")) {
+      return "Biểu đồ Thống kê theo loại";
+    } else {
+      const selected = selectedQuarters.join(", ");
+      return `Biểu đồ Thống kê theo loại ${
+        selected.length > 30 ? selected.substring(0, 30) + "..." : selected
+      }`;
+    }
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -580,7 +591,7 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê theo loại
+                  {getTypeChartTitle()}
                 </h2>
                 <div className="relative" ref={filterRef}>
                   <button
@@ -638,7 +649,7 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê top 5 bài nghiên cứu theo khoa
+                  Top 5 khoa có nhiều bài nghiên cứu
                 </h2>
                 <div className="relative" ref={roleFilterRef}>
                   <button
@@ -696,7 +707,7 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê top 5 bài nghiên cứu theo lĩnh vực nghiên cứu
+                  Top 5 lĩnh vực có nhiều bài nghiên cứu
                 </h2>
                 <div className="relative" ref={fieldFilterRef}>
                   <button
