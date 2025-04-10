@@ -320,57 +320,132 @@ const ManagementPointDepartmentPage = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Báo cáo");
 
+    // Lấy danh sách các cột hiển thị có dữ liệu
+    const visibleColumnsList = columns.filter(
+      (col) => col.dataIndex && visibleColumns.includes(col.key)
+    );
+    const headers = visibleColumnsList.map((col) => col.title);
+
+    // Lấy ngày tháng năm hiện tại
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()}/${
+      currentDate.getMonth() + 1
+    }/${currentDate.getFullYear()}`;
+
+    // Gộp 3 dòng đầu để hiển thị tên hệ thống
+    worksheet.mergeCells("A1", `${String.fromCharCode(64 + headers.length)}7`);
+    const systemNameCell = worksheet.getCell("A1");
+    systemNameCell.value =
+      "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
+    systemNameCell.font = { name: "Times New Roman", size: 14, bold: true };
+    systemNameCell.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    // Thêm ngày tháng năm tạo
+    worksheet.mergeCells("A8", "C8");
+    const dateCell = worksheet.getCell("A8");
+    dateCell.value = `Ngày tạo: ${formattedDate}`;
+    dateCell.font = { name: "Times New Roman", size: 11 };
+    dateCell.alignment = { horizontal: "left", vertical: "middle" };
+
     // Add title
-    worksheet.mergeCells("A1", "J1");
-    const titleCell = worksheet.getCell("A1");
+    worksheet.mergeCells(
+      "A11",
+      `${String.fromCharCode(64 + headers.length)}11`
+    );
+    const titleCell = worksheet.getCell("A11");
     titleCell.value = "BÁO CÁO ĐIỂM ĐÓNG GÓP";
     titleCell.font = { name: "Times New Roman", size: 16, bold: true };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFCCEEFF" },
+    };
 
-    // Add headers
-    const headers = columns
-      .filter((col) => col.dataIndex)
-      .map((col) => col.title);
-    worksheet.addRow(headers);
-    headers.forEach((header, index) => {
-      const cell = worksheet.getRow(2).getCell(index + 1);
+    // Thêm header row (dòng 12)
+    const headerRow = worksheet.addRow(headers);
+    headerRow.eachCell((cell, colNumber) => {
       cell.font = { name: "Times New Roman", size: 12, bold: true };
       cell.alignment = { horizontal: "center", vertical: "middle" };
       cell.fill = {
         type: "pattern",
         pattern: "solid",
-        fgColor: { argb: "D9E1F2" }, // Light blue background
+        fgColor: { argb: "D9E1F2" },
+      };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
       };
     });
 
     // Add data rows
-    const selectedColumns = columns.map((col) => col.dataIndex).filter(Boolean);
-    filteredPapers.forEach((paper) => {
-      const rowData = selectedColumns.map((col) => paper[col] || "");
-      worksheet.addRow(rowData);
-    });
+    filteredPapers.forEach((paper, index) => {
+      const rowData = visibleColumnsList.map((column) => {
+        if (column.dataIndex === "id") {
+          return index + 1; // STT bắt đầu từ 1
+        }
+        return paper[column.dataIndex] || "";
+      });
 
-    // Style data rows
-    worksheet.eachRow((row, rowIndex) => {
-      if (rowIndex > 2) {
-        row.eachCell((cell) => {
-          cell.font = { name: "Times New Roman", size: 12 };
+      const row = worksheet.addRow(rowData);
+
+      // Style cho từng cell trong row
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: "Times New Roman", size: 12 };
+        // Căn giữa cho STT, căn phải cho số, căn trái cho text
+        if (colNumber === 1) {
+          // STT
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+        } else if (
+          ["totalPapers", "totalPoints"].includes(
+            visibleColumnsList[colNumber - 1].dataIndex
+          )
+        ) {
+          cell.alignment = { horizontal: "right", vertical: "middle" };
+        } else {
           cell.alignment = { horizontal: "left", vertical: "middle" };
-        });
-      }
+        }
+        // Thêm border
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
     });
 
-    // Adjust column widths
-    worksheet.columns = headers.map((header, index) => ({
-      width: Math.max(
-        header.length,
-        ...filteredPapers.map((paper) =>
-          paper[selectedColumns[index]]
-            ? paper[selectedColumns[index]].toString().length
-            : 10
-        )
-      ),
-    }));
+    // Điều chỉnh độ rộng cột
+    worksheet.columns.forEach((column, index) => {
+      let maxLength = 0;
+      // Tính độ rộng dựa trên header
+      maxLength = Math.max(
+        maxLength,
+        headers[index] ? headers[index].length : 0
+      );
+
+      // Tính độ rộng dựa trên dữ liệu
+      filteredPapers.forEach((paper, rowIndex) => {
+        const columnName = visibleColumnsList[index]?.dataIndex;
+        if (columnName === "id") {
+          maxLength = Math.max(maxLength, String(rowIndex + 1).length);
+        } else if (columnName) {
+          const value = paper[columnName];
+          if (value) {
+            maxLength = Math.max(maxLength, String(value).length);
+          }
+        }
+      });
+
+      // Điều chỉnh độ rộng theo nội dung + padding
+      column.width = maxLength + 4;
+    });
 
     // Save the file
     const buffer = await workbook.xlsx.writeBuffer();
@@ -429,6 +504,225 @@ const ManagementPointDepartmentPage = () => {
         </head>
         <body>
           <h1 style="text-align: center;">Báo cáo Điểm Đóng Góp</h1>
+          ${tableHTML}
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const downloadAuthorPapersExcel = async () => {
+    if (!selectedAuthor || authorPapers.length === 0) {
+      console.log("No data available to download");
+      return;
+    }
+
+    console.log("Starting Excel download with data:", authorPapers);
+
+    try {
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Chi tiết bài viết");
+
+      // Headers for the Excel file
+      const headers = ["Tên bài viết", "Loại bài", "Điểm"];
+
+      // Current date for the report
+      const currentDate = new Date();
+      const formattedDate = `${currentDate.getDate()}/${
+        currentDate.getMonth() + 1
+      }/${currentDate.getFullYear()}`;
+
+      // System name header
+      worksheet.mergeCells("A1", `C7`);
+      const systemNameCell = worksheet.getCell("A1");
+      systemNameCell.value =
+        "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
+      systemNameCell.font = { name: "Times New Roman", size: 14, bold: true };
+      systemNameCell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
+      };
+
+      // Date created
+      worksheet.mergeCells("A8", "C8");
+      const dateCell = worksheet.getCell("A8");
+      dateCell.value = `Ngày tạo: ${formattedDate}`;
+      dateCell.font = { name: "Times New Roman", size: 11 };
+      dateCell.alignment = { horizontal: "left", vertical: "middle" };
+
+      // Author info
+      worksheet.mergeCells("A9", "C9");
+      const authorInfoCell = worksheet.getCell("A9");
+      authorInfoCell.value = `Tác giả: ${selectedAuthor.author} | Mã tác giả: ${selectedAuthor.authorId}`;
+      authorInfoCell.font = { name: "Times New Roman", size: 11 };
+      authorInfoCell.alignment = { horizontal: "left", vertical: "middle" };
+
+      // Department info
+      worksheet.mergeCells("A10", "C10");
+      const departmentInfoCell = worksheet.getCell("A10");
+      departmentInfoCell.value = `Khoa: ${selectedAuthor.department}`;
+      departmentInfoCell.font = { name: "Times New Roman", size: 11 };
+      departmentInfoCell.alignment = { horizontal: "left", vertical: "middle" };
+
+      // Paper and point totals
+      worksheet.mergeCells("A11", "C11");
+      const totalPapersCell = worksheet.getCell("A11");
+      totalPapersCell.value = `Tổng số bài: ${
+        selectedAuthor.totalPapers || 0
+      } | Tổng điểm: ${selectedAuthor.totalPoints || 0}`;
+      totalPapersCell.font = { name: "Times New Roman", size: 11, bold: true };
+      totalPapersCell.alignment = { horizontal: "left", vertical: "middle" };
+
+      // Title
+      worksheet.mergeCells("A13", "C13");
+      const titleCell = worksheet.getCell("A13");
+      titleCell.value = "CHI TIẾT BÀI VIẾT CỦA TÁC GIẢ";
+      titleCell.font = { name: "Times New Roman", size: 16, bold: true };
+      titleCell.alignment = { horizontal: "center", vertical: "middle" };
+      titleCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFCCEEFF" },
+      };
+
+      // Add header row
+      const headerRow = worksheet.addRow(headers);
+      headerRow.eachCell((cell, colNumber) => {
+        cell.font = { name: "Times New Roman", size: 12, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "D9E1F2" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      // Add data rows
+      authorPapers.forEach((paper) => {
+        const rowData = [
+          paper.title_vn || "N/A",
+          paper.magazine_type || "N/A",
+          paper.point || 0,
+        ];
+
+        const row = worksheet.addRow(rowData);
+
+        // Style for each cell in the row
+        row.eachCell((cell, colNumber) => {
+          cell.font = { name: "Times New Roman", size: 12 };
+          // Right align for numbers, left align for text
+          if (colNumber === 3) {
+            // Point column
+            cell.alignment = { horizontal: "right", vertical: "middle" };
+          } else {
+            cell.alignment = { horizontal: "left", vertical: "middle" };
+          }
+          // Add borders
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+      });
+
+      // Adjust column widths
+      worksheet.getColumn(1).width = 50; // Title column
+      worksheet.getColumn(2).width = 20; // Type column
+      worksheet.getColumn(3).width = 10; // Point column
+
+      console.log("Worksheet created, preparing to create buffer...");
+
+      // Generate the Excel file
+      const buffer = await workbook.xlsx.writeBuffer();
+      console.log("Buffer created:", buffer);
+
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const fileName = `ChiTiet_TacGia_${selectedAuthor.authorId}_${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`;
+
+      saveAs(blob, fileName);
+      console.log("File download initiated");
+    } catch (error) {
+      console.error("Error in downloadAuthorPapersExcel:", error);
+    }
+  };
+
+  const printAuthorPapers = () => {
+    if (!selectedAuthor || !authorPapers.length) return;
+
+    const printWindow = window.open("", "_blank");
+    const tableHeaders = paperColumns
+      .map(
+        (col) =>
+          `<th style="border: 1px solid #ddd; padding: 8px;">${col.title}</th>`
+      )
+      .join("");
+    const tableRows = authorPapers
+      .map((paper) => {
+        const rowData = paperColumns
+          .map(
+            (col) =>
+              `<td style="border: 1px solid #ddd; padding: 8px;">${
+                paper[col.dataIndex] || ""
+              }</td>`
+          )
+          .join("");
+        return `<tr>${rowData}</tr>`;
+      })
+      .join("");
+
+    const tableHTML = `
+      <table style="border-collapse: collapse; width: 100%; text-align: left;">
+        <thead>
+          <tr>${tableHeaders}</tr>
+        </thead>
+        <tbody>
+          ${tableRows}
+        </tbody>
+      </table>
+    `;
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Chi tiết bài viết của tác giả</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <h1 style="text-align: center;">Chi tiết bài viết của tác giả</h1>
+          <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <div>
+              <p><strong>Tác giả:</strong> ${selectedAuthor.author}</p>
+              <p><strong>Mã tác giả:</strong> ${selectedAuthor.authorId}</p>
+              <p><strong>Khoa:</strong> ${selectedAuthor.department}</p>
+            </div>
+            <div>
+              <p><strong>Tổng số bài:</strong> ${
+                selectedAuthor.totalPapers || 0
+              }</p>
+              <p><strong>Tổng điểm:</strong> ${
+                selectedAuthor.totalPoints || 0
+              }</p>
+            </div>
+          </div>
           ${tableHTML}
         </body>
       </html>
@@ -861,6 +1155,30 @@ const ManagementPointDepartmentPage = () => {
             <div className="text-center my-4">Đang tải dữ liệu...</div>
           ) : (
             <>
+              <div className="flex justify-end gap-4 mb-4">
+                <button
+                  onClick={() => downloadAuthorPapersExcel()}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
+                    alt="Download Icon"
+                    className="w-4 h-4"
+                  />
+                  Download
+                </button>
+                <button
+                  onClick={printAuthorPapers}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+                >
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
+                    alt="Print Icon"
+                    className="w-4 h-4"
+                  />
+                  Print
+                </button>
+              </div>
               <div className="flex justify-between mb-4">
                 <div className="text-lg">
                   Tổng số bài:{" "}
@@ -879,7 +1197,7 @@ const ManagementPointDepartmentPage = () => {
                 columns={paperColumns}
                 dataSource={authorPapers}
                 pagination={{ pageSize: 5 }}
-                rowKey="id"
+                rowKey={(record) => record.id || record._id} // Ensure a unique key is used
                 scroll={{ y: 400 }}
                 size="small"
               />
