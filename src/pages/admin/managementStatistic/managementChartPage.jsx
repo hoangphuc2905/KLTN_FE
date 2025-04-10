@@ -57,36 +57,145 @@ const Dashboard = () => {
     fetchStatistics();
   }, []);
 
-  const typeChartData = {
-    labels: ["Q1", "Q2", "Q3", "Q4", "None"],
+  const [typeChartData, setTypeChartData] = useState({
+    labels: [],
     datasets: [
       {
-        data: [22, 25, 21, 19, 15],
-        backgroundColor: [
-          "#00A3FF",
-          "#7239EA",
-          "#F1416C",
-          "#7239EA",
-          "#FF0000",
-        ],
+        data: [],
+        backgroundColor: [],
         borderWidth: 0,
         borderRadius: 6,
       },
     ],
-  };
+  });
 
-  const roleChartData = {
-    labels: ["Tác giả chính", "Liên hệ", "Vừa chính vừa liên hệ", "Tham gia"],
+  useEffect(() => {
+    const fetchTypeChartData = async () => {
+      try {
+        const response = await userApi.getStatisticsByAllGroup();
+        if (response && response.data) {
+          const labels = Object.keys(response.data);
+          const data = Object.values(response.data);
+          const backgroundColor = labels.map(
+            (_, index) =>
+              ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][index % 5]
+          ); // Generate colors dynamically
+
+          setTypeChartData({
+            labels,
+            datasets: [
+              {
+                data,
+                backgroundColor,
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
+        } else {
+          console.error("Unexpected API response structure:", response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch type chart data:", error);
+      }
+    };
+
+    fetchTypeChartData();
+  }, []);
+
+  const [departmentChartData, setDepartmentChartData] = useState({
+    labels: [],
     datasets: [
       {
-        data: [12, 13, 11, 9],
-        backgroundColor: ["#00A3FF", "#7239EA", "#F1416C", "#7239EA"],
+        data: [],
+        backgroundColor: [],
         borderWidth: 0,
         borderRadius: 6,
       },
     ],
-  };
+  });
 
+  useEffect(() => {
+    const fetchDepartmentChartData = async () => {
+      try {
+        const response = await userApi.getStatisticsTop5ByAllDepartment();
+        if (response && response.data) {
+          const labels = Object.keys(response.data);
+          const data = Object.values(response.data);
+          const backgroundColor = labels.map(
+            (_, index) =>
+              ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFC700"][index % 5]
+          ); // Generate colors dynamically
+
+          setDepartmentChartData({
+            labels,
+            datasets: [
+              {
+                data,
+                backgroundColor,
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
+        } else {
+          console.error("Unexpected API response structure:", response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch department chart data:", error);
+      }
+    };
+
+    fetchDepartmentChartData();
+  }, []);
+
+  const [top5ByFieldChartData, setTop5ByFieldChartData] = useState({
+    labels: [],
+    datasets: [
+      {
+        data: [],
+        backgroundColor: [],
+        borderWidth: 0,
+        borderRadius: 6,
+      },
+    ],
+  });
+
+  useEffect(() => {
+    const fetchTop5ByTypeChartData = async () => {
+      try {
+        const response = await userApi.getStatisticsTop5ByType();
+        if (response && response.data) {
+          const labels = Object.keys(response.data);
+          const data = Object.values(response.data);
+          const backgroundColor = labels.map(
+            (_, index) =>
+              ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFC700"][index % 5]
+          ); // Generate colors dynamically
+
+          setTop5ByFieldChartData({
+            labels,
+            datasets: [
+              {
+                data,
+                backgroundColor,
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
+        } else {
+          console.error("Unexpected API response structure:", response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch top 5 by type chart data:", error);
+      }
+    };
+
+    fetchTop5ByTypeChartData();
+  }, []);
+
+  
   const chartOptions = {
     responsive: false, // Đặt responsive là false
     maintainAspectRatio: false, // Đặt maintainAspectRatio là false
@@ -104,39 +213,6 @@ const Dashboard = () => {
         },
       },
     },
-  };
-
-  const donutChartData = {
-    labels: [
-      "Category 1",
-      "Category 2",
-      "Category 3",
-      "Category 4",
-      "Category 5",
-      "Category 6",
-      "Category 7",
-      "Category 8",
-      "Category 9",
-      "Category 10",
-    ],
-    datasets: [
-      {
-        data: [1, 6, 2, 7, 7, 4, 3, 2, 7, 8],
-        backgroundColor: [
-          "#ff0000",
-          "#8241f1",
-          "#705b10",
-          "#39eaa3",
-          "#c09624",
-          "#8686d4",
-          "#0cebd8",
-          "#F1416C",
-          "#FFC700",
-          "#856666",
-        ],
-        borderWidth: 0,
-      },
-    ],
   };
 
   const donutOptions = {
@@ -161,7 +237,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchTopPapers = async () => {
       try {
-        const response = await userApi.getTop3MostViewedAndDownloadedPapers();
+        const response = await userApi.getTop5MostViewedAndDownloadedPapers();
         if (response && response.papers) {
           setTopPapers(response.papers);
         } else {
@@ -309,29 +385,34 @@ const Dashboard = () => {
     ],
   };
 
-  const filteredRoleChartData = {
-    ...roleChartData,
+
+  const filteredDepartmentChartData = {
+    ...departmentChartData,
     datasets: [
       {
-        ...roleChartData.datasets[0],
+        ...departmentChartData.datasets[0],
         data: selectedRoles.includes("All")
-          ? roleChartData.datasets[0].data
-          : roleChartData.datasets[0].data.map((value, index) =>
-              selectedRoles.includes(roleChartData.labels[index]) ? value : 0
+          ? departmentChartData.datasets[0].data
+          : departmentChartData.datasets[0].data.map((value, index) =>
+              selectedRoles.includes(departmentChartData.labels[index])
+                ? value
+                : 0
             ),
       },
     ],
   };
 
   const filteredDonutChartData = {
-    ...donutChartData,
+    ...top5ByFieldChartData,
     datasets: [
       {
-        ...donutChartData.datasets[0],
+        ...top5ByFieldChartData.datasets[0],
         data: selectedFields.includes("All")
-          ? donutChartData.datasets[0].data
-          : donutChartData.datasets[0].data.map((value, index) =>
-              selectedFields.includes(donutChartData.labels[index]) ? value : 0
+          ? top5ByFieldChartData.datasets[0].data
+          : top5ByFieldChartData.datasets[0].data.map((value, index) =>
+              selectedFields.includes(top5ByFieldChartData.labels[index])
+                ? value
+                : 0
             ),
       },
     ],
@@ -456,7 +537,7 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê theo vai trò
+                  Biểu đồ Thống kê top 5 bài nghiên cứu theo khoa
                 </h2>
                 <div className="relative" ref={roleFilterRef}>
                   <button
@@ -502,7 +583,7 @@ const Dashboard = () => {
                 </div>
               </div>
               <Bar
-                data={filteredRoleChartData}
+                data={filteredDepartmentChartData}
                 options={chartOptions}
                 height={200}
                 width={540}
@@ -512,7 +593,7 @@ const Dashboard = () => {
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê theo lĩnh vực nghiên cứu
+                  Biểu đồ Thống kê top 5 bài nghiên cứu theo lĩnh vực nghiên cứu
                 </h2>
                 <div className="relative" ref={fieldFilterRef}>
                   <button
@@ -571,7 +652,7 @@ const Dashboard = () => {
             </div>
             <div className="bg-white rounded-xl p-6 shadow-md">
               <h2 className="font-semibold text-gray-700 mb-4">
-                TOP 3 BÀI NGHIÊN CỨU KHOA HỌC TIÊU BIỂU
+                Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất
               </h2>
               <Table
                 columns={columns}
