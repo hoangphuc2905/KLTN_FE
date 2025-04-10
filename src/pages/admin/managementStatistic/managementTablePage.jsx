@@ -334,29 +334,53 @@ const ManagementTable = () => {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Báo cáo");
 
+    // Get only the visible columns with data
+    const visibleColumnsList = filteredColumns.filter((col) => col.dataIndex);
+    const headers = visibleColumnsList.map((col) => col.title);
+
+    // Get current date
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getDate()}/${
+      currentDate.getMonth() + 1
+    }/${currentDate.getFullYear()}`;
+
+    // Merge cells for system name (rows 1-7)
+    worksheet.mergeCells("A1", `${String.fromCharCode(64 + headers.length)}7`);
+    const systemNameCell = worksheet.getCell("A1");
+    systemNameCell.value =
+      "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
+    systemNameCell.font = { name: "Times New Roman", size: 14, bold: true };
+    systemNameCell.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    // Add date created
+    worksheet.mergeCells("A8", "C8");
+    const dateCell = worksheet.getCell("A8");
+    dateCell.value = `Ngày tạo: ${formattedDate}`;
+    dateCell.font = { name: "Times New Roman", size: 11 };
+    dateCell.alignment = { horizontal: "left", vertical: "middle" };
+
     // Add title
-    worksheet.mergeCells("A1", "J1");
-    const titleCell = worksheet.getCell("A1");
+    worksheet.mergeCells(
+      "A11",
+      `${String.fromCharCode(64 + headers.length)}11`
+    );
+    const titleCell = worksheet.getCell("A11");
     titleCell.value = "BÁO CÁO DANH SÁCH";
     titleCell.font = { name: "Times New Roman", size: 16, bold: true };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFCCEEFF" },
+    };
 
     // Add headers
-    const headers = [
-      "STT",
-      "Loại bài báo",
-      "Nhóm",
-      "Tên bài báo nghiên cứu khoa học",
-      "Tác giả",
-      "Số tác giả",
-      "Vai trò",
-      "CQ đứng tên",
-      "Ngày công bố",
-      "Ngày thêm",
-    ];
-    worksheet.addRow(headers);
-    headers.forEach((header, index) => {
-      const cell = worksheet.getRow(2).getCell(index + 1);
+    const headerRow = worksheet.addRow(headers);
+    headerRow.eachCell((cell, colNumber) => {
       cell.font = { name: "Times New Roman", size: 12, bold: true };
       cell.alignment = { horizontal: "center", vertical: "middle" };
       cell.fill = {
@@ -364,39 +388,94 @@ const ManagementTable = () => {
         pattern: "solid",
         fgColor: { argb: "D9E1F2" },
       };
+      cell.border = {
+        top: { style: "thin" },
+        left: { style: "thin" },
+        bottom: { style: "thin" },
+        right: { style: "thin" },
+      };
     });
 
     // Add data rows
     filteredPapers.forEach((paper, index) => {
-      const rowData = [
-        index + 1,
-        paper.articleType,
-        paper.groupName,
-        paper.title_vn,
-        paper.authors,
-        paper.author_count,
-        paper.roles
-          .split(", ")
-          .map((role) => roleMapping[role] || role)
-          .join(", "),
-        paper.institutions,
-        new Date(paper.publish_date).toLocaleDateString(),
-        new Date(paper.createdAt).toLocaleDateString(),
-      ];
-      worksheet.addRow(rowData);
+      const rowData = visibleColumnsList.map((column) => {
+        if (column.key === "id") {
+          return index + 1; // STT starts from 1
+        }
+
+        // Handle date fields
+        if (column.key === "publicationDate" && paper.publish_date) {
+          return new Date(paper.publish_date).toLocaleDateString();
+        }
+        if (column.key === "dateAdded" && paper.createdAt) {
+          return new Date(paper.createdAt).toLocaleDateString();
+        }
+
+        // For roles, convert to Vietnamese display
+        if (column.key === "roles" && paper.roles) {
+          return paper.roles
+            .split(", ")
+            .map((role) => roleMapping[role] || role)
+            .join(", ");
+        }
+
+        // For other fields
+        return paper[column.dataIndex] || "";
+      });
+
+      const row = worksheet.addRow(rowData);
+
+      // Style each cell in the row
+      row.eachCell((cell, colNumber) => {
+        cell.font = { name: "Times New Roman", size: 12 };
+        // Align center for STT, right for numbers, left for text
+        if (colNumber === 1) {
+          // STT
+          cell.alignment = { horizontal: "center", vertical: "middle" };
+        } else if (
+          ["author_count"].includes(visibleColumnsList[colNumber - 1].dataIndex)
+        ) {
+          // Numbers
+          cell.alignment = { horizontal: "right", vertical: "middle" };
+        } else {
+          // Text
+          cell.alignment = { horizontal: "left", vertical: "middle" };
+        }
+        // Add borders
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
     });
 
     // Adjust column widths
-    worksheet.columns = headers.map((header, index) => ({
-      width: Math.max(
-        header.length,
-        ...filteredPapers.map((paper) =>
-          paper[filteredColumns[index]?.dataIndex]
-            ? paper[filteredColumns[index]?.dataIndex].toString().length
-            : 10
-        )
-      ),
-    }));
+    worksheet.columns.forEach((column, index) => {
+      let maxLength = 0;
+      // Calculate width based on headers
+      maxLength = Math.max(
+        maxLength,
+        headers[index] ? headers[index].length : 0
+      );
+
+      // Calculate width based on data
+      filteredPapers.forEach((paper, rowIndex) => {
+        const columnName = visibleColumnsList[index]?.dataIndex;
+        if (columnName === "id") {
+          maxLength = Math.max(maxLength, String(rowIndex + 1).length);
+        } else if (columnName) {
+          const value = paper[columnName];
+          if (value) {
+            maxLength = Math.max(maxLength, String(value).length);
+          }
+        }
+      });
+
+      // Adjust width based on content + padding
+      column.width = maxLength + 4;
+    });
 
     // Export to Excel
     const buffer = await workbook.xlsx.writeBuffer();
