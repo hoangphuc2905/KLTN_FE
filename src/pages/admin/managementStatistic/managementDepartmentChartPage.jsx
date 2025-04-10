@@ -662,21 +662,36 @@ const ManagementDepartmentChart = () => {
                       style={{ width: "200px", right: "0" }}
                     >
                       <div className="px-4 py-3 w-full max-w-[400px]">
-                        {["All", ...typeChartData.labels].map((quarter) => (
-                          <label
-                            key={quarter}
-                            className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer"
-                          >
-                            <input
-                              type="checkbox"
-                              value={quarter}
-                              checked={selectedQuarters.includes(quarter)}
-                              onChange={handleQuarterChange}
-                              className="mr-2 accent-blue-500"
-                            />
-                            {quarter}
-                          </label>
-                        ))}
+                        <label className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            value="All"
+                            checked={selectedQuarters.includes("All")}
+                            onChange={handleQuarterChange}
+                            className="mr-2 accent-blue-500"
+                          />
+                          Tất cả
+                        </label>
+                        <div className="max-h-[150px] overflow-y-auto">
+                          {typeChartData.labels.map((quarter) => (
+                            <label
+                              key={quarter}
+                              className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                value={quarter}
+                                checked={
+                                  selectedQuarters.includes(quarter) ||
+                                  selectedQuarters.includes("All")
+                                }
+                                onChange={handleQuarterChange}
+                                className="mr-2 accent-blue-500"
+                              />
+                              {quarter}
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -693,7 +708,7 @@ const ManagementDepartmentChart = () => {
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ top 5 tác giả có điểm đóng góp cao nhất
+                  Top 5 tác giả có điểm đóng góp
                 </h2>
                 <div className="relative" ref={authorFilterRef}>
                   <button
@@ -754,7 +769,7 @@ const ManagementDepartmentChart = () => {
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê top 5 bài nghiên cứu theo lĩnh vực nghiên cứu
+                  Top 5 lĩnh vực có nhiều bài nghiên cứu
                 </h2>
                 <div className="relative" ref={fieldFilterRef}>
                   <button

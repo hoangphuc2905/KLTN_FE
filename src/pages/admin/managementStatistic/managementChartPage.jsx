@@ -27,6 +27,42 @@ ChartJS.register(
   Legend
 );
 
+// Hàm tính toán options cho biểu đồ dựa trên dữ liệu thực tế
+const getChartOptions = (data) => {
+  // Tìm giá trị cao nhất trong dữ liệu
+  const maxValue =
+    data && data.datasets && data.datasets[0] && data.datasets[0].data
+      ? Math.max(
+          ...data.datasets[0].data.filter((val) => !isNaN(val) && val !== 0)
+        )
+      : 0;
+
+  // Làm tròn lên chục gần nhất + thêm buffer 10 để đảm bảo giá trị luôn là số chẵn chục
+  const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
+
+  // Tính toán bước (step) phù hợp dựa trên khoảng giá trị
+  const step = roundedMax > 100 ? 20 : roundedMax > 50 ? 10 : 5;
+
+  return {
+    responsive: false,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: roundedMax,
+        ticks: {
+          stepSize: step,
+        },
+      },
+    },
+  };
+};
+
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalPapers: 0,
@@ -197,25 +233,6 @@ const Dashboard = () => {
 
     fetchTop5ByTypeChartData();
   }, []);
-
-  const chartOptions = {
-    responsive: false, // Đặt responsive là false
-    maintainAspectRatio: false, // Đặt maintainAspectRatio là false
-    plugins: {
-      legend: {
-        display: false,
-      },
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        max: 50,
-        ticks: {
-          stepSize: 10,
-        },
-      },
-    },
-  };
 
   const donutOptions = {
     responsive: false, // Đặt responsive là false
@@ -640,7 +657,7 @@ const Dashboard = () => {
               </div>
               <Bar
                 data={filteredTypeChartData}
-                options={chartOptions}
+                options={getChartOptions(filteredTypeChartData)}
                 height={200}
                 width={500}
               />
@@ -698,7 +715,7 @@ const Dashboard = () => {
               </div>
               <Bar
                 data={filteredDepartmentChartData}
-                options={chartOptions}
+                options={getChartOptions(filteredDepartmentChartData)}
                 height={200}
                 width={540}
               />
