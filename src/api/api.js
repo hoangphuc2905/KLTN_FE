@@ -888,10 +888,13 @@ const userApi = {
     }
   },
 
-  getAllPaperAuthorsByTolalPointsAndTotalPapers: async () => {
+  getAllPaperAuthorsByTolalPointsAndTotalPapers: async (academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/paperauthor/statistics-by-department`
+        `${API_URL}/paperauthor/statistics-by-department`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -904,10 +907,13 @@ const userApi = {
     }
   },
 
-  getPaperAuthorsByDepartment: async (department) => {
+  getPaperAuthorsByDepartment: async (department, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/paperauthor/department/${department}`
+        `${API_URL}/paperauthor/department/${department}`,
+        {
+          params: { academicYear }, // Pass academicYear as a query parameter
+        }
       );
       console.log("API Response:", response.data);
       return response.data;

@@ -22,14 +22,37 @@ const ManagementPoint = () => {
     "action",
   ]);
 
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
+
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
+
   useEffect(() => {
     const fetchPapers = async () => {
       try {
         setLoading(true);
-        const data =
-          await userApi.getAllPaperAuthorsByTolalPointsAndTotalPapers();
+        const response =
+          await userApi.getAllPaperAuthorsByTolalPointsAndTotalPapers(
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
+
+        // Validate response and ensure result is an array
+        const data = Array.isArray(response.result) ? response.result : [];
         setPapers(
-          data.map((item, index) => ({
+          data.map((item) => ({
             id: item["DEPARTMENT_ID"],
             department: item["KHOA"],
             totalPapers: item["TỔNG_BÀI"],
@@ -44,7 +67,7 @@ const ManagementPoint = () => {
     };
 
     fetchPapers();
-  }, []);
+  }, [selectedYear]);
 
   const columnOptions = [
     { label: "STT", value: "id" },
@@ -105,9 +128,13 @@ const ManagementPoint = () => {
   });
 
   const handleViewDetails = (departmentId, departmentName) => {
-    navigate(`/admin/management/point/detail/${departmentId}`, {
-      state: { departmentId, departmentName },
-    });
+    const state = {
+      departmentId,
+      departmentName,
+      ...(selectedYear !== "Tất cả" && { selectedYear }), // Chỉ thêm selectedYear nếu không phải "Tất cả"
+    };
+
+    navigate(`/admin/management/point/detail/${departmentId}`, { state });
   };
 
   const columns = [
@@ -382,9 +409,16 @@ const ManagementPoint = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[130px]">
-              <option value="2024">2024-2025</option>
-              <option value="2023">2023-2024</option>
+            <select
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+              className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[130px]"
+            >
+              {academicYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
             </select>
             <button
               onClick={downloadExcel}

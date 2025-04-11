@@ -6,10 +6,11 @@ import { useNavigate, useParams } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
 import userApi from "../../../api/api";
+import { useLocation } from "react-router-dom";
 
 const ManagementPointDetailPage = () => {
-  const { id } = useParams();
-  const departmentId = id;
+  const location = useLocation();
+  const { departmentId, departmentName, selectedYear } = location.state || {};
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showFilter, setShowFilter] = useState(false);
@@ -31,12 +32,27 @@ const ManagementPointDetailPage = () => {
       try {
         setLoading(true);
         if (!departmentId) {
-          console.error("Error: departmentId is undefined");
+          console.error(
+            `Error: Missing required parameter. departmentId: ${departmentId}`
+          );
           return;
         }
-        console.log("Fetching papers for departmentId:", departmentId);
-        const data = await userApi.getPaperAuthorsByDepartment(departmentId);
-        console.log("API Response:", data);
+        console.log(
+          "Fetching papers for departmentId:",
+          departmentId,
+          "and year:",
+          selectedYear || "All"
+        );
+
+        // Gọi API
+        const response = await userApi.getPaperAuthorsByDepartment(
+          departmentId,
+          selectedYear || null // Truyền null nếu không có selectedYear
+        );
+
+        console.log("API Response:", response);
+
+        const data = response.result || [];
         setPapers(
           data.map((item, index) => ({
             id: index + 1,
@@ -55,7 +71,7 @@ const ManagementPointDetailPage = () => {
     };
 
     fetchPapers();
-  }, [departmentId]);
+  }, [departmentId, selectedYear]); // Add selectedYear as a dependency
 
   const columnOptions = [
     { label: "STT", value: "id" },
@@ -151,71 +167,69 @@ const ManagementPointDetailPage = () => {
     setLoadingPapers(true);
     try {
       const response = await userApi.getScientificPapersByAuthorId(
-        author.authorId
-      ); // Use authorId from the selected author
+        author.authorId,
+        selectedYear // Use selectedYear from props
+      );
       console.log("Full API Response:", response);
 
-      if (Array.isArray(response)) {
-        const mappedPapers = await Promise.all(
-          response
-            .filter((paper) => paper.status === "approved") // Only include approved papers
-            .map(async (paper) => {
-              // Fetch department name
-              let departmentName = "N/A";
-              if (paper.department) {
-                try {
-                  const departmentResponse = await userApi.getDepartmentById(
-                    paper.department
-                  );
-                  departmentName = departmentResponse?.department_name || "N/A";
-                } catch (error) {
-                  console.error(
-                    `Error fetching department for ID ${paper.department}:`,
-                    error
-                  );
-                }
+      // Adjusted to handle the new API response structure
+      const scientificPapers = response?.scientificPapers || [];
+      const mappedPapers = await Promise.all(
+        scientificPapers
+          .filter((paper) => paper.status === "approved") // Only include approved papers
+          .map(async (paper) => {
+            // Fetch department name
+            let departmentName = "N/A";
+            if (paper.department) {
+              try {
+                const departmentResponse = await userApi.getDepartmentById(
+                  paper.department
+                );
+                departmentName = departmentResponse?.department_name || "N/A";
+              } catch (error) {
+                console.error(
+                  `Error fetching department for ID ${paper.department}:`,
+                  error
+                );
               }
+            }
 
-              // Filter role for the selected author
-              const userAuthor = paper.author?.find(
-                (authorItem) => authorItem.user_id === author.authorId
-              );
-              const userRole = userAuthor?.role || "N/A";
+            // Filter role for the selected author
+            const userAuthor = paper.author?.find(
+              (authorItem) => authorItem.user_id === author.authorId
+            );
+            const userRole = userAuthor?.role || "N/A";
 
-              // Get the point value directly from the API response
-              const points = userAuthor?.point || 0;
+            // Get the point value directly from the API response
+            const points = userAuthor?.point || 0;
 
-              // Map role to display values
-              const displayRole = (() => {
-                switch (userRole) {
-                  case "MainAndCorrespondingAuthor":
-                    return "Vừa chính vừa liên hệ";
-                  case "CorrespondingAuthor":
-                    return "Liên hệ";
-                  case "MainAuthor":
-                    return "Chính";
-                  case "Participant":
-                    return "Tham gia";
-                  default:
-                    return "N/A";
-                }
-              })();
+            // Map role to display values
+            const displayRole = (() => {
+              switch (userRole) {
+                case "MainAndCorrespondingAuthor":
+                  return "Vừa chính vừa liên hệ";
+                case "CorrespondingAuthor":
+                  return "Liên hệ";
+                case "MainAuthor":
+                  return "Chính";
+                case "Participant":
+                  return "Tham gia";
+                default:
+                  return "N/A";
+              }
+            })();
 
-              return {
-                id: paper.paper_id,
-                title_vn: paper.title_vn || "N/A",
-                magazine_type: paper.article_type?.type_name || "N/A",
-                point: points, // Use the point value from the API
-                role: displayRole, // Use the mapped display role
-                institution: departmentName, // Use the fetched department name
-              };
-            })
-        );
-        setAuthorPapers(mappedPapers); // Display the data in the modal table
-      } else {
-        console.error("Unexpected API response structure:", response);
-        setAuthorPapers([]); // Fallback to an empty array
-      }
+            return {
+              id: paper.paper_id,
+              title_vn: paper.title_vn || "N/A",
+              magazine_type: paper.article_type?.type_name || "N/A",
+              point: points, // Use the point value from the API
+              role: displayRole, // Use the mapped display role
+              institution: departmentName, // Use the fetched department name
+            };
+          })
+      );
+      setAuthorPapers(mappedPapers); // Display the data in the modal table
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
       setAuthorPapers([]); // Fallback to an empty array on error
@@ -244,7 +258,7 @@ const ManagementPointDetailPage = () => {
 
   const columns = [
     {
-      title: "STT",
+      title: "STffT",
       dataIndex: "id",
       key: "id",
       render: (text, record, index) => index + 1,
@@ -817,10 +831,7 @@ const ManagementPointDetailPage = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[130px]">
-              <option value="2024">2024-2025</option>
-              <option value="2023">2023-2024</option>
-            </select>
+            {/* Removed the combobox for selecting academic year */}
             <button
               onClick={downloadExcel}
               className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
@@ -1133,8 +1144,8 @@ const ManagementPointDetailPage = () => {
           <div className="font-semibold">
             Chi tiết bài viết: {selectedAuthor?.author}
             <div className="text-sm font-normal text-gray-500 mt-1">
-              Khoa: {selectedAuthor?.department} | Mã tác giả:{" "}
-              {selectedAuthor?.authorId}
+              Khoa: {departmentName} | Mã tác giả: {selectedAuthor?.authorId}{" "}
+              {/* Use departmentName */}
             </div>
           </div>
         }

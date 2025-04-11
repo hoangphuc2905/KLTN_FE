@@ -11,14 +11,16 @@ const ManagementPoint = () => {
   const [papers, setPapers] = useState([]);
 
   const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
+    if (!dateString || isNaN(new Date(dateString).getTime())) return "N/A"; // Check for invalid date
     const date = new Date(dateString);
-    return `${date.getDate().toString().padStart(2, "0")}/${(
-      date.getMonth() + 1
+    return `${date.getUTCDate().toString().padStart(2, "0")}/${(
+      date.getUTCMonth() + 1
     )
       .toString()
-      .padStart(2, "0")}/${date.getFullYear()}`;
+      .padStart(2, "0")}/${date.getUTCFullYear()}`;
   };
+
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -29,12 +31,18 @@ const ManagementPoint = () => {
           return;
         }
 
-        const response = await userApi.getScientificPapersByAuthorId(user_id);
+        const response = await userApi.getScientificPapersByAuthorId(
+          user_id,
+          selectedYear === "Tất cả" ? null : selectedYear // Pass academicYear if not "Tất cả"
+        );
         console.log("Full API Response:", response);
 
-        if (Array.isArray(response)) {
+        if (
+          response?.scientificPapers &&
+          Array.isArray(response.scientificPapers)
+        ) {
           const mappedPapers = await Promise.all(
-            response.map(async (paper) => {
+            response.scientificPapers.map(async (paper) => {
               // Fetch department name
               let departmentName = "N/A";
               if (paper.department) {
@@ -88,7 +96,9 @@ const ManagementPoint = () => {
                 authorCount: paper.author_count || "0",
                 role: displayRole, // Use the mapped display role
                 institution: departmentName, // Use the fetched department name
-                publicationDate: formatDate(paper.publish_date), // Format publication date
+                publicationDate: paper.publish_date
+                  ? formatDate(paper.publish_date)
+                  : "N/A", // Ensure valid date or fallback to "N/A"
                 dateAdded: paper.createdAt || "N/A",
                 featured: true, // Set default value
                 points: points, // Use the point value from the API
@@ -101,13 +111,16 @@ const ManagementPoint = () => {
           setPapers([]); // Fallback to an empty array
         }
       } catch (error) {
-        console.error("Error fetching scientific papers:", error);
+        console.error(
+          "Error fetching scientific papers:",
+          error.message || error
+        );
         setPapers([]); // Fallback to an empty array on error
       }
     };
 
     fetchPapers();
-  }, []);
+  }, [selectedYear]);
 
   const [showFilter, setShowFilter] = useState(false);
   const [showColumnFilter, setShowColumnFilter] = useState(false);
@@ -242,12 +255,17 @@ const ManagementPoint = () => {
   };
 
   const handleRowClick = (record) => {
-    setModalContent(record);
+    setModalContent({
+      ...record,
+      publicationDate:
+        record.publicationDate !== "N/A"
+          ? record.publicationDate
+          : "Không xác định", // Ensure valid date or fallback
+    });
     setIsModalVisible(true);
   };
 
   const [academicYears, setAcademicYears] = useState([]);
-  const [selectedYear, setSelectedYear] = useState("Tất cả");
 
   const getAcademicYears = async () => {
     try {
