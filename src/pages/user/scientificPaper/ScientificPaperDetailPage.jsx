@@ -102,6 +102,8 @@ const ScientificPaperDetailPage = () => {
           doi: data.doi || null,
           link: "https://ctujsvn.ctu.edu.vn/index.php/ctujsvn/article/view/5036",
           fileUrl: data.file || null,
+          submitter: data.author?.[0]?.author_name_vi || "Không có dữ liệu",
+          institution: data.author?.[0]?.departmentName || "Không có dữ liệu",
         };
 
         setPaper(transformedPaper);

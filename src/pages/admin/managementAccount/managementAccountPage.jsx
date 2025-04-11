@@ -1,5 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import { Modal, Input, Select, Table, message, Radio, Checkbox } from "antd";
+import {
+  Modal,
+  Input,
+  Select,
+  Table,
+  message,
+  Radio,
+  Checkbox,
+  Tooltip,
+} from "antd";
 import Header from "../../../components/header";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
@@ -390,35 +399,62 @@ const ManagementUsers = () => {
             dataIndex: "id",
             key: "id",
             render: (text, record, index) => index + 1,
+            width: 65,
+            fixed: "left",
           },
           {
             title: "HỌ VÀ TÊN",
             dataIndex: "full_name",
             key: "full_name",
+            width: 200,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (full_name) => (
+              <Tooltip placement="topLeft" title={full_name}>
+                {full_name}
+              </Tooltip>
+            ),
           },
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
+            width: 200,
+            ellipsis: {
+              showTitle: false,
+            },
             render: (department) => {
-              if (
-                typeof department === "object" &&
-                department.department_name
-              ) {
-                return department.department_name;
-              }
-              return departmentNames[department] || "Đang tải...";
+              const deptName =
+                typeof department === "object" && department.department_name
+                  ? department.department_name
+                  : departmentNames[department] || "Đang tải...";
+              return (
+                <Tooltip placement="topLeft" title={deptName}>
+                  {deptName}
+                </Tooltip>
+              );
             },
           },
           {
             title: "MSSV",
             dataIndex: "student_id",
             key: "student_id",
+            width: 150,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (student_id) => (
+              <Tooltip placement="topLeft" title={student_id}>
+                {student_id}
+              </Tooltip>
+            ),
           },
           {
             title: "TRẠNG THÁI",
             dataIndex: "isActive",
             key: "isActive",
+            width: 150,
             render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
@@ -432,6 +468,8 @@ const ManagementUsers = () => {
           {
             title: "CHỈNH SỬA",
             key: "edit",
+            width: 100,
+            fixed: "right",
             render: (text, record) => (
               <button
                 className="text-blue-500"
@@ -460,37 +498,67 @@ const ManagementUsers = () => {
             dataIndex: "id",
             key: "id",
             render: (text, record, index) => index + 1,
+            width: 65,
+            fixed: "left",
           },
           {
             title: "MSGV",
             dataIndex: "lecturer_id",
             key: "lecturer_id",
+            width: 150,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (lecturer_id) => (
+              <Tooltip placement="topLeft" title={lecturer_id}>
+                {lecturer_id}
+              </Tooltip>
+            ),
           },
           {
             title: "HỌ VÀ TÊN",
             dataIndex: "full_name",
             key: "full_name",
+            width: 200,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (full_name) => (
+              <Tooltip placement="topLeft" title={full_name}>
+                {full_name}
+              </Tooltip>
+            ),
           },
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
+            width: 200,
+            ellipsis: {
+              showTitle: false,
+            },
             render: (department) => {
-              if (
-                typeof department === "object" &&
-                department.department_name
-              ) {
-                return department.department_name;
-              }
-              return departmentNames[department] || "Đang tải...";
+              const deptName =
+                typeof department === "object" && department.department_name
+                  ? department.department_name
+                  : departmentNames[department] || "Đang tải...";
+              return (
+                <Tooltip placement="topLeft" title={deptName}>
+                  {deptName}
+                </Tooltip>
+              );
             },
           },
           {
             title: "CHỨC VỤ",
             dataIndex: "roles",
             key: "roles",
-            render: (roles) =>
-              Array.isArray(roles)
+            width: 180,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (roles) => {
+              const roleText = Array.isArray(roles)
                 ? roles
                     .filter(
                       (role) =>
@@ -500,18 +568,36 @@ const ManagementUsers = () => {
                       (role) => roleMapping[role.role_name] || role.role_name
                     )
                     .join(", ")
-                : "Không xác định",
+                : "Không xác định";
+              return (
+                <Tooltip placement="topLeft" title={roleText}>
+                  {roleText}
+                </Tooltip>
+              );
+            },
           },
           {
             title: "CHỨC DANH",
             dataIndex: "degree",
             key: "degree",
-            render: (degree) => degreeMapping[degree] || "Không xác định",
+            width: 150,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (degree) => {
+              const degreeText = degreeMapping[degree] || "Không xác định";
+              return (
+                <Tooltip placement="topLeft" title={degreeText}>
+                  {degreeText}
+                </Tooltip>
+              );
+            },
           },
           {
             title: "TRẠNG THÁI",
             dataIndex: "isActive",
             key: "isActive",
+            width: 150,
             render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
@@ -525,6 +611,8 @@ const ManagementUsers = () => {
           {
             title: "CHỈNH SỬA",
             key: "edit",
+            width: 100,
+            fixed: "right",
             render: (text, record) => {
               const isHeadOfDepartment = record.roles.some(
                 (role) => role.role_name === "head_of_department"
@@ -812,18 +900,35 @@ const ManagementUsers = () => {
                 )}
               </div>
 
-              <Table
-                columns={columns}
-                dataSource={filteredUsers}
-                pagination={{
-                  current: currentPage,
-                  pageSize: itemsPerPage,
-                  total: filteredUsers.length,
-                  onChange: (page) => setCurrentPage(page),
-                }}
-                rowKey="id"
-                className="text-sm"
-              />
+              <div className="overflow-x-auto">
+                <Table
+                  columns={columns}
+                  dataSource={filteredUsers}
+                  pagination={{
+                    current: currentPage,
+                    pageSize: itemsPerPage,
+                    total: filteredUsers.length,
+                    onChange: (page) => setCurrentPage(page),
+                  }}
+                  rowKey={(record) =>
+                    record._id || record.student_id || record.lecturer_id
+                  }
+                  className="text-sm"
+                  scroll={{
+                    x: columns.reduce(
+                      (total, col) => total + (col.width || 0),
+                      0
+                    ),
+                  }}
+                  locale={{
+                    emptyText: <div style={{ height: "35px" }}></div>,
+                  }}
+                  style={{
+                    height: "525px",
+                    minHeight: "525px",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

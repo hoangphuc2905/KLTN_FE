@@ -11,6 +11,7 @@ const ManagementAriticle = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
   const [userDepartment] = useState(localStorage.getItem("department") || "");
   const [departments, setDepartments] = useState({});
+  const [selectedYear, setSelectedYear] = useState("all"); // Add state for year selection
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -207,6 +208,12 @@ const ManagementAriticle = () => {
 
   // Implement filtering logic with the proper variables
   const filteredPapers = papers.filter((paper) => {
+    // Filter by selected year
+    const yearMatch =
+      selectedYear === "all" ||
+      (paper.publish_date &&
+        new Date(paper.publish_date).getFullYear().toString() === selectedYear);
+
     // Filter by tab selection
     const tabMatch = activeTab === "all" ? true : paper.status === activeTab;
 
@@ -265,6 +272,7 @@ const ManagementAriticle = () => {
       filterStatus.includes("Tất cả") || filterStatus.includes(paper.status);
 
     return (
+      yearMatch &&
       tabMatch &&
       paperTypeMatch &&
       groupMatch &&
@@ -564,64 +572,79 @@ const ManagementAriticle = () => {
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div
-            className="flex border-b"
-            style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
-          >
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "all"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("all")}
+          <div className="flex justify-between items-center">
+            <div
+              className="flex border-b"
+              style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
             >
-              Tất cả ({papers.length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "approved"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("approved")}
-            >
-              Đã duyệt (
-              {papers.filter((paper) => paper.status === "approved").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "pending"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("pending")}
-            >
-              Chờ duyệt (
-              {papers.filter((paper) => paper.status === "pending").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "revision"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("revision")}
-            >
-              Chờ chỉnh sửa (
-              {papers.filter((paper) => paper.status === "revision").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "refused"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("refused")}
-            >
-              Từ chối (
-              {papers.filter((paper) => paper.status === "refused").length})
-            </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "all"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("all")}
+              >
+                Tất cả ({papers.length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "approved"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("approved")}
+              >
+                Đã duyệt (
+                {papers.filter((paper) => paper.status === "approved").length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "pending"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("pending")}
+              >
+                Chờ duyệt (
+                {papers.filter((paper) => paper.status === "pending").length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "revision"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("revision")}
+              >
+                Chờ chỉnh sửa (
+                {papers.filter((paper) => paper.status === "revision").length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "refused"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("refused")}
+              >
+                Từ chối (
+                {papers.filter((paper) => paper.status === "refused").length})
+              </button>
+            </div>
+            <div className="flex items-center">
+              <select
+                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[150px]"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                <option value="all">Tất cả các năm</option>
+                <option value="2024">Năm 2024-2025</option>
+                <option value="2023">Năm 2023-2024</option>
+                <option value="2022">Năm 2022-2023</option>
+                <option value="2021">Năm 2021-2022</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -644,7 +667,7 @@ const ManagementAriticle = () => {
                     ref={filterRef}
                     className="absolute top-full mt-2 z-50 shadow-lg"
                   >
-                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 max-h-[500px] overflow-y-auto">
                       <div className="mb-3">
                         <label className="block text-gray-700 text-xs">
                           Loại bài báo:
@@ -1017,7 +1040,7 @@ const ManagementAriticle = () => {
                     ref={columnFilterRef}
                     className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                   >
-                    <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                    <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 max-h-[400px] overflow-y-auto">
                       <Checkbox
                         onChange={handleSelectAllColumns}
                         checked={checkedList.length === columns.length}
@@ -1060,6 +1083,16 @@ const ManagementAriticle = () => {
                   onClick: () => handleRowClick(record),
                   style: { cursor: "pointer" },
                 })}
+                locale={{
+                  emptyText: <div style={{ height: "35px" }}></div>,
+                }}
+                style={{
+                  height: "525px", // Fixed height for the table to display consistent number of rows
+                  minHeight: "525px",
+                }}
+                onChange={(pagination, filters, sorter) => {
+                  setSortedInfo(sorter);
+                }}
               />
             </div>
           </div>
