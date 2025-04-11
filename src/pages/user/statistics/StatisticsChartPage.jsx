@@ -78,130 +78,6 @@ const donutOptions = {
   cutout: "70%",
 };
 
-const mockData = [
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file1.pdf",
-    authors: ["Author A", "Author B"],
-    selectedDepartment: "Department 1",
-    summary: "This is a summary of the first paper.",
-    keywords: ["keyword1", "keyword2"],
-    selectedPaperType: "Type 1",
-    selectedPaperGroup: "Group A",
-    titleVn: "Tiêu đề tiếng Việt 1",
-    titleEn: "English Title 1",
-    publishDate: "2023-01-01",
-    magazineVi: "Tạp chí Việt Nam 1",
-    magazineEn: "English Magazine 1",
-    magazineType: "Type A",
-    pageCount: 10,
-    issnIsbn: "1234-5678",
-    doi: "10.1234/example1",
-    link: "https://example.com/paper1",
-    point: 85, // Updated to reflect max 100
-    totalPapers: 50,
-    totalViews: 3000,
-    totalDownloads: 500,
-    year: 2024,
-  },
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file2.pdf",
-    authors: ["Author C", "Author D"],
-    selectedDepartment: "Department 2",
-    summary: "This is a summary of the second paper.",
-    keywords: ["keyword3", "keyword4"],
-    selectedPaperType: "Type 2",
-    selectedPaperGroup: "Group B",
-    titleVn: "Tiêu đề tiếng Việt 2",
-    titleEn: "English Title 2",
-    publishDate: "2023-02-01",
-    magazineVi: "Tạp chí Việt Nam 2",
-    magazineEn: "English Magazine 2",
-    magazineType: "Type B",
-    pageCount: 15,
-    issnIsbn: "2345-6789",
-    doi: "10.1234/example2",
-    link: "https://example.com/paper2",
-    point: 90, // Updated to reflect max 100
-    totalPapers: 60,
-    totalViews: 4000,
-    totalDownloads: 600,
-    year: 2024,
-  },
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file3.pdf",
-    authors: ["Author E", "Author F"],
-    selectedDepartment: "Department 3",
-    summary: "This is a summary of the third paper.",
-    keywords: ["keyword5", "keyword6"],
-    selectedPaperType: "Type 3",
-    selectedPaperGroup: "Group C",
-    titleVn: "Tiêu đề tiếng Việt 3",
-    titleEn: "English Title 3",
-    publishDate: "2023-03-01",
-    magazineVi: "Tạp chí Việt Nam 3",
-    magazineEn: "English Magazine 3",
-    magazineType: "Type C",
-    pageCount: 20,
-    issnIsbn: "3456-7890",
-    doi: "10.1234/example3",
-    link: "https://example.com/paper3",
-    point: 80, // Updated to reflect max 100
-    totalPapers: 70,
-    totalViews: 5000,
-    totalDownloads: 700,
-    year: 2024,
-  },
-  {
-    coverImage: "https://via.placeholder.com/150",
-    selectedFile: "file4.pdf",
-    authors: ["Author G", "Author H"],
-    selectedDepartment: "Department 4",
-    summary: "This is a summary of the fourth paper.",
-    keywords: ["keyword7", "keyword8"],
-    selectedPaperType: "Type 4",
-    selectedPaperGroup: "Group D",
-    titleVn: "Tiêu đề tiếng Việt 4",
-    titleEn: "English Title 4",
-    publishDate: "2023-04-01",
-    magazineVi: "Tạp chí Việt Nam 4",
-    magazineEn: "English Magazine 4",
-    magazineType: "Type D",
-    pageCount: 25,
-    issnIsbn: "4567-8901",
-    doi: "10.1234/example4",
-    link: "https://example.com/paper4",
-    point: 95, // Updated to reflect max 100
-    totalPapers: 80,
-    totalViews: 6000,
-    totalDownloads: 800,
-    year: 2024,
-  },
-];
-
-const stats = {
-  totalPapers: mockData.reduce((sum, paper) => sum + paper.totalPapers, 0),
-  totalViews: mockData.reduce((sum, paper) => sum + paper.totalViews, 0),
-  totalPoints: mockData.reduce((sum, paper) => sum + paper.point, 0),
-  totalDownloads: mockData.reduce(
-    (sum, paper) => sum + paper.totalDownloads,
-    0
-  ),
-  year: new Date().getFullYear(),
-};
-
-const topPapers = mockData
-  .map((paper, index) => ({
-    id: index + 1,
-    title: paper.titleEn,
-    views: paper.totalViews,
-    downloads: paper.totalDownloads,
-    contributions: paper.point,
-  }))
-  .slice(0, 3); // Limit to top 3 papers
-
 const columns = [
   {
     title: "STT",
@@ -297,18 +173,13 @@ const StatisticsChartPage = () => {
   }));
   const [showDonutFilter, setShowDonutFilter] = useState(false);
   const [selectedDonutFilters, setSelectedDonutFilters] = useState([]);
-  const donutFilterOptions = mockData
-    .map((paper) => paper.selectedDepartment)
-    .map((label) => ({
-      label,
-      value: label,
-    }));
+  const donutFilterOptions = [];
   const userId = localStorage.getItem("user_id");
-  const [totalPapers, setTotalPapers] = useState(stats.totalPapers);
-  const [totalViews, setTotalViews] = useState(stats.totalViews);
-  const [totalDownloads, setTotalDownloads] = useState(stats.totalDownloads);
-  const [top3Papers, setTop3Papers] = useState(topPapers);
-  const [totalPoints, setTotalPoints] = useState(stats.totalPoints);
+  const [totalPapers, setTotalPapers] = useState(0);
+  const [totalViews, setTotalViews] = useState(0);
+  const [totalDownloads, setTotalDownloads] = useState(0);
+  const [top3Papers, setTop3Papers] = useState([]);
+  const [totalPoints, setTotalPoints] = useState(0);
   const [donutChartData, setDonutChartData] = useState({
     labels: [],
     datasets: [
@@ -331,6 +202,24 @@ const StatisticsChartPage = () => {
     ],
   });
 
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
+
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
+
   // Add refs for click outside handling
   const typeFilterRef = useRef(null);
   const pointFilterRef = useRef(null);
@@ -341,44 +230,37 @@ const StatisticsChartPage = () => {
     const fetchData = async () => {
       try {
         if (userId) {
-          // Fetch total papers
-          const papersResponse = await userApi.getTotalPapersByAuthorId(userId);
+          // Fetch total papers with selected academic year
+          const papersResponse = await userApi.getTotalPapersByAuthorId(
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
           console.log("Total Papers API Response:", papersResponse);
           setTotalPapers(papersResponse.total_papers);
 
           // Fetch total views
-          const viewsResponse = await userApi.getTotalViewsByAuthorId(userId);
+          const viewsResponse = await userApi.getTotalViewsByAuthorId(
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
           console.log("Total Views API Response:", viewsResponse);
           setTotalViews(viewsResponse.total_views);
 
           // Fetch total downloads
           const downloadsResponse = await userApi.getTotalDownloadsByAuthorId(
-            userId
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
           );
           console.log("Total Downloads API Response:", downloadsResponse);
           setTotalDownloads(downloadsResponse.total_downloads);
 
           // Fetch total points
-          const pointsResponse = await userApi.getTotalPointByAuthorId(userId);
+          const pointsResponse = await userApi.getTotalPointByAuthorId(
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
           console.log("Total Points API Response:", pointsResponse);
           setTotalPoints(pointsResponse.total_points);
-
-          // Fetch top 3 papers
-          const top3Response = await userApi.getTop3PapersByAuthorId(userId);
-          console.log("Top 3 Papers API Response:", top3Response);
-
-          // Transform the API response to match the table format
-          if (top3Response && top3Response.papers) {
-            const formattedPapers = top3Response.papers.map((paper, index) => ({
-              id: index + 1,
-              _id: paper._id, // Ensure we extract the _id from the paper
-              title: paper.title_vn || paper.title_en,
-              views: paper.viewCount,
-              downloads: paper.downloadCount,
-              contributions: paper.contributionScore,
-            }));
-            setTop3Papers(formattedPapers);
-          }
         }
       } catch (error) {
         console.error("Error fetching statistics:", error);
@@ -386,7 +268,89 @@ const StatisticsChartPage = () => {
     };
 
     fetchData();
-  }, [userId]);
+  }, [userId, selectedYear]);
+
+  useEffect(() => {
+    const fetchTop5PapersAndPoints = async () => {
+      try {
+        if (userId) {
+          const top5Response = await userApi.getTop5PapersByAuthorId(
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
+          console.log("Top 5 Papers API Response:", top5Response);
+
+          if (top5Response && top5Response.papers) {
+            // Transform data for the table
+            const formattedPapers = top5Response.papers.map((paper, index) => ({
+              id: index + 1,
+              _id: paper._id,
+              title: paper.title_vn || paper.title_en,
+              views: paper.viewCount,
+              downloads: paper.downloadCount,
+              contributions: paper.contributionScore,
+            }));
+            setTop3Papers(formattedPapers);
+
+            // Transform data for the chart
+            const formattedChartData = top5Response.papers.map((paper) => ({
+              title: paper.title_vn || paper.title_en,
+              contributionScore: paper.contributionScore,
+            }));
+            setPointChartData({
+              labels: formattedChartData.map((paper) =>
+                paper.title.length > 20
+                  ? paper.title.substring(0, 20) + "..."
+                  : paper.title
+              ),
+              datasets: [
+                {
+                  data: formattedChartData.map(
+                    (paper) => paper.contributionScore
+                  ),
+                  backgroundColor: [
+                    "#00A3FF",
+                    "#7239EA",
+                    "#F1416C",
+                    "#39eaa3",
+                    "#FFB700",
+                  ],
+                  borderWidth: 0,
+                  borderRadius: 6,
+                },
+              ],
+            });
+          } else {
+            console.warn("No papers found for this author.");
+            setTop3Papers([]);
+            setPointChartData({
+              labels: [],
+              datasets: [
+                {
+                  data: [],
+                  backgroundColor: [],
+                },
+              ],
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching top 5 papers and points:", error);
+        setTop3Papers([]);
+        setPointChartData({
+          labels: [],
+          datasets: [
+            {
+              data: [],
+              backgroundColor: [],
+            },
+          ],
+        });
+      }
+    };
+
+    fetchTop5PapersAndPoints();
+  }, [userId, selectedYear]);
 
   useEffect(() => {
     const fetchTypeStatistics = async () => {
@@ -404,50 +368,6 @@ const StatisticsChartPage = () => {
 
     fetchTypeStatistics();
   }, []);
-
-  useEffect(() => {
-    const fetchTop5Papers = async () => {
-      try {
-        if (userId) {
-          const response = await userApi.getTop5PapersByAuthor(userId);
-          console.log("Top 5 Papers API Response:", response);
-
-          if (response && response.papers) {
-            const formattedData = response.papers.map((paper) => ({
-              title: paper.title_vn || paper.title_en,
-              contributionScore: paper.contributionScore,
-            }));
-
-            setPointChartData({
-              labels: formattedData.map((paper) =>
-                paper.title.length > 20
-                  ? paper.title.substring(0, 20) + "..."
-                  : paper.title
-              ),
-              datasets: [
-                {
-                  data: formattedData.map((paper) => paper.contributionScore),
-                  backgroundColor: [
-                    "#00A3FF",
-                    "#7239EA",
-                    "#F1416C",
-                    "#39eaa3",
-                    "#FFB700",
-                  ],
-                  borderWidth: 0,
-                  borderRadius: 6,
-                },
-              ],
-            });
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching top 5 papers:", error);
-      }
-    };
-
-    fetchTop5Papers();
-  }, [userId]);
 
   useEffect(() => {
     const fetchTop5PaperTypes = async () => {
@@ -535,14 +455,10 @@ const StatisticsChartPage = () => {
     setSelectedTypeFilters(selectedFilters);
 
     // Update the point and donut chart filters based on the selected type filters
-    const filteredLabels = mockData
-      .filter((paper) => selectedFilters.includes(paper.selectedPaperType))
-      .map((paper) => paper.titleEn);
+    const filteredLabels = [];
     setSelectedPointFilters(filteredLabels);
 
-    const filteredDepartments = mockData
-      .filter((paper) => selectedFilters.includes(paper.selectedPaperType))
-      .map((paper) => paper.selectedDepartment);
+    const filteredDepartments = [];
     setSelectedDonutFilters([...new Set(filteredDepartments)]);
   };
 
@@ -550,14 +466,10 @@ const StatisticsChartPage = () => {
     setSelectedPointFilters(selectedFilters);
 
     // Update the type and donut chart filters based on the selected point filters
-    const filteredTypes = mockData
-      .filter((paper) => selectedFilters.includes(paper.titleEn))
-      .map((paper) => paper.selectedPaperType);
+    const filteredTypes = [];
     setSelectedTypeFilters([...new Set(filteredTypes)]);
 
-    const filteredDepartments = mockData
-      .filter((paper) => selectedFilters.includes(paper.titleEn))
-      .map((paper) => paper.selectedDepartment);
+    const filteredDepartments = [];
     setSelectedDonutFilters([...new Set(filteredDepartments)]);
   };
 
@@ -565,14 +477,10 @@ const StatisticsChartPage = () => {
     setSelectedDonutFilters(selectedFilters);
 
     // Update the type and point chart filters based on the selected donut filters
-    const filteredTypes = mockData
-      .filter((paper) => selectedFilters.includes(paper.selectedDepartment))
-      .map((paper) => paper.selectedPaperType);
+    const filteredTypes = [];
     setSelectedTypeFilters([...new Set(filteredTypes)]);
 
-    const filteredLabels = mockData
-      .filter((paper) => selectedFilters.includes(paper.selectedDepartment))
-      .map((paper) => paper.titleEn);
+    const filteredLabels = [];
     setSelectedPointFilters(filteredLabels);
   };
 
@@ -667,9 +575,16 @@ const StatisticsChartPage = () => {
               </div>
             </div>
             <div className="ml-4">
-              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px] cursor-pointer hover:bg-[#008AE0] transition-colors">
-                <option value="2024">2024-2025</option>
-                <option value="2023">2023-2024</option>
+              <select
+                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px] cursor-pointer hover:bg-[#008AE0] transition-colors"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {academicYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
