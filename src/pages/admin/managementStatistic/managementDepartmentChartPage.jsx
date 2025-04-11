@@ -27,23 +27,40 @@ ChartJS.register(
   Legend
 );
 
-const chartOptions = {
-  responsive: false,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: false,
-    },
-  },
-  scales: {
-    y: {
-      beginAtZero: true,
-      max: 100,
-      ticks: {
-        stepSize: 20,
+// Hàm tính toán options cho biểu đồ dựa trên dữ liệu thực tế
+const getChartOptions = (data) => {
+  // Tìm giá trị cao nhất trong dữ liệu
+  const maxValue =
+    data && data.datasets && data.datasets[0] && data.datasets[0].data
+      ? Math.max(
+          ...data.datasets[0].data.filter((val) => !isNaN(val) && val !== 0)
+        )
+      : 0;
+
+  // Làm tròn lên chục gần nhất
+  const roundedMax = Math.ceil(maxValue / 10) * 10;
+
+  // Tính toán bước (step) phù hợp dựa trên khoảng giá trị
+  const step = roundedMax > 100 ? 20 : roundedMax > 50 ? 10 : 5;
+
+  return {
+    responsive: false,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false,
       },
     },
-  },
+    scales: {
+      y: {
+        beginAtZero: true,
+        max: roundedMax,
+        ticks: {
+          stepSize: step,
+        },
+      },
+    },
+  };
 };
 
 const donutOptions = {
@@ -68,6 +85,8 @@ const ManagementDepartmentChart = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [selectedFields, setSelectedFields] = useState(["All"]);
   const [showFieldFilter, setShowFieldFilter] = useState(false);
+  const [selectedAuthors, setSelectedAuthors] = useState(["All"]);
+  const [showAuthorFilter, setShowAuthorFilter] = useState(false);
   const [stats, setStats] = useState({
     totalPapers: 0,
     totalViews: 0,
@@ -125,8 +144,17 @@ const ManagementDepartmentChart = () => {
       },
     ],
   });
+  const [originalResearchFieldsData, setOriginalResearchFieldsData] = useState({
+    labels: [],
+    data: [],
+  });
+  const [originalContributorsData, setOriginalContributorsData] = useState({
+    labels: [],
+    data: [],
+  });
   const filterRef = useRef(null);
   const fieldFilterRef = useRef(null);
+  const authorFilterRef = useRef(null);
   const navigate = useNavigate();
   const departmentId = localStorage.getItem("department");
 
@@ -226,6 +254,11 @@ const ManagementDepartmentChart = () => {
           const labels = response.data.map((author) => author.authorName);
           const data = response.data.map((author) => author.totalPoints);
 
+          setOriginalContributorsData({
+            labels,
+            data,
+          });
+
           setTopContributorsChartData({
             labels,
             datasets: [
@@ -264,6 +297,11 @@ const ManagementDepartmentChart = () => {
           const labels = Object.keys(response.data);
           const data = Object.values(response.data);
 
+          setOriginalResearchFieldsData({
+            labels,
+            data,
+          });
+
           setTopResearchFieldsChartData({
             labels,
             datasets: [
@@ -292,6 +330,75 @@ const ManagementDepartmentChart = () => {
     }
   }, [departmentId]);
 
+  // Update research fields chart when filters change
+  useEffect(() => {
+    if (originalResearchFieldsData.labels.length > 0) {
+      const filteredLabels = [];
+      const filteredData = [];
+
+      originalResearchFieldsData.labels.forEach((label, index) => {
+        if (selectedFields.includes("All") || selectedFields.includes(label)) {
+          filteredLabels.push(label);
+          filteredData.push(originalResearchFieldsData.data[index]);
+        }
+      });
+
+      setTopResearchFieldsChartData({
+        labels: filteredLabels,
+        datasets: [
+          {
+            data: filteredData,
+            backgroundColor: [
+              "#00A3FF",
+              "#7239EA",
+              "#F1416C",
+              "#FF0000",
+              "#FFC700",
+            ],
+            borderWidth: 0,
+            borderRadius: 6,
+          },
+        ],
+      });
+    }
+  }, [selectedFields, originalResearchFieldsData]);
+
+  // Update contributors chart when filters change
+  useEffect(() => {
+    if (originalContributorsData.labels.length > 0) {
+      const filteredLabels = [];
+      const filteredData = [];
+
+      originalContributorsData.labels.forEach((label, index) => {
+        if (
+          selectedAuthors.includes("All") ||
+          selectedAuthors.includes(label)
+        ) {
+          filteredLabels.push(label);
+          filteredData.push(originalContributorsData.data[index]);
+        }
+      });
+
+      setTopContributorsChartData({
+        labels: filteredLabels,
+        datasets: [
+          {
+            data: filteredData,
+            backgroundColor: [
+              "#00A3FF",
+              "#7239EA",
+              "#F1416C",
+              "#FF0000",
+              "#FFC700",
+            ],
+            borderWidth: 0,
+            borderRadius: 6,
+          },
+        ],
+      });
+    }
+  }, [selectedAuthors, originalContributorsData]);
+
   const handleQuarterChange = (event) => {
     const value = event.target.value;
     setSelectedQuarters((prevSelected) => {
@@ -313,12 +420,49 @@ const ManagementDepartmentChart = () => {
     const value = event.target.value;
     setSelectedFields((prevSelected) => {
       if (value === "All") {
-        return prevSelected.includes("All") ? [] : ["All"];
+        return prevSelected.includes("All")
+          ? []
+          : ["All", ...originalResearchFieldsData.labels];
       }
-      const updatedSelection = prevSelected.includes(value)
-        ? prevSelected.filter((item) => item !== value)
-        : [...prevSelected, value];
-      return updatedSelection.filter((item) => item !== "All");
+
+      let updatedSelection;
+      if (prevSelected.includes(value)) {
+        updatedSelection = prevSelected.filter((item) => item !== value);
+      } else {
+        updatedSelection = [...prevSelected, value];
+      }
+
+      if (
+        updatedSelection.length === originalResearchFieldsData.labels.length
+      ) {
+        return ["All", ...originalResearchFieldsData.labels];
+      } else {
+        return updatedSelection.filter((item) => item !== "All");
+      }
+    });
+  };
+
+  const handleAuthorChange = (event) => {
+    const value = event.target.value;
+    setSelectedAuthors((prevSelected) => {
+      if (value === "All") {
+        return prevSelected.includes("All")
+          ? []
+          : ["All", ...originalContributorsData.labels];
+      }
+
+      let updatedSelection;
+      if (prevSelected.includes(value)) {
+        updatedSelection = prevSelected.filter((item) => item !== value);
+      } else {
+        updatedSelection = [...prevSelected, value];
+      }
+
+      if (updatedSelection.length === originalContributorsData.labels.length) {
+        return ["All", ...originalContributorsData.labels];
+      } else {
+        return updatedSelection.filter((item) => item !== "All");
+      }
     });
   };
 
@@ -332,6 +476,12 @@ const ManagementDepartmentChart = () => {
         !fieldFilterRef.current.contains(event.target)
       ) {
         setShowFieldFilter(false);
+      }
+      if (
+        authorFilterRef.current &&
+        !authorFilterRef.current.contains(event.target)
+      ) {
+        setShowAuthorFilter(false);
       }
     };
 
@@ -361,6 +511,9 @@ const ManagementDepartmentChart = () => {
       dataIndex: "id",
       key: "id",
       width: 60,
+      render: (text) => (
+        <span className="font-medium text-gray-600">{text}</span>
+      ),
     },
     {
       title: "Tên bài nghiên cứu",
@@ -370,7 +523,7 @@ const ManagementDepartmentChart = () => {
       ellipsis: true,
       render: (text, record) => (
         <div
-          className="cursor-pointer hover:text-blue-500"
+          className="cursor-pointer hover:text-blue-500 transition-colors duration-200 font-medium"
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/scientific-paper/${record._id}`);
@@ -392,12 +545,18 @@ const ManagementDepartmentChart = () => {
       dataIndex: "views",
       key: "views",
       width: 95,
+      render: (text) => (
+        <span className="text-blue-500 font-medium">{text}</span>
+      ),
     },
     {
       title: "Lượt tải",
       dataIndex: "downloads",
       key: "downloads",
       width: 95,
+      render: (text) => (
+        <span className="text-amber-500 font-medium">{text}</span>
+      ),
     },
   ];
 
@@ -408,6 +567,7 @@ const ManagementDepartmentChart = () => {
         navigate(`/scientific-paper/${record._id}`);
       },
       style: { cursor: "pointer" },
+      className: "hover:bg-blue-50 transition-colors duration-200",
     };
   };
 
@@ -445,7 +605,7 @@ const ManagementDepartmentChart = () => {
           <div className="flex justify-between items-center">
             <div className="flex gap-4 justify-center w-full">
               <div
-                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-gray-700 pt-4">
@@ -454,7 +614,7 @@ const ManagementDepartmentChart = () => {
                 <div className="text-gray-500 pb-4 text-sm">Tổng bài báo</div>
               </div>
               <div
-                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#00A3FF] pt-4">
@@ -463,7 +623,7 @@ const ManagementDepartmentChart = () => {
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
               <div
-                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#FFB700] pt-4">
@@ -473,7 +633,7 @@ const ManagementDepartmentChart = () => {
               </div>
             </div>
             <div className="ml-4">
-              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px]">
+              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px] cursor-pointer hover:bg-[#008AE0] transition-colors">
                 <option value="2024">2024-2025</option>
                 <option value="2023">2023-2024</option>
               </select>
@@ -484,33 +644,54 @@ const ManagementDepartmentChart = () => {
         {/* Charts */}
         <div className="self-center w-full max-w-[1563px] px-6 mt-6">
           <div className="grid grid-cols-2 gap-6">
-            <div className="bg-white rounded-xl p-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
                   Biểu đồ Thống kê theo loại
                 </h2>
                 <div className="relative" ref={filterRef}>
                   <button
-                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    className="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg border text-xs hover:bg-gray-50 transition-colors"
                     onClick={() => setShowFilter(!showFilter)}
                   >
                     <span className="text-xs">Bộ lọc</span>
                   </button>
                   {showFilter && (
-                    <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
-                      <div className="px-4 py-5 w-full max-w-[400px]">
-                        {["All", ...typeChartData.labels].map((quarter) => (
-                          <label key={quarter} className="flex items-center">
-                            <input
-                              type="checkbox"
-                              value={quarter}
-                              checked={selectedQuarters.includes(quarter)}
-                              onChange={handleQuarterChange}
-                              className="mr-2"
-                            />
-                            {quarter}
-                          </label>
-                        ))}
+                    <div
+                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "200px", right: "0" }}
+                    >
+                      <div className="px-4 py-3 w-full max-w-[400px]">
+                        <label className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            value="All"
+                            checked={selectedQuarters.includes("All")}
+                            onChange={handleQuarterChange}
+                            className="mr-2 accent-blue-500"
+                          />
+                          Tất cả
+                        </label>
+                        <div className="max-h-[150px] overflow-y-auto">
+                          {typeChartData.labels.map((quarter) => (
+                            <label
+                              key={quarter}
+                              className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                value={quarter}
+                                checked={
+                                  selectedQuarters.includes(quarter) ||
+                                  selectedQuarters.includes("All")
+                                }
+                                onChange={handleQuarterChange}
+                                className="mr-2 accent-blue-500"
+                              />
+                              {quarter}
+                            </label>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -518,77 +699,121 @@ const ManagementDepartmentChart = () => {
               </div>
               <Bar
                 data={filteredTypeChartData}
-                options={chartOptions}
+                options={getChartOptions(filteredTypeChartData)}
                 height={200}
                 width={500}
               />
             </div>
 
-            <div className="bg-white rounded-xl p-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ top 5 tác giả có điểm đóng góp cao nhất
+                  Top 5 tác giả có điểm đóng góp
                 </h2>
+                <div className="relative" ref={authorFilterRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg border text-xs hover:bg-gray-50 transition-colors"
+                    onClick={() => setShowAuthorFilter(!showAuthorFilter)}
+                  >
+                    <span className="text-xs">Bộ lọc</span>
+                  </button>
+                  {showAuthorFilter && (
+                    <div
+                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "250px" }}
+                    >
+                      <div className="px-4 py-3 w-full max-w-[250px]">
+                        <label className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            value="All"
+                            checked={selectedAuthors.includes("All")}
+                            onChange={handleAuthorChange}
+                            className="mr-2 accent-blue-500"
+                          />
+                          Tất cả
+                        </label>
+                        <div className="max-h-[200px] overflow-y-auto">
+                          {originalContributorsData.labels.map((author) => (
+                            <label
+                              key={author}
+                              className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer"
+                            >
+                              <input
+                                type="checkbox"
+                                value={author}
+                                checked={
+                                  selectedAuthors.includes(author) ||
+                                  selectedAuthors.includes("All")
+                                }
+                                onChange={handleAuthorChange}
+                                className="mr-2 accent-blue-500"
+                              />
+                              <span className="text-sm">{author}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <Bar
                 data={topContributorsChartData}
-                options={{
-                  responsive: false,
-                  maintainAspectRatio: false,
-                  plugins: {
-                    legend: {
-                      display: false,
-                    },
-                  },
-                  scales: {
-                    y: {
-                      beginAtZero: true,
-                      ticks: {
-                        stepSize: 1,
-                      },
-                    },
-                  },
-                }}
+                options={getChartOptions(topContributorsChartData)}
                 height={200}
                 width={540}
               />
             </div>
 
-            <div className="bg-white rounded-xl p-6">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê top 5 bài nghiên cứu theo lĩnh vực nghiên cứu
+                  Top 5 lĩnh vực có nhiều bài nghiên cứu
                 </h2>
                 <div className="relative" ref={fieldFilterRef}>
                   <button
-                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    className="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg border text-xs hover:bg-gray-50 transition-colors"
                     onClick={() => setShowFieldFilter(!showFieldFilter)}
                   >
                     <span className="text-xs">Bộ lọc</span>
                   </button>
                   {showFieldFilter && (
                     <div
-                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "200px" }}
+                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "250px" }}
                     >
-                      <div className="px-4 py-5 w-full max-w-[200px]">
-                        {["All", ...topResearchFieldsChartData.labels].map(
-                          (field) => (
+                      <div className="px-4 py-3 w-full max-w-[250px]">
+                        <label className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
+                          <input
+                            type="checkbox"
+                            value="All"
+                            checked={selectedFields.includes("All")}
+                            onChange={handleFieldChange}
+                            className="mr-2 accent-blue-500"
+                          />
+                          All
+                        </label>
+                        <div className="max-h-[200px] overflow-y-auto">
+                          {originalResearchFieldsData.labels.map((field) => (
                             <label
                               key={field}
-                              className="flex items-center mb-2 flex-wrap"
+                              className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer"
                             >
                               <input
                                 type="checkbox"
                                 value={field}
-                                checked={selectedFields.includes(field)}
+                                checked={
+                                  selectedFields.includes(field) ||
+                                  selectedFields.includes("All")
+                                }
                                 onChange={handleFieldChange}
-                                className="mr-2"
+                                className="mr-2 accent-blue-500"
                               />
-                              {field}
+                              <span className="text-sm">{field}</span>
                             </label>
-                          )
-                        )}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -604,7 +829,7 @@ const ManagementDepartmentChart = () => {
                 />
               </div>
             </div>
-            <div className="bg-white rounded-xl p-6 shadow-md">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <h2 className="font-semibold text-gray-700 mb-4">
                 Top 5 bài nghiên cứu được nổi bật
               </h2>
@@ -613,7 +838,10 @@ const ManagementDepartmentChart = () => {
                 dataSource={topPapers}
                 pagination={false}
                 rowKey="id"
-                onRow={onRowClick} // Add the row click handler
+                onRow={onRowClick}
+                className="papers-table"
+                rowClassName="cursor-pointer"
+                size="small"
               />
             </div>
           </div>
