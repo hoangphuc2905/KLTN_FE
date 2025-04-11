@@ -51,6 +51,25 @@ const ManagementTable = () => {
   const [filterPaperType, setFilterPaperType] = useState(["Tất cả"]);
   const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
 
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
+
+  // Fetch academic years
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
+
   useEffect(() => {
     const fetchPapers = async () => {
       try {
@@ -60,12 +79,16 @@ const ManagementTable = () => {
           return;
         }
 
-        const response = await userApi.getScientificPapersByAuthorId(user_id);
+        const response = await userApi.getScientificPapersByAuthorId(
+          user_id,
+          selectedYear === "Tất cả" ? null : selectedYear // Pass academicYear if not "Tất cả"
+        );
         console.log("Full API Response:", response);
 
-        if (Array.isArray(response)) {
+        const papersData = response?.scientificPapers || []; // Extract scientificPapers array
+        if (Array.isArray(papersData)) {
           const mappedPapers = await Promise.all(
-            response.map(async (paper) => {
+            papersData.map(async (paper) => {
               // Fetch department name
               let departmentName = "N/A";
               if (paper.department) {
@@ -132,7 +155,7 @@ const ManagementTable = () => {
     };
 
     fetchPapers();
-  }, []);
+  }, [selectedYear]); // Refetch papers when selectedYear changes
 
   console.log("Mapped Papers:", papers); // Log mapped papers for debugging
   console.log("Filter Values:", {
@@ -681,10 +704,16 @@ const ManagementTable = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]">
-              <option value="2025">2025-2026</option>
-              <option value="2024">2024-2025</option>
-              <option value="2023">2023-2024</option>
+            <select
+              className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
+              value={selectedYear}
+              onChange={(e) => setSelectedYear(e.target.value)}
+            >
+              {academicYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
             </select>
             <button
               className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"

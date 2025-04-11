@@ -30,7 +30,7 @@ import EditScientificPaperPage from "./pages/user/scientificPaper/EditScientific
 import ManagementDepartmentChart from "./pages/admin/managementStatistic/managementDepartmentChartPage";
 import ManagementPointDepartmentPage from "./pages/admin/managementStatistic/managementPointDepartmentPage";
 import ManagementPointDetailPage from "./pages/admin/managementStatistic/managementPointDetailPage";
-
+import ManagementTableDepartment from "./pages/admin/managementStatistic/managementTableDepartmentPage";
 const App = () => {
   const [userRoles, setUserRoles] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -287,6 +287,14 @@ const App = () => {
                   path="/admin/management/table"
                 >
                   <ManagementTable />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/management/table"
+              element={
+                <ProtectedRoute roles={userRoles} path="/management/table">
+                  <ManagementTableDepartment />
                 </ProtectedRoute>
               }
             />

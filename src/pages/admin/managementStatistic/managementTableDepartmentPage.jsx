@@ -18,7 +18,7 @@ import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import userApi from "../../../api/api";
 
-const ManagementTable = () => {
+const ManagementTableDepartmentPage = () => {
   const [papers, setPapers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState(
@@ -224,7 +224,8 @@ const ManagementTable = () => {
     const fetchPapers = async () => {
       try {
         setLoading(true);
-        const response = await userApi.getAllScientificPapers(
+        const response = await userApi.getScientificPapersByDepartment(
+          userDepartment,
           selectedYear === "Tất cả" ? undefined : selectedYear
         );
         const fetchedPapers = response.scientificPapers || []; // Access the correct property
@@ -251,7 +252,7 @@ const ManagementTable = () => {
     };
 
     fetchPapers();
-  }, [selectedYear]);
+  }, [selectedYear, userDepartment]);
 
   const filteredPapers = papers.filter((paper) => {
     const authorCount = paper.author_count
@@ -955,4 +956,4 @@ const ManagementTable = () => {
   );
 };
 
-export default ManagementTable;
+export default ManagementTableDepartmentPage;
