@@ -827,10 +827,13 @@ const userApi = {
     }
   },
 
-  getTotalPapersByAuthorId: async (userId) => {
+  getTotalPapersByAuthorId: async (userId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/total-by-author/${userId}`
+        `${API_URL}/statistics/total-by-author/${userId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -839,10 +842,13 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
-  getTotalViewsByAuthorId: async (userId) => {
+  getTotalViewsByAuthorId: async (userId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/total-views-by-author/${userId}`
+        `${API_URL}/statistics/total-views-by-author/${userId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -851,10 +857,13 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
-  getTotalDownloadsByAuthorId: async (userId) => {
+  getTotalDownloadsByAuthorId: async (userId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/total-downloads-by-author/${userId}`
+        `${API_URL}/statistics/total-downloads-by-author/${userId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -863,10 +872,13 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
-  getTotalPointByAuthorId: async (userId) => {
+  getTotalPointByAuthorId: async (userId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/total-points-by-author/${userId}`
+        `${API_URL}/statistics/total-points-by-author/${userId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -875,15 +887,18 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
-  getTop3PapersByAuthorId: async (userId) => {
+  getTop5PapersByAuthorId: async (userId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/top3-papers-by-author/${userId}`
+        `${API_URL}/statistics/top5-papers-points-by-author/${userId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
-      console.error("Error fetching top 3 papers by author ID:", error);
+      console.error("Error fetching top 5 papers by author ID:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
@@ -1083,10 +1098,13 @@ const userApi = {
     }
   },
 
-  getTop5PapersByAuthor: async (userId) => {
+  getTop5PapersByPointByUser: async (userId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/top5-papers-by-author/${userId}`
+        `${API_URL}/statistics/top5-papers-by-author/${userId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
