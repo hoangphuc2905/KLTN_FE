@@ -596,9 +596,11 @@ const ManagementPoint = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[110px]">
-              <option value="2024">2024-2025</option>
-              <option value="2023">2023-2024</option>
+            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[150px]">
+              <option value="2024">Năm 2024-2025</option>
+              <option value="2023">Năm 2023-2024</option>
+              <option value="2022">Năm 2022-2023</option>
+              <option value="2021">Năm 2021-2022</option>
             </select>
             <button
               onClick={downloadExcel}

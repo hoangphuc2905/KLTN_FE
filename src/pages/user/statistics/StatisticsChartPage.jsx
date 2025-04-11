@@ -692,29 +692,26 @@ const StatisticsChartPage = () => {
                   </div>
                   {showTypeFilter && (
                     <div
-                      className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg mt-1 right-0"
-                      style={{ width: "250px" }}
+                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "220px" }}
                     >
                       <div className="p-3">
-                        <label className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
-                          <input
-                            type="checkbox"
-                            value="All"
-                            checked={
-                              selectedTypeFilters.length ===
-                              Object.keys(typeCounts).length
+                        <Checkbox
+                          checked={
+                            selectedTypeFilters.length ===
+                            Object.keys(typeCounts).length
+                          }
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedTypeFilters(Object.keys(typeCounts));
+                            } else {
+                              setSelectedTypeFilters([]);
                             }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedTypeFilters(Object.keys(typeCounts));
-                              } else {
-                                setSelectedTypeFilters([]);
-                              }
-                            }}
-                            className="mr-2 accent-blue-500"
-                          />
+                          }}
+                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
+                        >
                           Tất cả
-                        </label>
+                        </Checkbox>
                         <div className="max-h-[200px] overflow-y-auto">
                           {Object.keys(typeCounts).map((type) => (
                             <Checkbox
@@ -798,31 +795,28 @@ const StatisticsChartPage = () => {
                   </div>
                   {showPointFilter && (
                     <div
-                      className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg mt-1 right-0"
+                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                       style={{ width: "250px" }}
                     >
                       <div className="p-3">
-                        <label className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
-                          <input
-                            type="checkbox"
-                            value="All"
-                            checked={
-                              selectedPointFilters.length ===
-                              pointFilterOptions.length
+                        <Checkbox
+                          checked={
+                            selectedPointFilters.length ===
+                            pointFilterOptions.length
+                          }
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedPointFilters(
+                                pointFilterOptions.map((opt) => opt.value)
+                              );
+                            } else {
+                              setSelectedPointFilters([]);
                             }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedPointFilters(
-                                  pointFilterOptions.map((opt) => opt.value)
-                                );
-                              } else {
-                                setSelectedPointFilters([]);
-                              }
-                            }}
-                            className="mr-2 accent-blue-500"
-                          />
+                          }}
+                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
+                        >
                           Tất cả
-                        </label>
+                        </Checkbox>
                         <div className="max-h-[200px] overflow-y-auto">
                           {pointFilterOptions.map((option) => (
                             <Checkbox
@@ -877,31 +871,28 @@ const StatisticsChartPage = () => {
                   </div>
                   {showDonutFilter && (
                     <div
-                      className="absolute z-10 bg-white border border-gray-300 rounded-md shadow-lg mt-1 right-0"
-                      style={{ width: "250px" }}
+                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "200px" }}
                     >
                       <div className="p-3">
-                        <label className="flex items-center mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer">
-                          <input
-                            type="checkbox"
-                            value="All"
-                            checked={
-                              selectedDonutFilters.length ===
-                              donutFilterOptions.length
+                        <Checkbox
+                          checked={
+                            selectedDonutFilters.length ===
+                            donutFilterOptions.length
+                          }
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedDonutFilters(
+                                donutFilterOptions.map((opt) => opt.value)
+                              );
+                            } else {
+                              setSelectedDonutFilters([]);
                             }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedDonutFilters(
-                                  donutFilterOptions.map((opt) => opt.value)
-                                );
-                              } else {
-                                setSelectedDonutFilters([]);
-                              }
-                            }}
-                            className="mr-2 accent-blue-500"
-                          />
+                          }}
+                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
+                        >
                           Tất cả
-                        </label>
+                        </Checkbox>
                         <div className="max-h-[200px] overflow-y-auto">
                           {donutFilterOptions.map((option) => (
                             <Checkbox
@@ -958,7 +949,7 @@ const StatisticsChartPage = () => {
                   </div>
                   {showColumnFilter && (
                     <div
-                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 right-0"
+                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                       style={{ width: "220px" }}
                     >
                       <div className="p-3">
@@ -979,7 +970,7 @@ const StatisticsChartPage = () => {
                           checked={
                             visibleColumns.length === columnOptions.length
                           }
-                          className="mb-2 hover:bg-gray-50 p-1 rounded"
+                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
                         >
                           Chọn tất cả
                         </Checkbox>

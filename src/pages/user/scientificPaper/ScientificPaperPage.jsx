@@ -36,7 +36,11 @@ const ScientificPaperPage = () => {
   const [showRoleFilter, setShowRoleFilter] = useState(false);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [modalContent, setModalContent] = useState({});
+  const [modalContent, setModalContent] = useState({
+    title: "",
+    content: "",
+    type: "", // "link" or "file"
+  });
   const [sortedInfo, setSortedInfo] = useState({});
 
   useEffect(() => {
@@ -254,14 +258,37 @@ const ScientificPaperPage = () => {
       navigate(`/scientific-paper/${paperId}`);
     } else if (record.status === "revision") {
       navigate(`/scientific-paper/edit/${paperId}`);
-    } else {
-      setModalContent(record);
-      setIsModalVisible(true);
     }
   };
 
   const handleChange = (pagination, filters, sorter) => {
     setSortedInfo(sorter);
+  };
+
+  const handleViewLink = (record, e) => {
+    e.stopPropagation(); // Ngăn sự kiện click vào hàng
+    if (record.publication_link) {
+      // Mở link trực tiếp trong tab mới
+      window.open(record.publication_link, "_blank");
+    } else {
+      // Nếu không có link, hiển thị thông báo
+      alert("Không có link minh chứng cho bài báo này");
+    }
+  };
+
+  const handleViewFile = (record, e) => {
+    e.stopPropagation(); // Ngăn sự kiện click vào hàng
+    if (record.evidence_file) {
+      // Mở file trực tiếp trong tab mới
+      window.open(record.evidence_file, "_blank");
+    } else {
+      // Nếu không có file, hiển thị thông báo
+      alert("Không có file minh chứng cho bài báo này");
+    }
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
   };
 
   const columns = [
@@ -468,10 +495,21 @@ const ScientificPaperPage = () => {
     {
       title: "MINH CHỨNG",
       key: "evidence",
-      render: () => (
+      render: (_, record) => (
         <div className="flex-col text-[#00A3FF]">
-          <button className="hover:underline">Xem link|</button>
-          <button className="hover:underline">Xem file</button>
+          <button
+            className="hover:underline mr-1"
+            onClick={(e) => handleViewLink(record, e)}
+          >
+            Xem link
+          </button>
+          |
+          <button
+            className="hover:underline ml-1"
+            onClick={(e) => handleViewFile(record, e)}
+          >
+            Xem file
+          </button>
         </div>
       ),
       width: 150,
@@ -520,25 +558,32 @@ const ScientificPaperPage = () => {
     {
       title: "CHỈNH SỬA",
       key: "edit",
-      render: (text, record) => (
-        <button
-          className="text-[#00A3FF]"
-          onClick={() => handleRowClick(record)}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-              fill="currentColor"
-            />
-          </svg>
-        </button>
-      ),
+      render: (text, record) => {
+        // Chỉ hiển thị nút chỉnh sửa khi trạng thái là "chờ chỉnh sửa"
+        if (record.status === "revision") {
+          return (
+            <button
+              className="text-[#00A3FF]"
+              onClick={() => handleRowClick(record)}
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          );
+        }
+        // Không hiển thị nút chỉnh sửa cho các trạng thái khác
+        return null;
+      },
       width: 120,
       align: "center",
     },
@@ -603,90 +648,116 @@ const ScientificPaperPage = () => {
         </div>
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4 max-sm:px-2">
-          <div
-            className="flex border-b"
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "12px",
-              flexWrap: "wrap", // Allow wrapping for smaller screens
-            }}
-          >
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "all"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg max-sm:px-3 max-sm:py-1`}
-              onClick={() => setActiveTab("all")}
+          <div className="flex justify-between items-center">
+            <div
+              className="flex border-b"
+              style={{
+                display: "flex",
+                alignItems: "flex-start",
+                gap: "12px",
+                flexWrap: "wrap", // Allow wrapping for smaller screens
+              }}
             >
-              Tất cả ({papers.length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Đã duyệt"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg max-sm:px-3 max-sm:py-1`}
-              onClick={() => setActiveTab("Đã duyệt")}
-            >
-              Đã duyệt (
-              {papers.filter((paper) => paper.status === "approved").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Đang chờ"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg max-sm:px-3 max-sm:py-1`}
-              onClick={() => setActiveTab("Đang chờ")}
-            >
-              Chờ duyệt (
-              {papers.filter((paper) => paper.status === "pending").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Chờ chỉnh sửa"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg max-sm:px-3 max-sm:py-1`}
-              onClick={() => setActiveTab("Chờ chỉnh sửa")}
-            >
-              Chờ chỉnh sửa (
-              {papers.filter((paper) => paper.status === "revision").length})
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "Từ chối"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg max-sm:px-3 max-sm:py-1`}
-              onClick={() => setActiveTab("Từ chối")}
-            >
-              Từ chối (
-              {papers.filter((paper) => paper.status === "refused").length})
-            </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "all"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg max-sm:px-3 max-sm:py-1`}
+                onClick={() => setActiveTab("all")}
+              >
+                Tất cả ({papers.length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "Đã duyệt"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg max-sm:px-3 max-sm:py-1`}
+                onClick={() => setActiveTab("Đã duyệt")}
+              >
+                Đã duyệt (
+                {papers.filter((paper) => paper.status === "approved").length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "Đang chờ"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg max-sm:px-3 max-sm:py-1`}
+                onClick={() => setActiveTab("Đang chờ")}
+              >
+                Chờ duyệt (
+                {papers.filter((paper) => paper.status === "pending").length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "Chờ chỉnh sửa"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg max-sm:px-3 max-sm:py-1`}
+                onClick={() => setActiveTab("Chờ chỉnh sửa")}
+              >
+                Chờ chỉnh sửa (
+                {papers.filter((paper) => paper.status === "revision").length})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "Từ chối"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg max-sm:px-3 max-sm:py-1`}
+                onClick={() => setActiveTab("Từ chối")}
+              >
+                Từ chối (
+                {papers.filter((paper) => paper.status === "refused").length})
+              </button>
+            </div>
+            <div className="flex items-center">
+              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[150px]">
+                <option value="all">Tất cả các năm</option>
+                <option value="2024">Năm 2024-2025</option>
+                <option value="2023">Năm 2023-2024</option>
+                <option value="2022">Năm 2022-2023</option>
+                <option value="2021">Năm 2021-2022</option>
+              </select>
+            </div>
           </div>
         </div>
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:px-4 max-sm:px-2 overflow-x-auto">
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4 max-sm:p-3">
-              <div className="flex justify-end mb-4 relative gap-2 max-sm:gap-1">
-                <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5"
-                  onClick={() => {
-                    setShowFilter(!showFilter);
-                    setShowColumnFilter(false);
-                  }}
-                >
-                  <Filter className="w-4 h-4 max-sm:w-3 max-sm:h-3" />
-                  <span className="text-xs max-sm:text-[10px]">Bộ lọc</span>
-                </button>
+              <div className="flex justify-between mb-4 relative gap-2 max-sm:gap-1">
+                <div className="flex items-center">
+                  {/* Đã xóa select option dư thừa ở đây */}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5"
+                    onClick={() => {
+                      setShowFilter(!showFilter);
+                      setShowColumnFilter(false);
+                    }}
+                  >
+                    <Filter className="w-4 h-4 max-sm:w-3 max-sm:h-3" />
+                    <span className="text-xs max-sm:text-[10px]">Bộ lọc</span>
+                  </button>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5"
+                    onClick={() => {
+                      setShowColumnFilter(!showColumnFilter);
+                      setShowFilter(false);
+                    }}
+                  >
+                    <Filter className="w-4 h-4 max-sm:w-3 max-sm:h-3" />
+                    <span className="text-xs max-sm:text-[10px]">Chọn cột</span>
+                  </button>
+                </div>
                 {showFilter && (
                   <div
                     ref={filterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg"
+                    className="absolute right-0 top-10 mt-2 z-50 shadow-lg"
                   >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <div className="mb-3">
@@ -1055,20 +1126,10 @@ const ScientificPaperPage = () => {
                     </form>
                   </div>
                 )}
-                <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5"
-                  onClick={() => {
-                    setShowColumnFilter(!showColumnFilter);
-                    setShowFilter(false);
-                  }}
-                >
-                  <Filter className="w-4 h-4 max-sm:w-3 max-sm:h-3" />
-                  <span className="text-xs max-sm:text-[10px]">Chọn cột</span>
-                </button>
                 {showColumnFilter && (
                   <div
                     ref={columnFilterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    className="absolute right-0 top-10 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                   >
                     <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <Checkbox
@@ -1121,70 +1182,68 @@ const ScientificPaperPage = () => {
                     onRow={(record) => ({
                       onClick: () => handleRowClick(record),
                     })}
+                    locale={{
+                      emptyText: <div style={{ height: "35px" }}></div>,
+                    }}
+                    style={{
+                      height: "525px", // Cố định chiều cao cho bảng hiển thị 7 dòng
+                      minHeight: "525px",
+                    }}
                   />
                 </div>
               )}
+
+              {/* Modal for displaying evidence links or files */}
+              <Modal
+                title={modalContent.title}
+                open={isModalVisible}
+                onCancel={handleModalClose}
+                footer={[
+                  <button
+                    key="close"
+                    onClick={handleModalClose}
+                    className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-sm"
+                  >
+                    Đóng
+                  </button>,
+                ]}
+              >
+                {modalContent.type === "link" ? (
+                  <div>
+                    <p>{modalContent.content}</p>
+                    {modalContent.content &&
+                      modalContent.content !== "Không có link minh chứng" && (
+                        <a
+                          href={modalContent.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#00A3FF] hover:underline"
+                        >
+                          Mở trong tab mới
+                        </a>
+                      )}
+                  </div>
+                ) : (
+                  <div>
+                    <p>{modalContent.content}</p>
+                    {modalContent.content &&
+                      modalContent.content !== "Không có file minh chứng" && (
+                        <a
+                          href={modalContent.content}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#00A3FF] hover:underline"
+                        >
+                          Tải xuống
+                        </a>
+                      )}
+                  </div>
+                )}
+              </Modal>
             </div>
           </div>
         </div>
       </div>
-      <Modal
-        title="Chi tiết"
-        open={isModalVisible} // Replace `visible` with `open`
-        onCancel={() => setIsModalVisible(false)}
-        footer={null}
-      >
-        <p>
-          <strong>Loại bài báo:</strong> {modalContent.paperType}
-        </p>
-        <p>
-          <strong>Thuộc nhóm:</strong> {modalContent.group}
-        </p>
-        <p>
-          <strong>Tên bài báo nghiên cứu khoa học:</strong> {modalContent.title}
-        </p>
-        <p>
-          <strong>Tác giả:</strong> {modalContent.authors}
-        </p>
-        <p>
-          <strong>Số tác giả:</strong> {modalContent.authorCount}
-        </p>
-        <p>
-          <strong>Vai trò:</strong> {modalContent.role}
-        </p>
-        <p>
-          <strong>CQ đứng tên:</strong> {modalContent.institution}
-        </p>
-        <p>
-          <strong>Ngày công bố:</strong> {modalContent.publicationDate}
-        </p>
-        <p>
-          <strong>Ngày thêm:</strong> {modalContent.dateAdded}
-        </p>
-        <p>
-          <strong>Trạng thái:</strong> {modalContent.status}
-        </p>
-        {modalContent.note && (
-          <p>
-            <strong>Ghi chú:</strong> {modalContent.note}
-          </p>
-        )}
-        <button className="text-[#00A3FF] mt-4">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-              fill="currentColor"
-            />
-          </svg>
-          Chỉnh sửa
-        </button>
-      </Modal>
     </div>
   );
 };

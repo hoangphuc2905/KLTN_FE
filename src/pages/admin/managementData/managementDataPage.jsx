@@ -373,6 +373,19 @@ const ManagementData = () => {
                   pagination={{ pageSize: 5 }}
                   rowKey="_id"
                   onChange={handleChange}
+                  scroll={{
+                    x: typeColumns.reduce(
+                      (total, col) => total + (col.width || 0),
+                      0
+                    ),
+                  }}
+                  locale={{
+                    emptyText: <div style={{ height: "35px" }}></div>,
+                  }}
+                  style={{
+                    height: "525px",
+                    minHeight: "525px",
+                  }}
                 />
               ) : (
                 <Table
@@ -381,6 +394,19 @@ const ManagementData = () => {
                   pagination={{ pageSize: 5 }}
                   rowKey="_id"
                   onChange={handleChange}
+                  scroll={{
+                    x: groupColumns.reduce(
+                      (total, col) => total + (col.width || 0),
+                      0
+                    ),
+                  }}
+                  locale={{
+                    emptyText: <div style={{ height: "35px" }}></div>,
+                  }}
+                  style={{
+                    height: "525px",
+                    minHeight: "525px",
+                  }}
                 />
               )}
             </div>
