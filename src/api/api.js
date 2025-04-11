@@ -458,9 +458,12 @@ const userApi = {
     }
   },
 
-  getAllScientificPapers: async () => {
+  getAllScientificPapers: async (academicYear) => {
     try {
-      const response = await axios.get(`${API_URL}/scientificPapers`);
+      const response = await axios.get(`${API_URL}/scientificPapers`, {
+        params: { academicYear }, // Thêm tham số academicYear vào query string
+      });
+      console.log("API Response:", response.data);
       return response.data; // Return only the data property
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
@@ -468,10 +471,13 @@ const userApi = {
     }
   },
 
-  getScientificPapersByDepartment: async (department) => {
+  getScientificPapersByDepartment: async (department, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/scientificPapers/department/${department}`
+        `${API_URL}/scientificPapers/department/${department}`,
+        {
+          params: { academicYear }, // Add academicYear to query string
+        }
       );
       return response.data; // Return only the data property
     } catch (error) {
@@ -507,10 +513,13 @@ const userApi = {
     }
   },
 
-  getScientificPapersByAuthorId: async (user_id) => {
+  getScientificPapersByAuthorId: async (user_id, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/scientificPapers/author/${user_id}`
+        `${API_URL}/scientificPapers/author/${user_id}`,
+        {
+          params: { academicYear }, // Add academicYear to query string
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -1090,6 +1099,17 @@ const userApi = {
       return response.data;
     } catch (error) {
       console.error("Error fetching top 5 paper types by user ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAcademicYears: async () => {
+    try {
+      const response = await axios.get(`${API_URL}/academic-years`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },

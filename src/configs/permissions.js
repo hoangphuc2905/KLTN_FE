@@ -55,6 +55,7 @@ const permissions = {
     "/admin/management/point/department",
     "/admin/management/point/detail/:id",
     "/scientific-paper/edit/:id",
+    "/management/table",
   ],
   head_of_department: [
     "/management/chart",
@@ -71,6 +72,7 @@ const permissions = {
     "/scientific-paper/:id",
     "/update-profile",
     "/notifications",
+    "/management/table",
   ],
   deputy_head_of_department: [
     "/management/chart",
@@ -87,6 +89,7 @@ const permissions = {
     "/scientific-paper/:id",
     "/update-profile",
     "/notifications",
+    "/management/table",
   ],
   department_in_charge: [
     "/management/chart",
@@ -103,6 +106,7 @@ const permissions = {
     "/scientific-paper/:id",
     "/update-profile",
     "/notifications",
+    "/management/table",
   ],
 };
 
