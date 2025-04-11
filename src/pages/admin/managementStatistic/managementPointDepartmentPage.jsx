@@ -27,41 +27,62 @@ const ManagementPointDepartmentPage = () => {
   const departmentId = localStorage.getItem("department");
   const [userRole] = useState(localStorage.getItem("current_role") || "");
 
-  useEffect(() => {
-    const fetchPapers = async () => {
-      try {
-        setLoading(true);
-        let data;
-        if (userRole === "admin") {
-          data = await userApi.getAllPaperAuthorsByTolalPointsAndTotalPapers();
-        } else if (
-          [
-            "head_of_department",
-            "deputy_head_of_department",
-            "department_in_charge",
-          ].includes(userRole)
-        ) {
-          data = await userApi.getPaperAuthorsByDepartment(departmentId);
-        }
-        setPapers(
-          data.map((item, index) => ({
-            id: index + 1,
-            authorId: item["MÃ_TÁC_GIẢ"],
-            author: item["TÁC_GIẢ"],
-            department: item["KHOA"],
-            totalPapers: item["TỔNG_BÀI"],
-            totalPoints: item["TỔNG_ĐIỂM"],
-          }))
-        );
-      } catch (error) {
-        console.error("Error fetching papers:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
 
-    fetchPapers();
-  }, [userRole, departmentId]);
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
+
+  const fetchPapers = async (academicYear = "Tất cả") => {
+    try {
+      setLoading(true);
+      const response =
+        academicYear === "Tất cả"
+          ? await userApi.getPaperAuthorsByDepartment(departmentId)
+          : await userApi.getPaperAuthorsByDepartment(
+              departmentId,
+              academicYear
+            );
+
+      const data = response.result || []; // Access the 'result' property
+      setPapers(
+        data.map((item, index) => ({
+          id: index + 1,
+          authorId: item["MÃ_TÁC_GIẢ"],
+          author: item["TÁC_GIẢ"],
+          department: item["KHOA"],
+          totalPapers: item["TỔNG_BÀI"],
+          totalPoints: item["TỔNG_ĐIỂM"],
+        }))
+      );
+    } catch (error) {
+      console.error("Error fetching papers:", error.message || error);
+      setPapers([]); // Fallback to an empty array on error
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleYearChange = (value) => {
+    setSelectedYear(value);
+    fetchPapers(value); // Fetch data based on the selected year
+  };
+
+  useEffect(() => {
+    fetchPapers(selectedYear); // Fetch data when the component mounts or selectedYear changes
+  }, [departmentId, selectedYear]);
 
   const columnOptions = [
     { label: "STT", value: "id" },
@@ -157,71 +178,68 @@ const ManagementPointDepartmentPage = () => {
     setLoadingPapers(true);
     try {
       const response = await userApi.getScientificPapersByAuthorId(
-        author.authorId
-      ); // Use authorId from the selected author
+        author.authorId,
+        selectedYear === "Tất cả" ? undefined : selectedYear // Pass selectedYear if not "Tất cả"
+      );
       console.log("Full API Response:", response);
 
-      if (Array.isArray(response)) {
-        const mappedPapers = await Promise.all(
-          response
-            .filter((paper) => paper.status === "approved") // Only include approved papers
-            .map(async (paper) => {
-              // Fetch department name
-              let departmentName = "N/A";
-              if (paper.department) {
-                try {
-                  const departmentResponse = await userApi.getDepartmentById(
-                    paper.department
-                  );
-                  departmentName = departmentResponse?.department_name || "N/A";
-                } catch (error) {
-                  console.error(
-                    `Error fetching department for ID ${paper.department}:`,
-                    error
-                  );
-                }
+      const papers = response.scientificPapers || []; // Access the 'scientificPapers' property
+      const mappedPapers = await Promise.all(
+        papers
+          .filter((paper) => paper.status === "approved") // Only include approved papers
+          .map(async (paper) => {
+            // Fetch department name
+            let departmentName = "N/A";
+            if (paper.department) {
+              try {
+                const departmentResponse = await userApi.getDepartmentById(
+                  paper.department
+                );
+                departmentName = departmentResponse?.department_name || "N/A";
+              } catch (error) {
+                console.error(
+                  `Error fetching department for ID ${paper.department}:`,
+                  error
+                );
               }
+            }
 
-              // Filter role for the selected author
-              const userAuthor = paper.author?.find(
-                (authorItem) => authorItem.user_id === author.authorId
-              );
-              const userRole = userAuthor?.role || "N/A";
+            // Filter role for the selected author
+            const userAuthor = paper.author?.find(
+              (authorItem) => authorItem.user_id === author.authorId
+            );
+            const userRole = userAuthor?.role || "N/A";
 
-              // Get the point value directly from the API response
-              const points = userAuthor?.point || 0;
+            // Get the point value directly from the API response
+            const points = userAuthor?.point || 0;
 
-              // Map role to display values
-              const displayRole = (() => {
-                switch (userRole) {
-                  case "MainAndCorrespondingAuthor":
-                    return "Vừa chính vừa liên hệ";
-                  case "CorrespondingAuthor":
-                    return "Liên hệ";
-                  case "MainAuthor":
-                    return "Chính";
-                  case "Participant":
-                    return "Tham gia";
-                  default:
-                    return "N/A";
-                }
-              })();
+            // Map role to display values
+            const displayRole = (() => {
+              switch (userRole) {
+                case "MainAndCorrespondingAuthor":
+                  return "Vừa chính vừa liên hệ";
+                case "CorrespondingAuthor":
+                  return "Liên hệ";
+                case "MainAuthor":
+                  return "Chính";
+                case "Participant":
+                  return "Tham gia";
+                default:
+                  return "N/A";
+              }
+            })();
 
-              return {
-                id: paper.paper_id,
-                title_vn: paper.title_vn || "N/A",
-                magazine_type: paper.article_type?.type_name || "N/A",
-                point: points,
-                role: displayRole,
-                institution: departmentName,
-              };
-            })
-        );
-        setAuthorPapers(mappedPapers); // Display the data in the modal table
-      } else {
-        console.error("Unexpected API response structure:", response);
-        setAuthorPapers([]); // Fallback to an empty array
-      }
+            return {
+              id: paper.paper_id,
+              title_vn: paper.title_vn || "N/A",
+              magazine_type: paper.article_type?.type_name || "N/A",
+              point: points,
+              role: displayRole,
+              institution: departmentName,
+            };
+          })
+      );
+      setAuthorPapers(mappedPapers); // Display the data in the modal table
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
       setAuthorPapers([]); // Fallback to an empty array on error
@@ -823,9 +841,16 @@ const ManagementPointDepartmentPage = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
           <div className="flex justify-end gap-4 mb-4">
-            <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[130px]">
-              <option value="2024">2024-2025</option>
-              <option value="2023">2023-2024</option>
+            <select
+              value={selectedYear}
+              onChange={(e) => handleYearChange(e.target.value)}
+              className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[130px]"
+            >
+              {academicYears.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
             </select>
             <button
               onClick={downloadExcel}
