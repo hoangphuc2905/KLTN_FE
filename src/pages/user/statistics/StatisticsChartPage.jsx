@@ -178,7 +178,7 @@ const StatisticsChartPage = () => {
   const [totalPapers, setTotalPapers] = useState(0);
   const [totalViews, setTotalViews] = useState(0);
   const [totalDownloads, setTotalDownloads] = useState(0);
-  const [top3Papers, setTop3Papers] = useState([]);
+  const [top5Papers, setTop5Papers] = useState([]);
   const [totalPoints, setTotalPoints] = useState(0);
   const [donutChartData, setDonutChartData] = useState({
     labels: [],
@@ -271,17 +271,20 @@ const StatisticsChartPage = () => {
   }, [userId, selectedYear]);
 
   useEffect(() => {
-    const fetchTop5PapersAndPoints = async () => {
+    const fetchTop5PapersForTable = async () => {
       try {
         if (userId) {
           const top5Response = await userApi.getTop5PapersByAuthorId(
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Top 5 Papers API Response:", top5Response);
+          console.log("Top 5 Papers for Table API Response:", top5Response);
 
-          if (top5Response && top5Response.papers) {
-            // Transform data for the table
+          if (
+            top5Response &&
+            top5Response.papers &&
+            top5Response.papers.length > 0
+          ) {
             const formattedPapers = top5Response.papers.map((paper, index) => ({
               id: index + 1,
               _id: paper._id,
@@ -290,10 +293,38 @@ const StatisticsChartPage = () => {
               downloads: paper.downloadCount,
               contributions: paper.contributionScore,
             }));
-            setTop3Papers(formattedPapers);
+            setTop5Papers(formattedPapers);
+          } else {
+            console.warn("No papers found for the table.");
+            setTop5Papers([]);
+          }
+        } else {
+          setTop5Papers([]);
+        }
+      } catch (error) {
+        console.error(
+          "Error fetching top 5 papers for table:",
+          error.message || error
+        );
+        setTop5Papers([]);
+      }
+    };
 
-            // Transform data for the chart
-            const formattedChartData = top5Response.papers.map((paper) => ({
+    const fetchTop5PapersForChart = async () => {
+      try {
+        if (userId) {
+          const pointsResponse = await userApi.getTop5PapersByPointByUser(
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
+          console.log("Top 5 Papers by Points API Response:", pointsResponse);
+
+          if (
+            pointsResponse &&
+            pointsResponse.papers &&
+            pointsResponse.papers.length > 0
+          ) {
+            const formattedChartData = pointsResponse.papers.map((paper) => ({
               title: paper.title_vn || paper.title_en,
               contributionScore: paper.contributionScore,
             }));
@@ -321,62 +352,55 @@ const StatisticsChartPage = () => {
               ],
             });
           } else {
-            console.warn("No papers found for this author.");
-            setTop3Papers([]);
+            console.warn("No papers found for the chart.");
             setPointChartData({
-              labels: [],
+              labels: ["No data"],
               datasets: [
                 {
-                  data: [],
-                  backgroundColor: [],
+                  data: [0],
+                  backgroundColor: ["#E0E0E0"],
                 },
               ],
             });
           }
+        } else {
+          setPointChartData({
+            labels: ["No data"],
+            datasets: [
+              {
+                data: [0],
+                backgroundColor: ["#E0E0E0"],
+              },
+            ],
+          });
         }
       } catch (error) {
-        console.error("Error fetching top 5 papers and points:", error);
-        setTop3Papers([]);
+        console.error(
+          "Error fetching top 5 papers by points:",
+          error.message || error
+        );
         setPointChartData({
-          labels: [],
+          labels: ["No data"],
           datasets: [
             {
-              data: [],
-              backgroundColor: [],
+              data: [0],
+              backgroundColor: ["#E0E0E0"],
             },
           ],
         });
       }
     };
 
-    fetchTop5PapersAndPoints();
-  }, [userId, selectedYear]);
-
-  useEffect(() => {
-    const fetchTypeStatistics = async () => {
-      try {
-        const response = await userApi.getStatisticsByGroupByUser(userId);
-        console.log("Type Statistics API Response:", response);
-        if (response && response.data) {
-          setTypeCounts(response.data);
-          setSelectedTypeFilters(Object.keys(response.data));
-        }
-      } catch (error) {
-        console.error("Error fetching type statistics:", error);
-      }
-    };
-
-    fetchTypeStatistics();
-  }, []);
-
-  useEffect(() => {
     const fetchTop5PaperTypes = async () => {
       try {
         if (userId) {
-          const response = await userApi.getTop5PaperTypesByUser(userId);
+          const response = await userApi.getTop5PaperTypesByUser(
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
           console.log("Top 5 Paper Types API Response:", response);
 
-          if (response && response.data) {
+          if (response && response.data && response.data.length > 0) {
             const formattedData = response.data.map((item) => ({
               type:
                 item.type.length > 20
@@ -406,15 +430,70 @@ const StatisticsChartPage = () => {
                 },
               ],
             });
+          } else {
+            console.warn("No paper types found for this user.");
+            setDonutChartData({
+              labels: ["No data"],
+              datasets: [
+                {
+                  data: [0],
+                  backgroundColor: ["#E0E0E0"],
+                },
+              ],
+            });
           }
+        } else {
+          setDonutChartData({
+            labels: ["No data"],
+            datasets: [
+              {
+                data: [0],
+                backgroundColor: ["#E0E0E0"],
+              },
+            ],
+          });
         }
       } catch (error) {
-        console.error("Error fetching top 5 paper types:", error);
+        console.error(
+          "Error fetching top 5 paper types:",
+          error.message || error
+        );
+        setDonutChartData({
+          labels: ["No data"],
+          datasets: [
+            {
+              data: [0],
+              backgroundColor: ["#E0E0E0"],
+            },
+          ],
+        });
       }
     };
 
+    fetchTop5PapersForTable();
+    fetchTop5PapersForChart();
     fetchTop5PaperTypes();
-  }, [userId]);
+  }, [userId, selectedYear]);
+
+  useEffect(() => {
+    const fetchTypeStatistics = async () => {
+      try {
+        const response = await userApi.getPaperGroupsByUser(
+          userId,
+          selectedYear === "Tất cả" ? null : selectedYear
+        );
+        console.log("Type Statistics API Response:", response);
+        if (response && response.data) {
+          setTypeCounts(response.data);
+          setSelectedTypeFilters(Object.keys(response.data));
+        }
+      } catch (error) {
+        console.error("Error fetching type statistics:", error);
+      }
+    };
+
+    fetchTypeStatistics();
+  }, [userId, selectedYear]);
 
   // Add click outside handler to close filter dropdowns
   useEffect(() => {
@@ -454,12 +533,29 @@ const StatisticsChartPage = () => {
   const handleTypeFilterChange = (selectedFilters) => {
     setSelectedTypeFilters(selectedFilters);
 
-    // Update the point and donut chart filters based on the selected type filters
-    const filteredLabels = [];
-    setSelectedPointFilters(filteredLabels);
+    // Update the chart data based on the selected type filters
+    const filteredLabels = Object.keys(typeCounts).filter((type) =>
+      selectedFilters.includes(type)
+    );
+    const filteredData = filteredLabels.map((label) => typeCounts[label]);
 
-    const filteredDepartments = [];
-    setSelectedDonutFilters([...new Set(filteredDepartments)]);
+    setPointChartData({
+      labels: filteredLabels,
+      datasets: [
+        {
+          data: filteredData,
+          backgroundColor: [
+            "#00A3FF",
+            "#7239EA",
+            "#F1416C",
+            "#39eaa3",
+            "#FFB700",
+          ],
+          borderWidth: 0,
+          borderRadius: 6,
+        },
+      ],
+    });
   };
 
   const handlePointFilterChange = (selectedFilters) => {
@@ -923,7 +1019,7 @@ const StatisticsChartPage = () => {
                 columns={columns.filter((col) =>
                   visibleColumns.includes(col.key)
                 )}
-                dataSource={top3Papers}
+                dataSource={top5Papers}
                 pagination={false}
                 rowKey="id"
                 onRow={onRowClick}

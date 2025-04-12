@@ -29,7 +29,6 @@ ChartJS.register(
 
 // Hàm tính toán options cho biểu đồ dựa trên dữ liệu thực tế
 const getChartOptions = (data) => {
-  // Tìm giá trị cao nhất trong dữ liệu
   const maxValue =
     data && data.datasets && data.datasets[0] && data.datasets[0].data
       ? Math.max(
@@ -37,11 +36,13 @@ const getChartOptions = (data) => {
         )
       : 0;
 
-  // Làm tròn lên chục gần nhất + thêm buffer 10 để đảm bảo giá trị luôn là số chẵn chục
   const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
 
-  // Tính toán bước (step) phù hợp dựa trên khoảng giá trị
-  const step = roundedMax > 100 ? 20 : roundedMax > 50 ? 10 : 5;
+  // Ensure stepSize is reasonable to avoid too many ticks
+  const step = Math.min(
+    roundedMax > 100 ? 20 : roundedMax > 50 ? 10 : 5,
+    Math.ceil(roundedMax / 10)
+  );
 
   return {
     responsive: false,
@@ -71,10 +72,14 @@ const Dashboard = () => {
     year: 2024,
   });
 
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
+
   useEffect(() => {
     const fetchStatistics = async () => {
       try {
-        const response = await userApi.getStatisticsForAll(); // Corrected API call
+        const response = await userApi.getStatisticsForAll(
+          selectedYear !== "Tất cả" ? selectedYear : undefined
+        );
         if (response) {
           setStats((prevStats) => ({
             ...prevStats,
@@ -91,7 +96,7 @@ const Dashboard = () => {
     };
 
     fetchStatistics();
-  }, []);
+  }, [selectedYear]);
 
   const [typeChartData, setTypeChartData] = useState({
     labels: [],
@@ -108,7 +113,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchTypeChartData = async () => {
       try {
-        const response = await userApi.getStatisticsByAllGroup();
+        const response = await userApi.getStatisticsByAllGroup(
+          selectedYear !== "Tất cả" ? selectedYear : undefined
+        );
         if (response && response.data) {
           const labels = Object.keys(response.data);
           const data = Object.values(response.data);
@@ -140,7 +147,7 @@ const Dashboard = () => {
     };
 
     fetchTypeChartData();
-  }, []);
+  }, [selectedYear]);
 
   const [departmentChartData, setDepartmentChartData] = useState({
     labels: [],
@@ -157,7 +164,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDepartmentChartData = async () => {
       try {
-        const response = await userApi.getStatisticsTop5ByAllDepartment();
+        const response = await userApi.getStatisticsTop5ByAllDepartment(
+          selectedYear !== "Tất cả" ? selectedYear : undefined
+        );
         if (response && response.data) {
           const labels = Object.keys(response.data);
           const data = Object.values(response.data);
@@ -186,7 +195,7 @@ const Dashboard = () => {
     };
 
     fetchDepartmentChartData();
-  }, []);
+  }, [selectedYear]);
 
   const [top5ByFieldChartData, setTop5ByFieldChartData] = useState({
     labels: [],
@@ -203,7 +212,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchTop5ByTypeChartData = async () => {
       try {
-        const response = await userApi.getStatisticsTop5ByType();
+        const response = await userApi.getStatisticsTop5ByType(
+          selectedYear !== "Tất cả" ? selectedYear : undefined
+        );
         if (response && response.data) {
           const labels = Object.keys(response.data);
           const data = Object.values(response.data);
@@ -232,7 +243,7 @@ const Dashboard = () => {
     };
 
     fetchTop5ByTypeChartData();
-  }, []);
+  }, [selectedYear]);
 
   const donutOptions = {
     responsive: false, // Đặt responsive là false
@@ -256,19 +267,33 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchTopPapers = async () => {
       try {
-        const response = await userApi.getTop5MostViewedAndDownloadedPapers();
-        if (response && response.papers) {
+        const response = await userApi.getTop5MostViewedAndDownloadedPapers(
+          selectedYear !== "Tất cả" ? selectedYear : undefined
+        );
+        if (response && response.papers && response.papers.length > 0) {
           setTopPapers(response.papers);
         } else {
-          console.error("Unexpected API response structure:", response);
+          console.warn("No data found for top papers:", response);
+          setTopPapers([]); // Set empty array to indicate no data
         }
       } catch (error) {
-        console.error("Failed to fetch top papers:", error);
+        if (error.response?.status === 404) {
+          console.warn(
+            "No data found for the selected academic year:",
+            error.response.data
+          );
+          setTopPapers([]); // Set empty array to indicate no data
+        } else {
+          console.error(
+            "Failed to fetch top papers:",
+            error.response?.data || error.message
+          );
+        }
       }
     };
 
     fetchTopPapers();
-  }, []);
+  }, [selectedYear]);
 
   const columns = [
     {
@@ -337,6 +362,24 @@ const Dashboard = () => {
   const roleFilterRef = useRef(null);
   const fieldFilterRef = useRef(null);
   const navigate = useNavigate();
+
+  const [academicYears, setAcademicYears] = useState([]);
+
+  // Fetch academic years
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
 
   const handleQuarterChange = (event) => {
     const value = event.target.value;
@@ -594,9 +637,16 @@ const Dashboard = () => {
               </div>
             </div>
             <div className="ml-4">
-              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px]">
-                <option value="2024">2024-2025</option>
-                <option value="2023">2023-2024</option>
+              <select
+                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px]"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {academicYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -785,14 +835,20 @@ const Dashboard = () => {
               <h2 className="font-semibold text-gray-700 mb-4">
                 Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất
               </h2>
-              <Table
-                columns={columns}
-                dataSource={topPapers}
-                pagination={false}
-                rowKey="_id"
-                onRow={onRowClick}
-                size="small"
-              />
+              {topPapers.length > 0 ? (
+                <Table
+                  columns={columns}
+                  dataSource={topPapers}
+                  pagination={false}
+                  rowKey="_id"
+                  onRow={onRowClick}
+                  size="small"
+                />
+              ) : (
+                <div className="text-gray-500 text-center">
+                  Không có dữ liệu để hiển thị.
+                </div>
+              )}
             </div>
           </div>
         </div>
