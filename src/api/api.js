@@ -811,10 +811,13 @@ const userApi = {
     }
   },
 
-  getTop5MostViewedAndDownloadedPapers: async () => {
+  getTop5MostViewedAndDownloadedPapers: async (academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/scientificPapers/top5-most-viewed-downloaded`
+        `${API_URL}/scientificPapers/top5-most-viewed-downloaded`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -983,10 +986,13 @@ const userApi = {
   //   }
   // },
 
-  getStatisticsForAll: async () => {
+  getStatisticsForAll: async (academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/statistics-for-all`
+        `${API_URL}/statistics/statistics-for-all`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -1012,9 +1018,11 @@ const userApi = {
     }
   },
 
-  getStatisticsByAllGroup: async () => {
+  getStatisticsByAllGroup: async (academicYear) => {
     try {
-      const response = await axios.get(`${API_URL}/statistics/by-all-group`);
+      const response = await axios.get(`${API_URL}/statistics/by-all-group`, {
+        params: { academicYear },
+      });
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
@@ -1023,10 +1031,13 @@ const userApi = {
     }
   },
 
-  getStatisticsTop5ByAllDepartment: async () => {
+  getStatisticsTop5ByAllDepartment: async (academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/top5-by-all-group`
+        `${API_URL}/statistics/top5-by-all-group`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -1036,9 +1047,12 @@ const userApi = {
     }
   },
 
-  getStatisticsTop5ByType: async () => {
+  getStatisticsTop5ByType: async (academicYear) => {
     try {
-      const response = await axios.get(`${API_URL}/statistics/top5-by-type`);
+      const response = await axios.get(`${API_URL}/statistics/top5-by-type`, {
+        params: { academicYear },
+      });
+
       console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
