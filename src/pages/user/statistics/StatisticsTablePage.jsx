@@ -751,7 +751,7 @@ const ManagementTable = () => {
                     ref={filterRef}
                     className="absolute top-full mt-2 z-50 shadow-lg"
                   >
-                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 max-h-[500px] overflow-y-auto">
                       <div className="mb-3">
                         <label className="block text-gray-700 text-xs">
                           Loại bài báo:
@@ -769,7 +769,7 @@ const ManagementTable = () => {
                           {showPaperTypeFilter && (
                             <div
                               ref={paperTypeFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-h-[200px] overflow-y-auto"
                             >
                               <Checkbox
                                 indeterminate={
@@ -826,7 +826,7 @@ const ManagementTable = () => {
                           {showGroupFilter && (
                             <div
                               ref={groupFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-h-[200px] overflow-y-auto"
                             >
                               <Checkbox
                                 indeterminate={
@@ -944,7 +944,7 @@ const ManagementTable = () => {
                           {showRoleFilter && (
                             <div
                               ref={roleFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-h-[200px] overflow-y-auto"
                             >
                               <Checkbox
                                 indeterminate={
@@ -997,7 +997,7 @@ const ManagementTable = () => {
                           {showInstitutionFilter && (
                             <div
                               ref={institutionFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-h-[200px] overflow-y-auto"
                             >
                               <Checkbox
                                 indeterminate={
@@ -1087,7 +1087,7 @@ const ManagementTable = () => {
                     ref={columnFilterRef}
                     className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                   >
-                    <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                    <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 max-h-[400px] overflow-y-auto">
                       <Checkbox
                         indeterminate={
                           visibleColumns.length > 0 &&
