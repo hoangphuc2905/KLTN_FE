@@ -957,10 +957,13 @@ const userApi = {
     }
   },
 
-  getStatisticsByDepartmentId: async (departmentId) => {
+  getStatisticsByDepartmentId: async (departmentId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/statistics-by-department/${departmentId}`
+        `${API_URL}/statistics/statistics-by-department/${departmentId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -1002,10 +1005,16 @@ const userApi = {
     }
   },
 
-  getTop5MostViewedAndDownloadedPapersByDepartment: async (departmentId) => {
+  getTop5MostViewedAndDownloadedPapersByDepartment: async (
+    departmentId,
+    academicYear
+  ) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/top5-papers-by-department/${departmentId}`
+        `${API_URL}/statistics/top5-papers-by-department/${departmentId}`,
+        {
+          params: { academicYear }, // Pass academicYear as a query parameter
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -1061,10 +1070,13 @@ const userApi = {
     }
   },
 
-  getStatisticsByGroupByDepartment: async (departmentId) => {
+  getStatisticsByGroupByDepartment: async (departmentId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/group-by-department/${departmentId}`
+        `${API_URL}/statistics/group-by-department/${departmentId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -1074,10 +1086,13 @@ const userApi = {
     }
   },
 
-  getTop5AuthorsByDepartment: async (departmentId) => {
+  getTop5AuthorsByDepartment: async (departmentId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/top5-authors-by-department/${departmentId}`
+        `${API_URL}/statistics/top5-authors-by-department/${departmentId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;
@@ -1087,10 +1102,13 @@ const userApi = {
     }
   },
 
-  getStatisticsTop5ByTypeByDepartment: async (departmentId) => {
+  getStatisticsTop5ByTypeByDepartment: async (departmentId, academicYear) => {
     try {
       const response = await axios.get(
-        `${API_URL}/statistics/top5-by-type-by-department/${departmentId}`
+        `${API_URL}/statistics/top5-by-type-by-department/${departmentId}`,
+        {
+          params: { academicYear },
+        }
       );
       console.log("API Response:", response.data);
       return response.data;

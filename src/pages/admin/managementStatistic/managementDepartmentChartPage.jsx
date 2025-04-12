@@ -152,16 +152,36 @@ const ManagementDepartmentChart = () => {
     labels: [],
     data: [],
   });
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
   const filterRef = useRef(null);
   const fieldFilterRef = useRef(null);
   const authorFilterRef = useRef(null);
   const navigate = useNavigate();
   const departmentId = localStorage.getItem("department");
 
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
+
   useEffect(() => {
     const fetchStatistics = async () => {
       try {
-        const data = await userApi.getStatisticsByDepartmentId(departmentId);
+        const data = await userApi.getStatisticsByDepartmentId(
+          departmentId,
+          selectedYear === "Tất cả" ? null : selectedYear // Pass null if "Tất cả" is selected
+        );
 
         const updatedStats = {
           totalPapers: data.total_papers ?? 0,
@@ -178,16 +198,18 @@ const ManagementDepartmentChart = () => {
     if (departmentId) {
       fetchStatistics();
     }
-  }, [departmentId]);
+  }, [departmentId, selectedYear]); // Add selectedYear as a dependency
 
   useEffect(() => {
     const fetchTopPapers = async () => {
       try {
         const response =
           await userApi.getTop5MostViewedAndDownloadedPapersByDepartment(
-            departmentId
+            departmentId,
+            selectedYear === "Tất cả" ? null : selectedYear // Pass null if "Tất cả" is selected
           );
-        if (response && response.papers) {
+
+        if (response && response.papers && response.papers.length > 0) {
           const formattedPapers = response.papers.map((paper, index) => ({
             id: index + 1,
             _id: paper._id, // Add the _id property for navigation
@@ -197,25 +219,33 @@ const ManagementDepartmentChart = () => {
           }));
           setTopPapers(formattedPapers);
         } else {
-          console.error("Unexpected API response structure:", response);
+          console.warn("No scientific papers found for this department");
+          setTopPapers([]); // Set an empty array if no data is returned
         }
       } catch (error) {
         console.error("Failed to fetch top papers:", error);
+        setTopPapers([]); // Set an empty array in case of an error
       }
     };
 
     if (departmentId) {
       fetchTopPapers();
     }
-  }, [departmentId]);
+  }, [departmentId, selectedYear]); // Add selectedYear as a dependency
 
   useEffect(() => {
     const fetchTypeStatistics = async () => {
       try {
         const response = await userApi.getStatisticsByGroupByDepartment(
-          departmentId
+          departmentId,
+          selectedYear === "Tất cả" ? null : selectedYear // Pass null if "Tất cả" is selected
         );
-        if (response && response.data) {
+
+        if (
+          response &&
+          response.data &&
+          Object.keys(response.data).length > 0
+        ) {
           const labels = Object.keys(response.data); // Use labels directly from the database response
           const mappedData = {
             labels,
@@ -235,22 +265,50 @@ const ManagementDepartmentChart = () => {
             ],
           };
           setTypeChartData(mappedData);
+        } else {
+          console.warn("No data found for type statistics");
+          setTypeChartData({
+            labels: [],
+            datasets: [
+              {
+                data: [],
+                backgroundColor: [],
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
         }
       } catch (error) {
         console.error("❌ Failed to fetch type statistics:", error);
+        setTypeChartData({
+          labels: [],
+          datasets: [
+            {
+              data: [],
+              backgroundColor: [],
+              borderWidth: 0,
+              borderRadius: 6,
+            },
+          ],
+        });
       }
     };
 
     if (departmentId) {
       fetchTypeStatistics();
     }
-  }, [departmentId]);
+  }, [departmentId, selectedYear]); // Add selectedYear as a dependency
 
   useEffect(() => {
     const fetchTopContributors = async () => {
       try {
-        const response = await userApi.getTop5AuthorsByDepartment(departmentId);
-        if (response && response.data) {
+        const response = await userApi.getTop5AuthorsByDepartment(
+          departmentId,
+          selectedYear === "Tất cả" ? null : selectedYear // Pass null if "Tất cả" is selected
+        );
+
+        if (response && response.data && response.data.length > 0) {
           const labels = response.data.map((author) => author.authorName);
           const data = response.data.map((author) => author.totalPoints);
 
@@ -276,24 +334,56 @@ const ManagementDepartmentChart = () => {
               },
             ],
           });
+        } else {
+          console.warn("No data found for top contributors");
+          setOriginalContributorsData({ labels: [], data: [] });
+          setTopContributorsChartData({
+            labels: [],
+            datasets: [
+              {
+                data: [],
+                backgroundColor: [],
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
         }
       } catch (error) {
         console.error("❌ Failed to fetch top contributors:", error);
+        setOriginalContributorsData({ labels: [], data: [] });
+        setTopContributorsChartData({
+          labels: [],
+          datasets: [
+            {
+              data: [],
+              backgroundColor: [],
+              borderWidth: 0,
+              borderRadius: 6,
+            },
+          ],
+        });
       }
     };
 
     if (departmentId) {
       fetchTopContributors();
     }
-  }, [departmentId]);
+  }, [departmentId, selectedYear]); // Add selectedYear as a dependency
 
   useEffect(() => {
     const fetchTopResearchFields = async () => {
       try {
         const response = await userApi.getStatisticsTop5ByTypeByDepartment(
-          departmentId
+          departmentId,
+          selectedYear === "Tất cả" ? null : selectedYear // Pass null if "Tất cả" is selected
         );
-        if (response && response.data) {
+
+        if (
+          response &&
+          response.data &&
+          Object.keys(response.data).length > 0
+        ) {
           const labels = Object.keys(response.data);
           const data = Object.values(response.data);
 
@@ -319,16 +409,42 @@ const ManagementDepartmentChart = () => {
               },
             ],
           });
+        } else {
+          console.warn("No data found for top research fields");
+          setOriginalResearchFieldsData({ labels: [], data: [] });
+          setTopResearchFieldsChartData({
+            labels: [],
+            datasets: [
+              {
+                data: [],
+                backgroundColor: [],
+                borderWidth: 0,
+                borderRadius: 6,
+              },
+            ],
+          });
         }
       } catch (error) {
         console.error("❌ Failed to fetch top research fields:", error);
+        setOriginalResearchFieldsData({ labels: [], data: [] });
+        setTopResearchFieldsChartData({
+          labels: [],
+          datasets: [
+            {
+              data: [],
+              backgroundColor: [],
+              borderWidth: 0,
+              borderRadius: 6,
+            },
+          ],
+        });
       }
     };
 
     if (departmentId) {
       fetchTopResearchFields();
     }
-  }, [departmentId]);
+  }, [departmentId, selectedYear]); // Add selectedYear as a dependency
 
   // Update research fields chart when filters change
   useEffect(() => {
@@ -633,9 +749,16 @@ const ManagementDepartmentChart = () => {
               </div>
             </div>
             <div className="ml-4">
-              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px] cursor-pointer hover:bg-[#008AE0] transition-colors">
-                <option value="2024">2024-2025</option>
-                <option value="2023">2023-2024</option>
+              <select
+                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px] cursor-pointer hover:bg-[#008AE0] transition-colors"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {academicYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

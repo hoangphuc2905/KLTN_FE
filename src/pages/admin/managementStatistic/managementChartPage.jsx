@@ -270,13 +270,25 @@ const Dashboard = () => {
         const response = await userApi.getTop5MostViewedAndDownloadedPapers(
           selectedYear !== "Tất cả" ? selectedYear : undefined
         );
-        if (response && response.papers) {
+        if (response && response.papers && response.papers.length > 0) {
           setTopPapers(response.papers);
         } else {
-          console.error("Unexpected API response structure:", response);
+          console.warn("No data found for top papers:", response);
+          setTopPapers([]); // Set empty array to indicate no data
         }
       } catch (error) {
-        console.error("Failed to fetch top papers:", error);
+        if (error.response?.status === 404) {
+          console.warn(
+            "No data found for the selected academic year:",
+            error.response.data
+          );
+          setTopPapers([]); // Set empty array to indicate no data
+        } else {
+          console.error(
+            "Failed to fetch top papers:",
+            error.response?.data || error.message
+          );
+        }
       }
     };
 
@@ -823,14 +835,20 @@ const Dashboard = () => {
               <h2 className="font-semibold text-gray-700 mb-4">
                 Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất
               </h2>
-              <Table
-                columns={columns}
-                dataSource={topPapers}
-                pagination={false}
-                rowKey="_id"
-                onRow={onRowClick}
-                size="small"
-              />
+              {topPapers.length > 0 ? (
+                <Table
+                  columns={columns}
+                  dataSource={topPapers}
+                  pagination={false}
+                  rowKey="_id"
+                  onRow={onRowClick}
+                  size="small"
+                />
+              ) : (
+                <div className="text-gray-500 text-center">
+                  Không có dữ liệu để hiển thị.
+                </div>
+              )}
             </div>
           </div>
         </div>
