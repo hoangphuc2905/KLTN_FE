@@ -42,7 +42,10 @@ const HomePage = () => {
   useEffect(() => {
     const fetchResearchPapers = async () => {
       try {
-        const papers = await userApi.getAllScientificPapers();
+        const response = await userApi.getAllScientificPapers();
+        const papers = Array.isArray(response)
+          ? response
+          : response?.scientificPapers || []; // Ensure response is an array
         const approvedPapers = papers.filter(
           (paper) => paper.status === "approved"
         ); // Only include approved papers
