@@ -311,7 +311,7 @@ const Dashboard = () => {
       ellipsis: true,
       render: (text, record) => (
         <div
-          className="cursor-pointer hover:text-blue-500"
+          className="cursor-pointer hover:text-blue-500 transition-colors duration-200 font-medium"
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/scientific-paper/${record._id}`);
@@ -333,12 +333,18 @@ const Dashboard = () => {
       dataIndex: "viewCount",
       key: "viewCount",
       width: 95,
+      render: (text) => (
+        <span className="text-blue-500 font-medium">{text}</span>
+      ),
     },
     {
       title: "Lượt tải",
       dataIndex: "downloadCount",
       key: "downloadCount",
       width: 95,
+      render: (text) => (
+        <span className="text-amber-500 font-medium">{text}</span>
+      ),
     },
   ];
 
@@ -349,6 +355,7 @@ const Dashboard = () => {
         navigate(`/scientific-paper/${record._id}`);
       },
       style: { cursor: "pointer" },
+      className: "hover:bg-blue-50 transition-colors duration-200",
     };
   };
 
@@ -638,7 +645,7 @@ const Dashboard = () => {
             </div>
             <div className="ml-4">
               <select
-                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px]"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -842,6 +849,8 @@ const Dashboard = () => {
                   pagination={false}
                   rowKey="_id"
                   onRow={onRowClick}
+                  className="papers-table"
+                  rowClassName="cursor-pointer"
                   size="small"
                 />
               ) : (
