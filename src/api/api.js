@@ -1175,6 +1175,17 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getRecommendations: async (paperId) => {
+    try {
+      const response = await axios.get(`${API_URL}/recommendations/${paperId}`);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
