@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Header from "../../../components/header";
 import { Home, ChevronRight } from "lucide-react";
 import Footer from "../../../components/footer";
+import CountUp from "react-countup";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -616,29 +617,29 @@ const Dashboard = () => {
           <div className="flex justify-between items-center">
             <div className="flex gap-4 justify-center w-full">
               <div
-                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-gray-700 pt-4">
-                  {stats.totalPapers}
+                  <CountUp end={stats.totalPapers} duration={2} />
                 </div>
                 <div className="text-gray-500 text-sm pb-4">Tổng bài báo</div>
               </div>
               <div
-                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#00A3FF] pt-4">
-                  {stats.totalViews.toLocaleString()}
+                  <CountUp end={stats.totalViews} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
               <div
-                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#FFB700] pt-4">
-                  {stats.totalDownloads.toLocaleString()}
+                  <CountUp end={stats.totalDownloads} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
               </div>
