@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Header from "../../../components/header";
 import { Home, ChevronRight } from "lucide-react";
 import Footer from "../../../components/footer";
+import CountUp from "react-countup";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -311,7 +312,7 @@ const Dashboard = () => {
       ellipsis: true,
       render: (text, record) => (
         <div
-          className="cursor-pointer hover:text-blue-500"
+          className="cursor-pointer hover:text-blue-500 transition-colors duration-200 font-medium"
           onClick={(e) => {
             e.stopPropagation();
             navigate(`/scientific-paper/${record._id}`);
@@ -333,12 +334,18 @@ const Dashboard = () => {
       dataIndex: "viewCount",
       key: "viewCount",
       width: 95,
+      render: (text) => (
+        <span className="text-blue-500 font-medium">{text}</span>
+      ),
     },
     {
       title: "Lượt tải",
       dataIndex: "downloadCount",
       key: "downloadCount",
       width: 95,
+      render: (text) => (
+        <span className="text-amber-500 font-medium">{text}</span>
+      ),
     },
   ];
 
@@ -349,6 +356,7 @@ const Dashboard = () => {
         navigate(`/scientific-paper/${record._id}`);
       },
       style: { cursor: "pointer" },
+      className: "hover:bg-blue-50 transition-colors duration-200",
     };
   };
 
@@ -609,36 +617,36 @@ const Dashboard = () => {
           <div className="flex justify-between items-center">
             <div className="flex gap-4 justify-center w-full">
               <div
-                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-gray-700 pt-4">
-                  {stats.totalPapers}
+                  <CountUp end={stats.totalPapers} duration={2} />
                 </div>
                 <div className="text-gray-500 text-sm pb-4">Tổng bài báo</div>
               </div>
               <div
-                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#00A3FF] pt-4">
-                  {stats.totalViews.toLocaleString()}
+                  <CountUp end={stats.totalViews} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
               <div
-                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center"
+                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#FFB700] pt-4">
-                  {stats.totalDownloads.toLocaleString()}
+                  <CountUp end={stats.totalDownloads} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
               </div>
             </div>
             <div className="ml-4">
               <select
-                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px]"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -842,6 +850,8 @@ const Dashboard = () => {
                   pagination={false}
                   rowKey="_id"
                   onRow={onRowClick}
+                  className="papers-table"
+                  rowClassName="cursor-pointer"
                   size="small"
                 />
               ) : (
