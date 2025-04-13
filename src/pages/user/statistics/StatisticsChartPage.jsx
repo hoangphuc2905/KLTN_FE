@@ -14,6 +14,7 @@ import { Table, Checkbox } from "antd";
 import { useNavigate } from "react-router-dom";
 import userApi from "../../../api/api";
 import { useEffect, useState, useRef } from "react";
+import CountUp from "react-countup";
 
 ChartJS.register(
   CategoryScale,
@@ -83,6 +84,7 @@ const columns = [
     title: "STT",
     dataIndex: "id",
     key: "id",
+    render: (_, __, index) => index + 1,
     width: 60,
   },
   {
@@ -92,14 +94,10 @@ const columns = [
     ellipsis: true,
     render: (text, record) => (
       <div
-        className="cursor-pointer hover:text-blue-500"
+        className="cursor-pointer hover:text-blue-500 transition-colors duration-200 font-medium"
         onClick={(e) => {
           e.stopPropagation();
-          if (record._id) {
-            navigate(`/scientific-paper/${record._id}`);
-          } else {
-            console.error("Paper ID not found in record:", record);
-          }
+          window.location.href = `/scientific-paper/${record._id}`;
         }}
         style={{
           maxWidth: "300px",
@@ -119,18 +117,25 @@ const columns = [
     dataIndex: "views",
     key: "views",
     width: 95,
+    render: (text) => <span className="text-blue-500 font-medium">{text}</span>,
   },
   {
     title: "Lượt tải",
     dataIndex: "downloads",
     key: "downloads",
     width: 95,
+    render: (text) => (
+      <span className="text-amber-500 font-medium">{text}</span>
+    ),
   },
   {
     title: "Điểm đóng góp",
     dataIndex: "contributions",
     key: "contributions",
     width: 135,
+    render: (text) => (
+      <span className="text-green-500 font-medium">{text}</span>
+    ),
   },
 ];
 
@@ -147,7 +152,6 @@ const StatisticsChartPage = () => {
   const [visibleColumns, setVisibleColumns] = useState(
     columns.map((col) => col.key)
   );
-  const [showColumnFilter, setShowColumnFilter] = useState(false);
   const [showPointFilter, setShowPointFilter] = useState(false);
   const [selectedPointFilters, setSelectedPointFilters] = useState([]);
   const [pointChartData, setPointChartData] = useState({
@@ -224,7 +228,6 @@ const StatisticsChartPage = () => {
   const typeFilterRef = useRef(null);
   const pointFilterRef = useRef(null);
   const donutFilterRef = useRef(null);
-  const columnFilterRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -516,12 +519,7 @@ const StatisticsChartPage = () => {
       ) {
         setShowDonutFilter(false);
       }
-      if (
-        columnFilterRef.current &&
-        !columnFilterRef.current.contains(event.target)
-      ) {
-        setShowColumnFilter(false);
-      }
+      // Removing the column filter reference
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -632,47 +630,47 @@ const StatisticsChartPage = () => {
           <div className="flex justify-between items-center">
             <div className="flex gap-4 justify-center w-full">
               <div
-                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-gray-700 pt-4">
-                  {totalPapers}
+                  <CountUp end={totalPapers} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng bài báo</div>
               </div>
               <div
-                className="bg-[#b0fccd] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-[#b0fccd] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-gray-700 pt-4">
-                  {totalPoints.toLocaleString()}
+                  <CountUp end={totalPoints} duration={2} decimals={1} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">
                   Tổng điểm đóng góp
                 </div>
               </div>
               <div
-                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#00A3FF] pt-4">
-                  {totalViews.toLocaleString()}
+                  <CountUp end={totalViews} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
               <div
-                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow"
+                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md transition-shadow cursor-pointer transform hover:scale-105 transition-transform duration-300"
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#FFB700] pt-4">
-                  {totalDownloads.toLocaleString()}
+                  <CountUp end={totalDownloads} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
               </div>
             </div>
             <div className="ml-4">
               <select
-                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px] cursor-pointer hover:bg-[#008AE0] transition-colors"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px] cursor-pointer hover:bg-[#008AE0] transition-colors"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -695,57 +693,63 @@ const StatisticsChartPage = () => {
                   Biểu đồ Thống kê theo loại
                 </h2>
                 <div className="relative" ref={typeFilterRef}>
-                  <div
-                    className="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg border text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                     onClick={() => setShowTypeFilter(!showTypeFilter)}
                   >
-                    Bộ lọc
-                  </div>
+                    <span className="text-xs">Bộ lọc</span>
+                  </button>
                   {showTypeFilter && (
                     <div
                       className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                       style={{ width: "220px" }}
                     >
-                      <div className="p-3">
-                        <Checkbox
-                          checked={
-                            selectedTypeFilters.length ===
-                            Object.keys(typeCounts).length
-                          }
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedTypeFilters(Object.keys(typeCounts));
-                            } else {
-                              setSelectedTypeFilters([]);
+                      <div className="px-4 py-3 w-full">
+                        <label className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedTypeFilters.length ===
+                              Object.keys(typeCounts).length
                             }
-                          }}
-                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
-                        >
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedTypeFilters(Object.keys(typeCounts));
+                              } else {
+                                setSelectedTypeFilters([]);
+                              }
+                            }}
+                            className="mr-2"
+                          />
                           Tất cả
-                        </Checkbox>
-                        <div className="max-h-[200px] overflow-y-auto">
+                        </label>
+                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
                           {Object.keys(typeCounts).map((type) => (
-                            <Checkbox
+                            <label
                               key={type}
-                              checked={selectedTypeFilters.includes(type)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedTypeFilters([
-                                    ...selectedTypeFilters,
-                                    type,
-                                  ]);
-                                } else {
-                                  setSelectedTypeFilters(
-                                    selectedTypeFilters.filter(
-                                      (t) => t !== type
-                                    )
-                                  );
-                                }
-                              }}
-                              className="block mb-2 hover:bg-gray-50 p-1 rounded"
+                              className="flex items-center mb-2"
                             >
+                              <input
+                                type="checkbox"
+                                checked={selectedTypeFilters.includes(type)}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedTypeFilters([
+                                      ...selectedTypeFilters,
+                                      type,
+                                    ]);
+                                  } else {
+                                    setSelectedTypeFilters(
+                                      selectedTypeFilters.filter(
+                                        (t) => t !== type
+                                      )
+                                    );
+                                  }
+                                }}
+                                className="mr-2"
+                              />
                               {type}
-                            </Checkbox>
+                            </label>
                           ))}
                         </div>
                       </div>
@@ -798,61 +802,67 @@ const StatisticsChartPage = () => {
                   Biểu đồ Thống kê top 5 bài báo có điểm đóng góp cao nhất
                 </h2>
                 <div className="relative" ref={pointFilterRef}>
-                  <div
-                    className="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg border text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                     onClick={() => setShowPointFilter(!showPointFilter)}
                   >
-                    Bộ lọc
-                  </div>
+                    <span className="text-xs">Bộ lọc</span>
+                  </button>
                   {showPointFilter && (
                     <div
                       className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "250px" }}
+                      style={{ width: "220px" }}
                     >
-                      <div className="p-3">
-                        <Checkbox
-                          checked={
-                            selectedPointFilters.length ===
-                            pointFilterOptions.length
-                          }
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedPointFilters(
-                                pointFilterOptions.map((opt) => opt.value)
-                              );
-                            } else {
-                              setSelectedPointFilters([]);
+                      <div className="px-4 py-3 w-full">
+                        <label className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedPointFilters.length ===
+                              pointFilterOptions.length
                             }
-                          }}
-                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
-                        >
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedPointFilters(
+                                  pointFilterOptions.map((opt) => opt.value)
+                                );
+                              } else {
+                                setSelectedPointFilters([]);
+                              }
+                            }}
+                            className="mr-2"
+                          />
                           Tất cả
-                        </Checkbox>
-                        <div className="max-h-[200px] overflow-y-auto">
+                        </label>
+                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
                           {pointFilterOptions.map((option) => (
-                            <Checkbox
+                            <label
                               key={option.value}
-                              checked={selectedPointFilters.includes(
-                                option.value
-                              )}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedPointFilters([
-                                    ...selectedPointFilters,
-                                    option.value,
-                                  ]);
-                                } else {
-                                  setSelectedPointFilters(
-                                    selectedPointFilters.filter(
-                                      (t) => t !== option.value
-                                    )
-                                  );
-                                }
-                              }}
-                              className="block mb-2 hover:bg-gray-50 p-1 rounded"
+                              className="flex items-center mb-2"
                             >
+                              <input
+                                type="checkbox"
+                                checked={selectedPointFilters.includes(
+                                  option.value
+                                )}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedPointFilters([
+                                      ...selectedPointFilters,
+                                      option.value,
+                                    ]);
+                                  } else {
+                                    setSelectedPointFilters(
+                                      selectedPointFilters.filter(
+                                        (t) => t !== option.value
+                                      )
+                                    );
+                                  }
+                                }}
+                                className="mr-2"
+                              />
                               {option.label}
-                            </Checkbox>
+                            </label>
                           ))}
                         </div>
                       </div>
@@ -874,61 +884,67 @@ const StatisticsChartPage = () => {
                   Biểu đồ Thống kê top 5 bài báo theo lĩnh vực nghiên cứu
                 </h2>
                 <div className="relative" ref={donutFilterRef}>
-                  <div
-                    className="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg border text-xs cursor-pointer hover:bg-gray-50 transition-colors"
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                     onClick={() => setShowDonutFilter(!showDonutFilter)}
                   >
-                    Bộ lọc
-                  </div>
+                    <span className="text-xs">Bộ lọc</span>
+                  </button>
                   {showDonutFilter && (
                     <div
                       className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "200px" }}
+                      style={{ width: "220px" }}
                     >
-                      <div className="p-3">
-                        <Checkbox
-                          checked={
-                            selectedDonutFilters.length ===
-                            donutFilterOptions.length
-                          }
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setSelectedDonutFilters(
-                                donutFilterOptions.map((opt) => opt.value)
-                              );
-                            } else {
-                              setSelectedDonutFilters([]);
+                      <div className="px-4 py-3 w-full">
+                        <label className="flex items-center mb-2">
+                          <input
+                            type="checkbox"
+                            checked={
+                              selectedDonutFilters.length ===
+                              donutFilterOptions.length
                             }
-                          }}
-                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
-                        >
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setSelectedDonutFilters(
+                                  donutFilterOptions.map((opt) => opt.value)
+                                );
+                              } else {
+                                setSelectedDonutFilters([]);
+                              }
+                            }}
+                            className="mr-2"
+                          />
                           Tất cả
-                        </Checkbox>
-                        <div className="max-h-[200px] overflow-y-auto">
+                        </label>
+                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
                           {donutFilterOptions.map((option) => (
-                            <Checkbox
+                            <label
                               key={option.value}
-                              checked={selectedDonutFilters.includes(
-                                option.value
-                              )}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setSelectedDonutFilters([
-                                    ...selectedDonutFilters,
-                                    option.value,
-                                  ]);
-                                } else {
-                                  setSelectedDonutFilters(
-                                    selectedDonutFilters.filter(
-                                      (t) => t !== option.value
-                                    )
-                                  );
-                                }
-                              }}
-                              className="block mb-2 hover:bg-gray-50 p-1 rounded"
+                              className="flex items-center mb-2"
                             >
+                              <input
+                                type="checkbox"
+                                checked={selectedDonutFilters.includes(
+                                  option.value
+                                )}
+                                onChange={(e) => {
+                                  if (e.target.checked) {
+                                    setSelectedDonutFilters([
+                                      ...selectedDonutFilters,
+                                      option.value,
+                                    ]);
+                                  } else {
+                                    setSelectedDonutFilters(
+                                      selectedDonutFilters.filter(
+                                        (t) => t !== option.value
+                                      )
+                                    );
+                                  }
+                                }}
+                                className="mr-2"
+                              />
                               {option.label}
-                            </Checkbox>
+                            </label>
                           ))}
                         </div>
                       </div>
@@ -951,69 +967,6 @@ const StatisticsChartPage = () => {
                 <h2 className="font-semibold text-gray-700">
                   Top 5 bài báo nổi bật
                 </h2>
-                <div className="relative" ref={columnFilterRef}>
-                  <div
-                    className="flex items-center gap-2 text-gray-600 px-3 py-1.5 rounded-lg border text-xs cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => setShowColumnFilter(!showColumnFilter)}
-                  >
-                    Bộ lọc cột
-                  </div>
-                  {showColumnFilter && (
-                    <div
-                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "220px" }}
-                    >
-                      <div className="p-3">
-                        <Checkbox
-                          indeterminate={
-                            visibleColumns.length > 0 &&
-                            visibleColumns.length < columnOptions.length
-                          }
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setVisibleColumns(
-                                columnOptions.map((col) => col.value)
-                              );
-                            } else {
-                              setVisibleColumns([]);
-                            }
-                          }}
-                          checked={
-                            visibleColumns.length === columnOptions.length
-                          }
-                          className="mb-2 hover:bg-gray-50 p-1 rounded cursor-pointer block"
-                        >
-                          Chọn tất cả
-                        </Checkbox>
-                        <div className="max-h-[200px] overflow-y-auto">
-                          {columnOptions.map((option) => (
-                            <Checkbox
-                              key={option.value}
-                              checked={visibleColumns.includes(option.value)}
-                              onChange={(e) => {
-                                if (e.target.checked) {
-                                  setVisibleColumns([
-                                    ...visibleColumns,
-                                    option.value,
-                                  ]);
-                                } else {
-                                  setVisibleColumns(
-                                    visibleColumns.filter(
-                                      (c) => c !== option.value
-                                    )
-                                  );
-                                }
-                              }}
-                              className="block mb-2 hover:bg-gray-50 p-1 rounded"
-                            >
-                              {option.label}
-                            </Checkbox>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
               </div>
               <Table
                 columns={columns.filter((col) =>
