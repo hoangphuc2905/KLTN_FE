@@ -42,6 +42,23 @@ const ScientificPaperPage = () => {
     type: "", // "link" or "file"
   });
   const [sortedInfo, setSortedInfo] = useState({});
+  const [academicYears, setAcademicYears] = useState([]);
+  const [selectedYear, setSelectedYear] = useState("Tất cả");
+
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -118,12 +135,21 @@ const ScientificPaperPage = () => {
           console.error("Missing user_id");
           return;
         }
-        const response = await userApi.getScientificPapersByAuthorId(user_id);
+        const response = await userApi.getScientificPapersByAuthorId(
+          user_id,
+          selectedYear === "Tất cả" ? null : selectedYear // Pass academicYear if not "Tất cả"
+        );
         console.log("Full API Response:", response); // Log the full response for debugging
 
-        if (Array.isArray(response)) {
-          console.log("API Response is an array:", response); // Log the array response
-          setPapers(response); // Directly set the response as papers
+        if (
+          response?.scientificPapers &&
+          Array.isArray(response.scientificPapers)
+        ) {
+          console.log(
+            "API Response contains scientific papers:",
+            response.scientificPapers
+          ); // Log the array response
+          setPapers(response.scientificPapers); // Set the scientific papers from the response
         } else {
           console.error("Unexpected API response structure:", response);
           setPapers([]); // Fallback to an empty array
@@ -135,7 +161,7 @@ const ScientificPaperPage = () => {
     };
 
     fetchPapers();
-  }, []);
+  }, [selectedYear]); // Re-fetch papers when selectedYear changes
 
   const navigate = useNavigate();
   const uniquePaperTypes = [
@@ -714,12 +740,16 @@ const ScientificPaperPage = () => {
               </button>
             </div>
             <div className="flex items-center">
-              <select className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[150px]">
-                <option value="all">Tất cả các năm</option>
-                <option value="2024">Năm 2024-2025</option>
-                <option value="2023">Năm 2023-2024</option>
-                <option value="2022">Năm 2022-2023</option>
-                <option value="2021">Năm 2021-2022</option>
+              <select
+                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[150px]"
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {academicYears.map((year, index) => (
+                  <option key={index} value={year}>
+                    {year}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

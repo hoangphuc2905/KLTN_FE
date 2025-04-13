@@ -11,15 +11,21 @@ const ManagementAriticle = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
   const [userDepartment] = useState(localStorage.getItem("department") || "");
   const [departments, setDepartments] = useState({});
-  const [selectedYear, setSelectedYear] = useState("all"); // Add state for year selection
+  const [selectedYear, setSelectedYear] = useState("Tất cả"); // Default to "Tất cả"
+  const [academicYears, setAcademicYears] = useState([]); // Add state for academic years
+  const [sortedInfo, setSortedInfo] = useState({}); // Add state for sorting information
 
   useEffect(() => {
     const fetchPapers = async () => {
       try {
         let fetchedPapers = [];
         if (userRole === "admin") {
-          const response = await getAllScientificPapers();
-          fetchedPapers = response || [];
+          const response = await getAllScientificPapers(
+            selectedYear === "Tất cả" ? null : selectedYear // Pass selectedYear directly
+          );
+          fetchedPapers = Array.isArray(response.scientificPapers)
+            ? response.scientificPapers
+            : []; // Extract scientificPapers array
         } else if (
           [
             "head_of_department",
@@ -28,19 +34,23 @@ const ManagementAriticle = () => {
           ].includes(userRole)
         ) {
           const response = await getScientificPapersByDepartment(
-            userDepartment
+            userDepartment,
+            selectedYear === "Tất cả" ? null : selectedYear // Pass selectedYear directly
           );
-          fetchedPapers = response || [];
+          fetchedPapers = Array.isArray(response.scientificPapers)
+            ? response.scientificPapers
+            : []; // Extract scientificPapers array
         }
+        console.log("Fetched Papers:", fetchedPapers); // Debugging log
         setPapers(fetchedPapers);
       } catch (error) {
         console.error("Error fetching papers:", error);
-        setPapers([]);
+        setPapers([]); // Reset to an empty array on error
       }
     };
 
     fetchPapers();
-  }, [userRole, userDepartment]);
+  }, [userRole, userDepartment, selectedYear]); // Fetch data whenever selectedYear changes
 
   const fetchDepartments = async () => {
     try {
@@ -60,9 +70,9 @@ const ManagementAriticle = () => {
     fetchDepartments();
   }, []);
 
-  const getAllScientificPapers = async () => {
+  const getAllScientificPapers = async (academicYear) => {
     try {
-      const response = await userApi.getAllScientificPapers();
+      const response = await userApi.getAllScientificPapers(academicYear); // Pass academicYear as a parameter
       console.log("API Response:", response); // Log the correct response
       return response;
     } catch (error) {
@@ -71,10 +81,11 @@ const ManagementAriticle = () => {
     }
   };
 
-  const getScientificPapersByDepartment = async (department) => {
+  const getScientificPapersByDepartment = async (department, academicYear) => {
     try {
       const response = await userApi.getScientificPapersByDepartment(
-        department
+        department,
+        academicYear // Pass academicYear as a parameter
       );
       console.log("API Response:", response); // Log the correct response
       return response;
@@ -83,6 +94,21 @@ const ManagementAriticle = () => {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   };
+
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
+      setSelectedYear("Tất cả"); // Default to "Tất cả"
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
 
   const [activeTab, setActiveTab] = useState("all");
   const [showFilter, setShowFilter] = useState(false);
@@ -181,109 +207,6 @@ const ManagementAriticle = () => {
     showStatusFilter,
     showPaperTypeFilter,
   ]);
-
-  const uniquePaperTypes = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.article_type?.type_name)),
-  ];
-  const uniqueGroups = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.article_group?.group_name)),
-  ];
-  const uniqueRoles = [
-    "Tất cả",
-    ...new Set(papers.flatMap((paper) => paper.author.map((a) => a.role))),
-  ];
-  const uniqueInstitutions = [
-    "Tất cả",
-    ...new Set(papers.map((paper) => paper.department)),
-  ];
-  const uniqueStatuses = [
-    "Tất cả",
-    "pending",
-    "approved",
-    "revision",
-    "refused",
-  ]; // Updated status values
-
-  // Implement filtering logic with the proper variables
-  const filteredPapers = papers.filter((paper) => {
-    // Filter by selected year
-    const yearMatch =
-      selectedYear === "all" ||
-      (paper.publish_date &&
-        new Date(paper.publish_date).getFullYear().toString() === selectedYear);
-
-    // Filter by tab selection
-    const tabMatch = activeTab === "all" ? true : paper.status === activeTab;
-
-    // Filter by paper type
-    const paperTypeMatch =
-      filterPaperType.includes("Tất cả") ||
-      filterPaperType.includes(paper.article_type?.type_name);
-
-    // Filter by group
-    const groupMatch =
-      filterGroup.includes("Tất cả") ||
-      filterGroup.includes(paper.article_group?.group_name);
-
-    // Filter by paper title
-    const titleMatch =
-      !filterPaperTitle ||
-      paper.title_vn?.toLowerCase().includes(filterPaperTitle.toLowerCase());
-
-    // Filter by author name
-    const authorNameMatch =
-      !filterAuthorName ||
-      paper.author?.some(
-        (a) =>
-          (a.author_name_vi || "")
-            .toLowerCase()
-            .includes(filterAuthorName.toLowerCase()) ||
-          (a.author_name_en || "")
-            .toLowerCase()
-            .includes(filterAuthorName.toLowerCase())
-      );
-
-    // Filter by author count
-    const authorCountFrom = filterAuthorCountFrom
-      ? parseInt(filterAuthorCountFrom)
-      : 0;
-    const authorCountTo = filterAuthorCountTo
-      ? parseInt(filterAuthorCountTo)
-      : Infinity;
-    const authorCountMatch =
-      (!filterAuthorCountFrom && !filterAuthorCountTo) ||
-      (paper.author_count >= authorCountFrom &&
-        paper.author_count <= authorCountTo);
-
-    // Filter by role
-    const roleMatch =
-      filterRole.includes("Tất cả") ||
-      paper.author?.some((a) => filterRole.includes(a.role));
-
-    // Filter by institution
-    const institutionMatch =
-      filterInstitution.includes("Tất cả") ||
-      filterInstitution.includes(paper.department);
-
-    // Filter by status
-    const statusMatch =
-      filterStatus.includes("Tất cả") || filterStatus.includes(paper.status);
-
-    return (
-      yearMatch &&
-      tabMatch &&
-      paperTypeMatch &&
-      groupMatch &&
-      titleMatch &&
-      authorNameMatch &&
-      authorCountMatch &&
-      roleMatch &&
-      institutionMatch &&
-      statusMatch
-    );
-  });
 
   const handleRowClick = (record) => {
     navigate(`/admin/management/ariticle/detail/${record._id}`);
@@ -638,11 +561,11 @@ const ManagementAriticle = () => {
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
-                <option value="all">Tất cả các năm</option>
-                <option value="2024">Năm 2024-2025</option>
-                <option value="2023">Năm 2023-2024</option>
-                <option value="2022">Năm 2022-2023</option>
-                <option value="2021">Năm 2021-2022</option>
+                {academicYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year === "Tất cả" ? "Tất cả" : `${year}`}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -1062,16 +985,16 @@ const ManagementAriticle = () => {
               </div>
               <Table
                 columns={newColumns}
-                dataSource={filteredPapers}
+                dataSource={papers} // Directly use papers as the data source
                 pagination={{
                   current: currentPage,
                   pageSize: itemsPerPage,
-                  total: filteredPapers.length,
+                  total: papers.length,
                   onChange: (page) => setCurrentPage(page),
                   showSizeChanger: false, // Disable page size changer
                   position: ["bottomCenter"], // Center the pagination controls
                 }}
-                rowKey="_id" // Using _id as the unique key
+                rowKey={(record) => record._id || record.key} // Ensure rowKey is unique
                 className="text-sm"
                 scroll={{
                   x: newColumns.reduce(
@@ -1084,14 +1007,16 @@ const ManagementAriticle = () => {
                   style: { cursor: "pointer" },
                 })}
                 locale={{
-                  emptyText: <div style={{ height: "35px" }}></div>,
+                  emptyText: (
+                    <div style={{ height: "35px" }}>Không có dữ liệu</div>
+                  ), // Add a meaningful empty state
                 }}
                 style={{
                   height: "525px", // Fixed height for the table to display consistent number of rows
                   minHeight: "525px",
                 }}
                 onChange={(pagination, filters, sorter) => {
-                  setSortedInfo(sorter);
+                  setSortedInfo(sorter); // Update sortedInfo state
                 }}
               />
             </div>
