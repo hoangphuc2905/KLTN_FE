@@ -6,6 +6,7 @@ import { useParams, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
 import { QRCodeSVG } from "qrcode.react";
+import axios from "axios"; // Ensure axios is imported
 
 const ScientificPaperDetailPage = () => {
   const { id } = useParams(); // Extract the _id from the URL
@@ -13,6 +14,7 @@ const ScientificPaperDetailPage = () => {
   const [citation, setCitation] = useState(null); // State for citation
   const [selectedFormat, setSelectedFormat] = useState("APA"); // State to track selected format
   const [copySuccess, setCopySuccess] = useState(false); // State to track copy success
+  const [relatedPapers, setRelatedPapers] = useState([]); // Replace static relatedPapers with state
   const navigate = useNavigate();
   const location = useLocation(); // Get current location
   const user_id = localStorage.getItem("user_id");
@@ -20,23 +22,6 @@ const ScientificPaperDetailPage = () => {
 
   // Get current full URL for QR code
   const currentUrl = window.location.origin + location.pathname;
-
-  const relatedPapers = [
-    {
-      id: 1,
-      title:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      author: "Đoàn Văn Đạt",
-      department: "Khoa CNHH",
-      description:
-        "Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols. Tổng hợp xanh nano kim loại quý bằng dịch chiết thực vật, ứng dụng làm vật liệu xúc tác xử lý nitrophenols",
-      thumbnail: "/placeholder.svg?height=150&width=100",
-      views: 100,
-      downloads: 50,
-      date: "20/02/2025",
-    },
-    // Add more related papers as needed
-  ];
 
   const fetchDownloadCount = async (paperId) => {
     try {
@@ -58,6 +43,80 @@ const ScientificPaperDetailPage = () => {
     } catch (error) {
       console.error(`Error fetching view count for paper ${paperId}:`, error);
       return 0; // Fallback to 0 in case of an error
+    }
+  };
+
+  const getRecommendations = async (paperId) => {
+    try {
+      const response = await userApi.getRecommendations(paperId);
+      console.log("API Response:", response.data);
+
+      const transformedRecommendations = await Promise.all(
+        response.data.map(async (item) => {
+          let departmentName = "Không có dữ liệu";
+          let views = 0;
+          let downloads = 0;
+
+          // Fetch department name
+          if (item.department) {
+            try {
+              const departmentData = await userApi.getDepartmentById(
+                item.department
+              );
+              departmentName =
+                departmentData.department_name || "Không có dữ liệu";
+            } catch (error) {
+              console.error(
+                `Error fetching department for paper ${item._id}:`,
+                error
+              );
+            }
+          }
+
+          // Fetch view count
+          try {
+            const viewData = await userApi.getViewCountByPaperId(item._id);
+            views = viewData.viewCount || 0;
+          } catch (error) {
+            console.error(
+              `Error fetching view count for paper ${item._id}:`,
+              error
+            );
+          }
+
+          // Fetch download count
+          try {
+            const downloadData = await userApi.getDownloadCountByPaperId(
+              item._id
+            );
+            downloads = downloadData.download_count || 0;
+          } catch (error) {
+            console.error(
+              `Error fetching download count for paper ${item._id}:`,
+              error
+            );
+          }
+
+          return {
+            id: item._id,
+            title: item.title_vn || "Không có tiêu đề",
+            author:
+              item.author?.map((a) => a.author_name_vi).join(", ") ||
+              "Không có dữ liệu",
+            department: departmentName,
+            description: item.summary || "Không có mô tả",
+            thumbnail: item.cover_image || "/placeholder.svg",
+            views,
+            downloads,
+            date: new Date(item.publish_date).toLocaleDateString("vi-VN"),
+          };
+        })
+      );
+
+      return transformedRecommendations;
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
     }
   };
 
@@ -112,6 +171,10 @@ const ScientificPaperDetailPage = () => {
         if (data.doi) {
           fetchCitationByFormat(data.doi, "apa");
         }
+
+        // Fetch related papers dynamically
+        const recommendations = await getRecommendations(id);
+        setRelatedPapers(recommendations);
       } catch (error) {
         console.error("Error fetching scientific paper:", error);
       }
@@ -471,52 +534,58 @@ const ScientificPaperDetailPage = () => {
             Các bài nghiên cứu liên quan
           </h2>
           <div className="space-y-4">
-            {relatedPapers.map((paper) => (
-              <div key={paper.id} className="bg-white rounded-xl p-4">
-                <div className="flex flex-col sm:flex-row gap-4">
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/0563f14b44500ff5b83245fb9a6af2b57eb332ec4bbe05eafafe76a4e02af753?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                    alt="Form illustration"
-                    className="w-[100px] h-[150px] object-cover rounded-lg"
-                  />
-                  <div className="flex-1">
-                    <h3 className="font-medium text-sky-900 mb-2">
-                      {paper.title}
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-2">{paper.author}</p>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {paper.description}
-                    </p>
-                    <p className="text-sm  text-sky-900">{paper.department}</p>
-                  </div>
-                  <div className="flex flex-col items-end justify-between">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                        className="object-contain w-4 aspect-square"
-                        alt="Views icon"
-                      />
-                      <div className="text-xs text-orange-500">
-                        {typeof paper.views === "number" ? paper.views : 0}
-                      </div>
-                      <img
-                        src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                        className="object-contain w-4 aspect-[1.2]"
-                        alt="Downloads icon"
-                      />
-                      <div className="text-xs">
-                        {typeof paper.downloads === "number"
-                          ? paper.downloads
-                          : 0}
-                      </div>
+            {relatedPapers.length > 0 ? (
+              relatedPapers.map((paper, index) => (
+                <div
+                  key={paper.id || index}
+                  className="bg-white rounded-xl p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => navigate(`/scientific-paper/${paper.id}`)} // Navigate to the detail page
+                >
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <img
+                      src={paper.thumbnail}
+                      alt="Form illustration"
+                      className="w-[100px] h-[150px] object-cover rounded-lg"
+                    />
+                    <div className="flex-1">
+                      <h3 className="font-medium text-sky-900 mb-2">
+                        {paper.title}
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {paper.author}
+                      </p>
+                      <p className="text-sm text-gray-600 mb-4">
+                        {paper.description}
+                      </p>
+                      <p className="text-sm text-sky-900">{paper.department}</p>
                     </div>
-                    <p className="text-sm text-gray-500">
-                      Ngày đăng: {paper.date}
-                    </p>
+                    <div className="flex flex-col items-end justify-between">
+                      <div className="flex items-center gap-2">
+                        <img
+                          src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                          className="object-contain w-4 aspect-square"
+                          alt="Views icon"
+                        />
+                        <div className="text-xs text-orange-500">
+                          {paper.views}
+                        </div>
+                        <img
+                          src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                          className="object-contain w-4 aspect-[1.2]"
+                          alt="Downloads icon"
+                        />
+                        <div className="text-xs">{paper.downloads}</div>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        Ngày đăng: {paper.date}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p>Không có bài nghiên cứu liên quan.</p>
+            )}
           </div>
         </div>
       </div>
