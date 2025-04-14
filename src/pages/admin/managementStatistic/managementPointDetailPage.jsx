@@ -823,8 +823,15 @@ const ManagementPointDetailPage = () => {
               Thống kê
             </span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sm text-sky-900">
+            <span
+              onClick={() => navigate("/admin/management/point")}
+              className="cursor-pointer hover:text-blue-500"
+            >
               Điểm đóng góp
+            </span>
+            <span className="text-gray-400"> &gt; </span>
+            <span className="font-semibold text-sm text-sky-900">
+              Chi tiết điểm đóng góp
             </span>
           </div>
         </div>
