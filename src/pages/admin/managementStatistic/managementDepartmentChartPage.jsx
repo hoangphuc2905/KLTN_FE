@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
+import CountUp from "react-countup";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -725,7 +726,7 @@ const ManagementDepartmentChart = () => {
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-gray-700 pt-4">
-                  {stats.totalPapers ?? 0}
+                  <CountUp end={stats.totalPapers ?? 0} duration={2} />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng bài báo</div>
               </div>
@@ -734,7 +735,11 @@ const ManagementDepartmentChart = () => {
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#00A3FF] pt-4">
-                  {(stats.totalViews ?? 0).toLocaleString()}
+                  <CountUp
+                    end={stats.totalViews ?? 0}
+                    duration={2}
+                    separator=","
+                  />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
               </div>
@@ -743,14 +748,18 @@ const ManagementDepartmentChart = () => {
                 style={{ width: "200px", height: "55px" }}
               >
                 <div className="text-lg font-bold text-[#FFB700] pt-4">
-                  {(stats.totalDownloads ?? 0).toLocaleString()}
+                  <CountUp
+                    end={stats.totalDownloads ?? 0}
+                    duration={2}
+                    separator=","
+                  />
                 </div>
                 <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
               </div>
             </div>
             <div className="ml-4">
               <select
-                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[125px] cursor-pointer hover:bg-[#008AE0] transition-colors"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
