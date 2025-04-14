@@ -130,7 +130,7 @@ const ManagementAriticle = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusFilterRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7; // Change to 7 items per page
+  const itemsPerPage = 10; // Change to 7 items per page
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -557,7 +557,7 @@ const ManagementAriticle = () => {
             </div>
             <div className="flex items-center">
               <select
-                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[150px]"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -985,14 +985,20 @@ const ManagementAriticle = () => {
               </div>
               <Table
                 columns={newColumns}
-                dataSource={papers} // Directly use papers as the data source
+                dataSource={papers.filter((paper) => {
+                  // Filter based on the active tab
+                  if (activeTab === "all") return true;
+                  return paper.status === activeTab;
+                })}
                 pagination={{
                   current: currentPage,
                   pageSize: itemsPerPage,
-                  total: papers.length,
+                  total: papers.filter((paper) =>
+                    activeTab === "all" ? true : paper.status === activeTab
+                  ).length,
                   onChange: (page) => setCurrentPage(page),
                   showSizeChanger: false, // Disable page size changer
-                  position: ["bottomCenter"], // Center the pagination controls
+                  position: ["bottomRight"], // Center the pagination controls
                 }}
                 rowKey={(record) => record._id || record.key} // Ensure rowKey is unique
                 className="text-sm"
@@ -1010,10 +1016,6 @@ const ManagementAriticle = () => {
                   emptyText: (
                     <div style={{ height: "35px" }}>Không có dữ liệu</div>
                   ), // Add a meaningful empty state
-                }}
-                style={{
-                  height: "525px", // Fixed height for the table to display consistent number of rows
-                  minHeight: "525px",
                 }}
                 onChange={(pagination, filters, sorter) => {
                   setSortedInfo(sorter); // Update sortedInfo state
