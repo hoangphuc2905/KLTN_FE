@@ -18,18 +18,19 @@ import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import AddScoringFormulaPage from "./AddScoringFormulaPage";
 import { useNavigate } from "react-router-dom";
-import dayjs from "dayjs"; // Import dayjs for date handling
-
+import dayjs from "dayjs";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+dayjs.extend(isSameOrBefore);
 const ItemTypes = {
   ATTRIBUTE: "attribute",
 };
 
 const attributeNames = {
-  journal_group: "NHÓM TẠP CHÍ",
-  author_role: "VAI TRÒ",
-  institution_count: "CƠ QUAN ĐỨNG TÊN",
-  doi: "DOI",
-  exemplary_paper: "TIÊU BIỂU",
+  article_group: "Nhóm bài báo",
+  author_role: "Vai trò tác giả",
+  institution_count: "Số cơ quan đứng tên",
+  doi: "Doi",
+  featured: "Tiêu biểu",
 };
 
 const DraggableAttribute = ({ attribute, onSettingsClick }) => {
@@ -235,6 +236,9 @@ const ManagementFormulas = () => {
   const [showFilter, setShowFilter] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState(null);
   const [filterEndDate, setFilterEndDate] = useState(null);
+  const [confirmSaveModalVisible, setConfirmSaveModalVisible] = useState(false); // State for confirmation modal
+  const [pendingFormulaData, setPendingFormulaData] = useState(null); // Store formula data temporarily
+  const [overlappingFormula, setOverlappingFormula] = useState(null); // Store overlapping formula details
   const navigate = useNavigate();
 
   const filterRef = useRef(null);
@@ -315,6 +319,27 @@ const ManagementFormulas = () => {
     }
   };
 
+  const isDateRangeOverlapping = (startDate, endDate) => {
+    const overlapping = recentFormulas.find((formula) => {
+      const formulaStart = dayjs(formula.startDate);
+      const formulaEnd = formula.endDate ? dayjs(formula.endDate) : null;
+
+      const isOverlapping =
+        (!formulaEnd || dayjs(startDate).isSameOrBefore(formulaEnd, "day")) && // Ensure startDate is not before formulaEnd
+        (!endDate || dayjs(endDate).isAfter(formulaStart, "day")); // Ensure endDate is after formulaStart
+
+      return isOverlapping;
+    });
+
+    if (overlapping) {
+      setOverlappingFormula(overlapping);
+      return true;
+    }
+
+    setOverlappingFormula(null);
+    return false;
+  };
+
   const handleSaveFormula = async () => {
     const totalWeight = currentFormula.reduce(
       (sum, slot) => sum + (slot?.weight || 0),
@@ -325,17 +350,56 @@ const ManagementFormulas = () => {
       return;
     }
 
-    try {
-      const formulaData = {
-        formula: currentFormula,
-        startDate: startDate ? dayjs(startDate).toISOString() : null, // Save start date
-        endDate: endDate ? dayjs(endDate).toISOString() : null, // Save end date
-      };
+    if (
+      startDate &&
+      endDate &&
+      dayjs(endDate).isSameOrBefore(startDate, "day")
+    ) {
+      message.error("Ngày kết thúc phải lớn hơn ngày bắt đầu.");
+      return;
+    }
 
+    if (isDateRangeOverlapping(startDate, endDate)) {
+      setPendingFormulaData({
+        formula: currentFormula,
+        startDate,
+        endDate,
+      });
+      setConfirmSaveModalVisible(true);
+      return;
+    }
+
+    await saveFormulaToServer({
+      formula: currentFormula,
+      startDate,
+      endDate,
+    });
+  };
+
+  const saveFormulaToServer = async (formulaData) => {
+    try {
       const response = await userApi.createFormula(formulaData);
-      console.log("Saved Formula:", response);
+
+      // Attach attribute names to the formula before updating the table
+      const updatedFormula = await Promise.all(
+        response.formula.map(async (slot) => {
+          const attributeName = await getAttributeNameById(slot.attribute);
+          return {
+            ...slot,
+            attribute: {
+              _id: slot.attribute,
+              name: attributeName,
+            },
+          };
+        })
+      );
+
+      const updatedResponse = { ...response, formula: updatedFormula };
+
+      console.log("Saved Formula:", updatedResponse);
       message.success("Lưu công thức thành công!");
-      setRecentFormulas((prevFormulas) => [...prevFormulas, response]);
+
+      setRecentFormulas((prevFormulas) => [...prevFormulas, updatedResponse]);
       setIsEditing(false);
     } catch (error) {
       console.error("Error saving formula:", error);
@@ -349,7 +413,7 @@ const ManagementFormulas = () => {
 
   const getAttributeNameById = async (attributeId) => {
     try {
-      const response = await userApi.getAttributeById(attributeId); // Pass the ID directly
+      const response = await userApi.getAttributeById(attributeId);
       console.log("Attribute Name Response:", response);
       return response.name;
     } catch (error) {
@@ -749,6 +813,61 @@ const ManagementFormulas = () => {
               selectedYear={null}
               onAddAttribute={handleAddAttribute}
             />
+          </Modal>
+
+          <Modal
+            title="Xác nhận lưu công thức"
+            open={confirmSaveModalVisible}
+            onCancel={() => setConfirmSaveModalVisible(false)}
+            onOk={async () => {
+              if (pendingFormulaData) {
+                await saveFormulaToServer(pendingFormulaData);
+                setPendingFormulaData(null);
+              }
+              setConfirmSaveModalVisible(false);
+            }}
+            okText="Đồng ý"
+            cancelText="Hủy"
+          >
+            <p>Khoảng thời gian này đã có công thức tồn tại:</p>
+            {overlappingFormula && (
+              <div className="mb-4">
+                <p>
+                  <strong>Ngày bắt đầu:</strong>{" "}
+                  {formatDate(overlappingFormula.startDate)}
+                </p>
+                <p>
+                  <strong>Ngày kết thúc:</strong>{" "}
+                  {overlappingFormula.endDate
+                    ? formatDate(overlappingFormula.endDate)
+                    : "Hiện tại"}
+                </p>
+                <p>
+                  <strong>Công thức:</strong>
+                </p>
+                <div className="flex flex-wrap items-center space-x-2">
+                  <span className="text-base font-semibold text-cyan-500">
+                    Điểm đóng góp =
+                  </span>
+                  {overlappingFormula.formula.map((slot, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <span className="text-sm font-medium">
+                        {attributeNames[slot?.attribute?.name] ||
+                          slot?.attribute?.name}
+                      </span>
+                      <span className="text-lg font-semibold">×</span>
+                      <span className="text-sm font-medium">
+                        {slot?.weight}
+                      </span>
+                      {index < overlappingFormula.formula.length - 1 && (
+                        <span className="text-lg font-semibold">+</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <p>Bạn có chắc chắn muốn lưu công thức mới không?</p>
           </Modal>
 
           <Footer />
