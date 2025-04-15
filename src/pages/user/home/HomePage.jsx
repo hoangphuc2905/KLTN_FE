@@ -2,15 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/header";
 import Footer from "../../../components/footer";
 import { Link } from "react-router-dom";
-// import { StepBackwardOutlined, StepForwardOutlined } from "@ant-design/icons";
 import { Modal, Button, Input, message } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 
 const HomePage = () => {
   const [recentPapers, setRecentPapers] = useState([]);
-  const [featuredPapers, setFeaturedPapers] = useState([]); // Replace hardcoded array with state
-
+  const [featuredPapers, setFeaturedPapers] = useState([]);
   const [researchPapers, setResearchPapers] = useState([]);
   const [authors, setAuthors] = useState({});
   const [departments, setDepartments] = useState({});
@@ -26,6 +24,8 @@ const HomePage = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [collections, setCollections] = useState([]);
+  const [searchHistory, setSearchHistory] = useState([]); // State for search history
+  const [isHistoryVisible, setIsHistoryVisible] = useState(false); // State to control visibility of search history
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,10 +45,8 @@ const HomePage = () => {
         const userId = localStorage.getItem("user_id");
         const response = await userApi.getRecommendationsByUserHistory(userId);
 
-        // Log the API response to verify its structure
         console.log("API Response for Recommended Papers:", response);
 
-        // Extract and process the data
         const papers = response?.data || [];
         if (!Array.isArray(papers)) {
           console.error("Invalid data format for recommended papers:", papers);
@@ -57,9 +55,9 @@ const HomePage = () => {
 
         const approvedPapers = papers.filter(
           (paper) => paper.status === "approved"
-        ); // Only include approved papers
+        );
 
-        setResearchPapers(approvedPapers); // Set the approved papers to state
+        setResearchPapers(approvedPapers);
         console.log("Recommended research papers:", approvedPapers);
       } catch (error) {
         console.error("Error fetching recommended research papers:", error);
@@ -67,7 +65,7 @@ const HomePage = () => {
     };
 
     fetchResearchPapers();
-  }, []); // Fetch recommended papers on page load
+  }, []);
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -137,8 +135,13 @@ const HomePage = () => {
     fetchFeaturedPapers();
   }, []);
 
+  useEffect(() => {
+    const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
+    setSearchHistory(history);
+  }, []);
+
   const fetchAuthors = async (paperId) => {
-    if (authors[paperId]) return; // Skip if authors are already fetched
+    if (authors[paperId]) return;
 
     try {
       const authorsData = await userApi.getAuthorsByPaperId(paperId);
@@ -148,39 +151,40 @@ const HomePage = () => {
       setAuthors((prevAuthors) => ({
         ...prevAuthors,
         [paperId]:
-          authorNames.length > 0
-            ? authorNames.join(", ")
-            : "No authors available",
+          authorNames.length > 0 ? authorNames.join(", ") : "Unknown Author",
       }));
     } catch (error) {
-      if (error.response?.status === 404) {
-        console.warn(`No authors found for paper ${paperId}`);
-        setAuthors((prevAuthors) => ({
-          ...prevAuthors,
-          [paperId]: "No authors available",
-        }));
-      } else {
-        console.error(`Error fetching authors for paper ${paperId}:`, error);
-        setAuthors((prevAuthors) => ({
-          ...prevAuthors,
-          [paperId]: "Error fetching authors",
-        }));
-      }
+      console.error(`Error fetching authors for paper ${paperId}:`, error);
+      setAuthors((prevAuthors) => ({
+        ...prevAuthors,
+        [paperId]: "Error fetching authors",
+      }));
     }
   };
 
   const getDepartmentById = async (departmentId) => {
+    if (
+      !departmentId ||
+      typeof departmentId !== "string" ||
+      departmentId.length !== 24
+    ) {
+      console.warn(`Invalid department ID: ${departmentId}`);
+      return "Unknown Department";
+    }
     try {
       const response = await userApi.getDepartmentById(departmentId);
       return response.department_name || "Unknown Department";
     } catch (error) {
-      console.error(`Error fetching department for ID ${departmentId}:`, error);
-      return "Unknown Department"; // Fallback in case of error
+      console.error(
+        `Error fetching department for ID ${departmentId}:`,
+        error.response?.data || error
+      );
+      return "Unknown Department";
     }
   };
 
   const fetchDepartment = async (departmentId) => {
-    if (!departmentId || departments[departmentId]) return; // Skip if already fetched or no ID
+    if (!departmentId || departments[departmentId]) return;
 
     try {
       const departmentData = await userApi.getDepartmentById(departmentId);
@@ -190,34 +194,48 @@ const HomePage = () => {
       }));
       console.log(`Fetched department for ID ${departmentId}:`, departmentData);
     } catch (error) {
-      console.error(`Error fetching department for ID ${departmentId}:`, error);
+      console.error(
+        `Error fetching department for ID ${departmentId}:`,
+        error.response?.data || error
+      );
       setDepartments((prevDepartments) => ({
         ...prevDepartments,
-        [departmentId]: "Unknown Department", // Fallback for errors
+        [departmentId]: "Unknown Department",
       }));
     }
   };
 
   const fetchDownloadCount = async (paperId) => {
+    if (!paperId) {
+      console.error("Error: paperId is undefined.");
+      return 0;
+    }
     try {
       const response = await userApi.getDownloadCountByPaperId(paperId);
       return response.download_count || 0;
     } catch (error) {
       console.error(
         `Error fetching download count for paper ${paperId}:`,
-        error
+        error.response?.data || error
       );
-      return 0; // Fallback to 0 in case of an error
+      return 0;
     }
   };
 
   const fetchViewCount = async (paperId) => {
+    if (!paperId) {
+      console.error("Error: paperId is undefined.");
+      return 0;
+    }
     try {
       const response = await userApi.getViewCountByPaperId(paperId);
-      return response.viewCount || 0; // Return view count or fallback to 0
+      return response.viewCount || 0;
     } catch (error) {
-      console.error(`Error fetching view count for paper ${paperId}:`, error);
-      return 0; // Fallback to 0 in case of an error
+      console.error(
+        `Error fetching view count for paper ${paperId}:`,
+        error.response?.data || error
+      );
+      return 0;
     }
   };
 
@@ -226,7 +244,6 @@ const HomePage = () => {
       ? departments[paper.department] === selectedDepartment
       : true;
 
-    // Updated search matching logic to safely handle all possible search cases
     const searchMatch = searchQuery
       ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         paper.title_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -258,19 +275,21 @@ const HomePage = () => {
       ? recentPapers
       : activeTab === "featured"
       ? featuredPapers
-      : researchPapers; // Default to recommended papers
+      : researchPapers;
 
   useEffect(() => {
     const fetchCountsForCurrentPapers = async () => {
       try {
         const updatedPapers = await Promise.all(
-          filteredPapers.map(async (paper) => {
-            const [viewCount, downloadCount] = await Promise.all([
-              fetchViewCount(paper._id),
-              fetchDownloadCount(paper._id),
-            ]);
-            return { ...paper, views: viewCount, downloads: downloadCount };
-          })
+          filteredPapers
+            .filter((paper) => paper.id)
+            .map(async (paper) => {
+              const [viewCount, downloadCount] = await Promise.all([
+                fetchViewCount(paper.id),
+                fetchDownloadCount(paper.id),
+              ]);
+              return { ...paper, views: viewCount, downloads: downloadCount };
+            })
         );
 
         setResearchPapers((prev) => {
@@ -287,13 +306,13 @@ const HomePage = () => {
     if (filteredPapers.length > 0) {
       fetchCountsForCurrentPapers();
     }
-  }, [JSON.stringify(filteredPapers)]); // Using filteredPapers instead of currentPapers
+  }, [JSON.stringify(filteredPapers)]);
 
   useEffect(() => {
     const fetchAuthorsForCurrentPapers = async () => {
       for (const paper of filteredPapers) {
         if (!authors[paper._id]) {
-          await fetchAuthors(paper._id); // Fetch authors only if not already fetched
+          await fetchAuthors(paper._id);
         }
       }
     };
@@ -304,8 +323,12 @@ const HomePage = () => {
   useEffect(() => {
     const fetchDepartmentsForCurrentPapers = async () => {
       for (const paper of filteredPapers) {
-        if (paper.department && !departments[paper.department]) {
-          await fetchDepartment(paper.department); // Fetch department using 'department' field
+        if (
+          paper.department &&
+          paper.department !== "Unknown Department" &&
+          !departments[paper.department]
+        ) {
+          await fetchDepartment(paper.department);
         }
       }
     };
@@ -339,22 +362,17 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    // Reset current page when filters change
     setCurrentPage(1);
   }, [searchQuery, selectedDepartment]);
 
-  // Create a ref for the papers section to scroll to
   const papersListRef = useRef(null);
 
-  // Function to handle page change and scroll to top
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
 
-    // Scroll to the top of the page
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Calculate pagination values
   const totalPages = Math.ceil(filteredPapers.length / papersPerPage);
   const indexOfLastPaper = currentPage * papersPerPage;
   const indexOfFirstPaper = indexOfLastPaper - papersPerPage;
@@ -381,30 +399,47 @@ const HomePage = () => {
   };
 
   const isPaperInCollection = async (userId, paperId) => {
+    if (!userId || !paperId) {
+      console.error("Error: userId or paperId is undefined.");
+      return false;
+    }
     try {
-      const response = await userApi.isPaperInCollection(userId, paperId); // Call API to check
-      return response.exists; // Return true if the paper exists in a collection
+      const response = await userApi.isPaperInCollection(userId, paperId);
+      return response.exists;
     } catch (error) {
-      console.error(`Error checking paper in collection:`, error);
-      return false; // Default to false in case of an error
+      console.error(
+        `Error checking paper in collection for paper ${paperId}:`,
+        error.response?.data || error
+      );
+      return false;
     }
   };
 
   useEffect(() => {
     const checkArchivedPapers = async () => {
       const userId = localStorage.getItem("user_id");
-      const archivedStatuses = await Promise.all(
-        researchPapers.map(async (paper) => {
-          const isArchived = await isPaperInCollection(userId, paper._id);
-          return { paperId: paper._id, isArchived };
-        })
-      );
+      if (!userId) {
+        console.error("Error: userId is undefined.");
+        return;
+      }
+      try {
+        const archivedStatuses = await Promise.all(
+          researchPapers
+            .filter((paper) => paper.id)
+            .map(async (paper) => {
+              const isArchived = await isPaperInCollection(userId, paper.id);
+              return { paperId: paper.id, isArchived };
+            })
+        );
 
-      setArchivedPapers(
-        archivedStatuses
-          .filter((status) => status.isArchived)
-          .map((status) => status.paperId)
-      );
+        setArchivedPapers(
+          archivedStatuses
+            .filter((status) => status.isArchived)
+            .map((status) => status.paperId)
+        );
+      } catch (error) {
+        console.error("Error checking archived papers:", error);
+      }
     };
 
     if (researchPapers.length > 0) {
@@ -414,20 +449,15 @@ const HomePage = () => {
 
   const removePaperFromCollection = async (paperId) => {
     try {
-      // Ensure collections are up-to-date
       const userId = localStorage.getItem("user_id");
       const userCollections = await userApi.getCollectionsByUserId(userId);
       setCollections(userCollections);
 
-      // Debug: Log collections to verify structure
       console.log("Fetched collections:", userCollections);
 
-      // Find the collection containing the paper
       const collection = userCollections.find((col) => {
-        // Log the papers array for debugging
         console.log(`Checking collection: ${col.name}`, col.papers);
 
-        // Check if papers array contains the paper ID
         return col.papers.some((paper) =>
           typeof paper === "string" ? paper === paperId : paper._id === paperId
         );
@@ -444,10 +474,9 @@ const HomePage = () => {
         paper_id: paperId,
       };
 
-      await userApi.removePaperFromCollection(payload); // Call API to remove the paper
-      setArchivedPapers((prev) => prev.filter((id) => id !== paperId)); // Remove paper from archived list
+      await userApi.removePaperFromCollection(payload);
+      setArchivedPapers((prev) => prev.filter((id) => id !== paperId));
 
-      // Update the collections state to reflect the removal
       setCollections((prev) =>
         prev.map((col) =>
           col._id === collection._id
@@ -472,7 +501,6 @@ const HomePage = () => {
 
   const showModal = async (paper) => {
     if (archivedPapers.includes(paper._id)) {
-      // If the paper is already archived, remove it
       await removePaperFromCollection(paper._id);
       return;
     }
@@ -487,7 +515,7 @@ const HomePage = () => {
       const userId = localStorage.getItem("user_id");
       const userCollections = await userApi.getCollectionsByUserId(userId);
       setCollections(userCollections);
-      setCategories(userCollections.map((collection) => collection.name)); // Update categories
+      setCategories(userCollections.map((collection) => collection.name));
     } catch (error) {
       console.error("Error fetching collections:", error);
     }
@@ -512,9 +540,8 @@ const HomePage = () => {
         name: newCategory,
       };
 
-      const response = await userApi.createCollection(payload); // Call API to create the collection
+      const response = await userApi.createCollection(payload);
 
-      // Validate the API response
       if (
         !response ||
         !response.collection ||
@@ -538,7 +565,7 @@ const HomePage = () => {
       setCategories((prev) => [...prev, newCollection.name]);
       setSelectedCategory(newCollection.name);
       if (selectedPaper) {
-        setArchivedPapers((prev) => [...prev, selectedPaper._id]); // Mark paper as archived
+        setArchivedPapers((prev) => [...prev, selectedPaper._id]);
       }
       setNewCategory("");
       setIsAddingCategory(false);
@@ -586,7 +613,7 @@ const HomePage = () => {
       };
 
       await userApi.addPaperToCollection(payload);
-      setArchivedPapers((prev) => [...prev, selectedPaper._id]); // Mark paper as archived
+      setArchivedPapers((prev) => [...prev, selectedPaper._id]);
       setIsModalVisible(false);
       message.success("Bài nghiên cứu đã được thêm vào danh mục lưu trữ!");
     } catch (error) {
@@ -597,14 +624,13 @@ const HomePage = () => {
     }
   };
 
-  // Ensure selectedCategory is updated when the user selects a category
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
   };
 
   const handleOk = () => {
     if (newCategory.trim() && !categories.includes(newCategory)) {
-      handleCreateCollection(); // Create new collection
+      handleCreateCollection();
     } else {
       handleAddPaperToCollection();
     }
@@ -615,7 +641,63 @@ const HomePage = () => {
   };
 
   const handleAddCategoryClick = () => {
-    setIsAddingCategory(true); // Enable the input field for adding a new category
+    setIsAddingCategory(true);
+  };
+
+  const handleSearch = async () => {
+    try {
+      const criteria = "title";
+      const response = await userApi.semanticSearch(
+        searchQuery,
+        selectedDepartment,
+        criteria
+      );
+      console.log("Semantic Search Results:", response);
+
+      if (response && response.results) {
+        const papers = response.results
+          .filter((result) => result.paper && result.paper._id)
+          .map((result) => {
+            const paper = result.paper;
+            const title = paper.title_vn?.trim() || paper.title_en?.trim();
+            if (!title) {
+              console.warn(`Missing title for paper ID: ${paper._id}`);
+            }
+            const authors =
+              paper.author
+                ?.map((a) => a.author_name_vi || a.author_name_en)
+                .join(", ") || "Unknown Author";
+            const departmentName =
+              paper.department?.department_name || "Unknown Department";
+            return {
+              id: paper._id,
+              title: title || "No Title",
+              author: authors,
+              department: departmentName,
+              thumbnailUrl: paper.cover_image || "",
+              summary: paper.summary || "No Summary",
+              publish_date: paper.publish_date,
+              keywords: paper.keywords || "",
+              file: paper.file || "",
+              doi: paper.doi || "",
+            };
+          });
+        setResearchPapers(papers);
+      } else {
+        setResearchPapers([]);
+      }
+
+      if (searchQuery.trim()) {
+        const updatedHistory = [
+          searchQuery,
+          ...searchHistory.filter((q) => q !== searchQuery),
+        ].slice(0, 5);
+        setSearchHistory(updatedHistory);
+        localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+      }
+    } catch (error) {
+      console.error("Error performing semantic search:", error);
+    }
   };
 
   return (
@@ -623,20 +705,20 @@ const HomePage = () => {
       <style>
         {`
           .custom-scrollbar {
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* Internet Explorer 10+ */
+            scrollbar-width: none;
+            -ms-overflow-style: none;
           }
 
           .custom-scrollbar::-webkit-scrollbar {
-            width: 0; /* Safari and Chrome */
+            width: 0;
           }
 
           .custom-scrollbar:hover {
-            scrollbar-width: thin; /* Firefox */
+            scrollbar-width: thin;
           }
 
           .custom-scrollbar:hover::-webkit-scrollbar {
-            width: 8px; /* Safari and Chrome */
+            width: 8px;
           }
 
           @media (max-width: 640px) {
@@ -684,15 +766,67 @@ const HomePage = () => {
               <option value="keywords">Từ khóa</option>
             </select>
 
-            <input
-              type="text"
-              className="p-2 border rounded-lg flex-1 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
-              placeholder="Nhập từ khóa tìm kiếm..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div className="relative flex-1">
+              <input
+                type="text"
+                className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
+                placeholder="Nhập từ khóa tìm kiếm..."
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setIsHistoryVisible(true); // Show history when typing
+                }}
+                onFocus={() => setIsHistoryVisible(true)} // Show history on focus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch();
+                    setIsHistoryVisible(false); // Hide history on search
+                  }
+                }}
+              />
+              {isHistoryVisible && searchHistory.length > 0 && (
+                <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto">
+                  {searchHistory.map((query, index) => (
+                    <li
+                      key={index}
+                      className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100"
+                    >
+                      <span
+                        onClick={() => {
+                          setSearchQuery(query);
+                          handleSearch();
+                          setIsHistoryVisible(false); // Hide history on selection
+                        }}
+                        className="flex-1 truncate"
+                      >
+                        {query}
+                      </span>
+                      <button
+                        className="text-red-500 hover:text-red-700 ml-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const updatedHistory = searchHistory.filter(
+                            (_, i) => i !== index
+                          );
+                          setSearchHistory(updatedHistory);
+                          localStorage.setItem(
+                            "searchHistory",
+                            JSON.stringify(updatedHistory)
+                          );
+                        }}
+                      >
+                        x
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-            <button className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-3 max-md:text-base max-md:h-[44px] hover:bg-blue-600">
+            <button
+              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-3 max-md:text-base max-md:h-[44px] hover:bg-blue-600"
+              onClick={handleSearch}
+            >
               Tìm kiếm
             </button>
           </div>
@@ -704,79 +838,70 @@ const HomePage = () => {
               <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
                 {currentPapers.map((paper, index) => (
                   <Link
-                    to={`/scientific-paper/${paper._id}`}
-                    key={paper._id}
-                    onClick={() => createPaperView(paper._id)}
+                    to={`/scientific-paper/${paper.id}`}
+                    key={paper.id}
+                    onClick={() => createPaperView(paper.id)}
                     className="w-full block"
                   >
                     <article
-                      key={paper._id}
+                      key={paper.id}
                       className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-4 max-md:w-full ${
                         index > 0 ? "mt-3" : ""
                       }`}
                     >
-                      {/* Paper content remains unchanged */}
                       <div className="flex justify-center w-fit lg:block max-lg:hidden">
                         <img
-                          src={paper.cover_image}
+                          src={paper.thumbnailUrl}
                           className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[120px] max-md:max-w-[100px] m-0"
-                          alt={paper.title_vn || "No Title"}
+                          alt={paper.title || "No Title"}
                         />
                       </div>
-                      <div className="grid grid-cols-1 gap-2 w-full max-md:overflow-hidden">
-                        {/* Title */}
-                        <div className="grid grid-cols-[auto,1fr] items-center text-sky-900 w-full max-md:flex max-md:flex-col max-md:items-start max-md:w-full">
-                          <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
-                            {paper.title_vn || "No Title"}
-                          </h2>
-                          <div className="flex flex-col items-center ml-auto max-md:ml-0 max-md:mt-2 max-md:w-full">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                                className="object-contain w-4 aspect-square max-md:w-3"
-                                alt="Views icon"
-                              />
-                              <div className="text-xs text-orange-500 max-md:text-sm">
-                                {typeof paper.views === "number"
-                                  ? paper.views
-                                  : 0}
-                              </div>
-                              <img
-                                src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                                className="object-contain w-4 aspect-[1.2] max-md:w-3"
-                                alt="Downloads icon"
-                              />
-                              <div className="text-xs max-md:text-sm">
-                                {typeof paper.downloads === "number"
-                                  ? paper.downloads
-                                  : 0}
-                              </div>
+                      <div className="grid grid-cols-1 gap-2 w-full max-md:overflow-hidden relative">
+                        <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
+                          {paper.title || "No Title"}
+                        </h2>
+                        <div className="absolute top-0 right-0 flex flex-col items-end text-xs text-neutral-500 max-md:text-sm">
+                          <div className="flex items-center gap-2">
+                            <img
+                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                              className="object-contain w-4 aspect-square max-md:w-3"
+                              alt="Views icon"
+                            />
+                            <div className="text-orange-500">
+                              {typeof paper.views === "number"
+                                ? paper.views
+                                : 0}
                             </div>
-                            <div className="text-xs text-neutral-500 mt-1 max-md:text-sm">
-                              {paper.publish_date
-                                ? new Date(
-                                    paper.publish_date
-                                  ).toLocaleDateString()
-                                : "No Date"}
+                            <img
+                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                              className="object-contain w-4 aspect-[1.2] max-md:w-3"
+                              alt="Downloads icon"
+                            />
+                            <div>
+                              {typeof paper.downloads === "number"
+                                ? paper.downloads
+                                : 0}
                             </div>
                           </div>
+                          <div>
+                            {paper.publish_date
+                              ? new Date(
+                                  paper.publish_date
+                                ).toLocaleDateString()
+                              : "No Date"}
+                          </div>
                         </div>
-                        {/* Authors */}
                         <div className="text-sm text-sky-900 max-md:text-[14px]">
-                          {authors[paper._id] || "Loading authors..."}
+                          {paper.author || "Unknown Author"}
                         </div>
-                        {/* Summary */}
                         <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[14px]">
                           {paper.summary || "No Summary"}
                         </p>
-                        {/* Department */}
                         <div className="text-sm text-sky-900 max-md:text-[14px]">
-                          {departments[paper.department] ||
-                            "Loading department..."}
+                          {paper.department || "Unknown Department"}
                         </div>
-                        {/* Archive Icon */}
                         <div className="flex justify-end">
-                          {archivedPapers.includes(paper._id) ? (
+                          {archivedPapers.includes(paper.id) ? (
                             <FaArchive
                               className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-5 max-md:h-5"
                               onClick={(e) => {
@@ -799,7 +924,6 @@ const HomePage = () => {
                   </Link>
                 ))}
 
-                {/* Pagination Controls */}
                 <div className="flex justify-center mt-6 gap-2">
                   <button
                     className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -931,7 +1055,6 @@ const HomePage = () => {
       </div>
       <Footer />
 
-      {/* Modal for adding to archive */}
       <Modal
         title="Thêm vào Lưu trữ"
         open={isModalVisible}
