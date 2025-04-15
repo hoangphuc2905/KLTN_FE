@@ -719,6 +719,11 @@ const ManagementTable = () => {
               className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
               onClick={downloadExcel}
             >
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
+                alt="Download Icon"
+                className="w-4 h-4 invert"
+              />
               Download
             </button>
             <button
@@ -728,7 +733,7 @@ const ManagementTable = () => {
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"
-                className="w-4 h-4"
+                className="w-4 h-4 invert"
               />
               Print
             </button>

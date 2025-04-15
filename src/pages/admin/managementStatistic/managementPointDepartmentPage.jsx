@@ -844,7 +844,7 @@ const ManagementPointDepartmentPage = () => {
             <select
               value={selectedYear}
               onChange={(e) => handleYearChange(e.target.value)}
-              className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-lg w-[130px]"
+              className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[115px]"
             >
               {academicYears.map((year) => (
                 <option key={year} value={year}>
@@ -854,18 +854,23 @@ const ManagementPointDepartmentPage = () => {
             </select>
             <button
               onClick={downloadExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
             >
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
+                alt="Download Icon"
+                className="w-4 h-4 invert"
+              />
               Download
             </button>
             <button
               onClick={printData}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg"
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
             >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                 alt="Print Icon"
-                className="w-4 h-4"
+                className="w-4 h-4 invert"
               />
               Print
             </button>
@@ -1188,7 +1193,7 @@ const ManagementPointDepartmentPage = () => {
                   <img
                     src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
                     alt="Download Icon"
-                    className="w-4 h-4"
+                    className="w-4 h-4 invert"
                   />
                   Download
                 </button>
@@ -1199,7 +1204,7 @@ const ManagementPointDepartmentPage = () => {
                   <img
                     src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
                     alt="Print Icon"
-                    className="w-4 h-4"
+                    className="w-4 h-4 invert"
                   />
                   Print
                 </button>

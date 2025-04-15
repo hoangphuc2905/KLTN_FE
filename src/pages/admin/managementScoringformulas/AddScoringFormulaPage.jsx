@@ -1,4 +1,4 @@
-import { Select, Input, Button, Form, message, DatePicker } from "antd";
+import { Select, Input, Button, Form, message, DatePicker, Modal } from "antd";
 import { useState } from "react";
 import { CloseOutlined, PlusOutlined, MinusOutlined } from "@ant-design/icons";
 import userApi from "../../../api/api";
@@ -72,6 +72,32 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
 
       console.log("Submitting Data:", attributeData); // Log the data being sent
 
+      // Check for overlapping date ranges
+      const overlapCheckResponse = await userApi.checkAttributeOverlap(
+        attributeData
+      );
+      if (overlapCheckResponse.data.overlap) {
+        Modal.confirm({
+          title: "Cảnh báo",
+          content:
+            "Khoảng thời gian này đã có công thức tồn tại. Bạn có chắc chắn muốn lưu không?",
+          okText: "Đồng ý",
+          cancelText: "Hủy",
+          onOk: async () => {
+            await saveAttribute(attributeData);
+          },
+        });
+      } else {
+        await saveAttribute(attributeData);
+      }
+    } catch (error) {
+      console.error("Error submitting data:", error.response?.data || error);
+      message.error("Thuộc tính đã tồn tại!");
+    }
+  };
+
+  const saveAttribute = async (attributeData) => {
+    try {
       // Create a new attribute
       const response = await userApi.createAttribute(attributeData);
       console.log("Submitted Data:", response.data);
@@ -82,7 +108,7 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
 
       onClose();
     } catch (error) {
-      console.error("Error submitting data:", error.response?.data || error);
+      console.error("Error saving data:", error.response?.data || error);
       message.error("Thuộc tính đã tồn tại!");
     }
   };
@@ -116,11 +142,11 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
                 placeholder="Chọn tiêu chí"
                 className="w-full"
               >
-                <Option value="article_group">NHÓM TẠP CHÍ</Option>
-                <Option value="author_role">VAI TRÒ</Option>
-                <Option value="institution_count">CƠ QUAN ĐỨNG TÊN</Option>
-                <Option value="doi">DOI</Option>
-                <Option value="featured">TIÊU BIỂU</Option>
+                <Option value="article_group">Nhóm bài báo</Option>
+                <Option value="author_role">Vai trò tác giả</Option>
+                <Option value="institution_count">Số cơ quan đứng tên</Option>
+                <Option value="doi">Doi</Option>
+                <Option value="featured">Tiêu biểu</Option>
               </Select>
             </div>
 

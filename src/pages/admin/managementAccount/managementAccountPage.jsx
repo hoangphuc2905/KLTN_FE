@@ -26,7 +26,7 @@ const ManagementUsers = () => {
   const [filterPosition, setFilterPosition] = useState("Tất cả");
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -922,10 +922,6 @@ const ManagementUsers = () => {
                   }}
                   locale={{
                     emptyText: <div style={{ height: "35px" }}></div>,
-                  }}
-                  style={{
-                    height: "525px",
-                    minHeight: "525px",
                   }}
                 />
               </div>

@@ -354,6 +354,13 @@ const StatisticsChartPage = () => {
                 },
               ],
             });
+            setSelectedPointFilters(
+              formattedChartData.map((paper) =>
+                paper.title.length > 20
+                  ? paper.title.substring(0, 20) + "..."
+                  : paper.title
+              )
+            );
           } else {
             console.warn("No papers found for the chart.");
             setPointChartData({
@@ -799,7 +806,7 @@ const StatisticsChartPage = () => {
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê top 5 bài báo có điểm đóng góp cao nhất
+                  Top 5 bài có điểm đóng góp cao nhất
                 </h2>
                 <div className="relative" ref={pointFilterRef}>
                   <button
@@ -871,8 +878,41 @@ const StatisticsChartPage = () => {
                 </div>
               </div>
               <Bar
-                data={pointChartData}
-                options={getChartOptions(pointChartData)}
+                data={{
+                  labels: pointChartData.labels.filter((label, index) =>
+                    selectedPointFilters.includes(label)
+                  ),
+                  datasets: [
+                    {
+                      data: pointChartData.labels
+                        .filter((label, index) =>
+                          selectedPointFilters.includes(label)
+                        )
+                        .map((label) => {
+                          const index = pointChartData.labels.indexOf(label);
+                          return pointChartData.datasets[0].data[index];
+                        }),
+                      backgroundColor:
+                        pointChartData.datasets[0].backgroundColor,
+                      borderWidth: 0,
+                      borderRadius: 6,
+                    },
+                  ],
+                }}
+                options={getChartOptions({
+                  datasets: [
+                    {
+                      data: pointChartData.labels
+                        .filter((label, index) =>
+                          selectedPointFilters.includes(label)
+                        )
+                        .map((label) => {
+                          const index = pointChartData.labels.indexOf(label);
+                          return pointChartData.datasets[0].data[index];
+                        }),
+                    },
+                  ],
+                })}
                 height={200}
                 width={540}
               />
