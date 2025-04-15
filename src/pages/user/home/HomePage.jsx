@@ -42,21 +42,32 @@ const HomePage = () => {
   useEffect(() => {
     const fetchResearchPapers = async () => {
       try {
-        const response = await userApi.getAllScientificPapers();
-        const papers = Array.isArray(response)
-          ? response
-          : response?.scientificPapers || []; // Ensure response is an array
+        const userId = localStorage.getItem("user_id");
+        const response = await userApi.getRecommendationsByUserHistory(userId);
+
+        // Log the API response to verify its structure
+        console.log("API Response for Recommended Papers:", response);
+
+        // Extract and process the data
+        const papers = response?.data || [];
+        if (!Array.isArray(papers)) {
+          console.error("Invalid data format for recommended papers:", papers);
+          return;
+        }
+
         const approvedPapers = papers.filter(
           (paper) => paper.status === "approved"
         ); // Only include approved papers
-        setResearchPapers(approvedPapers);
+
+        setResearchPapers(approvedPapers); // Set the approved papers to state
+        console.log("Recommended research papers:", approvedPapers);
       } catch (error) {
-        console.error("Error fetching research papers:", error);
+        console.error("Error fetching recommended research papers:", error);
       }
     };
 
     fetchResearchPapers();
-  }, []);
+  }, []); // Fetch recommended papers on page load
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -243,7 +254,11 @@ const HomePage = () => {
   console.log("searchQuery:", searchQuery);
 
   const displayedPapers =
-    activeTab === "recent" ? recentPapers : featuredPapers; // Thêm lại định nghĩa displayedPapers
+    activeTab === "recent"
+      ? recentPapers
+      : activeTab === "featured"
+      ? featuredPapers
+      : researchPapers; // Default to recommended papers
 
   useEffect(() => {
     const fetchCountsForCurrentPapers = async () => {

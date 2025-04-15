@@ -1186,6 +1186,19 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getRecommendationsByUserHistory: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/recommendations/user-history/${userId}`
+      );
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching recommendations by user history:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
