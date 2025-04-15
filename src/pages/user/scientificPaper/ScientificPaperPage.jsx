@@ -28,7 +28,7 @@ const ScientificPaperPage = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusFilterRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
+  const itemsPerPage = 10;
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -741,7 +741,7 @@ const ScientificPaperPage = () => {
             </div>
             <div className="flex items-center">
               <select
-                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[150px]"
+                className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[110px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >

@@ -182,7 +182,7 @@ const ProfilePage = () => {
                           <select
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="flex z-10 gap-2 items-center pr-10 pl-3 text-sm font-bold leading-none text-black whitespace-nowrap rounded-md border border-solid bg-zinc-100 border-gray-300 h-[19px] w-[116px] max-md:h-[36px] max-md:w-[100px]"
+                            className="flex z-10 gap-2 items-center pr-10 pl-3 text-sm font-bold leading-none text-black whitespace-nowrap rounded-md border border-solid bg-zinc-100 border-gray-300 h-[19px] w-[110px] max-md:h-[36px] max-md:w-[100px]"
                           >
                             <option value="2024">2024</option>
                             <option value="2023">2023</option>

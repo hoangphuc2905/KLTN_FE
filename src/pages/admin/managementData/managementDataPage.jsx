@@ -370,7 +370,7 @@ const ManagementData = () => {
                 <Table
                   columns={typeColumns}
                   dataSource={filteredPaperTypes}
-                  pagination={{ pageSize: 5 }}
+                  pagination={{ pageSize: 10 }}
                   rowKey="_id"
                   onChange={handleChange}
                   scroll={{
@@ -391,7 +391,7 @@ const ManagementData = () => {
                 <Table
                   columns={groupColumns}
                   dataSource={filteredPaperGroups}
-                  pagination={{ pageSize: 5 }}
+                  pagination={{ pageSize: 10 }}
                   rowKey="_id"
                   onChange={handleChange}
                   scroll={{
