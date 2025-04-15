@@ -1199,6 +1199,21 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  semanticSearch: async (query, department = null, criteria = null) => {
+    try {
+      const response = await axios.post(`${API_URL}/search/semantic`, {
+        query,
+        department,
+        criteria,
+      });
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error performing semantic search:", error);
+      throw error.response?.data?.message || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
