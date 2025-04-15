@@ -211,22 +211,27 @@ const ManagementUsers = () => {
             console.error("Lecturer ID is missing");
             throw new Error("Lecturer ID is missing");
           }
-          if (newRole.length === 0) {
+
+          // Ensure roles are unique before assigning
+          const uniqueRoles = [...new Set(newRole)];
+          if (uniqueRoles.length === 0) {
             console.error("No roles selected for assignment");
             throw new Error("No roles selected for assignment");
           }
 
           // Assign roles to the lecturer
-          for (const role of newRole) {
+          for (const role of uniqueRoles) {
             try {
               await userApi.assignRole(adminId, selectedUser.lecturer_id, role);
             } catch (error) {
-              console.error(
-                "Error assigning role:",
-                error.response?.data || error
-              );
+              console.error("Error assigning role:", {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status,
+                config: error.config,
+              });
               throw new Error(
-                error.response?.data?.message || "Failed to assign role"
+                error.response?.data?.message || "Quyền đã tồn tại ở khoa này!"
               );
             }
           }
@@ -291,12 +296,10 @@ const ManagementUsers = () => {
   };
 
   const handleRoleChange = (checkedValues) => {
-    // Ensure "Giảng viên" is always selected
-    if (!checkedValues.includes("lecturer")) {
-      checkedValues.push("lecturer");
-    }
+    // Ensure "lecturer" is always included
+    const filteredRoles = checkedValues.filter((role) => role !== "lecturer");
 
-    // Enforce a maximum of two roles
+    // Enforce a maximum of one additional role
     const allowedRoles = [
       "head_of_department",
       "deputy_head_of_department",
@@ -304,38 +307,12 @@ const ManagementUsers = () => {
       "admin",
     ];
 
-    const selectedAllowedRole = checkedValues.find((role) =>
+    const selectedAllowedRole = filteredRoles.find((role) =>
       allowedRoles.includes(role)
     );
 
-    // Role-based restrictions
-    if (userRole === "head_of_department" && selectedAllowedRole === "admin") {
-      message.error("Trưởng khoa không được sửa quyền của quản trị viên.");
-      return;
-    }
-    if (
-      userRole === "deputy_head_of_department" &&
-      ["head_of_department", "admin"].includes(selectedAllowedRole)
-    ) {
-      message.error(
-        "Phó khoa không được sửa quyền của trưởng khoa hoặc quản trị viên."
-      );
-      return;
-    }
-    if (
-      userRole === "department_in_charge" &&
-      ["head_of_department", "deputy_head_of_department", "admin"].includes(
-        selectedAllowedRole
-      )
-    ) {
-      message.error(
-        "Cán bộ phụ trách không được sửa quyền của trưởng khoa, phó khoa hoặc quản trị viên."
-      );
-      return;
-    }
-
     if (selectedAllowedRole) {
-      // Keep only "lecturer" and the newly selected role
+      // Keep "lecturer" and the newly selected role
       setNewRole(["lecturer", selectedAllowedRole]);
     } else {
       // If no additional role is selected, keep only "lecturer"
@@ -953,10 +930,10 @@ const ManagementUsers = () => {
           <div className="mb-3">
             <label className="block text-gray-700 text-sm">Chức vụ:</label>
             <Checkbox.Group
-              options={roleOptions.map((role) => ({
-                ...role,
-                key: role.value, // Add a unique key for each role
-              }))}
+              options={[
+                { label: "Giảng viên", value: "lecturer", disabled: true }, // Always include "lecturer" as disabled
+                ...roleOptions.filter((role) => role.value !== "lecturer"),
+              ]}
               value={newRole}
               onChange={handleRoleChange}
               className="flex flex-col gap-2"
