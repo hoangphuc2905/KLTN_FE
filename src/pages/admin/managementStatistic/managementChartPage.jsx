@@ -52,6 +52,14 @@ const getChartOptions = (data) => {
       legend: {
         display: false,
       },
+      tooltip: {
+        callbacks: {
+          title: function (tooltipItems) {
+            // Hiển thị đầy đủ tiêu đề khi hover
+            return tooltipItems[0].label;
+          },
+        },
+      },
     },
     scales: {
       y: {
@@ -61,8 +69,40 @@ const getChartOptions = (data) => {
           stepSize: step,
         },
       },
+      x: {
+        ticks: {
+          maxRotation: 0, // Đặt là 0 để hiển thị ngang
+          minRotation: 0, // Đặt là 0 để hiển thị ngang
+          callback: function (value, index, values) {
+            const label = this.getLabelForValue(value);
+            // Giới hạn độ dài của nhãn và thêm dấu '...' nếu quá dài
+            return label.length > 15 ? label.substring(0, 15) + "..." : label;
+          },
+        },
+      },
     },
   };
+};
+
+// Hàm tùy chỉnh cho biểu đồ khoa để xử lý tên khoa dài
+const getDepartmentChartOptions = (data) => {
+  const options = getChartOptions(data);
+
+  // Ghi đè các tùy chọn cụ thể cho biểu đồ khoa
+  options.scales.x = {
+    ...options.scales.x,
+    ticks: {
+      callback: function (value, index, values) {
+        const label = this.getLabelForValue(value);
+        // Giới hạn độ dài của nhãn và thêm dấu '...' nếu quá dài
+        return label.length > 15 ? label.substring(0, 15) + "..." : label;
+      },
+      maxRotation: 0, // Đặt là 0 để hiển thị ngang
+      minRotation: 0, // Đặt là 0 để hiển thị ngang
+    },
+  };
+
+  return options;
 };
 
 const Dashboard = () => {
@@ -773,7 +813,7 @@ const Dashboard = () => {
               </div>
               <Bar
                 data={filteredDepartmentChartData}
-                options={getChartOptions(filteredDepartmentChartData)}
+                options={getDepartmentChartOptions(filteredDepartmentChartData)}
                 height={200}
                 width={540}
               />
