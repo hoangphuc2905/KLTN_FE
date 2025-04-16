@@ -59,6 +59,7 @@ const ManagementUsers = () => {
             .map((role) => ({
               label: roleMapping[role.role_name] || role.role_name, // Map to Vietnamese
               value: role.role_name, // Use role_name as value
+              _id: role._id, // Include _id for API calls
             }))
         );
       } catch (error) {
@@ -212,27 +213,53 @@ const ManagementUsers = () => {
             throw new Error("Lecturer ID is missing");
           }
 
-          // Ensure roles are unique before assigning
+          // Ensure roles are unique
           const uniqueRoles = [...new Set(newRole)];
-          if (uniqueRoles.length === 0) {
-            console.error("No roles selected for assignment");
-            throw new Error("No roles selected for assignment");
+          const currentRoles = selectedUser.roles.map((role) => role.role_name);
+
+          // Add new roles
+          for (const role of uniqueRoles) {
+            if (!currentRoles.includes(role)) {
+              try {
+                await userApi.assignRole(
+                  adminId,
+                  selectedUser.lecturer_id,
+                  role
+                );
+              } catch (error) {
+                console.error("Error assigning role:", {
+                  message: error.message,
+                  response: error.response?.data,
+                  status: error.response?.status,
+                  config: error.config,
+                });
+                throw new Error(
+                  error.response?.data?.message || "Failed to assign role"
+                );
+              }
+            }
           }
 
-          // Assign roles to the lecturer
-          for (const role of uniqueRoles) {
-            try {
-              await userApi.assignRole(adminId, selectedUser.lecturer_id, role);
-            } catch (error) {
-              console.error("Error assigning role:", {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status,
-                config: error.config,
-              });
-              throw new Error(
-                error.response?.data?.message || "Quyền đã tồn tại ở khoa này!"
-              );
+          // Remove unchecked roles
+          for (const role of currentRoles) {
+            if (!uniqueRoles.includes(role)) {
+              try {
+                await userApi.removeRole(
+                  adminId,
+                  selectedUser.lecturer_id,
+                  role
+                );
+              } catch (error) {
+                console.error("Error removing role:", {
+                  message: error.message,
+                  response: error.response?.data,
+                  status: error.response?.status,
+                  config: error.config,
+                });
+                throw new Error(
+                  error.response?.data?.message || "Failed to remove role"
+                );
+              }
             }
           }
         }
@@ -318,6 +345,113 @@ const ManagementUsers = () => {
       // If no additional role is selected, keep only "lecturer"
       setNewRole(["lecturer"]);
     }
+  };
+
+  const handleRoleDelete = async (role) => {
+    if (role === "lecturer") {
+      message.error("Quyền 'Giảng viên' không thể bị xóa!");
+      return;
+    }
+
+    try {
+      const adminId = localStorage.getItem("user_id");
+      const lecturerId = selectedUser?.lecturer_id;
+
+      // Tìm roleObject từ roleOptions
+      const roleObject = roleOptions.find((r) => r.value === role);
+
+      if (!roleObject) {
+        console.error("Role not found in roleOptions:", role);
+        message.error("Không tìm thấy quyền cần xóa!");
+        return;
+      }
+
+      console.log("Deleting role with parameters:", {
+        adminId,
+        lecturerId,
+        roleId: roleObject._id, // Đảm bảo key là `roleId`
+      });
+
+      if (!adminId || !lecturerId || !roleObject._id) {
+        throw new Error("Thiếu thông tin người dùng, quản trị viên hoặc quyền");
+      }
+
+      // Gửi request đến API
+      await userApi.deleteRole(adminId, lecturerId, roleObject._id);
+      message.success(`Đã xóa quyền ${roleMapping[role] || role} thành công!`);
+
+      // Cập nhật UI
+      setNewRole((prevRoles) => prevRoles.filter((r) => r !== role));
+
+      // Reload table data
+      const fetchData = async () => {
+        try {
+          const departmentId = localStorage.getItem("department");
+
+          if (userRole === "admin") {
+            const lecturersData = await userApi.getAllLecturers();
+            const students = await userApi.getAllStudents();
+
+            setUsers(students);
+            setLecturers(lecturersData);
+          } else if (
+            [
+              "head_of_department",
+              "deputy_head_of_department",
+              "department_in_charge",
+            ].includes(userRole)
+          ) {
+            if (!departmentId) {
+              console.error("Department ID is missing in localStorage");
+              return;
+            }
+
+            const data = await userApi.getLecturerAndStudentByDepartment(
+              departmentId
+            );
+            setUsers(data.students || []);
+            setLecturers(data.lecturers || []);
+          }
+        } catch (error) {
+          console.error("Error fetching data:", error);
+        }
+      };
+
+      fetchData();
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      message.error(error.message || "Không thể xóa quyền, vui lòng thử lại!");
+    }
+  };
+
+  const renderRoleList = () => {
+    return newRole.map((role) => (
+      <div key={role} className="flex items-center gap-2">
+        <span>{roleMapping[role] || role}</span>
+        {role !== "lecturer" && (
+          <button
+            onClick={() => handleRoleDelete(role)}
+            className="text-red-500 hover:text-red-700 flex items-center justify-center w-6 h-6 rounded-full bg-red-100 hover:bg-red-200"
+            title="Xóa quyền"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={2}
+              stroke="currentColor"
+              className="w-4 h-4"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
+      </div>
+    ));
   };
 
   const displayedUsers = activeTab === "user" ? users : lecturers;
@@ -935,9 +1069,15 @@ const ManagementUsers = () => {
                 ...roleOptions.filter((role) => role.value !== "lecturer"),
               ]}
               value={newRole}
-              onChange={handleRoleChange}
+              onChange={(checkedValues) => setNewRole(checkedValues)}
               className="flex flex-col gap-2"
             />
+            <div className="mt-3">
+              <label className="block text-gray-700 text-sm">
+                Danh sách quyền:
+              </label>
+              <div className="flex flex-col gap-2">{renderRoleList()}</div>
+            </div>
           </div>
         )}
       </Modal>
