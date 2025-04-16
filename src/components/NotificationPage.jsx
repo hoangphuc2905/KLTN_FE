@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Added import
 import userApi from "../api/api";
-import Header from "./header";
+import Header from "./Header";
 
 const NotificationPage = () => {
   const [notifications, setNotifications] = useState([]);

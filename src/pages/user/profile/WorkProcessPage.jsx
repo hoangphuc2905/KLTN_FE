@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Table, Button } from "antd";
 import userApi from "../../../api/api";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
 import Footer from "../../../components/footer";
 import { useNavigate } from "react-router-dom";
