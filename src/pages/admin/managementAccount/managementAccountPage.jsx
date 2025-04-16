@@ -9,7 +9,7 @@ import {
   Checkbox,
   Tooltip,
 } from "antd";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 

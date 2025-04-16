@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import { Filter } from "lucide-react";
 import { Button, Table, Input, Form, Modal, message } from "antd";
 import userApi from "../../../api/api";

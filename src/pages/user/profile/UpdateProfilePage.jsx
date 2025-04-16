@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { message } from "antd";
 import userApi from "../../../api/api";
 import authApi from "../../../api/authApi";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import Footer from "../../../components/footer";
 import { useNavigate } from "react-router-dom";
 

@@ -17,7 +17,7 @@ import {
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
 import { useEffect, useState } from "react";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import Footer from "../../../components/footer";
 import userApi from "../../../api/api";
 import { useNavigate, useParams } from "react-router-dom";

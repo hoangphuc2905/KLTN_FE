@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import Footer from "../../../components/footer";
 import { Settings, X, Filter } from "lucide-react";
 import {
