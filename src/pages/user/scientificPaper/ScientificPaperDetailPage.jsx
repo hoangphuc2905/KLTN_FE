@@ -1,4 +1,4 @@
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import { Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import userApi from "../../../api/api";

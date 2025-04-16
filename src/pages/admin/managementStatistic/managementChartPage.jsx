@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import { Home, ChevronRight } from "lucide-react";
 import Footer from "../../../components/footer";
 import CountUp from "react-countup";

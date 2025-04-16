@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Modal } from "antd";
 import { useNavigate, useParams } from "react-router-dom";

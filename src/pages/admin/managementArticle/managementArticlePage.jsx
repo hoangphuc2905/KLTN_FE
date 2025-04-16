@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "../../../components/header";
+import Header from "../../../components/Header";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
 import userApi from "../../../api/api";
