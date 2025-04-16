@@ -3,7 +3,7 @@ import { Table, Button } from "antd";
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
-import Footer from "../../../components/footer";
+import Footer from "../../../components/Footer";
 import { useNavigate } from "react-router-dom";
 
 const WorkProcessPage = () => {
