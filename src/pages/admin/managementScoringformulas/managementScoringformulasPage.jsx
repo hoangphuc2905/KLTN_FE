@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
-import Footer from "../../../components/footer";
+import Footer from "../../../components/Footer";
 import { Settings, X, Filter } from "lucide-react";
 import {
   Button,

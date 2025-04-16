@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
-import Footer from "../../../components/footer";
+import Footer from "../../../components/Footer";
 import { useNavigate } from "react-router-dom";
 
 const ProfilePage = () => {
