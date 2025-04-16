@@ -423,8 +423,20 @@ const userApi = {
     }
   },
 
-  // deleteRole: async (adminId, lecturerId, role) => {
-  //   try {
+  deleteRole: async (adminId, lecturerId, role) => {
+    try {
+      const response = await axios.post(`${API_URL}/lecturers/delete-role`, {
+        adminId,
+        lecturerId,
+        role,
+      });
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting role:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 
   getAllRoles: async () => {
     try {
