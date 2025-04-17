@@ -76,31 +76,31 @@ const Header = () => {
   useEffect(() => {
     const fetchUnreadNotifications = async () => {
       try {
-        const receiverId = localStorage.getItem("user_id"); // Get receiver_id from localStorage
-        if (!receiverId) {
-          console.error("ReceiverId không tồn tại.");
+        const receiverId = localStorage.getItem("user_id");
+        const currentRole = localStorage.getItem("current_role");
+
+        if (!receiverId || !currentRole) {
+          console.error("Thiếu receiverId hoặc currentRole");
           return;
         }
 
-        // Call the API with receiverId
         const response = await userApi.getMessagesByReceiverId(receiverId);
-
-        if (response.length === 0) {
-          console.log("No unread notifications found.");
-          setUnreadCount(0); // Set unread count to 0 if no messages are found
+        if (!response || response.length === 0) {
+          setUnreadCount(0);
           return;
         }
 
-        console.log("Thông báo chưa đọc:", response);
+        const filteredMessages = response.filter((msg) => {
+          const isApprovalType = msg.message_type === "Request for Approval";
+          if (currentRole === "lecturer" && isApprovalType) {
+            return false;
+          }
+          return !msg.isread;
+        });
 
-        // Filter unread messages
-        const unreadMessages = response.filter((msg) => !msg.isread);
-        setUnreadCount(unreadMessages.length);
+        setUnreadCount(filteredMessages.length);
       } catch (error) {
-        console.error(
-          "Lỗi khi lấy thông báo:",
-          error || "Lỗi kết nối đến server"
-        );
+        console.error("Lỗi khi lấy thông báo:", error);
       }
     };
 
