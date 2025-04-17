@@ -34,9 +34,8 @@ const permissions = {
     "/scientific-paper/edit/:id",
   ],
   lecturer: [
-    "/admin/management/chart",
-    "/role-selection",
     "/home",
+    "/role-selection",
     "/profile",
     "/update-profile",
     "/work-process",

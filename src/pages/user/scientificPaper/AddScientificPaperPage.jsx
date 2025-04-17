@@ -18,7 +18,7 @@ import {
 import TextArea from "antd/es/input/TextArea";
 import { useEffect, useState } from "react";
 import Header from "../../../components/Header";
-import Footer from "../../../components/footer";
+import Footer from "../../../components/Footer";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 

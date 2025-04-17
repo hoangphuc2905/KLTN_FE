@@ -38,10 +38,11 @@ const RoleSelectionPage = () => {
 
   useEffect(() => {
     const storedRoles = JSON.parse(localStorage.getItem("roles")) || [];
-    if (storedRoles.length === 1) {
-      redirectToRolePage(storedRoles[0]);
+    const normalizedRoles = storedRoles.map((role) => role.toLowerCase()); // Chuyển về chữ thường
+    if (normalizedRoles.length === 1) {
+      redirectToRolePage(normalizedRoles[0]);
     }
-    setRoles(storedRoles);
+    setRoles(normalizedRoles);
   }, []);
 
   const redirectToRolePage = (role) => {
@@ -53,9 +54,12 @@ const RoleSelectionPage = () => {
       department_in_charge: "/management/chart",
     };
 
-    localStorage.setItem("current_role", role);
+    const normalizedRole = role.toLowerCase(); // Chuẩn hóa vai trò về chữ thường
+    const targetRoute = routes[normalizedRole] || "/home"; // Lấy đường dẫn hoặc mặc định là "/home"
+
+    localStorage.setItem("current_role", normalizedRole);
     window.dispatchEvent(new Event("storage"));
-    navigate(routes[role] || "/home");
+    navigate(targetRoute);
   };
 
   return (

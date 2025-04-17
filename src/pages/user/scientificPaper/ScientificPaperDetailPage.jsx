@@ -1,12 +1,14 @@
 import Header from "../../../components/Header";
 import { Download } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Import useRef for tracking scroll
 import userApi from "../../../api/api";
 import { useParams, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { message } from "antd";
 import { QRCodeSVG } from "qrcode.react";
-import axios from "axios"; // Ensure axios is imported
+import PDFViewer from "../../../components/PDFViewer"; // Import your PDFViewer component
+import { throttle } from "lodash";
+import { Modal, Spin } from "antd"; // Import Modal and Spin from Ant Design
 
 const ScientificPaperDetailPage = () => {
   const { id } = useParams(); // Extract the _id from the URL
@@ -15,12 +17,18 @@ const ScientificPaperDetailPage = () => {
   const [selectedFormat, setSelectedFormat] = useState("APA"); // State to track selected format
   const [copySuccess, setCopySuccess] = useState(false); // State to track copy success
   const [relatedPapers, setRelatedPapers] = useState([]); // Replace static relatedPapers with state
+  const [isModalVisible, setIsModalVisible] = useState(false); // State to control modal visibility
   const navigate = useNavigate();
-  const location = useLocation(); // Get current location
+  const location = useLocation();
   const user_id = localStorage.getItem("user_id");
   const user_type = localStorage.getItem("user_type");
+  const paperRef = useRef(null); //
+  const modalContentRef = useRef(null);
+  const hasTrackedView = useRef(false);
+  const hasScrolledRef = useRef(false); // ✅ Đánh dấu đã scroll quá 50%
 
-  // Get current full URL for QR code
+  const [scrollPercent, setScrollPercent] = useState(0); // ✅ Theo dõi phần trăm lướt trang
+
   const currentUrl = window.location.origin + location.pathname;
 
   const fetchDownloadCount = async (paperId) => {
@@ -183,6 +191,146 @@ const ScientificPaperDetailPage = () => {
     fetchPaper();
   }, [id]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (paper && paper.pageCount) {
+        const currentPage = Math.ceil(window.scrollY / window.innerHeight) + 1; // Calculate current page based on viewport height
+        const totalPages = paper.pageCount;
+        const scrolledPercentage = (currentPage / totalPages) * 100;
+
+        setScrollPercent(scrolledPercentage); // ✅ Update scroll percentage
+
+        console.log(
+          `📜 User scrolled: ${scrolledPercentage.toFixed(2)}% of the paper.`
+        );
+
+        if (scrolledPercentage >= 50 && !hasTrackedView.current) {
+          console.log("📤 Sending view to API", {
+            paper_id: id,
+            user_id: localStorage.getItem("user_id"),
+            user_type: localStorage.getItem("user_type"),
+          });
+
+          userApi
+            .createPaperView({
+              paper_id: id,
+              user_id: localStorage.getItem("user_id"),
+              user_type: localStorage.getItem("user_type"),
+            })
+            .then(() => {
+              console.log("✅ View saved successfully");
+              hasTrackedView.current = true; // ✅ Mark as tracked
+            })
+            .catch((err) => {
+              console.error("❌ Error saving view:", err);
+            });
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [paper, id]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (paperRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = paperRef.current;
+        const scrolledPercentage =
+          (scrollTop / (scrollHeight - clientHeight)) * 100;
+
+        if (scrolledPercentage >= 50) {
+          hasScrolledRef.current = true; // ✅ Đánh dấu đã lướt trên 50%
+        }
+      }
+    };
+
+    const paperEl = paperRef.current;
+    if (paperEl) {
+      paperEl.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (paperEl) {
+        paperEl.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, []);
+
+  const handleModalScroll = () => {
+    if (!modalContentRef.current) {
+      console.log("❌ modalContentRef is not attached.");
+      return;
+    }
+
+    const { scrollTop, scrollHeight, clientHeight } = modalContentRef.current;
+    const scrolledPercentage =
+      (scrollTop / (scrollHeight - clientHeight)) * 100;
+
+    console.log(`📜 Modal scrolled: ${scrolledPercentage.toFixed(2)}%`);
+
+    if (scrolledPercentage >= 50) {
+      console.log("✅ User has scrolled more than 50% in the modal.");
+      modalContentRef.current.hasScrolled50Percent = true; // Đánh dấu đã lướt trên 50%
+    }
+  };
+
+  const startModalTimer = () => {
+    if (modalContentRef.current?.timer) return;
+
+    modalContentRef.current.timer = setTimeout(() => {
+      if (modalContentRef.current?.hasScrolled50Percent) {
+        console.log("📤 Sending modal view to API", {
+          paper_id: id,
+          user_id: localStorage.getItem("user_id"),
+          user_type: localStorage.getItem("user_type"),
+        });
+
+        userApi
+          .createPaperView({
+            paper_id: id,
+            user_id: localStorage.getItem("user_id"),
+            user_type: localStorage.getItem("user_type"),
+            view_time: new Date(),
+          })
+          .then(() => {
+            console.log("✅ Modal view saved successfully");
+          })
+          .catch((err) => {
+            console.error("❌ Error saving modal view:", err);
+          });
+      }
+    }, 30000); // 30 giây
+  };
+
+  const resetModalTimer = () => {
+    if (modalContentRef.current?.timer) {
+      clearTimeout(modalContentRef.current.timer);
+      modalContentRef.current.timer = null;
+    }
+  };
+
+  useEffect(() => {
+    const modalElement = modalContentRef.current;
+
+    const options = { passive: true }; // Tăng hiệu suất bằng cách thêm tùy chọn passive
+
+    if (isModalVisible && modalElement) {
+      modalElement.addEventListener("scroll", handleModalScroll);
+      modalElement.addEventListener("mousemove", startModalTimer);
+      modalElement.addEventListener("touchmove", startModalTimer, options); // Đánh dấu passive
+    }
+
+    return () => {
+      if (modalElement) {
+        modalElement.removeEventListener("scroll", handleModalScroll);
+        modalElement.removeEventListener("mousemove", startModalTimer);
+        modalElement.removeEventListener("touchmove", startModalTimer, options);
+      }
+      resetModalTimer();
+    };
+  }, [isModalVisible]);
+
   const fetchCitationByFormat = async (doi, format = "apa") => {
     if (!doi) {
       alert("Vui lòng nhập DOI!");
@@ -214,12 +362,52 @@ const ScientificPaperDetailPage = () => {
     }
   };
 
+  const handlePreview = () => {
+    console.log("📤 User clicked the 'Preview' button for paper:", {
+      paper_id: id,
+      user_id: localStorage.getItem("user_id"),
+      user_type: localStorage.getItem("user_type"),
+    });
+
+    if (paper.fileUrl) {
+      setIsModalVisible(true); // Show the modal
+    } else {
+      message.error(
+        "Không có file để xem trước! Vui lòng liên hệ với quản trị viên."
+      );
+    }
+  };
+
+  // Trong ScientificPaperDetailPage.jsx
+  const handleModalClose = () => {
+    console.log("🔄 Resetting hasTrackedView, isModalVisible:", isModalVisible);
+    setIsModalVisible(false);
+    hasTrackedView.current = false;
+    resetModalTimer();
+  };
+
+  useEffect(() => {
+    if (isModalVisible) {
+      console.log(
+        "🔍 hasTrackedView when modal opens:",
+        hasTrackedView.current
+      );
+    }
+  }, [isModalVisible]);
+
   if (!paper) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
+    );
   }
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
+    <div
+      ref={paperRef} // ✅ Đảm bảo ref đúng vùng scroll
+      className="overflow-y-auto max-h-[600px] px-4 py-2 bg-[#E7ECF0] min-h-screen"
+    >
       <Header />
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
         <div className="self-center w-full max-w-[1563px] px-4 mt-4">
@@ -260,41 +448,57 @@ const ScientificPaperDetailPage = () => {
                       <QRCodeSVG value={currentUrl} size={140} />
                     </div>
 
-                    <button
-                      className="flex items-center gap-2 bg-[#00A3FF] text-white px-4 py-2 rounded-lg"
-                      onClick={async () => {
-                        if (paper.fileUrl) {
-                          const link = document.createElement("a");
-                          link.href = paper.fileUrl;
-                          link.download = paper.title
-                            ? `${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
-                            : "scientific_paper.pdf";
-                          link.target = "_blank";
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
+                    <div className="flex items-center gap-2">
+                      <button
+                        className="flex items-center gap-2 bg-[#00A3FF] text-white text-xs px-2 py-1 rounded-lg w-[70px] h-[30px] justify-center"
+                        onClick={async () => {
+                          if (paper.fileUrl) {
+                            const link = document.createElement("a");
+                            link.href = paper.fileUrl;
+                            link.download = paper.title
+                              ? `${paper.title.replace(
+                                  /[^a-zA-Z0-9]/g,
+                                  "_"
+                                )}.pdf`
+                              : "scientific_paper.pdf";
+                            link.target = "_blank";
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
 
-                          try {
-                            await userApi.createPaperDownload({
-                              paper_id: id,
-                              user_id: user_id,
-                              user_type: user_type,
-                              download_time: new Date().toISOString(),
-                            });
-                            message.success("Tải file thành công!");
-                          } catch (error) {
-                            console.error("Error logging download:", error);
+                            try {
+                              await userApi.createPaperDownload({
+                                paper_id: id,
+                                user_id: user_id,
+                                user_type: user_type,
+                                download_time: new Date().toISOString(),
+                              });
+                              message.success("Tải file thành công!");
+                            } catch (error) {
+                              console.error("Error logging download:", error);
+                            }
+                          } else {
+                            message.error(
+                              "Không có file để tải về! Vui lòng liên hệ với quản trị viên."
+                            );
                           }
-                        } else {
-                          message.error(
-                            "Không có file để tải về! Vui lòng liên hệ với quản trị viên."
-                          );
-                        }
-                      }}
-                    >
-                      <Download className="w-4 h-4" />
-                      Tải về
-                    </button>
+                        }}
+                      >
+                        <Download className="w-4 h-4" />
+                        Tải
+                      </button>
+                      <button
+                        className="flex items-center gap-2 bg-[#FFA500] text-white text-xs px-2 py-1 rounded-lg w-[70px] h-[30px] justify-center"
+                        onClick={handlePreview}
+                      >
+                        <img
+                          src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
+                          alt="Preview Icon"
+                          className="w-4 h-4"
+                        />
+                        Xem
+                      </button>
+                    </div>
                   </div>
 
                   <div className="flex-1">
@@ -419,7 +623,7 @@ const ScientificPaperDetailPage = () => {
                             height: "300px",
                             overflow: "hidden",
                             width: "250px",
-                          }} // Set a consistent fixed height
+                          }}
                         >
                           {citation?.[selectedFormat.toLowerCase()] ? (
                             <div
@@ -429,7 +633,9 @@ const ScientificPaperDetailPage = () => {
                               }}
                             />
                           ) : (
-                            "Đang load dữ liệu..."
+                            <div className="flex items-center justify-center h-full">
+                              <Spin size="small" />
+                            </div>
                           )}
                         </div>
 
@@ -589,6 +795,58 @@ const ScientificPaperDetailPage = () => {
           </div>
         </div>
       </div>
+      {/* Modal for preview */}
+      {isModalVisible && (
+        <Modal
+          title="Xem trước bài báo"
+          open={isModalVisible}
+          onCancel={handleModalClose}
+          footer={null}
+          centered
+          width="90%"
+          styles={{ body: { height: "90vh", padding: 0 } }}
+          afterClose={() => console.log("🔄 Modal closed and unmounted")}
+          destroyOnClose
+        >
+          <PDFViewer
+            fileUrl={paper.fileUrl}
+            isModalVisible={isModalVisible}
+            onScroll={(percentage) => {
+              console.log(
+                "🔍 Kiểm tra hasTrackedView:",
+                hasTrackedView.current,
+                "Percentage:",
+                percentage
+              );
+              if (percentage >= 50 && !hasTrackedView.current) {
+                console.log("📤 Gửi lượt xem PDF đến API", {
+                  paper_id: id,
+                  user_id: localStorage.getItem("user_id"),
+                  user_type: localStorage.getItem("user_type"),
+                });
+                userApi
+                  .createPaperView({
+                    paper_id: id,
+                    user_id: localStorage.getItem("user_id"),
+                    user_type: localStorage.getItem("user_type"),
+                  })
+                  .then(() => {
+                    console.log("✅ Lưu lượt xem PDF thành công");
+                    hasTrackedView.current = true;
+                  })
+                  .catch((err) => {
+                    console.error("❌ Lỗi khi lưu lượt xem PDF:", err);
+                  });
+              } else {
+                console.log("🚫 API không gọi:", {
+                  percentage,
+                  hasTrackedView: hasTrackedView.current,
+                });
+              }
+            }}
+          />
+        </Modal>
+      )}
     </div>
   );
 };
