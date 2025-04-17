@@ -1,10 +1,41 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { Link } from "react-router-dom";
-import { Modal, Button, Input, message } from "antd";
+import { Modal, Button, Input, message, Spin } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
+import { FixedSizeList } from "react-window";
+
+class ErrorBoundary extends React.Component {
+  state = { hasError: false, error: null };
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error("ErrorBoundary caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div>
+          <h1>Đã xảy ra lỗi: {this.state.error?.message || "Unknown error"}</h1>
+          <p>Vui lòng thử tải lại trang hoặc liên hệ hỗ trợ.</p>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const HomePage = () => {
   const [recentPapers, setRecentPapers] = useState([]);
@@ -24,14 +55,15 @@ const HomePage = () => {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [collections, setCollections] = useState([]);
-  const [searchHistory, setSearchHistory] = useState([]); // State for search history
-  const [isHistoryVisible, setIsHistoryVisible] = useState(false); // State to control visibility of search history
+  const [searchHistory, setSearchHistory] = useState([]);
+  const [isHistoryVisible, setIsHistoryVisible] = useState(false);
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
   const [currentPage, setCurrentPage] = useState(1);
   const papersPerPage = 7;
 
   const scrollRef = useRef(null);
+  const papersListRef = useRef(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -40,127 +72,170 @@ const HomePage = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    const fetchResearchPapers = async () => {
-      try {
-        const userId = localStorage.getItem("user_id");
-        const response = await userApi.getRecommendationsByUserHistory(userId);
-
-        console.log("API Response for Recommended Papers:", response);
-
-        const papers = response?.data || [];
-        if (!Array.isArray(papers)) {
-          console.error("Invalid data format for recommended papers:", papers);
-          return;
-        }
-
-        const approvedPapers = papers.filter(
-          (paper) => paper.status === "approved"
-        );
-
-        setResearchPapers(approvedPapers);
-        console.log("Recommended research papers:", approvedPapers);
-      } catch (error) {
-        console.error("Error fetching recommended research papers:", error);
-      }
-    };
-
-    fetchResearchPapers();
-  }, []);
-
-  useEffect(() => {
-    const fetchCollections = async () => {
-      try {
-        const userId = localStorage.getItem("user_id");
-        const userCollections = await userApi.getCollectionsByUserId(userId);
-        setCollections(userCollections);
-      } catch (error) {
-        console.error("Error fetching collections:", error);
-      }
-    };
-
-    fetchCollections();
-  }, []);
-
-  useEffect(() => {
-    const fetchRecentPapers = async () => {
-      try {
-        const response = await userApi.getTop5NewestScientificPapers();
-        if (response && response.papers) {
-          const papers = await Promise.all(
-            response.papers.map(async (paper) => ({
-              id: paper._id,
-              title: paper.title_vn || paper.title_en || "No Title",
-              author: paper.author
-                .map((a) => a.author_name_vi || a.author_name_en)
-                .join(", "),
-              department: await getDepartmentById(paper.department),
-              thumbnailUrl: paper.cover_image || "",
-              summary: paper.summary || "No Summary",
-              publish_date: paper.publish_date,
-            }))
-          );
-          setRecentPapers(papers);
-        }
-      } catch (error) {
-        console.error("Error fetching recent papers:", error);
-      }
-    };
-
-    fetchRecentPapers();
-  }, []);
-
-  useEffect(() => {
-    const fetchFeaturedPapers = async () => {
-      try {
-        const response = await userApi.getTop5MostViewedAndDownloadedPapers();
-        if (response && response.papers) {
-          const papers = await Promise.all(
-            response.papers.map(async (paper) => ({
-              id: paper._id,
-              title: paper.title_vn || paper.title_en || "No Title",
-              author: paper.author
-                .map((a) => a.author_name_vi || a.author_name_en)
-                .join(", "),
-              department: await getDepartmentById(paper.department),
-              thumbnailUrl: paper.cover_image || "",
-            }))
-          );
-          setFeaturedPapers(papers);
-        }
-      } catch (error) {
-        console.error("Error fetching featured papers:", error);
-      }
-    };
-
-    fetchFeaturedPapers();
-  }, []);
-
-  useEffect(() => {
     const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
     setSearchHistory(history);
   }, []);
 
-  const fetchAuthors = async (paperId) => {
-    if (authors[paperId]) return;
+  const filteredPapers = useMemo(() => {
+    return researchPapers.filter((paper) => {
+      const departmentMatch = selectedDepartment
+        ? paper.department === selectedDepartment
+        : true;
 
-    try {
-      const authorsData = await userApi.getAuthorsByPaperId(paperId);
-      const authorNames = authorsData.map(
-        (author) => author.author_name_vi || author.author_name_en
-      );
-      setAuthors((prevAuthors) => ({
-        ...prevAuthors,
-        [paperId]:
-          authorNames.length > 0 ? authorNames.join(", ") : "Unknown Author",
-      }));
-    } catch (error) {
-      console.error(`Error fetching authors for paper ${paperId}:`, error);
-      setAuthors((prevAuthors) => ({
-        ...prevAuthors,
-        [paperId]: "Error fetching authors",
-      }));
-    }
+      const searchMatch = searchQuery
+        ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          paper.title_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (paper.author &&
+            paper.author.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          (paper.publish_date &&
+            paper.publish_date.toString().includes(searchQuery)) ||
+          (paper.keywords &&
+            Array.isArray(paper.keywords) &&
+            paper.keywords.some((keyword) =>
+              keyword.toLowerCase().includes(searchQuery.toLowerCase())
+            )) ||
+          (paper.summary &&
+            paper.summary.toLowerCase().includes(searchQuery.toLowerCase()))
+        : true;
+
+      return departmentMatch && searchMatch;
+    });
+  }, [researchPapers, selectedDepartment, searchQuery]);
+
+  const currentPapers = useMemo(() => {
+    return filteredPapers
+      .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
+      .map((paper) => {
+        console.log("Paper trong currentPapers:", paper);
+        return {
+          ...paper,
+          author: Array.isArray(paper.author)
+            ? paper.author
+                .map(
+                  (a) =>
+                    a.author_name_vi || a.author_name_en || "Unknown Author"
+                )
+                .join(", ")
+            : typeof paper.author === "object"
+            ? paper.author.author_name_vi ||
+              paper.author.author_name_en ||
+              "Unknown Author"
+            : paper.author || "Unknown Author",
+          departmentName:
+            departments[paper.department_name] || "Unknown Department",
+        };
+      });
+  }, [filteredPapers, currentPage, departments]);
+
+  const displayedPapers = useMemo(() => {
+    return activeTab === "recent"
+      ? recentPapers
+      : activeTab === "featured"
+      ? featuredPapers
+      : researchPapers;
+  }, [activeTab, recentPapers, featuredPapers, researchPapers]);
+
+  const mapPaperData = async (paper) => {
+    const departmentName = await getDepartmentById(paper.department);
+    return {
+      id: paper._id,
+      paperId: paper.paper_id || "",
+      title: paper.title_vn || paper.title_en || "No Title",
+      author: paper.author
+        ? paper.author
+            .map(
+              (a) => a.author_name_vi || a.author_name_en || "Unknown Author"
+            )
+            .join(", ")
+        : "Unknown Author",
+      department: paper.department || "Unknown Department",
+      departmentId: paper.department || "",
+      departmentName: departmentName || "Unknown Department",
+      thumbnailUrl: paper.cover_image || "", // Ensure consistency with backend field
+      summary: paper.summary || "No Summary",
+      publish_date: paper.publish_date || "",
+      magazine: paper.magazine_vi || paper.magazine_en || "Unknown Magazine",
+      magazineType: paper.magazine_type || "",
+      page: paper.page || "",
+      issnIsbn: paper.issn_isbn || "",
+      file: paper.file || "",
+      link: paper.link || "",
+      doi: paper.doi || "",
+      status: paper.status || "",
+      keywords: paper.keywords || [],
+      articleType: paper.article_type?.type_name || "",
+      articleGroup: paper.article_group?.group_name || "",
+      featured: paper.featured || false,
+    };
   };
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        console.log("Bắt đầu tải dữ liệu ban đầu");
+        const userId = localStorage.getItem("user_id");
+        console.log("userId:", userId);
+
+        const [
+          recommendationsResponse,
+          allPapersResponse,
+          recentPapersResponse,
+          featuredPapersResponse,
+          collectionsResponse,
+          departmentsResponse,
+        ] = await Promise.all([
+          userId
+            ? userApi.getRecommendationsByUserHistory(userId)
+            : Promise.resolve({ data: [] }),
+          userApi.getAllScientificPapers(),
+          userApi.getTop5NewestScientificPapers(),
+          userApi.getTop5MostViewedAndDownloadedPapers(),
+          userApi.getCollectionsByUserId(userId),
+          userApi.getAllDepartments(),
+        ]);
+
+        let papers = recommendationsResponse?.data || [];
+        if (!Array.isArray(papers) || papers.length === 0) {
+          console.log("Không tìm thấy gợi ý, sử dụng getAllScientificPapers");
+          papers = allPapersResponse?.data || [];
+        }
+
+        const mappedPapers = await Promise.all(papers.map(mapPaperData));
+
+        const pendingPapers = mappedPapers.filter(
+          (paper) => paper.status === "pending"
+        );
+        console.log("Cập nhật researchPapers:", pendingPapers);
+        setResearchPapers(pendingPapers);
+
+        const recentPapers = recentPapersResponse?.papers
+          ? await Promise.all(recentPapersResponse.papers.map(mapPaperData))
+          : [];
+        setRecentPapers(recentPapers);
+
+        const featuredPapers = featuredPapersResponse?.papers
+          ? await Promise.all(featuredPapersResponse.papers.map(mapPaperData))
+          : [];
+        setFeaturedPapers(featuredPapers);
+
+        setCollections(collectionsResponse || []);
+
+        const departmentMapping = departmentsResponse.reduce(
+          (acc, department) => {
+            acc[department.id] = department.department_name;
+            return acc;
+          },
+          {}
+        );
+        setDepartments(departmentMapping);
+        setDepartmentsList(departmentsResponse);
+      } catch (error) {
+        console.error("Lỗi khi tải dữ liệu ban đầu:", error);
+      }
+    };
+
+    fetchInitialData();
+  }, []);
 
   const getDepartmentById = async (departmentId) => {
     if (
@@ -175,33 +250,8 @@ const HomePage = () => {
       const response = await userApi.getDepartmentById(departmentId);
       return response.department_name || "Unknown Department";
     } catch (error) {
-      console.error(
-        `Error fetching department for ID ${departmentId}:`,
-        error.response?.data || error
-      );
+      console.error(`Error fetching department for ID ${departmentId}:`, error);
       return "Unknown Department";
-    }
-  };
-
-  const fetchDepartment = async (departmentId) => {
-    if (!departmentId || departments[departmentId]) return;
-
-    try {
-      const departmentData = await userApi.getDepartmentById(departmentId);
-      setDepartments((prevDepartments) => ({
-        ...prevDepartments,
-        [departmentId]: departmentData.department_name,
-      }));
-      console.log(`Fetched department for ID ${departmentId}:`, departmentData);
-    } catch (error) {
-      console.error(
-        `Error fetching department for ID ${departmentId}:`,
-        error.response?.data || error
-      );
-      setDepartments((prevDepartments) => ({
-        ...prevDepartments,
-        [departmentId]: "Unknown Department",
-      }));
     }
   };
 
@@ -216,7 +266,7 @@ const HomePage = () => {
     } catch (error) {
       console.error(
         `Error fetching download count for paper ${paperId}:`,
-        error.response?.data || error
+        error
       );
       return 0;
     }
@@ -231,184 +281,156 @@ const HomePage = () => {
       const response = await userApi.getViewCountByPaperId(paperId);
       return response.viewCount || 0;
     } catch (error) {
-      console.error(
-        `Error fetching view count for paper ${paperId}:`,
-        error.response?.data || error
-      );
+      console.error(`Error fetching view count for paper ${paperId}:`, error);
       return 0;
     }
   };
 
-  const filteredPapers = researchPapers.filter((paper) => {
-    const departmentMatch = selectedDepartment
-      ? departments[paper.department] === selectedDepartment
-      : true;
-
-    const searchMatch = searchQuery
-      ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        paper.title_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (authors[paper._id] &&
-          authors[paper._id]
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())) ||
-        (paper.publish_date &&
-          paper.publish_date.toString().includes(searchQuery)) ||
-        (paper.keywords &&
-          Array.isArray(paper.keywords) &&
-          paper.keywords.some((keyword) =>
-            keyword.toLowerCase().includes(searchQuery.toLowerCase())
-          )) ||
-        (paper.summary &&
-          paper.summary.toLowerCase().includes(searchQuery.toLowerCase()))
-      : true;
-
-    return departmentMatch && searchMatch;
-  });
-
-  console.log("All research papers:", researchPapers.length);
-  console.log("After filtering:", filteredPapers.length);
-  console.log("selectedDepartment:", selectedDepartment);
-  console.log("searchQuery:", searchQuery);
-
-  const displayedPapers =
-    activeTab === "recent"
-      ? recentPapers
-      : activeTab === "featured"
-      ? featuredPapers
-      : researchPapers;
-
   useEffect(() => {
     const fetchCountsForCurrentPapers = async () => {
       try {
+        if (filteredPapers.length === 0) {
+          console.log(
+            "filteredPapers rỗng, không gọi fetchCountsForCurrentPapers"
+          );
+          return;
+        }
+
+        const papersToFetch = filteredPapers
+          .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
+          .filter((paper) => paper.id && !paper.views && !paper.downloads);
+
+        if (papersToFetch.length === 0) {
+          console.log("Không cần lấy counts, tất cả paper đã có dữ liệu");
+          return;
+        }
+
+        console.log("Đang lấy số lượt xem/tải cho papers:", papersToFetch);
         const updatedPapers = await Promise.all(
-          filteredPapers
-            .filter((paper) => paper.id)
-            .map(async (paper) => {
-              const [viewCount, downloadCount] = await Promise.all([
-                fetchViewCount(paper.id),
-                fetchDownloadCount(paper.id),
-              ]);
-              return { ...paper, views: viewCount, downloads: downloadCount };
-            })
+          papersToFetch.map(async (paper) => {
+            const [viewCount, downloadCount] = await Promise.all([
+              fetchViewCount(paper.id),
+              fetchDownloadCount(paper.id),
+            ]);
+            return { ...paper, views: viewCount, downloads: downloadCount };
+          })
         );
 
-        setResearchPapers((prev) => {
-          if (JSON.stringify(prev) === JSON.stringify(updatedPapers)) {
-            return prev;
-          }
-          return updatedPapers;
-        });
+        setResearchPapers((prev) =>
+          prev.map((paper) => {
+            const updated = updatedPapers.find((p) => p.id === paper.id);
+            return updated || paper;
+          })
+        );
       } catch (error) {
-        console.error("Error fetching counts for current papers:", error);
+        console.error("Lỗi khi lấy số lượt xem/tải:", error);
       }
     };
 
-    if (filteredPapers.length > 0) {
-      fetchCountsForCurrentPapers();
-    }
-  }, [JSON.stringify(filteredPapers)]);
+    fetchCountsForCurrentPapers();
+  }, [filteredPapers, currentPage]);
 
   useEffect(() => {
-    const fetchAuthorsForCurrentPapers = async () => {
-      for (const paper of filteredPapers) {
-        if (!authors[paper._id]) {
-          await fetchAuthors(paper._id);
-        }
+    const fetchMetadataForCurrentPapers = async () => {
+      const papersToFetch = filteredPapers
+        .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
+        .filter((paper) => paper.id && !authors[paper.id]);
+
+      if (papersToFetch.length === 0) {
+        console.log("Không cần lấy authors, tất cả đã có dữ liệu");
+        return;
       }
-    };
 
-    fetchAuthorsForCurrentPapers();
-  }, [JSON.stringify(filteredPapers), JSON.stringify(authors)]);
-
-  useEffect(() => {
-    const fetchDepartmentsForCurrentPapers = async () => {
-      for (const paper of filteredPapers) {
-        if (
-          paper.department &&
-          paper.department !== "Unknown Department" &&
-          !departments[paper.department]
-        ) {
-          await fetchDepartment(paper.department);
-        }
-      }
-    };
-
-    fetchDepartmentsForCurrentPapers();
-  }, [JSON.stringify(filteredPapers), JSON.stringify(departments)]);
-
-  useEffect(() => {
-    const fetchDepartments = async () => {
       try {
-        const departments = await userApi.getAllDepartments();
-        const departmentMapping = departments.reduce((acc, department) => {
-          acc[department.id] = department.department_name;
+        const authorsData = await Promise.all(
+          papersToFetch.map(async (paper) => {
+            const authorsData = await userApi.getAuthorsByPaperId(paper.id);
+            const authorNames = authorsData.map(
+              (author) => author.author_name_vi || author.author_name_en
+            );
+            return {
+              paperId: paper.id,
+              authors:
+                authorNames.length > 0
+                  ? authorNames.join(", ")
+                  : "Unknown Author",
+            };
+          })
+        );
+
+        const newAuthors = authorsData.reduce((acc, { paperId, authors }) => {
+          acc[paperId] = authors;
           return acc;
         }, {});
-        setDepartments((prev) => {
-          if (JSON.stringify(prev) === JSON.stringify(departmentMapping))
-            return prev;
-          return departmentMapping;
-        });
-        setDepartmentsList((prevList) => {
-          if (JSON.stringify(prevList) === JSON.stringify(departments))
-            return prevList;
-          return departments;
-        });
+        setAuthors((prev) => ({ ...prev, ...newAuthors }));
       } catch (error) {
-        console.error("Error fetching departments:", error);
+        console.error("Lỗi khi lấy authors:", error);
       }
     };
-    fetchDepartments();
+
+    fetchMetadataForCurrentPapers();
+  }, [filteredPapers, currentPage, authors]);
+
+  const handlePageChange = useCallback((newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedDepartment]);
-
-  const papersListRef = useRef(null);
-
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const totalPages = Math.ceil(filteredPapers.length / papersPerPage);
-  const indexOfLastPaper = currentPage * papersPerPage;
-  const indexOfFirstPaper = indexOfLastPaper - papersPerPage;
-  const currentPapers = filteredPapers
-    .slice(indexOfFirstPaper, indexOfLastPaper)
-    .map((paper) => ({
-      ...paper,
-      author: Array.isArray(paper.author)
-        ? paper.author
-            .map(
-              (a) => a.author_name_vi || a.author_name_en || "Unknown Author"
-            )
-            .join(", ")
-        : typeof paper.author === "object"
-        ? paper.author.author_name_vi ||
-          paper.author.author_name_en ||
-          "Unknown Author"
-        : paper.author || "Unknown Author",
-    }));
-
-  const createPaperView = async (paperId) => {
+  const handleSearch = useCallback(async () => {
     try {
-      console.log(`Creating view for paperId: ${paperId}`);
-      await userApi.createPaperView({
-        paper_id: paperId,
-        user_id: localStorage.getItem("user_id"),
-        user_type: localStorage.getItem("user_type"),
-      });
-      console.log(`View created for paper ${paperId}`);
-    } catch (error) {
-      console.error(
-        `Error creating view for paper ${paperId}:`,
-        error.response?.data || error
+      console.log(
+        "Bắt đầu tìm kiếm với query:",
+        searchQuery,
+        "khoa:",
+        selectedDepartment
       );
+      const criteria = "title";
+      const response = await userApi.semanticSearch(
+        searchQuery,
+        selectedDepartment,
+        criteria
+      );
+      console.log("Kết quả tìm kiếm:", response);
+
+      let papers = [];
+      if (response && response.results) {
+        papers = response.results
+          .filter((result) => result.paper && result.paper._id)
+          .map((result) => {
+            const paper = result.paper;
+            return {
+              id: paper._id,
+              title: paper.title_vn || paper.title_en || "No Title",
+              author:
+                paper.author
+                  ?.map((a) => a.author_name_vi || a.author_name_en)
+                  .join(", ") || "Unknown Author",
+              department: paper.department || "Unknown Department",
+              thumbnailUrl: paper.cover_image || "",
+              summary: paper.summary || "No Summary",
+              publish_date: paper.publish_date,
+              keywords: paper.keywords || [],
+              file: paper.file || "",
+              doi: paper.doi || "",
+              status: paper.status,
+            };
+          });
+      }
+      console.log("Bài báo sau tìm kiếm:", papers);
+      setResearchPapers(papers);
+
+      if (searchQuery.trim()) {
+        const updatedHistory = [
+          searchQuery,
+          ...searchHistory.filter((q) => q !== searchQuery),
+        ].slice(0, 5);
+        setSearchHistory(updatedHistory);
+        localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+      }
+    } catch (error) {
+      console.error("Lỗi tìm kiếm:", error);
     }
-  };
+  }, [searchQuery, selectedDepartment, searchHistory]);
 
   const isPaperInCollection = async (userId, paperId) => {
     if (!userId || !paperId) {
@@ -421,7 +443,7 @@ const HomePage = () => {
     } catch (error) {
       console.error(
         `Error checking paper in collection for paper ${paperId}:`,
-        error.response?.data || error
+        error
       );
       return false;
     }
@@ -457,7 +479,7 @@ const HomePage = () => {
     if (researchPapers.length > 0) {
       checkArchivedPapers();
     }
-  }, [JSON.stringify(researchPapers)]);
+  }, [researchPapers]);
 
   const removePaperFromCollection = async (paperId) => {
     try {
@@ -465,15 +487,11 @@ const HomePage = () => {
       const userCollections = await userApi.getCollectionsByUserId(userId);
       setCollections(userCollections);
 
-      console.log("Fetched collections:", userCollections);
-
-      const collection = userCollections.find((col) => {
-        console.log(`Checking collection: ${col.name}`, col.papers);
-
-        return col.papers.some((paper) =>
+      const collection = userCollections.find((col) =>
+        col.papers.some((paper) =>
           typeof paper === "string" ? paper === paperId : paper._id === paperId
-        );
-      });
+        )
+      );
 
       if (!collection || !collection._id) {
         console.error("Collection not found for paper ID:", paperId);
@@ -512,8 +530,8 @@ const HomePage = () => {
   };
 
   const showModal = async (paper) => {
-    if (archivedPapers.includes(paper._id)) {
-      await removePaperFromCollection(paper._id);
+    if (archivedPapers.includes(paper.id)) {
+      await removePaperFromCollection(paper.id);
       return;
     }
 
@@ -568,7 +586,7 @@ const HomePage = () => {
       if (selectedPaper) {
         const addPaperPayload = {
           collection_id: newCollection._id,
-          paper_id: selectedPaper._id,
+          paper_id: selectedPaper.id,
         };
         await userApi.addPaperToCollection(addPaperPayload);
       }
@@ -577,7 +595,7 @@ const HomePage = () => {
       setCategories((prev) => [...prev, newCollection.name]);
       setSelectedCategory(newCollection.name);
       if (selectedPaper) {
-        setArchivedPapers((prev) => [...prev, selectedPaper._id]);
+        setArchivedPapers((prev) => [...prev, selectedPaper.id]);
       }
       setNewCategory("");
       setIsAddingCategory(false);
@@ -603,7 +621,7 @@ const HomePage = () => {
       console.error("Error: No category selected.");
       return;
     }
-    if (!selectedPaper || !selectedPaper._id) {
+    if (!selectedPaper || !selectedPaper.id) {
       console.error("Error: No paper selected or paper ID is missing.");
       return;
     }
@@ -621,420 +639,372 @@ const HomePage = () => {
     try {
       const payload = {
         collection_id: collection._id,
-        paper_id: selectedPaper._id,
+        paper_id: selectedPaper.id,
       };
 
       await userApi.addPaperToCollection(payload);
-      setArchivedPapers((prev) => [...prev, selectedPaper._id]);
+      setArchivedPapers((prev) => [...prev, selectedPaper.id]);
       setIsModalVisible(false);
       message.success("Bài nghiên cứu đã được thêm vào danh mục lưu trữ!");
     } catch (error) {
-      console.error(
-        "Error adding paper to collection:",
-        error.response?.data || error
-      );
+      console.error("Error adding paper to collection:", error);
     }
   };
 
-  const handleCategoryChange = (e) => {
+  const handleCategoryChange = useCallback((e) => {
     setSelectedCategory(e.target.value);
-  };
+  }, []);
 
-  const handleOk = () => {
+  const handleOk = useCallback(() => {
     if (newCategory.trim() && !categories.includes(newCategory)) {
       handleCreateCollection();
     } else {
       handleAddPaperToCollection();
     }
-  };
+  }, [newCategory, categories]);
 
-  const handleCancel = () => {
+  const handleCancel = useCallback(() => {
     setIsModalVisible(false);
-  };
+  }, []);
 
-  const handleAddCategoryClick = () => {
+  const handleAddCategoryClick = useCallback(() => {
     setIsAddingCategory(true);
-  };
+  }, []);
 
-  const handleSearch = async () => {
-    try {
-      const criteria = "title";
-      const response = await userApi.semanticSearch(
-        searchQuery,
-        selectedDepartment,
-        criteria
-      );
-      console.log("Semantic Search Results:", response);
-
-      if (response && response.results) {
-        const papers = response.results
-          .filter((result) => result.paper && result.paper._id)
-          .map((result) => {
-            const paper = result.paper;
-            const title = paper.title_vn?.trim() || paper.title_en?.trim();
-            if (!title) {
-              console.warn(`Missing title for paper ID: ${paper._id}`);
-            }
-            const authors =
-              paper.author
-                ?.map((a) => a.author_name_vi || a.author_name_en)
-                .join(", ") || "Unknown Author";
-            const departmentName =
-              paper.department?.department_name || "Unknown Department";
-            return {
-              id: paper._id,
-              title: title || "No Title",
-              author: authors,
-              department: departmentName,
-              thumbnailUrl: paper.cover_image || "",
-              summary: paper.summary || "No Summary",
-              publish_date: paper.publish_date,
-              keywords: paper.keywords || "",
-              file: paper.file || "",
-              doi: paper.doi || "",
-            };
-          });
-        setResearchPapers(papers);
-      } else {
-        setResearchPapers([]);
-      }
-
-      if (searchQuery.trim()) {
-        const updatedHistory = [
-          searchQuery,
-          ...searchHistory.filter((q) => q !== searchQuery),
-        ].slice(0, 5);
-        setSearchHistory(updatedHistory);
-        localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
-      }
-    } catch (error) {
-      console.error("Error performing semantic search:", error);
+  const PaperItem = ({ index, style, data }) => {
+    const paper = data[index];
+    if (!paper.id) {
+      console.error("Paper thiếu id:", paper);
+      return null;
     }
+    return (
+      <div style={style}>
+        <Link
+          to={`/scientific-paper/${paper.id}`}
+          key={paper.id}
+          className="w-full block"
+        >
+          <article
+            className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-4 max-md:w-full ${
+              index > 0 ? "mt-3" : ""
+            }`}
+          >
+            <div className="flex justify-center w-fit lg:block max-lg:hidden">
+              <img
+                src={paper.thumbnailUrl} // Use updated field
+                className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[120px] max-md:max-w-[100px] m-0"
+                alt={paper.title_vn || "No Title"}
+              />
+            </div>
+            <div className="grid grid-cols-1 gap-2 w-full max-md:overflow-hidden relative">
+              <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
+                {paper.title || paper.title_en || "No Title"}
+              </h2>
+              <div className="absolute top-0 right-0 flex flex-col items-end text-xs text-neutral-500 max-md:text-sm">
+                <div className="flex items-center gap-2">
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                    className="object-contain w-4 aspect-square max-md:w-3"
+                    alt="Views icon"
+                  />
+                  <div className="text-orange-500">
+                    {typeof paper.views === "number" ? paper.views : 0}
+                  </div>
+                  <img
+                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                    className="object-contain w-4 aspect-[1.2] max-md:w-3"
+                    alt="Downloads icon"
+                  />
+                  <div>
+                    {typeof paper.downloads === "number" ? paper.downloads : 0}
+                  </div>
+                </div>
+                <div>
+                  {paper.publish_date
+                    ? new Date(paper.publish_date).toLocaleDateString()
+                    : "No Date"}
+                </div>
+              </div>
+              <div className="text-sm text-sky-900 max-md:text-[14px]">
+                {paper.author || "Unknown Author"}
+              </div>
+              <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[14px]">
+                {paper.summary || "No Summary"}
+              </p>
+              <div className="text-sm text-sky-900 max-md:text-[14px]">
+                {paper.departmentName || "Unknown Department"}
+              </div>
+              <div className="flex justify-end">
+                {archivedPapers.includes(paper.id) ? (
+                  <FaArchive
+                    className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-5 max-md:h-5"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      showModal(paper);
+                    }}
+                  />
+                ) : (
+                  <FaRegFileArchive
+                    className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500 max-md:w-5 max-md:h-5"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      showModal(paper);
+                    }}
+                  />
+                )}
+              </div>
+            </div>
+          </article>
+        </Link>
+      </div>
+    );
   };
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <style>
-        {`
+    <ErrorBoundary>
+      <div className="bg-[#E7ECF0] min-h-screen">
+        <style>
+          {`
             .custom-scrollbar {
               scrollbar-width: none;
               -ms-overflow-style: none;
             }
-
             .custom-scrollbar::-webkit-scrollbar {
               width: 0;
             }
-
             .custom-scrollbar:hover {
               scrollbar-width: thin;
             }
-
             .custom-scrollbar:hover::-webkit-scrollbar {
               width: 8px;
             }
-
             @media (max-width: 640px) {
               body {
                 min-width: 320px;
               }
             }
           `}
-      </style>
-      <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
-        <div className="w-full bg-white">
-          <Header />
-        </div>
-
-        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20">
-          <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
-              alt="Home Icon"
-              className="w-5 h-5 max-md:w-4 max-md:h-4"
-            />
-            <span>Trang chủ</span>
-            <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900">Tìm kiếm</span>
+        </style>
+        <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
+          <div className="w-full bg-white">
+            <Header />
           </div>
-
-          <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-3">
-            <select
-              className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-            >
-              <option value="">Chọn Khoa</option>
-              {departmentsList.map((department) => (
-                <option key={department.id} value={department.id}>
-                  {department.department_name}
-                </option>
-              ))}
-            </select>
-            <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base">
-              <option value="">Tất cả</option>
-              <option value="title">Tiêu đề</option>
-              <option value="author">Tác giả</option>
-              <option value="publish_date">Năm xuất bản</option>
-              <option value="keywords">Từ khóa</option>
-            </select>
-
-            <div className="relative flex-1">
-              <input
-                type="text"
-                className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
-                placeholder="Nhập từ khóa tìm kiếm..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  setIsHistoryVisible(true); // Show history when typing
-                }}
-                onFocus={() => setIsHistoryVisible(true)} // Show history on focus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch();
-                    setIsHistoryVisible(false); // Hide history on search
-                  }
-                }}
+          <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20">
+            <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
+                alt="Home Icon"
+                className="w-5 h-5 max-md:w-4 max-md:h-4"
               />
-              {isHistoryVisible && searchHistory.length > 0 && (
-                <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto">
-                  {searchHistory.map((query, index) => (
-                    <li
-                      key={index}
-                      className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100"
-                    >
-                      <span
-                        onClick={() => {
-                          setSearchQuery(query);
-                          handleSearch();
-                          setIsHistoryVisible(false); // Hide history on selection
-                        }}
-                        className="flex-1 truncate"
-                      >
-                        {query}
-                      </span>
-                      <button
-                        className="text-red-500 hover:text-red-700 ml-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const updatedHistory = searchHistory.filter(
-                            (_, i) => i !== index
-                          );
-                          setSearchHistory(updatedHistory);
-                          localStorage.setItem(
-                            "searchHistory",
-                            JSON.stringify(updatedHistory)
-                          );
-                        }}
-                      >
-                        x
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <span>Trang chủ</span>
+              <span className="text-gray-400"></span>
+              <span className="font-semibold text-sky-900">Tìm kiếm</span>
             </div>
-
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-3 max-md:text-base max-md:h-[44px] hover:bg-blue-600"
-              onClick={handleSearch}
-            >
-              Tìm kiếm
-            </button>
-          </div>
-        </div>
-
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
-          <div className="flex gap-5 max-md:flex-col">
-            <section className="w-[71%] max-md:w-full" ref={papersListRef}>
-              <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
-                {currentPapers.map((paper, index) => (
-                  <Link
-                    to={`/scientific-paper/${paper.id}`}
-                    key={paper.id}
-                    onClick={() => createPaperView(paper.id)}
-                    className="w-full block"
-                  >
-                    <article
-                      key={paper.id}
-                      className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-4 max-md:w-full ${
-                        index > 0 ? "mt-3" : ""
-                      }`}
-                    >
-                      <div className="flex justify-center w-fit lg:block max-lg:hidden">
-                        <img
-                          src={paper.thumbnailUrl}
-                          className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[120px] max-md:max-w-[100px] m-0"
-                          alt={paper.title || "No Title"}
-                        />
-                      </div>
-                      <div className="grid grid-cols-1 gap-2 w-full max-md:overflow-hidden relative">
-                        <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
-                          {paper.title || "No Title"}
-                        </h2>
-                        <div className="absolute top-0 right-0 flex flex-col items-end text-xs text-neutral-500 max-md:text-sm">
-                          <div className="flex items-center gap-2">
-                            <img
-                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                              className="object-contain w-4 aspect-square max-md:w-3"
-                              alt="Views icon"
-                            />
-                            <div className="text-orange-500">
-                              {typeof paper.views === "number"
-                                ? paper.views
-                                : 0}
-                            </div>
-                            <img
-                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                              className="object-contain w-4 aspect-[1.2] max-md:w-3"
-                              alt="Downloads icon"
-                            />
-                            <div>
-                              {typeof paper.downloads === "number"
-                                ? paper.downloads
-                                : 0}
-                            </div>
-                          </div>
-                          <div>
-                            {paper.publish_date
-                              ? new Date(
-                                  paper.publish_date
-                                ).toLocaleDateString()
-                              : "No Date"}
-                          </div>
-                        </div>
-                        <div className="text-sm text-sky-900 max-md:text-[14px]">
-                          {paper.author || "Unknown Author"}
-                        </div>
-                        <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[14px]">
-                          {paper.summary || "No Summary"}
-                        </p>
-                        <div className="text-sm text-sky-900 max-md:text-[14px]">
-                          {paper.department || "Unknown Department"}
-                        </div>
-                        <div className="flex justify-end">
-                          {archivedPapers.includes(paper.id) ? (
-                            <FaArchive
-                              className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-5 max-md:h-5"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                showModal(paper);
-                              }}
-                            />
-                          ) : (
-                            <FaRegFileArchive
-                              className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500 max-md:w-5 max-md:h-5"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                showModal(paper);
-                              }}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    </article>
-                  </Link>
+            <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-3">
+              <select
+                className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
+                value={selectedDepartment}
+                onChange={(e) => setSelectedDepartment(e.target.value)}
+              >
+                <option value="">Chọn Khoa</option>
+                {departmentsList.map((department) => (
+                  <option key={department.id} value={department.id}>
+                    {department.department_name}
+                  </option>
                 ))}
-
-                <div className="flex justify-center mt-6 gap-2">
-                  <button
-                    className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={currentPage === 1}
-                    onClick={() =>
-                      handlePageChange(Math.max(currentPage - 1, 1))
+              </select>
+              <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base">
+                <option value="">Tất cả</option>
+                <option value="title">Tiêu đề</option>
+                <option value="author">Tác giả</option>
+                <option value="publish_date">Năm xuất bản</option>
+                <option value="keywords">Từ khóa</option>
+              </select>
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
+                  placeholder="Nhập từ khóa tìm kiếm..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setIsHistoryVisible(true);
+                  }}
+                  onFocus={() => setIsHistoryVisible(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                      setIsHistoryVisible(false);
                     }
-                  >
-                    Trước
-                  </button>
-
-                  {[...Array(totalPages)].map((_, i) => (
-                    <button
-                      key={i}
-                      className={`px-3 py-1 border rounded-md ${
-                        currentPage === i + 1
-                          ? "bg-blue-500 text-white"
-                          : "bg-white"
-                      }`}
-                      onClick={() => handlePageChange(i + 1)}
-                    >
-                      {i + 1}
-                    </button>
-                  ))}
-
-                  <button
-                    className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    disabled={currentPage === totalPages || totalPages === 0}
-                    onClick={() =>
-                      handlePageChange(Math.min(currentPage + 1, totalPages))
-                    }
-                  >
-                    Sau
-                  </button>
-                </div>
+                  }}
+                />
+                {isHistoryVisible && searchHistory.length > 0 && (
+                  <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto">
+                    {searchHistory.map((query, index) => (
+                      <li
+                        key={index}
+                        className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100"
+                      >
+                        <span
+                          onClick={() => {
+                            setSearchQuery(query);
+                            handleSearch();
+                            setIsHistoryVisible(false);
+                          }}
+                          className="flex-1 truncate"
+                        >
+                          {query}
+                        </span>
+                        <button
+                          className="text-red-500 hover:text-red-700 ml-2"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const updatedHistory = searchHistory.filter(
+                              (_, i) => i !== index
+                            );
+                            setSearchHistory(updatedHistory);
+                            localStorage.setItem(
+                              "searchHistory",
+                              JSON.stringify(updatedHistory)
+                            );
+                          }}
+                        >
+                          x
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-            </section>
-
-            <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
-              <section className="sticky top-[195px] z-10">
-                <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-5 max-md:mt-4 max-md:max-w-full">
-                  <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
-                    <button
-                      className={`px-4 pt-1.5 pb-3.5 rounded-lg ${
-                        activeTab === "recent"
-                          ? "text-white bg-sky-500"
-                          : "bg-white text-neutral-500"
-                      }`}
-                      onClick={() => setActiveTab("recent")}
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-3 max-md:text-base max-md:h-[44px] hover:bg-blue-600"
+                onClick={handleSearch}
+              >
+                Tìm kiếm
+              </button>
+            </div>
+          </div>
+          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
+            <div className="flex gap-5 max-md:flex-col">
+              <section className="w-[71%] max-md:w-full" ref={papersListRef}>
+                <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
+                  {filteredPapers.length === 0 ? (
+                    <div className="flex justify-center items-center min-h-[300px]">
+                      <Spin size="large" />
+                    </div>
+                  ) : (
+                    <FixedSizeList
+                      height={600}
+                      width="100%"
+                      itemCount={currentPapers.length}
+                      itemSize={220}
+                      itemData={currentPapers}
                     >
-                      Bài nghiên cứu mới đăng
+                      {PaperItem}
+                    </FixedSizeList>
+                  )}
+                  <div className="flex justify-center mt-6 gap-2">
+                    <button
+                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={currentPage === 1}
+                      onClick={() =>
+                        handlePageChange(Math.max(currentPage - 1, 1))
+                      }
+                    >
+                      Trước
                     </button>
+                    {[
+                      ...Array(
+                        Math.ceil(filteredPapers.length / papersPerPage)
+                      ),
+                    ].map((_, i) => (
+                      <button
+                        key={i}
+                        className={`px-3 py-1 border rounded-md ${
+                          currentPage === i + 1
+                            ? "bg-blue-500 text-white"
+                            : "bg-white"
+                        }`}
+                        onClick={() => handlePageChange(i + 1)}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
                     <button
-                      className={`px-1.5 pt-1 pb-3.5 rounded-lg ${
-                        activeTab === "featured"
-                          ? "text-white bg-sky-500"
-                          : "bg-white text-neutral-500"
-                      }`}
-                      onClick={() => setActiveTab("featured")}
+                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={
+                        currentPage ===
+                          Math.ceil(filteredPapers.length / papersPerPage) ||
+                        filteredPapers.length === 0
+                      }
+                      onClick={() =>
+                        handlePageChange(
+                          Math.min(
+                            currentPage + 1,
+                            Math.ceil(filteredPapers.length / papersPerPage)
+                          )
+                        )
+                      }
                     >
-                      Bài nghiên cứu nổi bật
+                      Sau
                     </button>
                   </div>
-
-                  <div
-                    className="flex gap-4 mt-5 overflow-y-auto max-h-[400px] custom-scrollbar"
-                    ref={scrollRef}
-                  >
-                    <div className="lg:block max-lg:hidden">
-                      {Array.isArray(displayedPapers) &&
-                        displayedPapers.map((paper, index) => (
-                          <Link
-                            to={`/scientific-paper/${paper.id}`}
-                            key={`thumbnail-${index}`}
-                            onClick={() => createPaperView(paper.id)}
-                          >
-                            <img
-                              src={paper.thumbnailUrl}
-                              className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
-                                index > 0 ? "mt-5" : ""
-                              }`}
-                              alt={paper.title}
-                            />
-                          </Link>
-                        ))}
+                </div>
+              </section>
+              <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
+                <section className="sticky top-[195px] z-10">
+                  <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-5 max-md:mt-4 max-md:max-w-full">
+                    <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
+                      <button
+                        className={`px-4 pt-1.5 pb-1.5 rounded-lg ${
+                          activeTab === "recent"
+                            ? "text-white bg-sky-500"
+                            : "bg-white text-neutral-500"
+                        }`}
+                        onClick={() => setActiveTab("recent")}
+                      >
+                        Bài nghiên cứu mới đăng
+                      </button>
+                      <button
+                        className={`px-1.5 pt-1 pb-1.5 rounded-lg ${
+                          activeTab === "featured"
+                            ? "text-white bg-sky-500"
+                            : "bg-white text-neutral-500"
+                        }`}
+                        onClick={() => setActiveTab("featured")}
+                      >
+                        Bài nghiên cứu nổi bật
+                      </button>
                     </div>
-
-                    <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
-                      {Array.isArray(displayedPapers) &&
-                        displayedPapers.map((paper, index) => (
-                          <article
-                            key={`details-${index}`}
-                            className="w-full block"
-                          >
+                    <div
+                      className="flex gap-4 mt-5 overflow-y-auto max-h-[400px] custom-scrollbar"
+                      ref={scrollRef}
+                    >
+                      <div className="lg:block max-lg:hidden">
+                        {Array.isArray(displayedPapers) &&
+                          displayedPapers.map((paper, index) => (
                             <Link
                               to={`/scientific-paper/${paper.id}`}
-                              onClick={() => createPaperView(paper.id)}
+                              key={`thumbnail-${index}`}
                             >
-                              <React.Fragment>
+                              <img
+                                src={paper.thumbnailUrl}
+                                className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
+                                  index > 0 ? "mt-5" : ""
+                                }`}
+                                alt={paper.title}
+                              />
+                            </Link>
+                          ))}
+                      </div>
+                      <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
+                        {Array.isArray(displayedPapers) &&
+                          displayedPapers.map((paper, index) => (
+                            <article
+                              key={`details-${index}`}
+                              className="w-full block"
+                            >
+                              <Link to={`/scientific-paper/${paper.id}`}>
                                 <div className="paper-details-container flex flex-col gap-2 pt-0">
                                   <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2 w-[220px]">
                                     {paper.title
@@ -1050,82 +1020,82 @@ const HomePage = () => {
                                     {paper.author || "Unknown Author"}
                                   </div>
                                   <div className="text-gray-500 text-xs pb-8">
-                                    {paper.department || "Unknown Department"}
+                                    {paper.departmentName ||
+                                      "Unknown Department"}
                                   </div>
                                 </div>
-                              </React.Fragment>
-                            </Link>
-                          </article>
-                        ))}
+                              </Link>
+                            </article>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                </aside>
-              </section>
+                  </aside>
+                </section>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      <Footer />
-
-      <Modal
-        title="Thêm vào Lưu trữ"
-        open={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-        footer={[
-          <Button
-            key="back"
-            onClick={handleCancel}
-            className="h-[40px] max-md:text-base"
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleOk}
-            className="h-[40px] max-md:text-base"
-          >
-            Thêm vào mục lưu
-          </Button>,
-        ]}
-        className="max-md:w-[95%]"
-      >
-        <p>Bài nghiên cứu khoa học: {selectedPaper?.title_vn}</p>
-        <p>Các danh mục lưu trữ:</p>
-        {isAddingCategory ? (
-          <Input
-            placeholder="Nhập tên danh mục mới"
-            value={newCategory}
-            onChange={(e) => setNewCategory(e.target.value)}
-          />
-        ) : (
-          <select
-            className="p-2 border rounded-lg w-full text-sm"
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-          >
-            <option value="">Chọn danh mục</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        )}
-        <div className="mt-4">
-          {!isAddingCategory && (
+        <Footer />
+        <Modal
+          title="Thêm vào Lưu trữ"
+          open={isModalVisible}
+          onOk={handleOk}
+          onCancel={handleCancel}
+          footer={[
             <Button
-              type="primary"
-              className="mt-2 h-[40px] max-md:text-base"
-              onClick={handleAddCategoryClick}
+              key="back"
+              onClick={handleCancel}
+              className="h-[40px] max-md:text-base"
             >
-              Thêm danh mục mới
-            </Button>
+              Hủy
+            </Button>,
+            <Button
+              key="submit"
+              type="primary"
+              onClick={handleOk}
+              className="h-[40px] max-md:text-base"
+            >
+              Thêm vào mục lưu
+            </Button>,
+          ]}
+          className="max-md:w-[95%]"
+        >
+          <p>Bài nghiên cứu khoa học: {selectedPaper?.title_vn}</p>
+          <p>Các danh mục lưu trữ:</p>
+          {isAddingCategory ? (
+            <Input
+              placeholder="Nhập tên danh mục mới"
+              value={newCategory}
+              onChange={(e) => setNewCategory(e.target.value)}
+            />
+          ) : (
+            <select
+              className="p-2 border rounded-lg w-full text-sm"
+              value={selectedCategory}
+              onChange={handleCategoryChange}
+            >
+              <option value="">Chọn danh mục</option>
+              {categories.map((category) => (
+                <option key={category} value={category}>
+                  {category}
+                </option>
+              ))}
+            </select>
           )}
-        </div>
-      </Modal>
-    </div>
+          <div className="mt-4">
+            {!isAddingCategory && (
+              <Button
+                type="primary"
+                className="mt-2 h-[40px] max-md:text-base"
+                onClick={handleAddCategoryClick}
+              >
+                Thêm danh mục mới
+              </Button>
+            )}
+          </div>
+        </Modal>
+      </div>
+    </ErrorBoundary>
   );
 };
 

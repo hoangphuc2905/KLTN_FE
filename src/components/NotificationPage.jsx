@@ -58,6 +58,13 @@ const NotificationPage = () => {
           );
         }
 
+        if (user_role === "lecturer") {
+          allNotifications = allNotifications.filter(
+            (notification) =>
+              notification.message_type !== "Request for Approval"
+          );
+        }
+
         setNotifications(
           allNotifications.sort(
             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
