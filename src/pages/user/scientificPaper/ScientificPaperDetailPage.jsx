@@ -26,9 +26,8 @@ const ScientificPaperDetailPage = () => {
   const modalContentRef = useRef(null);
   const hasTrackedView = useRef(false);
   const hasScrolledRef = useRef(false);
-  const secureFileUrl = paper.fileUrl.replace(/^http:/, "https:");
 
-  const [scrollPercent, setScrollPercent] = useState(0); 
+  const [scrollPercent, setScrollPercent] = useState(0);
 
   const currentUrl = window.location.origin + location.pathname;
 
@@ -810,7 +809,7 @@ const ScientificPaperDetailPage = () => {
           destroyOnClose
         >
           <PDFViewer
-            fileUrl={secureFileUrl}
+            fileUrl={paper.fileUrl?.replace(/^http:/, "https:")} 
             isModalVisible={isModalVisible}
             onScroll={(percentage) => {
               console.log(
