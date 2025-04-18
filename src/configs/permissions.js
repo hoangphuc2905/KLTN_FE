@@ -17,6 +17,7 @@ const permissions = {
     "/notifications",
     "/scientific-paper/:id",
     "/admin/management/point/detail/:id",
+    "/admin/management/ariticle/detail/:id",
   ],
   Student: [
     "/home",

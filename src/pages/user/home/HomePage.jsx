@@ -106,7 +106,6 @@ const HomePage = () => {
     return filteredPapers
       .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
       .map((paper) => {
-        console.log("Paper trong currentPapers:", paper);
         return {
           ...paper,
           author: Array.isArray(paper.author)
@@ -174,7 +173,6 @@ const HomePage = () => {
       try {
         console.log("Bắt đầu tải dữ liệu ban đầu");
         const userId = localStorage.getItem("user_id");
-        console.log("userId:", userId);
 
         const [
           recommendationsResponse,
@@ -196,7 +194,6 @@ const HomePage = () => {
 
         let papers = recommendationsResponse?.data || [];
         if (!Array.isArray(papers) || papers.length === 0) {
-          console.log("Không tìm thấy gợi ý, sử dụng getAllScientificPapers");
           papers = allPapersResponse?.data || [];
         }
 
@@ -205,7 +202,6 @@ const HomePage = () => {
         const pendingPapers = mappedPapers.filter(
           (paper) => paper.status === "pending"
         );
-        console.log("Cập nhật researchPapers:", pendingPapers);
         setResearchPapers(pendingPapers);
 
         const recentPapers = recentPapersResponse?.papers
@@ -243,7 +239,6 @@ const HomePage = () => {
       typeof departmentId !== "string" ||
       departmentId.length !== 24
     ) {
-      console.warn(`Invalid department ID: ${departmentId}`);
       return "Unknown Department";
     }
     try {
@@ -305,7 +300,6 @@ const HomePage = () => {
           return;
         }
 
-        console.log("Đang lấy số lượt xem/tải cho papers:", papersToFetch);
         const updatedPapers = await Promise.all(
           papersToFetch.map(async (paper) => {
             const [viewCount, downloadCount] = await Promise.all([
@@ -337,7 +331,6 @@ const HomePage = () => {
         .filter((paper) => paper.id && !authors[paper.id]);
 
       if (papersToFetch.length === 0) {
-        console.log("Không cần lấy authors, tất cả đã có dữ liệu");
         return;
       }
 
@@ -616,23 +609,31 @@ const HomePage = () => {
     }
   };
 
-  const handleAddPaperToCollection = async () => {
-    if (!selectedCategory) {
-      console.error("Error: No category selected.");
+  const handleAddPaperToCollection = async (category) => {
+    console.log("handleAddPaperToCollection called");
+    console.log("Selected category:", category);
+
+    if (!category) {
+      message.error("Vui lòng chọn danh mục trước khi lưu.");
       return;
     }
     if (!selectedPaper || !selectedPaper.id) {
-      console.error("Error: No paper selected or paper ID is missing.");
+      console.log("Selected paper:", selectedPaper);
+      message.error("Không tìm thấy bài nghiên cứu để lưu.");
       return;
     }
 
-    const collection = collections.find((col) => col.name === selectedCategory);
+    const collection = collections.find((col) => col.name === category);
 
     if (!collection || !collection._id) {
-      console.error(
-        `Error: No matching collection found for the selected category: ${selectedCategory}`
-      );
+      console.error("Không tìm thấy danh mục:", category);
       message.error("Không tìm thấy danh mục phù hợp. Vui lòng thử lại.");
+      return;
+    }
+
+    // Kiểm tra xem bài nghiên cứu đã tồn tại trong danh mục chưa
+    if (collection.papers.some((paper) => paper === selectedPaper.id)) {
+      message.warning("Bài nghiên cứu đã tồn tại trong danh mục này.");
       return;
     }
 
@@ -641,27 +642,53 @@ const HomePage = () => {
         collection_id: collection._id,
         paper_id: selectedPaper.id,
       };
+      console.log("Payload gửi đến API:", payload);
 
-      await userApi.addPaperToCollection(payload);
-      setArchivedPapers((prev) => [...prev, selectedPaper.id]);
-      setIsModalVisible(false);
-      message.success("Bài nghiên cứu đã được thêm vào danh mục lưu trữ!");
+      const response = await userApi.addPaperToCollection(payload);
+      console.log("Phản hồi từ API:", response);
+
+      // Kiểm tra phản hồi từ API
+      if (
+        response &&
+        response.message === "Paper added to collection successfully."
+      ) {
+        setArchivedPapers((prev) => [...prev, selectedPaper.id]);
+        setIsModalVisible(false);
+        message.success("Bài nghiên cứu đã được thêm vào danh mục lưu trữ!");
+      } else if (
+        response &&
+        response.message === "Paper already exists in the collection."
+      ) {
+        console.warn("Paper already exists in the collection:", response);
+        message.warning("Bài nghiên cứu đã tồn tại trong danh mục này.");
+      } else {
+        const errorMessage =
+          response?.message || "API không trả về kết quả thành công.";
+        console.error("Error from API:", errorMessage);
+        message.error(errorMessage);
+      }
     } catch (error) {
       console.error("Error adding paper to collection:", error);
+      message.error(
+        error.message || "Lỗi khi thêm bài nghiên cứu vào danh mục."
+      );
     }
   };
 
   const handleCategoryChange = useCallback((e) => {
-    setSelectedCategory(e.target.value);
+    const newCategory = e.target.value;
+    console.log("Category changed to:", newCategory);
+    setSelectedCategory(newCategory);
   }, []);
 
   const handleOk = useCallback(() => {
+    console.log("handleOk called");
     if (newCategory.trim() && !categories.includes(newCategory)) {
       handleCreateCollection();
     } else {
-      handleAddPaperToCollection();
+      handleAddPaperToCollection(selectedCategory); // Truyền selectedCategory trực tiếp
     }
-  }, [newCategory, categories]);
+  }, [newCategory, categories, selectedCategory]);
 
   const handleCancel = useCallback(() => {
     setIsModalVisible(false);
@@ -678,33 +705,39 @@ const HomePage = () => {
       return null;
     }
     return (
-      <div style={style}>
+      <div
+        style={{
+          ...style,
+          height: window.innerWidth <= 768 ? 160 : style.height, // Much increased height for mobile
+          marginBottom: window.innerWidth <= 768 ? 0 : 0, // Remove negative margin
+        }}
+      >
         <Link
           to={`/scientific-paper/${paper.id}`}
           key={paper.id}
           className="w-full block"
         >
           <article
-            className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-4 max-md:w-full ${
-              index > 0 ? "mt-3" : ""
+            className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-2 max-md:w-full ${
+              index > 0 ? "mt-0 max-md:mt-0" : ""
             }`}
           >
             <div className="flex justify-center w-fit lg:block max-lg:hidden">
               <img
-                src={paper.thumbnailUrl} // Use updated field
-                className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[120px] max-md:max-w-[100px] m-0"
+                src={paper.thumbnailUrl}
+                className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[100px] max-md:max-w-[80px] m-0 border border-gray-200"
                 alt={paper.title_vn || "No Title"}
               />
             </div>
-            <div className="grid grid-cols-1 gap-2 w-full max-md:overflow-hidden relative">
-              <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
+            <div className="grid grid-cols-1 gap-2 w-full max-md:gap-1 max-md:overflow-hidden relative">
+              <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-xs max-md:w-full">
                 {paper.title || paper.title_en || "No Title"}
               </h2>
-              <div className="absolute top-0 right-0 flex flex-col items-end text-xs text-neutral-500 max-md:text-sm">
-                <div className="flex items-center gap-2">
+              <div className="absolute top-0 right-0 flex flex-col items-end text-xs text-neutral-500 max-md:text-[10px] max-md:hidden">
+                <div className="flex items-center gap-2 max-md:gap-1">
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                    className="object-contain w-4 aspect-square max-md:w-3"
+                    className="object-contain w-4 aspect-square max-md:w-2"
                     alt="Views icon"
                   />
                   <div className="text-orange-500">
@@ -712,7 +745,7 @@ const HomePage = () => {
                   </div>
                   <img
                     src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                    className="object-contain w-4 aspect-[1.2] max-md:w-3"
+                    className="object-contain w-4 aspect-[1.2] max-md:w-2"
                     alt="Downloads icon"
                   />
                   <div>
@@ -725,33 +758,64 @@ const HomePage = () => {
                     : "No Date"}
                 </div>
               </div>
-              <div className="text-sm text-sky-900 max-md:text-[14px]">
+              <div className="text-sm text-sky-900 max-md:text-[10px]">
                 {paper.author || "Unknown Author"}
               </div>
-              <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[14px]">
+              <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[10px] max-md:line-clamp-1">
                 {paper.summary || "No Summary"}
               </p>
-              <div className="text-sm text-sky-900 max-md:text-[14px]">
+              <div className="text-sm text-sky-900 max-md:text-[10px]">
                 {paper.departmentName || "Unknown Department"}
               </div>
-              <div className="flex justify-end">
-                {archivedPapers.includes(paper.id) ? (
-                  <FaArchive
-                    className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-5 max-md:h-5"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      showModal(paper);
-                    }}
-                  />
-                ) : (
-                  <FaRegFileArchive
-                    className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500 max-md:w-5 max-md:h-5"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      showModal(paper);
-                    }}
-                  />
-                )}
+              <div className="flex justify-between items-center">
+                <div className="hidden max-md:flex max-md:items-center max-md:gap-1 max-md:text-[10px] text-neutral-500">
+                  <div className="flex items-center gap-1">
+                    <img
+                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                      className="object-contain w-3 aspect-square"
+                      alt="Views icon"
+                    />
+                    <div className="text-orange-500">
+                      {typeof paper.views === "number" ? paper.views : 0}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 ml-2">
+                    <img
+                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                      className="object-contain w-3 aspect-[1.2]"
+                      alt="Downloads icon"
+                    />
+                    <div>
+                      {typeof paper.downloads === "number"
+                        ? paper.downloads
+                        : 0}
+                    </div>
+                  </div>
+                  <div className="ml-2">
+                    {paper.publish_date
+                      ? new Date(paper.publish_date).toLocaleDateString()
+                      : "No Date"}
+                  </div>
+                </div>
+                <div className="ml-auto">
+                  {archivedPapers.includes(paper.id) ? (
+                    <FaArchive
+                      className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-4 max-md:h-4"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        showModal(paper);
+                      }}
+                    />
+                  ) : (
+                    <FaRegFileArchive
+                      className="w-5 h-5 cursor-pointer text-gray-500 hover:text-yellow-500 max-md:w-4 max-md:h-4"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        showModal(paper);
+                      }}
+                    />
+                  )}
+                </div>
               </div>
             </div>
           </article>
@@ -789,20 +853,20 @@ const HomePage = () => {
           <div className="w-full bg-white">
             <Header />
           </div>
-          <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20">
-            <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
+          <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20 max-md:static max-md:pt-[60px]">
+            <div className="flex items-center gap-2 text-gray-600 text-sm max-md:text-xs">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
                 alt="Home Icon"
-                className="w-5 h-5 max-md:w-4 max-md:h-4"
+                className="w-5 h-5 max-md:w-3 max-md:h-3"
               />
               <span>Trang chủ</span>
               <span className="text-gray-400"></span>
               <span className="font-semibold text-sky-900">Tìm kiếm</span>
             </div>
-            <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-3">
+            <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-1.5">
               <select
-                className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
+                className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
               >
@@ -813,17 +877,17 @@ const HomePage = () => {
                   </option>
                 ))}
               </select>
-              <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base">
+              <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs">
                 <option value="">Tất cả</option>
                 <option value="title">Tiêu đề</option>
                 <option value="author">Tác giả</option>
                 <option value="publish_date">Năm xuất bản</option>
                 <option value="keywords">Từ khóa</option>
               </select>
-              <div className="relative flex-1">
+              <div className="relative flex-1 max-md:w-full">
                 <input
                   type="text"
-                  className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
+                  className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
                   placeholder="Nhập từ khóa tìm kiếm..."
                   value={searchQuery}
                   onChange={(e) => {
@@ -839,11 +903,11 @@ const HomePage = () => {
                   }}
                 />
                 {isHistoryVisible && searchHistory.length > 0 && (
-                  <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto">
+                  <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto max-md:text-xs">
                     {searchHistory.map((query, index) => (
                       <li
                         key={index}
-                        className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100"
+                        className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100 max-md:p-1"
                       >
                         <span
                           onClick={() => {
@@ -856,7 +920,7 @@ const HomePage = () => {
                           {query}
                         </span>
                         <button
-                          className="text-red-500 hover:text-red-700 ml-2"
+                          className="text-red-500 hover:text-red-700 ml-2 max-md:ml-1"
                           onClick={(e) => {
                             e.stopPropagation();
                             const updatedHistory = searchHistory.filter(
@@ -877,7 +941,7 @@ const HomePage = () => {
                 )}
               </div>
               <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-3 max-md:text-base max-md:h-[44px] hover:bg-blue-600"
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:py-1.5 max-md:text-xs max-md:h-[32px] hover:bg-blue-600"
                 onClick={handleSearch}
               >
                 Tìm kiếm
@@ -887,25 +951,26 @@ const HomePage = () => {
           <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
             <div className="flex gap-5 max-md:flex-col">
               <section className="w-[71%] max-md:w-full" ref={papersListRef}>
-                <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
+                <div className="flex flex-col w-full max-md:mt-2 max-md:max-w-full">
                   {filteredPapers.length === 0 ? (
-                    <div className="flex justify-center items-center min-h-[300px]">
+                    <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
                       <Spin size="large" />
                     </div>
                   ) : (
                     <FixedSizeList
-                      height={600}
+                      height={window.innerWidth <= 768 ? 500 : 600}
                       width="100%"
                       itemCount={currentPapers.length}
-                      itemSize={220}
+                      itemSize={window.innerWidth <= 768 ? 150 : 220}
                       itemData={currentPapers}
+                      className="max-md:!h-[500px]"
                     >
                       {PaperItem}
                     </FixedSizeList>
                   )}
-                  <div className="flex justify-center mt-6 gap-2">
+                  <div className="flex justify-center mt-6 gap-2 max-md:mt-3">
                     <button
-                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
                       disabled={currentPage === 1}
                       onClick={() =>
                         handlePageChange(Math.max(currentPage - 1, 1))
@@ -920,7 +985,7 @@ const HomePage = () => {
                     ].map((_, i) => (
                       <button
                         key={i}
-                        className={`px-3 py-1 border rounded-md ${
+                        className={`px-3 py-1 border rounded-md max-md:px-2 max-md:py-0.5 max-md:text-xs ${
                           currentPage === i + 1
                             ? "bg-blue-500 text-white"
                             : "bg-white"
@@ -931,7 +996,7 @@ const HomePage = () => {
                       </button>
                     ))}
                     <button
-                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
                       disabled={
                         currentPage ===
                           Math.ceil(filteredPapers.length / papersPerPage) ||
@@ -951,22 +1016,22 @@ const HomePage = () => {
                   </div>
                 </div>
               </section>
-              <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full">
-                <section className="sticky top-[195px] z-10">
-                  <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-5 max-md:mt-4 max-md:max-w-full">
-                    <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px]">
+              <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full max-md:mt-3">
+                <section className="sticky top-[195px] z-10 max-md:static">
+                  <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-3 max-md:py-4 max-md:mt-2 max-md:max-w-full">
+                    <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px] max-md:w-full max-md:text-[10px] max-md:gap-2">
                       <button
-                        className={`px-4 pt-1.5 pb-1.5 rounded-lg ${
+                        className={`flex-1 px-4 pt-1.5 pb-1.5 rounded-lg text-center max-md:px-2 max-md:py-1 ${
                           activeTab === "recent"
                             ? "text-white bg-sky-500"
                             : "bg-white text-neutral-500"
                         }`}
                         onClick={() => setActiveTab("recent")}
                       >
-                        Bài nghiên cứu mới đăng
+                        Bài nghiên cứu mới
                       </button>
                       <button
-                        className={`px-1.5 pt-1 pb-1.5 rounded-lg ${
+                        className={`flex-1 px-4 pt-1.5 pb-1.5 rounded-lg text-center max-md:px-2 max-md:py-1 ${
                           activeTab === "featured"
                             ? "text-white bg-sky-500"
                             : "bg-white text-neutral-500"
@@ -976,37 +1041,26 @@ const HomePage = () => {
                         Bài nghiên cứu nổi bật
                       </button>
                     </div>
-                    <div
-                      className="flex gap-4 mt-5 overflow-y-auto max-h-[400px] custom-scrollbar"
-                      ref={scrollRef}
-                    >
-                      <div className="lg:block max-lg:hidden">
-                        {Array.isArray(displayedPapers) &&
-                          displayedPapers.map((paper, index) => (
-                            <Link
-                              to={`/scientific-paper/${paper.id}`}
-                              key={`thumbnail-${index}`}
-                            >
-                              <img
-                                src={paper.thumbnailUrl}
-                                className={`object-contain rounded-md aspect-[0.72] w-[72px] ${
-                                  index > 0 ? "mt-5" : ""
-                                }`}
-                                alt={paper.title}
-                              />
-                            </Link>
-                          ))}
-                      </div>
-                      <div className="flex flex-col grow shrink-0 items-start text-sm tracking-tight leading-none basis-0 text-slate-400 w-fit">
-                        {Array.isArray(displayedPapers) &&
-                          displayedPapers.map((paper, index) => (
-                            <article
-                              key={`details-${index}`}
-                              className="w-full block"
-                            >
+                    <div className="flex flex-col gap-4 mt-5 max-md:gap-3 max-md:mt-3">
+                      {Array.isArray(displayedPapers) &&
+                        displayedPapers.map((paper, index) => (
+                          <article
+                            key={`paper-${index}`}
+                            className="w-full flex gap-4 max-md:gap-2"
+                          >
+                            <div className="lg:block max-lg:hidden">
                               <Link to={`/scientific-paper/${paper.id}`}>
-                                <div className="paper-details-container flex flex-col gap-2 pt-0">
-                                  <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2 w-[220px]">
+                                <img
+                                  src={paper.thumbnailUrl}
+                                  className="object-contain rounded-md aspect-[0.72] w-[72px] border border-gray-200"
+                                  alt={paper.title}
+                                />
+                              </Link>
+                            </div>
+                            <div className="flex flex-col text-sm tracking-tight leading-none text-slate-400 w-fit max-md:text-xs">
+                              <Link to={`/scientific-paper/${paper.id}`}>
+                                <div className="paper-details-container flex flex-col gap-2 pt-0 max-md:gap-1">
+                                  <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2 w-[220px] max-md:text-xs max-md:h-[34px] max-md:pb-1 max-md:w-full">
                                     {paper.title
                                       ? paper.title.split(" ").length > 18
                                         ? paper.title
@@ -1016,18 +1070,18 @@ const HomePage = () => {
                                         : paper.title
                                       : "No Title"}
                                   </h3>
-                                  <div className="text-gray-600 text-xs pt-0.5">
+                                  <div className="text-gray-600 text-xs pt-0.5 max-md:text-[10px]">
                                     {paper.author || "Unknown Author"}
                                   </div>
-                                  <div className="text-gray-500 text-xs pb-8">
+                                  <div className="text-gray-500 text-xs pb-1 max-md:text-[10px] max-md:pb-1 min-h-[20px] max-md:min-h-[16px]">
                                     {paper.departmentName ||
                                       "Unknown Department"}
                                   </div>
                                 </div>
                               </Link>
-                            </article>
-                          ))}
-                      </div>
+                            </div>
+                          </article>
+                        ))}
                     </div>
                   </aside>
                 </section>
@@ -1045,7 +1099,7 @@ const HomePage = () => {
             <Button
               key="back"
               onClick={handleCancel}
-              className="h-[40px] max-md:text-base"
+              className="h-[40px] max-md:h-[32px] max-md:text-xs"
             >
               Hủy
             </Button>,
@@ -1053,24 +1107,27 @@ const HomePage = () => {
               key="submit"
               type="primary"
               onClick={handleOk}
-              className="h-[40px] max-md:text-base"
+              className="h-[40px] max-md:h-[32px] max-md:text-xs"
             >
               Thêm vào mục lưu
             </Button>,
           ]}
           className="max-md:w-[95%]"
         >
-          <p>Bài nghiên cứu khoa học: {selectedPaper?.title_vn}</p>
-          <p>Các danh mục lưu trữ:</p>
+          <p className="max-md:text-sm">
+            Bài nghiên cứu khoa học: {selectedPaper?.title_vn}
+          </p>
+          <p className="max-md:text-sm">Các danh mục lưu trữ:</p>
           {isAddingCategory ? (
             <Input
               placeholder="Nhập tên danh mục mới"
               value={newCategory}
               onChange={(e) => setNewCategory(e.target.value)}
+              className="max-md:text-xs"
             />
           ) : (
             <select
-              className="p-2 border rounded-lg w-full text-sm"
+              className="p-2 border rounded-lg w-full text-sm max-md:text-xs max-md:p-1.5"
               value={selectedCategory}
               onChange={handleCategoryChange}
             >
@@ -1082,11 +1139,11 @@ const HomePage = () => {
               ))}
             </select>
           )}
-          <div className="mt-4">
+          <div className="mt-4 max-md:mt-2">
             {!isAddingCategory && (
               <Button
                 type="primary"
-                className="mt-2 h-[40px] max-md:text-base"
+                className="mt-2 h-[40px] max-md:h-[32px] max-md:text-xs max-md:mt-1"
                 onClick={handleAddCategoryClick}
               >
                 Thêm danh mục mới

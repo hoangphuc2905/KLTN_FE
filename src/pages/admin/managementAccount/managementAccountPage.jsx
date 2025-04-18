@@ -8,16 +8,24 @@ import {
   Radio,
   Checkbox,
   Tooltip,
+  Dropdown,
 } from "antd";
 import Header from "../../../components/Header";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
+import AddStudentModal from "./AddStudentModal";
+import AddLecturerModal from "./AddLecturerModal";
+import {
+  DownOutlined,
+  FileExcelOutlined,
+  EditOutlined,
+} from "@ant-design/icons";
+import * as XLSX from "xlsx";
 
 const ManagementUsers = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
   const [users, setUsers] = useState([]);
   const [lecturers, setLecturers] = useState([]);
-  const [departmentNames, setDepartmentNames] = useState({});
   const [activeTab, setActiveTab] = useState("user");
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
@@ -25,13 +33,15 @@ const ManagementUsers = () => {
   const [filterDepartment, setFilterDepartment] = useState(["Tất cả"]);
   const [filterPosition, setFilterPosition] = useState("Tất cả");
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const [lecturerCurrentPage, setLecturerCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [newRole, setNewRole] = useState([]);
+  const departmentId = localStorage.getItem("department");
 
   const filterRef = useRef(null);
   const departmentFilterRef = useRef(null);
@@ -40,6 +50,195 @@ const ManagementUsers = () => {
   const navigate = useNavigate();
 
   const [roleOptions, setRoleOptions] = useState([]);
+
+  const [isStudentModalVisible, setIsStudentModalVisible] = useState(false);
+  const [isLecturerModalVisible, setIsLecturerModalVisible] = useState(false);
+
+  const [excelData, setExcelData] = useState([]);
+  const [isExcelModalVisible, setIsExcelModalVisible] = useState(false);
+
+  const reloadData = async () => {
+    try {
+      if (userRole === "admin") {
+        const lecturersData = await userApi.getAllLecturers();
+        const students = await userApi.getAllStudents();
+        setUsers(students);
+        setLecturers(lecturersData);
+      } else if (
+        [
+          "head_of_department",
+          "deputy_head_of_department",
+          "department_in_charge",
+        ].includes(userRole)
+      ) {
+        if (!departmentId) {
+          console.error("Department ID is missing in localStorage");
+          return;
+        }
+        const data = await userApi.getLecturerAndStudentByDepartment(
+          departmentId
+        );
+        setUsers(data.students || []);
+        setLecturers(data.lecturers || []);
+      }
+    } catch (error) {
+      console.error("Error reloading data:", error);
+    }
+  };
+
+  const handleAddStudent = async () => {
+    setIsStudentModalVisible(true);
+    await reloadData(); // Reload data after adding a student
+  };
+
+  const handleAddLecturer = async () => {
+    setIsLecturerModalVisible(true);
+    await reloadData(); // Reload data after adding a lecturer
+  };
+
+  const handleExcelUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        setExcelData(jsonData);
+        setIsExcelModalVisible(true);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const handleExcelSave = async () => {
+    try {
+      const fileInput =
+        activeTab === "user"
+          ? document.getElementById("studentExcelInput")
+          : document.getElementById("lecturerExcelInput");
+      const file = fileInput?.files[0];
+      if (!file) {
+        message.error("Vui lòng chọn tệp Excel!");
+        return;
+      }
+
+      if (!departmentId) {
+        message.error("Không tìm thấy thông tin khoa trong localStorage!");
+        return;
+      }
+
+      const validatedExcelData = excelData.map((row) => {
+        if (!row.lecturer_id && activeTab === "lecturer") {
+          throw new Error("Dữ liệu Excel thiếu mã giảng viên!");
+        }
+        if (!row.student_id && activeTab === "user") {
+          throw new Error("Dữ liệu Excel thiếu mã sinh viên!");
+        }
+
+        return {
+          ...row,
+          department: departmentId,
+        };
+      });
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append(
+        "data",
+        JSON.stringify({
+          [activeTab === "user" ? "students" : "lecturers"]: validatedExcelData, // Send appropriate data
+        })
+      );
+
+      const response =
+        activeTab === "user"
+          ? await userApi.importStudentsFromExcel(formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            })
+          : await userApi.importLecturersFromExcel(formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            });
+
+      console.log("API Response:", response.data);
+      message.success("Dữ liệu đã được lưu thành công!");
+      setIsExcelModalVisible(false);
+      fileInput.value = "";
+
+      await reloadData();
+    } catch (error) {
+      console.error("Error importing data from Excel:", error);
+      message.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Lỗi khi lưu dữ liệu từ Excel!"
+      );
+    }
+  };
+
+  const handleExcelCancel = () => {
+    setIsExcelModalVisible(false);
+  };
+
+  const handleExcelCellChange = (rowIndex, key, value) => {
+    setExcelData((prevData) =>
+      prevData.map((row, index) =>
+        index === rowIndex ? { ...row, [key]: value } : row
+      )
+    );
+  };
+
+  const handleStudentModalCancel = () => {
+    setIsStudentModalVisible(false);
+  };
+
+  const handleLecturerModalCancel = () => {
+    setIsLecturerModalVisible(false);
+  };
+
+  const studentMenuItems = [
+    {
+      key: "1",
+      icon: <FileExcelOutlined />,
+      label: (
+        <span
+          onClick={() => document.getElementById("studentExcelInput").click()}
+        >
+          Từ Excel
+        </span>
+      ),
+    },
+    {
+      key: "2",
+      icon: <EditOutlined />,
+      label: <span onClick={handleAddStudent}>Thủ công</span>,
+    },
+  ];
+
+  const lecturerMenuItems = [
+    {
+      key: "1",
+      icon: <FileExcelOutlined />,
+      label: (
+        <span
+          onClick={() => document.getElementById("lecturerExcelInput").click()}
+        >
+          Từ Excel
+        </span>
+      ),
+    },
+    {
+      key: "2",
+      icon: <EditOutlined />,
+      label: <span onClick={handleAddLecturer}>Thủ công</span>,
+    },
+  ];
 
   const roleMapping = {
     admin: "Quản trị viên",
@@ -107,8 +306,6 @@ const ManagementUsers = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const departmentId = localStorage.getItem("department");
-
         if (userRole === "admin") {
           const lecturersData = await userApi.getAllLecturers();
           const students = await userApi.getAllStudents();
@@ -141,39 +338,6 @@ const ManagementUsers = () => {
 
     fetchData();
   }, [userRole]);
-
-  useEffect(() => {
-    const fetchDepartmentNames = async () => {
-      try {
-        const uniqueDepartmentIds = [
-          ...new Set([...users, ...lecturers].map((user) => user.department)),
-        ];
-
-        const departmentData = {};
-        for (const departmentId of uniqueDepartmentIds) {
-          if (typeof departmentId === "object" && departmentId._id) {
-            const department = await userApi.getDepartmentById(
-              departmentId._id
-            );
-            departmentData[departmentId._id] = department.department_name;
-          } else if (typeof departmentId === "string") {
-            const department = await userApi.getDepartmentById(departmentId);
-            departmentData[departmentId] = department.department_name;
-          } else {
-            console.warn("Invalid departmentId:", departmentId);
-          }
-        }
-
-        setDepartmentNames(departmentData);
-      } catch (error) {
-        console.error("Lỗi khi lấy tên khoa:", error);
-      }
-    };
-
-    if (users.length > 0 || lecturers.length > 0) {
-      fetchDepartmentNames();
-    }
-  }, [users, lecturers]);
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -463,8 +627,11 @@ const ManagementUsers = () => {
   const uniqueDepartments = [
     ...new Set(
       displayedUsers.map((user) => {
-        if (typeof user.department === "object" && user.department._id) {
-          return user.department._id;
+        if (
+          typeof user.department === "object" &&
+          user.department.department_name
+        ) {
+          return user.department.department_name; // Use department_name directly
         }
         return user.department;
       })
@@ -475,9 +642,9 @@ const ManagementUsers = () => {
   // const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
 
   const filteredUsers = displayedUsers.filter((user) => {
-    const userDepartmentId =
-      typeof user.department === "object" && user.department._id
-        ? user.department._id
+    const userDepartmentName =
+      typeof user.department === "object" && user.department.department_name
+        ? user.department.department_name
         : user.department;
 
     return (
@@ -486,7 +653,7 @@ const ManagementUsers = () => {
         (activeTab === "user" && user.student_id.includes(filterId)) ||
         (activeTab === "lecturer" && user.lecturer_id.includes(filterId))) &&
       (filterDepartment.includes("Tất cả") ||
-        filterDepartment.includes(userDepartmentId)) &&
+        filterDepartment.includes(userDepartmentName)) &&
       (filterPosition === "Tất cả" || user.position === filterPosition) &&
       (filterStatus.includes("Tất cả") ||
         filterStatus.includes(user.isActive ? "Hoạt động" : "Không hoạt động"))
@@ -509,9 +676,24 @@ const ManagementUsers = () => {
             title: "STT",
             dataIndex: "id",
             key: "id",
-            render: (text, record, index) => index + 1,
+            render: (text, record, index) =>
+              (userCurrentPage - 1) * itemsPerPage + index + 1, // Adjust index for user tab
             width: 65,
             fixed: "left",
+          },
+          {
+            title: "MSGV",
+            dataIndex: "student_id",
+            key: "student_id",
+            width: 150,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (student_id) => (
+              <Tooltip placement="topLeft" title={student_id}>
+                {student_id}
+              </Tooltip>
+            ),
           },
           {
             title: "HỌ VÀ TÊN",
@@ -539,27 +721,13 @@ const ManagementUsers = () => {
               const deptName =
                 typeof department === "object" && department.department_name
                   ? department.department_name
-                  : departmentNames[department] || "Đang tải...";
+                  : department.department_name || "Đang tải...";
               return (
                 <Tooltip placement="topLeft" title={deptName}>
                   {deptName}
                 </Tooltip>
               );
             },
-          },
-          {
-            title: "MSSV",
-            dataIndex: "student_id",
-            key: "student_id",
-            width: 150,
-            ellipsis: {
-              showTitle: false,
-            },
-            render: (student_id) => (
-              <Tooltip placement="topLeft" title={student_id}>
-                {student_id}
-              </Tooltip>
-            ),
           },
           {
             title: "TRẠNG THÁI",
@@ -608,7 +776,8 @@ const ManagementUsers = () => {
             title: "STT",
             dataIndex: "id",
             key: "id",
-            render: (text, record, index) => index + 1,
+            render: (text, record, index) =>
+              (lecturerCurrentPage - 1) * itemsPerPage + index + 1, // Adjust index for lecturer tab
             width: 65,
             fixed: "left",
           },
@@ -652,7 +821,7 @@ const ManagementUsers = () => {
               const deptName =
                 typeof department === "object" && department.department_name
                   ? department.department_name
-                  : departmentNames[department] || "Đang tải...";
+                  : department.department_name || "Đang tải...";
               return (
                 <Tooltip placement="topLeft" title={deptName}>
                   {deptName}
@@ -725,10 +894,10 @@ const ManagementUsers = () => {
             width: 100,
             fixed: "right",
             render: (text, record) => {
-              const isHeadOfDepartment = record.roles.some(
+              const isHeadOfDepartment = record.roles?.some(
                 (role) => role.role_name === "head_of_department"
               );
-              const isDeputyHeadOfDepartment = record.roles.some(
+              const isDeputyHeadOfDepartment = record.roles?.some(
                 (role) => role.role_name === "deputy_head_of_department"
               );
 
@@ -802,9 +971,7 @@ const ManagementUsers = () => {
               ? "Chọn khoa"
               : filterDepartment.length === uniqueDepartments.length
               ? "Tất cả"
-              : filterDepartment
-                  .map((dept) => departmentNames[dept] || dept)
-                  .join(", ")}
+              : filterDepartment.join(", ")}
           </button>
           {showDepartmentFilter && (
             <div
@@ -829,7 +996,7 @@ const ManagementUsers = () => {
               </Checkbox>
               <Checkbox.Group
                 options={uniqueDepartments.map((department) => ({
-                  label: departmentNames[department] || department,
+                  label: department,
                   value: department,
                 }))}
                 value={filterDepartment}
@@ -858,6 +1025,7 @@ const ManagementUsers = () => {
             value={filterPosition}
             onChange={(value) => setFilterPosition(value)}
             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+            key="degree-select"
           >
             {uniquePositions.map((position) => (
               <Select.Option key={position} value={position}>
@@ -935,6 +1103,9 @@ const ManagementUsers = () => {
     </form>
   );
 
+  const totalStudents = users.length;
+  const totalLecturers = lecturers.length;
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -960,32 +1131,55 @@ const ManagementUsers = () => {
             </span>
           </div>
         </div>
-
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div
-            className="flex border-b"
+            className="flex justify-between items-center border-b"
             style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
           >
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "user"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("user")}
-            >
-              Sinh viên
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "lecturer"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("lecturer")}
-            >
-              Giảng viên
-            </button>
+            <div className="flex gap-2">
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "user"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("user")}
+              >
+                Sinh viên ({totalStudents})
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "lecturer"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("lecturer")}
+              >
+                Giảng viên ({totalLecturers})
+              </button>
+            </div>
+            <div>
+              {userRole !== "admin" &&
+                (activeTab === "user" ? (
+                  <Dropdown
+                    menu={{ items: studentMenuItems }}
+                    trigger={["click"]}
+                  >
+                    <button className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs flex items-center gap-2">
+                      Thêm sinh viên <DownOutlined />
+                    </button>
+                  </Dropdown>
+                ) : (
+                  <Dropdown
+                    menu={{ items: lecturerMenuItems }}
+                    trigger={["click"]}
+                  >
+                    <button className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs flex items-center gap-2">
+                      Thêm giảng viên <DownOutlined />
+                    </button>
+                  </Dropdown>
+                ))}
+            </div>
           </div>
         </div>
 
@@ -1016,10 +1210,16 @@ const ManagementUsers = () => {
                   columns={columns}
                   dataSource={filteredUsers}
                   pagination={{
-                    current: currentPage,
+                    current:
+                      activeTab === "user"
+                        ? userCurrentPage
+                        : lecturerCurrentPage,
                     pageSize: itemsPerPage,
                     total: filteredUsers.length,
-                    onChange: (page) => setCurrentPage(page),
+                    onChange: (page) =>
+                      activeTab === "user"
+                        ? setUserCurrentPage(page)
+                        : setLecturerCurrentPage(page),
                   }}
                   rowKey={(record) =>
                     record._id || record.student_id || record.lecturer_id
@@ -1040,6 +1240,21 @@ const ManagementUsers = () => {
           </div>
         </div>
       </div>
+
+      <input
+        type="file"
+        id="studentExcelInput"
+        accept=".xlsx, .xls"
+        style={{ display: "none" }}
+        onChange={handleExcelUpload}
+      />
+      <input
+        type="file"
+        id="lecturerExcelInput"
+        accept=".xlsx, .xls"
+        style={{ display: "none" }}
+        onChange={handleExcelUpload}
+      />
 
       <Modal
         title={`Cập nhật trạng thái - ${
@@ -1080,6 +1295,62 @@ const ManagementUsers = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title="Thêm sinh viên"
+        visible={isStudentModalVisible}
+        onCancel={handleStudentModalCancel}
+        footer={null}
+      >
+        <AddStudentModal
+          onClose={handleStudentModalCancel}
+          studentData={{}} // Pass an empty object or appropriate data to avoid undefined
+        />
+      </Modal>
+
+      <Modal
+        title="Thêm giảng viên"
+        visible={isLecturerModalVisible}
+        onCancel={handleLecturerModalCancel}
+        footer={null}
+      >
+        <AddLecturerModal
+          onClose={handleLecturerModalCancel}
+          lecturerData={{}} // Pass an empty object or appropriate data to avoid undefined
+        />
+      </Modal>
+
+      <Modal
+        title="Xem và chỉnh sửa dữ liệu Excel"
+        visible={isExcelModalVisible}
+        onOk={handleExcelSave}
+        onCancel={handleExcelCancel}
+        width={800}
+      >
+        <Table
+          dataSource={excelData}
+          columns={
+            excelData.length > 0
+              ? Object.keys(excelData[0]).map((key) => ({
+                  title: key,
+                  dataIndex: key,
+                  key,
+                  render: (text, record, index) => (
+                    <Input
+                      value={text}
+                      onChange={(e) =>
+                        handleExcelCellChange(index, key, e.target.value)
+                      }
+                    />
+                  ),
+                }))
+              : []
+          }
+          rowKey={(record, index) => index}
+          pagination={false}
+          scroll={{ x: true }}
+        />
       </Modal>
     </div>
   );

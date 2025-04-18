@@ -19,7 +19,6 @@ const userApi = {
   getWorkProcesses: async (user_id) => {
     try {
       const response = await axios.get(`${API_URL}/userworks/${user_id}`);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching work processes:", error);
@@ -30,7 +29,6 @@ const userApi = {
   getWorkUnitById: async (work_unit_id) => {
     try {
       const response = await axios.get(`${API_URL}/workUnits/${work_unit_id}`);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching work unit:", error);
@@ -41,7 +39,6 @@ const userApi = {
   createWorkUnit: async (workUnitData) => {
     try {
       const response = await axios.post(`${API_URL}/workUnits`, workUnitData);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating work unit:", error);
@@ -52,7 +49,6 @@ const userApi = {
   createUserWork: async (userWorkData) => {
     try {
       const response = await axios.post(`${API_URL}/userworks`, userWorkData);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating user work:", error);
@@ -63,7 +59,6 @@ const userApi = {
   createFormula: async (formulaData) => {
     try {
       const response = await axios.post(`${API_URL}/formulas`, formulaData);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating formula:", error);
@@ -74,7 +69,6 @@ const userApi = {
   getUserWorksByUserId: async (user_id) => {
     try {
       const response = await axios.get(`${API_URL}/userworks/${user_id}`);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching user works:", error);
@@ -89,7 +83,6 @@ const userApi = {
         `${API_URL}/formulas/update-by-date-range?startDate=${startDate}&endDate=${endDate}`,
         formulaData
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error updating formula:", error);
@@ -103,7 +96,6 @@ const userApi = {
         `${API_URL}/formulas/update/${formulaId}`,
         formulaData
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error updating formula:", error);
@@ -117,7 +109,6 @@ const userApi = {
         `${API_URL}/authorScores/input`,
         inputData
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error calculating score:", error);
@@ -135,7 +126,6 @@ const userApi = {
           endDate,
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching formulas:", error);
@@ -147,7 +137,6 @@ const userApi = {
   getAllFormula: async () => {
     try {
       const response = await axios.get(`${API_URL}/formulas`);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching date ranges:", error);
@@ -159,7 +148,6 @@ const userApi = {
   createAttribute: async (attributeData) => {
     try {
       const response = await axios.post(`${API_URL}/attributes`, attributeData);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating attribute:", error);
@@ -174,7 +162,6 @@ const userApi = {
         `${API_URL}/attributes/${name}`,
         attributeData
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error updating attribute:", error);
@@ -186,7 +173,6 @@ const userApi = {
   getAllAttributes: async () => {
     try {
       const response = await axios.get(`${API_URL}/attributes`);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching attributes:", error);
@@ -212,7 +198,6 @@ const userApi = {
   deleteAttributeByName: async (name) => {
     try {
       const response = await axios.delete(`${API_URL}/attributes/${name}`);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error deleting attribute:", error);
@@ -226,7 +211,6 @@ const userApi = {
       const response = await axios.delete(
         `${API_URL}/formulas?startDate=${startDate}&endDate=${endDate}`
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error deleting formula:", error);
@@ -239,7 +223,6 @@ const userApi = {
       const response = await axios.post(`${API_URL}/formulas/add-year`, {
         year,
       });
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error adding new year:", error);
@@ -250,7 +233,6 @@ const userApi = {
   createPaperType: async (paperTypeData) => {
     try {
       const response = await axios.post(`${API_URL}/papertypes`, paperTypeData);
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error creating paper type:", error);
@@ -261,7 +243,7 @@ const userApi = {
   getAllPaperTypes: async () => {
     try {
       const response = await axios.get(`${API_URL}/papertypes`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching paper types:", error);
@@ -275,7 +257,7 @@ const userApi = {
         `${API_URL}/papertypes/${paperTypeData._id}`,
         paperTypeData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error updating paper type:", error);
@@ -289,7 +271,7 @@ const userApi = {
         `${API_URL}/papergroups`,
         paperGroupData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error creating paper group:", error);
@@ -300,7 +282,7 @@ const userApi = {
   getAllPaperGroups: async () => {
     try {
       const response = await axios.get(`${API_URL}/papergroups`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching paper groups:", error);
@@ -314,7 +296,7 @@ const userApi = {
         `${API_URL}/papergroups/${paperGroupData._id}`,
         paperGroupData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error updating paper group:", error);
@@ -325,7 +307,7 @@ const userApi = {
   getAllLecturers: async () => {
     try {
       const response = await axios.get(`${API_URL}/lecturers`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching lecturers:", error);
@@ -336,7 +318,7 @@ const userApi = {
   getAllStudents: async () => {
     try {
       const response = await axios.get(`${API_URL}/students`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching students:", error);
@@ -347,7 +329,7 @@ const userApi = {
   getDepartmentById: async (department) => {
     try {
       const response = await axios.get(`${API_URL}/departments/${department}`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching department:", error);
@@ -358,7 +340,7 @@ const userApi = {
   getAllDepartments: async () => {
     try {
       const response = await axios.get(`${API_URL}/departments`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching departments:", error);
@@ -372,7 +354,6 @@ const userApi = {
         `${API_URL}/lecturers/lecturers-and-students/${department}`
       );
 
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching users by department:", error);
@@ -386,7 +367,7 @@ const userApi = {
         `${API_URL}/lecturers/status/${lecturer_id}`,
         { isActive }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error updating lecturer status:", error);
@@ -400,7 +381,7 @@ const userApi = {
         `${API_URL}/students/status/${student_id}`,
         { isActive }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error updating student status:", error);
@@ -415,7 +396,7 @@ const userApi = {
         lecturerId,
         newRole,
       });
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error assigning role:", error);
@@ -430,7 +411,7 @@ const userApi = {
         lecturerId,
         role,
       });
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error deleting role:", error);
@@ -441,7 +422,7 @@ const userApi = {
   getAllRoles: async () => {
     try {
       const response = await axios.get(`${API_URL}/roles`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching roles:", error);
@@ -452,7 +433,7 @@ const userApi = {
   getLecturerById: async (lecturer_id) => {
     try {
       const response = await axios.get(`${API_URL}/lecturers/${lecturer_id}`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching lecturer:", error);
@@ -462,7 +443,7 @@ const userApi = {
   getStudentById: async (student_id) => {
     try {
       const response = await axios.get(`${API_URL}/students/${student_id}`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching student:", error);
@@ -475,7 +456,7 @@ const userApi = {
       const response = await axios.get(`${API_URL}/scientificPapers`, {
         params: { academicYear }, // Thêm tham số academicYear vào query string
       });
-      console.log("API Response:", response.data);
+
       return response.data; // Return only the data property
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
@@ -503,7 +484,7 @@ const userApi = {
       const response = await axios.get(
         `${API_URL}/scientificPapers/${paper_id}`
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching scientific paper:", error);
@@ -517,7 +498,7 @@ const userApi = {
         `${API_URL}/scientificPapers/${paper_id}`,
         paperData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error updating scientific paper:", error);
@@ -533,7 +514,7 @@ const userApi = {
           params: { academicYear }, // Add academicYear to query string
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
@@ -546,7 +527,7 @@ const userApi = {
       const response = await axios.get(
         `${API_URL}/paperauthor/paper/${paper_id}`
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching authors:", error);
@@ -569,7 +550,6 @@ const userApi = {
         }
       );
 
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error(
@@ -591,7 +571,6 @@ const userApi = {
         },
       });
 
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error(
@@ -608,7 +587,7 @@ const userApi = {
         `${API_URL}/scientificPapers`,
         paperData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error creating scientific paper:", error);
@@ -619,7 +598,7 @@ const userApi = {
   createMessage: async (messageData) => {
     try {
       const response = await axios.post(`${API_URL}/messages`, messageData);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error creating message:", error);
@@ -632,7 +611,7 @@ const userApi = {
       const response = await axios.get(
         `${API_URL}/messages/receiver/${receiverId}`
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching messages:", error);
@@ -646,7 +625,7 @@ const userApi = {
         `${API_URL}/messages/read/${messageId}`,
         {}
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error marking message as read:", error);
@@ -660,7 +639,7 @@ const userApi = {
         `${API_URL}/scientificPapers/status/${paperId}`,
         { status }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error updating scientific paper status:", error);
@@ -674,7 +653,7 @@ const userApi = {
         `${API_URL}/paperdownload`,
         paperDownloadData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error creating paper download:", error);
@@ -687,7 +666,7 @@ const userApi = {
       const response = await axios.get(
         `${API_URL}/paperdownload/count/${paperId}`
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching download count:", error);
@@ -698,7 +677,7 @@ const userApi = {
   createPaperView: async (paperViewData) => {
     try {
       const response = await axios.post(`${API_URL}/paperview`, paperViewData);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error creating paper view:", error);
@@ -709,7 +688,7 @@ const userApi = {
   getViewCountByPaperId: async (paperId) => {
     try {
       const response = await axios.get(`${API_URL}/paperview/count/${paperId}`);
-      console.log("API Response:", response.data);
+
       return response.data; // Return the response data
     } catch (error) {
       console.error("Error fetching view count:", error);
@@ -720,7 +699,7 @@ const userApi = {
   getCollectionsByUserId: async (userId) => {
     try {
       const response = await axios.get(`${API_URL}/papercollections/${userId}`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching collections:", error);
@@ -733,7 +712,7 @@ const userApi = {
         `${API_URL}/papercollections`,
         collectionData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error creating collection:", error);
@@ -748,7 +727,6 @@ const userApi = {
         payload
       );
 
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error adding paper to collection:", error);
@@ -762,7 +740,7 @@ const userApi = {
         `${API_URL}/papercollections/removepaper`,
         payload
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error removing paper from collection:", error);
@@ -776,7 +754,7 @@ const userApi = {
         `${API_URL}/papercollections/${collectionId}`,
         collectionData
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error updating collection:", error);
@@ -789,7 +767,7 @@ const userApi = {
       const response = await axios.delete(
         `${API_URL}/papercollections/${collectionId}`
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error deleting collection:", error);
@@ -802,7 +780,6 @@ const userApi = {
       const response = await axios.get(
         `${API_URL}/papercollections/check/${userId}/${paperId}`
       );
-      console.log("API Response for isPaperInCollection:", response.data); // Debugging log
       return response.data;
     } catch (error) {
       console.error("Error checking paper in collection:", error);
@@ -815,7 +792,6 @@ const userApi = {
       const response = await axios.get(
         `${API_URL}/scientificPapers/top5-newest`
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching top 5 newest scientific papers:", error);
@@ -831,7 +807,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error(
@@ -850,7 +825,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching total papers by author ID:", error);
@@ -865,7 +839,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching total views by author ID:", error);
@@ -880,7 +853,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching total downloads by author ID:", error);
@@ -895,7 +867,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching total points by author ID:", error);
@@ -910,7 +881,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching top 5 papers by author ID:", error);
@@ -926,7 +896,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error(
@@ -945,7 +914,6 @@ const userApi = {
           params: { academicYear }, // Pass academicYear as a query parameter
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error(
@@ -977,7 +945,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics by department ID:", error);
@@ -1009,7 +977,6 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics for all:", error);
@@ -1028,7 +995,7 @@ const userApi = {
           params: { academicYear }, // Pass academicYear as a query parameter
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error(
@@ -1044,7 +1011,7 @@ const userApi = {
       const response = await axios.get(`${API_URL}/statistics/by-all-group`, {
         params: { academicYear },
       });
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics by group ID:", error);
@@ -1060,7 +1027,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics by department ID:", error);
@@ -1074,7 +1041,6 @@ const userApi = {
         params: { academicYear },
       });
 
-      console.log("API Response:", response.data);
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics by type:", error);
@@ -1090,7 +1056,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics by department ID:", error);
@@ -1106,7 +1072,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching top 5 authors by department ID:", error);
@@ -1122,7 +1088,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics by type:", error);
@@ -1137,7 +1103,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching statistics by user ID:", error);
@@ -1153,7 +1119,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching top 5 papers by author ID:", error);
@@ -1169,7 +1135,7 @@ const userApi = {
           params: { academicYear },
         }
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching top 5 paper types by user ID:", error);
@@ -1180,7 +1146,7 @@ const userApi = {
   getAcademicYears: async () => {
     try {
       const response = await axios.get(`${API_URL}/academic-years`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching academic years:", error);
@@ -1191,7 +1157,7 @@ const userApi = {
   getRecommendations: async (paperId) => {
     try {
       const response = await axios.get(`${API_URL}/recommendations/${paperId}`);
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching recommendations:", error);
@@ -1204,7 +1170,7 @@ const userApi = {
       const response = await axios.get(
         `${API_URL}/recommendations/user-history/${userId}`
       );
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error fetching recommendations by user history:", error);
@@ -1219,11 +1185,90 @@ const userApi = {
         department,
         criteria,
       });
-      console.log("API Response:", response.data);
+
       return response.data;
     } catch (error) {
       console.error("Error performing semantic search:", error);
       throw error.response?.data?.message || "Lỗi kết nối đến server";
+    }
+  },
+
+  createStudent: async (studentData) => {
+    try {
+      const response = await axios.post(`${API_URL}/students`, studentData);
+
+      return response.data;
+    } catch (error) {
+      console.error("Error creating student:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  importStudentsFromExcel: async (formData) => {
+    try {
+      if (!formData) {
+        throw new Error("FormData không được cung cấp");
+      }
+
+      console.log("FormData entries:", [...formData.entries()]);
+
+      const response = await axios.post(
+        `${API_URL}/students/import`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error importing students from Excel:", error);
+      if (error.response) {
+        throw error.response.data;
+      }
+      throw new Error("Lỗi kết nối đến server");
+    }
+  },
+
+  importLecturersFromExcel: async (formData) => {
+    try {
+      if (!formData) {
+        throw new Error("FormData không được cung cấp");
+      }
+
+      console.log("FormData entries:", [...formData.entries()]);
+
+      const response = await axios.post(
+        `${API_URL}/lecturers/import`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error importing students from Excel:", error);
+      if (error.response) {
+        throw error.response.data;
+      }
+      throw new Error("Lỗi kết nối đến server");
+    }
+  },
+
+  createLecturer: async (lecturerData) => {
+    try {
+      const response = await axios.post(`${API_URL}/lecturers`, lecturerData);
+
+      return response.data;
+    } catch (error) {
+      console.error("Error creating lecturer:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
 };

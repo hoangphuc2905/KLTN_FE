@@ -5,6 +5,7 @@ import { Input, Table, Button, Modal, message } from "antd";
 import userApi from "../../../api/api";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { FilePdfOutlined } from "@ant-design/icons"; // Import the Eye and PDF icons
 
 const { TextArea } = Input;
 
@@ -408,11 +409,11 @@ const DetailArticlePage = () => {
                             </p>
                           </div>
                         </div>
-                        <div className="flex mt-4 items-center flex-nowrap overflow-hidden whitespace-nowrap">
+                        <div className="flex mt-4 items-start flex-nowrap">
                           <p className="text-sm text-gray-500 flex-shrink-0">
                             Từ khóa:
                           </p>
-                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                          <p className="text-sm ml-2 font-medium text-[#174371] break-all">
                             {paper.keywords?.join(", ") || "Không có dữ liệu"}
                           </p>
                         </div>
@@ -454,20 +455,39 @@ const DetailArticlePage = () => {
                   <div>
                     <div className="flex items-center mb-4">
                       <p className="text-sm text-gray-500">File:</p>
-                      <p className="text-sm ml-2 font-medium text-[#174371]">
-                        {paper.file}
-                      </p>
+                      {paper.file ? (
+                        <Button
+                          type="link"
+                          icon={
+                            <FilePdfOutlined
+                              style={{ fontSize: "18px", color: "#FF4D4F" }}
+                            />
+                          }
+                          onClick={() => window.open(paper.file, "_blank")}
+                          className="ml-2"
+                        >
+                          Xem File
+                        </Button>
+                      ) : (
+                        <p className="text-sm ml-2 font-medium text-gray-500">
+                          Không có dữ liệu
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center mb-4">
-                      <p className="text-sm text-gray-500">Link công bố:</p>
-                      <a
-                        href={paper.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm ml-2 font-medium text-[#174371] hover:underline"
-                      >
-                        {paper.link || "Không có dữ liệu"}
-                      </a>
+                      <p className="text-sm text-gray-500 flex-shrink-0">
+                        Link công bố:
+                      </p>
+                      <div className="ml-2 break-all">
+                        <a
+                          href={paper.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-medium text-[#174371] hover:underline"
+                        >
+                          {paper.link || "Không có dữ liệu"}
+                        </a>
+                      </div>
                     </div>
                     <div className="flex items-center mb-4">
                       <p className="text-sm text-gray-500">Số DOI:</p>
