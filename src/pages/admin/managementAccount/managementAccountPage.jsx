@@ -8,11 +8,19 @@ import {
   Radio,
   Checkbox,
   Tooltip,
+  Dropdown,
 } from "antd";
 import Header from "../../../components/Header";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 import AddStudentModal from "./AddStudentModal";
+import AddLecturerModal from "./AddLecturerModal";
+import {
+  DownOutlined,
+  FileExcelOutlined,
+  EditOutlined,
+} from "@ant-design/icons";
+import * as XLSX from "xlsx";
 
 const ManagementUsers = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
@@ -33,6 +41,7 @@ const ManagementUsers = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [newStatus, setNewStatus] = useState("");
   const [newRole, setNewRole] = useState([]);
+  const departmentId = localStorage.getItem("department");
 
   const filterRef = useRef(null);
   const departmentFilterRef = useRef(null);
@@ -45,12 +54,144 @@ const ManagementUsers = () => {
   const [isStudentModalVisible, setIsStudentModalVisible] = useState(false);
   const [isLecturerModalVisible, setIsLecturerModalVisible] = useState(false);
 
-  const handleAddStudent = () => {
-    setIsStudentModalVisible(true);
+  const [excelData, setExcelData] = useState([]);
+  const [isExcelModalVisible, setIsExcelModalVisible] = useState(false);
+
+  const reloadData = async () => {
+    try {
+      if (userRole === "admin") {
+        const lecturersData = await userApi.getAllLecturers();
+        const students = await userApi.getAllStudents();
+        setUsers(students);
+        setLecturers(lecturersData);
+      } else if (
+        [
+          "head_of_department",
+          "deputy_head_of_department",
+          "department_in_charge",
+        ].includes(userRole)
+      ) {
+        if (!departmentId) {
+          console.error("Department ID is missing in localStorage");
+          return;
+        }
+        const data = await userApi.getLecturerAndStudentByDepartment(
+          departmentId
+        );
+        setUsers(data.students || []);
+        setLecturers(data.lecturers || []);
+      }
+    } catch (error) {
+      console.error("Error reloading data:", error);
+    }
   };
 
-  const handleAddLecturer = () => {
+  const handleAddStudent = async () => {
+    setIsStudentModalVisible(true);
+    await reloadData(); // Reload data after adding a student
+  };
+
+  const handleAddLecturer = async () => {
     setIsLecturerModalVisible(true);
+    await reloadData(); // Reload data after adding a lecturer
+  };
+
+  const handleExcelUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const data = new Uint8Array(event.target.result);
+        const workbook = XLSX.read(data, { type: "array" });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        setExcelData(jsonData);
+        setIsExcelModalVisible(true);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
+  const handleExcelSave = async () => {
+    try {
+      const fileInput =
+        activeTab === "user"
+          ? document.getElementById("studentExcelInput")
+          : document.getElementById("lecturerExcelInput");
+      const file = fileInput?.files[0];
+      if (!file) {
+        message.error("Vui lòng chọn tệp Excel!");
+        return;
+      }
+
+      if (!departmentId) {
+        message.error("Không tìm thấy thông tin khoa trong localStorage!");
+        return;
+      }
+
+      const validatedExcelData = excelData.map((row) => {
+        if (!row.lecturer_id && activeTab === "lecturer") {
+          throw new Error("Dữ liệu Excel thiếu mã giảng viên!");
+        }
+        if (!row.student_id && activeTab === "user") {
+          throw new Error("Dữ liệu Excel thiếu mã sinh viên!");
+        }
+
+        return {
+          ...row,
+          department: departmentId,
+        };
+      });
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append(
+        "data",
+        JSON.stringify({
+          [activeTab === "user" ? "students" : "lecturers"]: validatedExcelData, // Send appropriate data
+        })
+      );
+
+      const response =
+        activeTab === "user"
+          ? await userApi.importStudentsFromExcel(formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            })
+          : await userApi.importLecturersFromExcel(formData, {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+            });
+
+      console.log("API Response:", response.data);
+      message.success("Dữ liệu đã được lưu thành công!");
+      setIsExcelModalVisible(false);
+      fileInput.value = "";
+
+      await reloadData();
+    } catch (error) {
+      console.error("Error importing data from Excel:", error);
+      message.error(
+        error.response?.data?.message ||
+          error.message ||
+          "Lỗi khi lưu dữ liệu từ Excel!"
+      );
+    }
+  };
+
+  const handleExcelCancel = () => {
+    setIsExcelModalVisible(false);
+  };
+
+  const handleExcelCellChange = (rowIndex, key, value) => {
+    setExcelData((prevData) =>
+      prevData.map((row, index) =>
+        index === rowIndex ? { ...row, [key]: value } : row
+      )
+    );
   };
 
   const handleStudentModalCancel = () => {
@@ -60,6 +201,44 @@ const ManagementUsers = () => {
   const handleLecturerModalCancel = () => {
     setIsLecturerModalVisible(false);
   };
+
+  const studentMenuItems = [
+    {
+      key: "1",
+      icon: <FileExcelOutlined />,
+      label: (
+        <span
+          onClick={() => document.getElementById("studentExcelInput").click()}
+        >
+          Từ Excel
+        </span>
+      ),
+    },
+    {
+      key: "2",
+      icon: <EditOutlined />,
+      label: <span onClick={handleAddStudent}>Thủ công</span>,
+    },
+  ];
+
+  const lecturerMenuItems = [
+    {
+      key: "1",
+      icon: <FileExcelOutlined />,
+      label: (
+        <span
+          onClick={() => document.getElementById("lecturerExcelInput").click()}
+        >
+          Từ Excel
+        </span>
+      ),
+    },
+    {
+      key: "2",
+      icon: <EditOutlined />,
+      label: <span onClick={handleAddLecturer}>Thủ công</span>,
+    },
+  ];
 
   const roleMapping = {
     admin: "Quản trị viên",
@@ -127,8 +306,6 @@ const ManagementUsers = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const departmentId = localStorage.getItem("department");
-
         if (userRole === "admin") {
           const lecturersData = await userApi.getAllLecturers();
           const students = await userApi.getAllStudents();
@@ -717,10 +894,10 @@ const ManagementUsers = () => {
             width: 100,
             fixed: "right",
             render: (text, record) => {
-              const isHeadOfDepartment = record.roles.some(
+              const isHeadOfDepartment = record.roles?.some(
                 (role) => role.role_name === "head_of_department"
               );
-              const isDeputyHeadOfDepartment = record.roles.some(
+              const isDeputyHeadOfDepartment = record.roles?.some(
                 (role) => role.role_name === "deputy_head_of_department"
               );
 
@@ -848,6 +1025,7 @@ const ManagementUsers = () => {
             value={filterPosition}
             onChange={(value) => setFilterPosition(value)}
             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+            key="degree-select"
           >
             {uniquePositions.map((position) => (
               <Select.Option key={position} value={position}>
@@ -981,21 +1159,26 @@ const ManagementUsers = () => {
               </button>
             </div>
             <div>
-              {activeTab === "user" ? (
-                <button
-                  className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs"
-                  onClick={handleAddStudent}
-                >
-                  Thêm sinh viên
-                </button>
-              ) : (
-                <button
-                  className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs"
-                  onClick={handleAddLecturer}
-                >
-                  Thêm giảng viên
-                </button>
-              )}
+              {userRole !== "admin" &&
+                (activeTab === "user" ? (
+                  <Dropdown
+                    menu={{ items: studentMenuItems }}
+                    trigger={["click"]}
+                  >
+                    <button className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs flex items-center gap-2">
+                      Thêm sinh viên <DownOutlined />
+                    </button>
+                  </Dropdown>
+                ) : (
+                  <Dropdown
+                    menu={{ items: lecturerMenuItems }}
+                    trigger={["click"]}
+                  >
+                    <button className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs flex items-center gap-2">
+                      Thêm giảng viên <DownOutlined />
+                    </button>
+                  </Dropdown>
+                ))}
             </div>
           </div>
         </div>
@@ -1058,6 +1241,21 @@ const ManagementUsers = () => {
         </div>
       </div>
 
+      <input
+        type="file"
+        id="studentExcelInput"
+        accept=".xlsx, .xls"
+        style={{ display: "none" }}
+        onChange={handleExcelUpload}
+      />
+      <input
+        type="file"
+        id="lecturerExcelInput"
+        accept=".xlsx, .xls"
+        style={{ display: "none" }}
+        onChange={handleExcelUpload}
+      />
+
       <Modal
         title={`Cập nhật trạng thái - ${
           selectedUser?.full_name || "Người dùng"
@@ -1117,8 +1315,42 @@ const ManagementUsers = () => {
         onCancel={handleLecturerModalCancel}
         footer={null}
       >
-        {/* Add lecturer form content here */}
-        <p>Form thêm giảng viên</p>
+        <AddLecturerModal
+          onClose={handleLecturerModalCancel}
+          lecturerData={{}} // Pass an empty object or appropriate data to avoid undefined
+        />
+      </Modal>
+
+      <Modal
+        title="Xem và chỉnh sửa dữ liệu Excel"
+        visible={isExcelModalVisible}
+        onOk={handleExcelSave}
+        onCancel={handleExcelCancel}
+        width={800}
+      >
+        <Table
+          dataSource={excelData}
+          columns={
+            excelData.length > 0
+              ? Object.keys(excelData[0]).map((key) => ({
+                  title: key,
+                  dataIndex: key,
+                  key,
+                  render: (text, record, index) => (
+                    <Input
+                      value={text}
+                      onChange={(e) =>
+                        handleExcelCellChange(index, key, e.target.value)
+                      }
+                    />
+                  ),
+                }))
+              : []
+          }
+          rowKey={(record, index) => index}
+          pagination={false}
+          scroll={{ x: true }}
+        />
       </Modal>
     </div>
   );

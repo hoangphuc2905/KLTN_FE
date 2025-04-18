@@ -1237,6 +1237,77 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+  importStudentsFromExcel: async (formData) => {
+    try {
+      if (!formData) {
+        throw new Error("FormData không được cung cấp");
+      }
+
+      console.log("FormData entries:", [...formData.entries()]);
+
+      const response = await axios.post(
+        `${API_URL}/students/import`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error importing students from Excel:", error);
+      if (error.response) {
+        throw error.response.data;
+      }
+      throw new Error("Lỗi kết nối đến server");
+    }
+  },
+
+  importLecturersFromExcel: async (formData) => {
+    try {
+      if (!formData) {
+        throw new Error("FormData không được cung cấp");
+      }
+
+      console.log("FormData entries:", [...formData.entries()]);
+
+      const response = await axios.post(
+        `${API_URL}/lecturers/import`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error importing students from Excel:", error);
+      if (error.response) {
+        throw error.response.data;
+      }
+      throw new Error("Lỗi kết nối đến server");
+    }
+  },
+
+
+  createLecturer: async (lecturerData) => {
+    try {
+      const response = await axios.post(`${API_URL}/lecturers`, lecturerData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating lecturer:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
