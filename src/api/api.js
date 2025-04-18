@@ -1226,6 +1226,17 @@ const userApi = {
       throw error.response?.data?.message || "Lỗi kết nối đến server";
     }
   },
+
+  createStudent: async (studentData) => {
+    try {
+      const response = await axios.post(`${API_URL}/students`, studentData);
+      console.log("API Response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Error creating student:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;

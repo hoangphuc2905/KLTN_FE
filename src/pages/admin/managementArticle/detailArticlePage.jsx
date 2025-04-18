@@ -5,6 +5,7 @@ import { Input, Table, Button, Modal, message } from "antd";
 import userApi from "../../../api/api";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
+import { FilePdfOutlined } from "@ant-design/icons"; // Import the Eye and PDF icons
 
 const { TextArea } = Input;
 
@@ -454,9 +455,24 @@ const DetailArticlePage = () => {
                   <div>
                     <div className="flex items-center mb-4">
                       <p className="text-sm text-gray-500">File:</p>
-                      <p className="text-sm ml-2 font-medium text-[#174371]">
-                        {paper.file}
-                      </p>
+                      {paper.file ? (
+                        <Button
+                          type="link"
+                          icon={
+                            <FilePdfOutlined
+                              style={{ fontSize: "18px", color: "#FF4D4F" }}
+                            />
+                          }
+                          onClick={() => window.open(paper.file, "_blank")}
+                          className="ml-2"
+                        >
+                          Xem File
+                        </Button>
+                      ) : (
+                        <p className="text-sm ml-2 font-medium text-gray-500">
+                          Không có dữ liệu
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center mb-4">
                       <p className="text-sm text-gray-500">Link công bố:</p>
