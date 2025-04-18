@@ -1,22 +1,56 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Input, Button, Form, message, Select, DatePicker, Upload } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
+import userApi from "../../../api/api";
 
 const { Option } = Select;
 
 const AddStudentModal = ({ onClose, studentData = {} }) => {
   const [form] = Form.useForm();
+  const [departments, setDepartments] = useState([]); // State to store department data
+
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const response = await userApi.getAllDepartments(); // Fetch departments
+        setDepartments(response); // Set the department data
+      } catch (error) {
+        console.error("Error fetching departments:", error);
+        message.error("Không thể tải danh sách khoa!");
+      }
+    };
+
+    fetchDepartments();
+  }, []);
 
   const handleSubmit = async (values) => {
     try {
-      // Ensure the role is always "student"
-      const studentDataWithRole = { ...values, role: "student" };
-      console.log("Student data submitted:", studentDataWithRole);
+      // Extract the avatar file
+      const avatarFile = values.avatar?.[0]?.originFileObj;
+      if (!avatarFile) {
+        throw new Error("Vui lòng chọn ảnh đại diện hợp lệ!");
+      }
+
+      // Upload the avatar to the cloud and get the URL
+      const uploadResponse = await userApi.uploadImage(avatarFile);
+      const avatarUrl = uploadResponse.url; // Extract the URL from the response
+
+      // Ensure the role is always "student" and set score_year to 0
+      const studentDataWithRole = {
+        ...values,
+        avatar: avatarUrl, // Use the uploaded image URL
+        role: "student",
+        score_year: 0, // Explicitly set score_year to 0
+      };
+
+      // Call the createStudent API
+      await userApi.createStudent(studentDataWithRole);
+
       message.success("Thêm sinh viên thành công!");
       onClose(); // Close the modal after successful submission
     } catch (error) {
       console.error("Error adding student:", error);
-      message.error("Thêm sinh viên thất bại!");
+      message.error(error.message || "Thêm sinh viên thất bại!");
     }
   };
 
@@ -27,8 +61,9 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
         layout="vertical"
         initialValues={{
           ...studentData,
-          score_year: 0, // Default score_year to 0
-          isActive: true, // Default isActive to true
+          isActive: true,
+          role: "student",
+          score_year: 0,
         }}
         onFinish={handleSubmit}
         className="max-w-xl mx-auto"
@@ -74,6 +109,7 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
           <Select placeholder="Chọn giới tính" className="rounded-md">
             <Option value="male">Nam</Option>
             <Option value="female">Nữ</Option>
+            <Option value="other">Khác</Option>
           </Select>
         </Form.Item>
         <Form.Item
@@ -107,9 +143,15 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
         <Form.Item
           label="Khoa"
           name="department"
-          rules={[{ required: true, message: "Vui lòng nhập khoa!" }]}
+          rules={[{ required: true, message: "Vui lòng chọn khoa!" }]}
         >
-          <Input placeholder="Nhập khoa" className="rounded-md" />
+          <Select placeholder="Chọn khoa" className="rounded-md">
+            {departments.map((dept) => (
+              <Option key={dept._id} value={dept._id}>
+                {dept.department_name}
+              </Option>
+            ))}
+          </Select>
         </Form.Item>
         <Form.Item
           label="Ảnh đại diện"
@@ -127,15 +169,14 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
             <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
           </Upload>
         </Form.Item>
-        <Form.Item
-          label="Học vị"
-          name="degree"
-          rules={[{ required: true, message: "Vui lòng chọn học vị!" }]}
-        >
+        <Form.Item label="Học vị" name="degree" rules={[{ required: false }]}>
           <Select placeholder="Chọn học vị" className="rounded-md">
             <Option value="Bachelor">Cử nhân</Option>
             <Option value="Master">Thạc sĩ</Option>
             <Option value="Doctor">Tiến sĩ</Option>
+            <Option value="Egineer">Kỹ sư</Option>
+            <Option value="Professor">Giáo sư</Option>
+            <Option value="Ossociate_Professor">Phó giáo sư</Option>
           </Select>
         </Form.Item>
         <Form.Item>

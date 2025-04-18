@@ -925,6 +925,9 @@ const ManagementUsers = () => {
     </form>
   );
 
+  const totalStudents = users.length;
+  const totalLecturers = lecturers.length;
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -950,7 +953,6 @@ const ManagementUsers = () => {
             </span>
           </div>
         </div>
-
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div
             className="flex justify-between items-center border-b"
@@ -965,7 +967,7 @@ const ManagementUsers = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("user")}
               >
-                Sinh viên
+                Sinh viên ({totalStudents})
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -975,7 +977,7 @@ const ManagementUsers = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("lecturer")}
               >
-                Giảng viên
+                Giảng viên ({totalLecturers})
               </button>
             </div>
             <div>
