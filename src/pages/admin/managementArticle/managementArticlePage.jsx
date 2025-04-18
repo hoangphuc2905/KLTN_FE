@@ -324,18 +324,18 @@ const ManagementAriticle = () => {
       width: 150,
     },
     {
-      title: "CQ ĐỨNG TÊN",
+      title: "KHOA",
       dataIndex: "department",
       key: "department",
       ellipsis: {
         showTitle: false,
       },
-      render: (departmentId) => (
+      render: (department) => (
         <Tooltip
           placement="topLeft"
-          title={departments[departmentId] || "Không xác định"}
+          title={department?.department_name || "Không xác định"}
         >
-          {departments[departmentId] || "Không xác định"}
+          {department?.department_name || "Không xác định"}
         </Tooltip>
       ),
       width: 150,
@@ -816,7 +816,7 @@ const ManagementAriticle = () => {
 
                       <div className="mb-3">
                         <label className="block text-gray-700 text-xs">
-                          CQ đứng tên:
+                          Khoa
                         </label>
                         <div className="relative">
                           <button
@@ -826,7 +826,7 @@ const ManagementAriticle = () => {
                             }
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
                           >
-                            Chọn CQ đứng tên
+                            Chọn Khoa
                           </button>
                           {showInstitutionFilter && (
                             <div

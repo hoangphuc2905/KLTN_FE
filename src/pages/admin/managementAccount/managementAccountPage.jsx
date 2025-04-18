@@ -12,12 +12,12 @@ import {
 import Header from "../../../components/Header";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
+import AddStudentModal from "./AddStudentModal";
 
 const ManagementUsers = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
   const [users, setUsers] = useState([]);
   const [lecturers, setLecturers] = useState([]);
-  const [departmentNames, setDepartmentNames] = useState({});
   const [activeTab, setActiveTab] = useState("user");
   const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
@@ -25,7 +25,8 @@ const ManagementUsers = () => {
   const [filterDepartment, setFilterDepartment] = useState(["Tất cả"]);
   const [filterPosition, setFilterPosition] = useState("Tất cả");
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [userCurrentPage, setUserCurrentPage] = useState(1);
+  const [lecturerCurrentPage, setLecturerCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -40,6 +41,25 @@ const ManagementUsers = () => {
   const navigate = useNavigate();
 
   const [roleOptions, setRoleOptions] = useState([]);
+
+  const [isStudentModalVisible, setIsStudentModalVisible] = useState(false);
+  const [isLecturerModalVisible, setIsLecturerModalVisible] = useState(false);
+
+  const handleAddStudent = () => {
+    setIsStudentModalVisible(true);
+  };
+
+  const handleAddLecturer = () => {
+    setIsLecturerModalVisible(true);
+  };
+
+  const handleStudentModalCancel = () => {
+    setIsStudentModalVisible(false);
+  };
+
+  const handleLecturerModalCancel = () => {
+    setIsLecturerModalVisible(false);
+  };
 
   const roleMapping = {
     admin: "Quản trị viên",
@@ -141,39 +161,6 @@ const ManagementUsers = () => {
 
     fetchData();
   }, [userRole]);
-
-  useEffect(() => {
-    const fetchDepartmentNames = async () => {
-      try {
-        const uniqueDepartmentIds = [
-          ...new Set([...users, ...lecturers].map((user) => user.department)),
-        ];
-
-        const departmentData = {};
-        for (const departmentId of uniqueDepartmentIds) {
-          if (typeof departmentId === "object" && departmentId._id) {
-            const department = await userApi.getDepartmentById(
-              departmentId._id
-            );
-            departmentData[departmentId._id] = department.department_name;
-          } else if (typeof departmentId === "string") {
-            const department = await userApi.getDepartmentById(departmentId);
-            departmentData[departmentId] = department.department_name;
-          } else {
-            console.warn("Invalid departmentId:", departmentId);
-          }
-        }
-
-        setDepartmentNames(departmentData);
-      } catch (error) {
-        console.error("Lỗi khi lấy tên khoa:", error);
-      }
-    };
-
-    if (users.length > 0 || lecturers.length > 0) {
-      fetchDepartmentNames();
-    }
-  }, [users, lecturers]);
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -463,8 +450,11 @@ const ManagementUsers = () => {
   const uniqueDepartments = [
     ...new Set(
       displayedUsers.map((user) => {
-        if (typeof user.department === "object" && user.department._id) {
-          return user.department._id;
+        if (
+          typeof user.department === "object" &&
+          user.department.department_name
+        ) {
+          return user.department.department_name; // Use department_name directly
         }
         return user.department;
       })
@@ -475,9 +465,9 @@ const ManagementUsers = () => {
   // const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
 
   const filteredUsers = displayedUsers.filter((user) => {
-    const userDepartmentId =
-      typeof user.department === "object" && user.department._id
-        ? user.department._id
+    const userDepartmentName =
+      typeof user.department === "object" && user.department.department_name
+        ? user.department.department_name
         : user.department;
 
     return (
@@ -486,7 +476,7 @@ const ManagementUsers = () => {
         (activeTab === "user" && user.student_id.includes(filterId)) ||
         (activeTab === "lecturer" && user.lecturer_id.includes(filterId))) &&
       (filterDepartment.includes("Tất cả") ||
-        filterDepartment.includes(userDepartmentId)) &&
+        filterDepartment.includes(userDepartmentName)) &&
       (filterPosition === "Tất cả" || user.position === filterPosition) &&
       (filterStatus.includes("Tất cả") ||
         filterStatus.includes(user.isActive ? "Hoạt động" : "Không hoạt động"))
@@ -509,9 +499,24 @@ const ManagementUsers = () => {
             title: "STT",
             dataIndex: "id",
             key: "id",
-            render: (text, record, index) => index + 1,
+            render: (text, record, index) =>
+              (userCurrentPage - 1) * itemsPerPage + index + 1, // Adjust index for user tab
             width: 65,
             fixed: "left",
+          },
+          {
+            title: "MSGV",
+            dataIndex: "student_id",
+            key: "student_id",
+            width: 150,
+            ellipsis: {
+              showTitle: false,
+            },
+            render: (student_id) => (
+              <Tooltip placement="topLeft" title={student_id}>
+                {student_id}
+              </Tooltip>
+            ),
           },
           {
             title: "HỌ VÀ TÊN",
@@ -539,27 +544,13 @@ const ManagementUsers = () => {
               const deptName =
                 typeof department === "object" && department.department_name
                   ? department.department_name
-                  : departmentNames[department] || "Đang tải...";
+                  : department.department_name || "Đang tải...";
               return (
                 <Tooltip placement="topLeft" title={deptName}>
                   {deptName}
                 </Tooltip>
               );
             },
-          },
-          {
-            title: "MSSV",
-            dataIndex: "student_id",
-            key: "student_id",
-            width: 150,
-            ellipsis: {
-              showTitle: false,
-            },
-            render: (student_id) => (
-              <Tooltip placement="topLeft" title={student_id}>
-                {student_id}
-              </Tooltip>
-            ),
           },
           {
             title: "TRẠNG THÁI",
@@ -608,7 +599,8 @@ const ManagementUsers = () => {
             title: "STT",
             dataIndex: "id",
             key: "id",
-            render: (text, record, index) => index + 1,
+            render: (text, record, index) =>
+              (lecturerCurrentPage - 1) * itemsPerPage + index + 1, // Adjust index for lecturer tab
             width: 65,
             fixed: "left",
           },
@@ -652,7 +644,7 @@ const ManagementUsers = () => {
               const deptName =
                 typeof department === "object" && department.department_name
                   ? department.department_name
-                  : departmentNames[department] || "Đang tải...";
+                  : department.department_name || "Đang tải...";
               return (
                 <Tooltip placement="topLeft" title={deptName}>
                   {deptName}
@@ -802,9 +794,7 @@ const ManagementUsers = () => {
               ? "Chọn khoa"
               : filterDepartment.length === uniqueDepartments.length
               ? "Tất cả"
-              : filterDepartment
-                  .map((dept) => departmentNames[dept] || dept)
-                  .join(", ")}
+              : filterDepartment.join(", ")}
           </button>
           {showDepartmentFilter && (
             <div
@@ -829,7 +819,7 @@ const ManagementUsers = () => {
               </Checkbox>
               <Checkbox.Group
                 options={uniqueDepartments.map((department) => ({
-                  label: departmentNames[department] || department,
+                  label: department,
                   value: department,
                 }))}
                 value={filterDepartment}
@@ -963,29 +953,48 @@ const ManagementUsers = () => {
 
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div
-            className="flex border-b"
+            className="flex justify-between items-center border-b"
             style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
           >
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "user"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("user")}
-            >
-              Sinh viên
-            </button>
-            <button
-              className={`px-4 py-2 text-center text-xs ${
-                activeTab === "lecturer"
-                  ? "bg-[#00A3FF] text-white"
-                  : "bg-white text-gray-700"
-              } rounded-lg`}
-              onClick={() => setActiveTab("lecturer")}
-            >
-              Giảng viên
-            </button>
+            <div className="flex gap-2">
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "user"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("user")}
+              >
+                Sinh viên
+              </button>
+              <button
+                className={`px-4 py-2 text-center text-xs ${
+                  activeTab === "lecturer"
+                    ? "bg-[#00A3FF] text-white"
+                    : "bg-white text-gray-700"
+                } rounded-lg`}
+                onClick={() => setActiveTab("lecturer")}
+              >
+                Giảng viên
+              </button>
+            </div>
+            <div>
+              {activeTab === "user" ? (
+                <button
+                  className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs"
+                  onClick={handleAddStudent}
+                >
+                  Thêm sinh viên
+                </button>
+              ) : (
+                <button
+                  className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs"
+                  onClick={handleAddLecturer}
+                >
+                  Thêm giảng viên
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1016,10 +1025,16 @@ const ManagementUsers = () => {
                   columns={columns}
                   dataSource={filteredUsers}
                   pagination={{
-                    current: currentPage,
+                    current:
+                      activeTab === "user"
+                        ? userCurrentPage
+                        : lecturerCurrentPage,
                     pageSize: itemsPerPage,
                     total: filteredUsers.length,
-                    onChange: (page) => setCurrentPage(page),
+                    onChange: (page) =>
+                      activeTab === "user"
+                        ? setUserCurrentPage(page)
+                        : setLecturerCurrentPage(page),
                   }}
                   rowKey={(record) =>
                     record._id || record.student_id || record.lecturer_id
@@ -1080,6 +1095,28 @@ const ManagementUsers = () => {
             </div>
           </div>
         )}
+      </Modal>
+
+      <Modal
+        title="Thêm sinh viên"
+        visible={isStudentModalVisible}
+        onCancel={handleStudentModalCancel}
+        footer={null}
+      >
+        <AddStudentModal
+          onClose={handleStudentModalCancel}
+          studentData={{}} // Pass an empty object or appropriate data to avoid undefined
+        />
+      </Modal>
+
+      <Modal
+        title="Thêm giảng viên"
+        visible={isLecturerModalVisible}
+        onCancel={handleLecturerModalCancel}
+        footer={null}
+      >
+        {/* Add lecturer form content here */}
+        <p>Form thêm giảng viên</p>
       </Modal>
     </div>
   );
