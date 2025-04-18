@@ -52,6 +52,19 @@ const getChartOptions = (data) => {
       legend: {
         display: false,
       },
+      tooltip: {
+        callbacks: {
+          // Use this to customize tooltip content
+          title: function (tooltipItems) {
+            // For department chart, show full department name on hover
+            if (data.originalLabels && tooltipItems[0]) {
+              const index = tooltipItems[0].dataIndex;
+              return data.originalLabels[index] || tooltipItems[0].label;
+            }
+            return tooltipItems[0].label;
+          },
+        },
+      },
     },
     scales: {
       y: {
@@ -176,8 +189,13 @@ const Dashboard = () => {
               ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFC700"][index % 5]
           ); // Generate colors dynamically
 
+          // Format department names to add ellipsis if too long
+          const formattedLabels = labels.map((label) =>
+            label.length > 10 ? label.substring(0, 10) + "..." : label
+          );
+
           setDepartmentChartData({
-            labels,
+            labels: formattedLabels,
             datasets: [
               {
                 data,
@@ -186,6 +204,8 @@ const Dashboard = () => {
                 borderRadius: 6,
               },
             ],
+            // Store original labels for filters and tooltips
+            originalLabels: labels,
           });
         } else {
           console.error("Unexpected API response structure:", response);
@@ -217,12 +237,17 @@ const Dashboard = () => {
           selectedYear !== "Tất cả" ? selectedYear : undefined
         );
         if (response && response.data) {
-          const labels = Object.keys(response.data);
-          const data = Object.values(response.data);
+          // Get entries and sort them by value in descending order
+          const entries = Object.entries(response.data)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5); // Take only top 5
+
+          const labels = entries.map((entry) => entry[0]);
+          const data = entries.map((entry) => entry[1]);
           const backgroundColor = labels.map(
             (_, index) =>
               ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFC700"][index % 5]
-          ); // Generate colors dynamically
+          );
 
           setTop5ByFieldChartData({
             labels,
@@ -436,7 +461,7 @@ const Dashboard = () => {
         setSelectedRoles([]);
       } else {
         // Nếu chưa chọn "Tất cả" thì chọn tất cả
-        setSelectedRoles(["All", ...departmentChartData.labels]);
+        setSelectedRoles(["All", ...departmentChartData.originalLabels]);
       }
     } else {
       // Nếu click vào một mục cụ thể
@@ -454,7 +479,7 @@ const Dashboard = () => {
         ];
 
         // Nếu đã chọn tất cả các mục khác thì thêm cả "Tất cả"
-        if (newSelected.length === departmentChartData.labels.length) {
+        if (newSelected.length === departmentChartData.originalLabels.length) {
           newSelected.push("All");
         }
 
@@ -547,7 +572,7 @@ const Dashboard = () => {
         data: selectedRoles.includes("All")
           ? departmentChartData.datasets[0].data
           : departmentChartData.datasets[0].data.map((value, index) =>
-              selectedRoles.includes(departmentChartData.labels[index])
+              selectedRoles.includes(departmentChartData.originalLabels[index])
                 ? value
                 : 0
             ),
@@ -557,19 +582,41 @@ const Dashboard = () => {
 
   const filteredDonutChartData = {
     ...top5ByFieldChartData,
+    labels: selectedFields.includes("All")
+      ? top5ByFieldChartData.labels
+      : top5ByFieldChartData.labels.filter((label, index) =>
+          selectedFields.includes(label)
+        ),
     datasets: [
       {
         ...top5ByFieldChartData.datasets[0],
         data: selectedFields.includes("All")
           ? top5ByFieldChartData.datasets[0].data
-          : top5ByFieldChartData.datasets[0].data.map((value, index) =>
+          : top5ByFieldChartData.datasets[0].data.filter((_, index) =>
               selectedFields.includes(top5ByFieldChartData.labels[index])
-                ? value
-                : 0
+            ),
+        backgroundColor: selectedFields.includes("All")
+          ? top5ByFieldChartData.datasets[0].backgroundColor
+          : top5ByFieldChartData.datasets[0].backgroundColor.filter(
+              (_, index) =>
+                selectedFields.includes(top5ByFieldChartData.labels[index])
             ),
       },
     ],
   };
+
+  // Check if there's any data to display in the charts
+  const hasTypeChartData =
+    selectedQuarters.length > 0 &&
+    filteredTypeChartData.datasets[0].data.some((value) => value > 0);
+
+  const hasDepartmentChartData =
+    selectedRoles.length > 0 &&
+    filteredDepartmentChartData.datasets[0].data.some((value) => value > 0);
+
+  const hasFieldChartData =
+    selectedFields.length > 0 &&
+    filteredDonutChartData.datasets[0].data.some((value) => value > 0);
 
   const getTypeChartTitle = () => {
     if (selectedQuarters.includes("All")) {
@@ -713,12 +760,18 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-              <Bar
-                data={filteredTypeChartData}
-                options={getChartOptions(filteredTypeChartData)}
-                height={200}
-                width={500}
-              />
+              {hasTypeChartData ? (
+                <Bar
+                  data={filteredTypeChartData}
+                  options={getChartOptions(filteredTypeChartData)}
+                  height={200}
+                  width={500}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl p-6">
@@ -750,7 +803,7 @@ const Dashboard = () => {
                           Tất cả
                         </label>
                         <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
-                          {departmentChartData.labels.map((label) => (
+                          {departmentChartData.originalLabels.map((label) => (
                             <label
                               key={label}
                               className="flex items-center mb-2"
@@ -771,12 +824,18 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-              <Bar
-                data={filteredDepartmentChartData}
-                options={getChartOptions(filteredDepartmentChartData)}
-                height={200}
-                width={540}
-              />
+              {hasDepartmentChartData ? (
+                <Bar
+                  data={filteredDepartmentChartData}
+                  options={getChartOptions(filteredDepartmentChartData)}
+                  height={200}
+                  width={540}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl p-6">
@@ -829,15 +888,21 @@ const Dashboard = () => {
                   )}
                 </div>
               </div>
-              <div className="flex justify-start items-center relative">
-                <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
-                <Doughnut
-                  data={filteredDonutChartData}
-                  options={donutOptions}
-                  height={200}
-                  width={500}
-                />
-              </div>
+              {hasFieldChartData ? (
+                <div className="flex justify-start items-center relative">
+                  <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
+                  <Doughnut
+                    data={filteredDonutChartData}
+                    options={donutOptions}
+                    height={200}
+                    width={500}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
             <div className="bg-white rounded-xl p-6 shadow-md">
               <h2 className="font-semibold text-gray-700 mb-4">
@@ -855,7 +920,7 @@ const Dashboard = () => {
                   size="small"
                 />
               ) : (
-                <div className="text-gray-500 text-center">
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
                   Không có dữ liệu để hiển thị.
                 </div>
               )}
