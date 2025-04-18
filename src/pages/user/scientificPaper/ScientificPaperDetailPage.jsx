@@ -25,9 +25,10 @@ const ScientificPaperDetailPage = () => {
   const paperRef = useRef(null); //
   const modalContentRef = useRef(null);
   const hasTrackedView = useRef(false);
-  const hasScrolledRef = useRef(false); // ✅ Đánh dấu đã scroll quá 50%
+  const hasScrolledRef = useRef(false);
+  const secureFileUrl = paper.fileUrl.replace(/^http:/, "https:");
 
-  const [scrollPercent, setScrollPercent] = useState(0); // ✅ Theo dõi phần trăm lướt trang
+  const [scrollPercent, setScrollPercent] = useState(0); 
 
   const currentUrl = window.location.origin + location.pathname;
 
@@ -809,7 +810,7 @@ const ScientificPaperDetailPage = () => {
           destroyOnClose
         >
           <PDFViewer
-            fileUrl={paper.fileUrl}
+            fileUrl={secureFileUrl}
             isModalVisible={isModalVisible}
             onScroll={(percentage) => {
               console.log(
