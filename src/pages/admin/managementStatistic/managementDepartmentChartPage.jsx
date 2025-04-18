@@ -127,6 +127,7 @@ const ManagementDepartmentChart = () => {
         borderRadius: 6,
       },
     ],
+    originalLabels: [],
   });
   const [topResearchFieldsChartData, setTopResearchFieldsChartData] = useState({
     labels: [],
@@ -313,13 +314,18 @@ const ManagementDepartmentChart = () => {
           const labels = response.data.map((author) => author.authorName);
           const data = response.data.map((author) => author.totalPoints);
 
+          // Format author names to add ellipsis if too long
+          const formattedLabels = labels.map((label) =>
+            label.length > 10 ? label.substring(0, 10) + "..." : label
+          );
+
           setOriginalContributorsData({
             labels,
             data,
           });
 
           setTopContributorsChartData({
-            labels,
+            labels: formattedLabels,
             datasets: [
               {
                 data,
@@ -334,6 +340,8 @@ const ManagementDepartmentChart = () => {
                 borderRadius: 6,
               },
             ],
+            // Store original labels for filters and tooltips
+            originalLabels: labels,
           });
         } else {
           console.warn("No data found for top contributors");
@@ -348,6 +356,7 @@ const ManagementDepartmentChart = () => {
                 borderRadius: 6,
               },
             ],
+            originalLabels: [],
           });
         }
       } catch (error) {
@@ -363,6 +372,7 @@ const ManagementDepartmentChart = () => {
               borderRadius: 6,
             },
           ],
+          originalLabels: [],
         });
       }
     };
@@ -512,6 +522,7 @@ const ManagementDepartmentChart = () => {
             borderRadius: 6,
           },
         ],
+        originalLabels: originalContributorsData.labels,
       });
     }
   }, [selectedAuthors, originalContributorsData]);
@@ -688,6 +699,21 @@ const ManagementDepartmentChart = () => {
     };
   };
 
+  // Check if there's any data to display in the charts
+  const hasTypeChartData =
+    selectedQuarters.length > 0 &&
+    filteredTypeChartData.datasets[0].data.some((value) => value > 0);
+
+  const hasContributorsChartData =
+    selectedAuthors.length > 0 &&
+    topContributorsChartData.datasets[0].data.some((value) => value > 0);
+
+  const hasFieldsChartData =
+    selectedFields.length > 0 &&
+    topResearchFieldsChartData.datasets[0].data.some((value) => value > 0);
+
+  const hasTopPapersData = topPapers.length > 0;
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -829,12 +855,18 @@ const ManagementDepartmentChart = () => {
                   )}
                 </div>
               </div>
-              <Bar
-                data={filteredTypeChartData}
-                options={getChartOptions(filteredTypeChartData)}
-                height={200}
-                width={500}
-              />
+              {hasTypeChartData ? (
+                <Bar
+                  data={filteredTypeChartData}
+                  options={getChartOptions(filteredTypeChartData)}
+                  height={200}
+                  width={500}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -881,7 +913,14 @@ const ManagementDepartmentChart = () => {
                                 onChange={handleAuthorChange}
                                 className="mr-2 accent-blue-500"
                               />
-                              <span className="text-sm">{author}</span>
+                              <span
+                                className="text-sm"
+                                title={author.length > 15 ? author : ""}
+                              >
+                                {author.length > 15
+                                  ? author.substring(0, 15) + "..."
+                                  : author}
+                              </span>
                             </label>
                           ))}
                         </div>
@@ -890,12 +929,49 @@ const ManagementDepartmentChart = () => {
                   )}
                 </div>
               </div>
-              <Bar
-                data={topContributorsChartData}
-                options={getChartOptions(topContributorsChartData)}
-                height={200}
-                width={540}
-              />
+              {hasContributorsChartData ? (
+                <Bar
+                  data={topContributorsChartData}
+                  options={{
+                    ...getChartOptions(topContributorsChartData),
+                    scales: {
+                      y: {
+                        beginAtZero: true,
+                        max:
+                          Math.ceil(
+                            Math.max(
+                              ...topContributorsChartData.datasets[0].data
+                            ) / 10
+                          ) * 10,
+                        ticks: {
+                          stepSize:
+                            Math.ceil(
+                              Math.max(
+                                ...topContributorsChartData.datasets[0].data
+                              ) / 50
+                            ) * 5,
+                        },
+                      },
+                      x: {
+                        ticks: {
+                          callback: function (value) {
+                            const label = this.getLabelForValue(value);
+                            return label.length > 10
+                              ? label.substring(0, 10) + "..."
+                              : label;
+                          },
+                        },
+                      },
+                    },
+                  }}
+                  height={200}
+                  width={540}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -951,30 +1027,42 @@ const ManagementDepartmentChart = () => {
                   )}
                 </div>
               </div>
-              <div className="flex justify-start items-center relative">
-                <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
-                <Doughnut
-                  data={topResearchFieldsChartData}
-                  options={donutOptions}
-                  height={200}
-                  width={500}
-                />
-              </div>
+              {hasFieldsChartData ? (
+                <div className="flex justify-start items-center relative">
+                  <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
+                  <Doughnut
+                    data={topResearchFieldsChartData}
+                    options={donutOptions}
+                    height={200}
+                    width={500}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <h2 className="font-semibold text-gray-700 mb-4">
                 Top 5 bài nghiên cứu được nổi bật
               </h2>
-              <Table
-                columns={columns}
-                dataSource={topPapers}
-                pagination={false}
-                rowKey="id"
-                onRow={onRowClick}
-                className="papers-table"
-                rowClassName="cursor-pointer"
-                size="small"
-              />
+              {hasTopPapersData ? (
+                <Table
+                  columns={columns}
+                  dataSource={topPapers}
+                  pagination={false}
+                  rowKey="id"
+                  onRow={onRowClick}
+                  className="papers-table"
+                  rowClassName="cursor-pointer"
+                  size="small"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
           </div>
         </div>
