@@ -31,6 +31,23 @@ const ScientificPaperDetailPage = () => {
 
   const currentUrl = window.location.origin + location.pathname;
 
+  // Cuộn lên đầu trang với hiệu ứng mượt khi id thay đổi
+  useEffect(() => {
+    if (paperRef.current) {
+      paperRef.current.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    }
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
+    hasTrackedView.current = false; // Reset tracking state khi thay đổi bài báo
+  }, [id]);
+
   const fetchDownloadCount = async (paperId) => {
     try {
       const response = await userApi.getDownloadCountByPaperId(paperId);
@@ -527,13 +544,22 @@ const ScientificPaperDetailPage = () => {
                               {paper.group || "Không có dữ liệu"}
                             </p>
                           </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
+                          <div className="flex items-start">
+                            <p className="text-sm text-gray-500 flex-shrink-0 mt-[2px]">
                               Tên tác giả:
                             </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.authors?.join(", ") || "Không có dữ liệu"}
-                            </p>
+                            <div className="ml-2 text-sm font-medium text-[#174371] flex flex-wrap">
+                              {paper.authors?.length > 0
+                                ? paper.authors.map((author, index) => (
+                                    <span key={index} className="mr-1">
+                                      {author}
+                                      {index < paper.authors.length - 1
+                                        ? ","
+                                        : ""}
+                                    </span>
+                                  ))
+                                : "Không có dữ liệu"}
+                            </div>
                           </div>
                           <div className="flex items-center">
                             <p className="text-sm text-gray-500">Số tác giả:</p>
@@ -571,11 +597,11 @@ const ScientificPaperDetailPage = () => {
                           </div>
                         </div>
 
-                        <div className="flex mt-4 items-center flex-nowrap overflow-hidden whitespace-nowrap">
-                          <p className="text-sm text-gray-500 flex-shrink-0">
+                        <div className="flex mt-4 items-start">
+                          <p className="text-sm text-gray-500 flex-shrink-0 mr-2">
                             Từ khóa:
                           </p>
-                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                          <p className="text-sm font-medium text-[#174371] break-words">
                             {paper.keywords?.join(", ") || "Không có dữ liệu"}
                           </p>
                         </div>
@@ -754,16 +780,18 @@ const ScientificPaperDetailPage = () => {
                       className="w-[100px] h-[150px] object-cover rounded-lg"
                     />
                     <div className="flex-1">
-                      <h3 className="font-medium text-sky-900 mb-2">
-                        {paper.title}
-                      </h3>
-                      <p className="text-sm text-gray-600 mb-2">
+                      <h2 className="pb-2 text-sm font-bold break-words max-w-[1200px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
+                        {paper.title || paper.title_en || "No Title"}
+                      </h2>
+                      <p className="pb-1 text-sm text-gray-600 mb-2">
                         {paper.author}
                       </p>
-                      <p className="text-sm text-gray-600 mb-4">
+                      <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[14px] max-w-[1200px]">
                         {paper.description}
                       </p>
-                      <p className="text-sm text-sky-900">{paper.department}</p>
+                      <p className="pt-2 text-sm text-sky-900">
+                        {paper.department}
+                      </p>
                     </div>
                     <div className="flex flex-col items-end justify-between">
                       <div className="flex items-center gap-2">
@@ -809,7 +837,7 @@ const ScientificPaperDetailPage = () => {
           destroyOnClose
         >
           <PDFViewer
-            fileUrl={paper.fileUrl?.replace(/^http:/, "https:")} 
+            fileUrl={paper.fileUrl?.replace(/^http:/, "https:")}
             isModalVisible={isModalVisible}
             onScroll={(percentage) => {
               console.log(

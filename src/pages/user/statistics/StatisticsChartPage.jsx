@@ -49,6 +49,19 @@ const getChartOptions = (data) => {
       legend: {
         display: false,
       },
+      tooltip: {
+        callbacks: {
+          // Use this to customize tooltip content
+          title: function (tooltipItems) {
+            // For point chart, show full title on hover
+            if (data.originalLabels && tooltipItems[0]) {
+              const index = tooltipItems[0].dataIndex;
+              return data.originalLabels[index] || tooltipItems[0].label;
+            }
+            return tooltipItems[0].label;
+          },
+        },
+      },
     },
     scales: {
       y: {
@@ -337,6 +350,7 @@ const StatisticsChartPage = () => {
                   ? paper.title.substring(0, 20) + "..."
                   : paper.title
               ),
+              originalLabels: formattedChartData.map((paper) => paper.title),
               datasets: [
                 {
                   data: formattedChartData.map(
@@ -604,6 +618,22 @@ const StatisticsChartPage = () => {
     };
   };
 
+  // Check if there's any data to display in the charts
+  const hasTypeChartData =
+    selectedTypeFilters.length > 0 &&
+    Object.keys(typeCounts).filter((type) => selectedTypeFilters.includes(type))
+      .length > 0 &&
+    Object.values(typeCounts).some((value) => value > 0);
+
+  const hasPointChartData =
+    selectedPointFilters.length > 0 &&
+    pointChartData.datasets[0].data.some((value) => value > 0);
+
+  const hasDonutChartData =
+    donutChartData.labels.length > 0 &&
+    donutChartData.labels[0] !== "No data" &&
+    donutChartData.datasets[0].data.some((value) => value > 0);
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -764,44 +794,50 @@ const StatisticsChartPage = () => {
                   )}
                 </div>
               </div>
-              <Bar
-                data={{
-                  labels: Object.keys(typeCounts).filter((type) =>
-                    selectedTypeFilters.includes(type)
-                  ),
-                  datasets: [
-                    {
-                      data: Object.values(typeCounts).filter((_, index) =>
-                        selectedTypeFilters.includes(
-                          Object.keys(typeCounts)[index]
-                        )
-                      ),
-                      backgroundColor: [
-                        "#00A3FF",
-                        "#7239EA",
-                        "#F1416C",
-                        "#7239EA",
-                        "#FF0000",
-                      ],
-                      borderWidth: 0,
-                      borderRadius: 6,
-                    },
-                  ],
-                }}
-                options={getChartOptions({
-                  datasets: [
-                    {
-                      data: Object.values(typeCounts).filter((_, index) =>
-                        selectedTypeFilters.includes(
-                          Object.keys(typeCounts)[index]
-                        )
-                      ),
-                    },
-                  ],
-                })}
-                height={200}
-                width={500}
-              />
+              {hasTypeChartData ? (
+                <Bar
+                  data={{
+                    labels: Object.keys(typeCounts).filter((type) =>
+                      selectedTypeFilters.includes(type)
+                    ),
+                    datasets: [
+                      {
+                        data: Object.values(typeCounts).filter((_, index) =>
+                          selectedTypeFilters.includes(
+                            Object.keys(typeCounts)[index]
+                          )
+                        ),
+                        backgroundColor: [
+                          "#00A3FF",
+                          "#7239EA",
+                          "#F1416C",
+                          "#7239EA",
+                          "#FF0000",
+                        ],
+                        borderWidth: 0,
+                        borderRadius: 6,
+                      },
+                    ],
+                  }}
+                  options={getChartOptions({
+                    datasets: [
+                      {
+                        data: Object.values(typeCounts).filter((_, index) =>
+                          selectedTypeFilters.includes(
+                            Object.keys(typeCounts)[index]
+                          )
+                        ),
+                      },
+                    ],
+                  })}
+                  height={200}
+                  width={500}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
@@ -877,45 +913,52 @@ const StatisticsChartPage = () => {
                   )}
                 </div>
               </div>
-              <Bar
-                data={{
-                  labels: pointChartData.labels.filter((label, index) =>
-                    selectedPointFilters.includes(label)
-                  ),
-                  datasets: [
-                    {
-                      data: pointChartData.labels
-                        .filter((label, index) =>
-                          selectedPointFilters.includes(label)
-                        )
-                        .map((label) => {
-                          const index = pointChartData.labels.indexOf(label);
-                          return pointChartData.datasets[0].data[index];
-                        }),
-                      backgroundColor:
-                        pointChartData.datasets[0].backgroundColor,
-                      borderWidth: 0,
-                      borderRadius: 6,
-                    },
-                  ],
-                }}
-                options={getChartOptions({
-                  datasets: [
-                    {
-                      data: pointChartData.labels
-                        .filter((label, index) =>
-                          selectedPointFilters.includes(label)
-                        )
-                        .map((label) => {
-                          const index = pointChartData.labels.indexOf(label);
-                          return pointChartData.datasets[0].data[index];
-                        }),
-                    },
-                  ],
-                })}
-                height={200}
-                width={540}
-              />
+              {hasPointChartData ? (
+                <Bar
+                  data={{
+                    labels: pointChartData.labels.filter((label, index) =>
+                      selectedPointFilters.includes(label)
+                    ),
+                    datasets: [
+                      {
+                        data: pointChartData.labels
+                          .filter((label, index) =>
+                            selectedPointFilters.includes(label)
+                          )
+                          .map((label) => {
+                            const index = pointChartData.labels.indexOf(label);
+                            return pointChartData.datasets[0].data[index];
+                          }),
+                        backgroundColor:
+                          pointChartData.datasets[0].backgroundColor,
+                        borderWidth: 0,
+                        borderRadius: 6,
+                      },
+                    ],
+                  }}
+                  options={getChartOptions({
+                    datasets: [
+                      {
+                        data: pointChartData.labels
+                          .filter((label, index) =>
+                            selectedPointFilters.includes(label)
+                          )
+                          .map((label) => {
+                            const index = pointChartData.labels.indexOf(label);
+                            return pointChartData.datasets[0].data[index];
+                          }),
+                      },
+                    ],
+                    originalLabels: pointChartData.originalLabels,
+                  })}
+                  height={200}
+                  width={540}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
 
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
@@ -992,15 +1035,21 @@ const StatisticsChartPage = () => {
                   )}
                 </div>
               </div>
-              <div className="flex justify-start items-center relative">
-                <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
-                <Doughnut
-                  data={donutChartData}
-                  options={donutOptions}
-                  height={200}
-                  width={500}
-                />
-              </div>
+              {hasDonutChartData ? (
+                <div className="flex justify-start items-center relative">
+                  <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
+                  <Doughnut
+                    data={donutChartData}
+                    options={donutOptions}
+                    height={200}
+                    width={500}
+                  />
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-4">
@@ -1008,17 +1057,23 @@ const StatisticsChartPage = () => {
                   Top 5 bài báo nổi bật
                 </h2>
               </div>
-              <Table
-                columns={columns.filter((col) =>
-                  visibleColumns.includes(col.key)
-                )}
-                dataSource={top5Papers}
-                pagination={false}
-                rowKey="id"
-                onRow={onRowClick}
-                className="papers-table"
-                size="small"
-              />
+              {top5Papers && top5Papers.length > 0 ? (
+                <Table
+                  columns={columns.filter((col) =>
+                    visibleColumns.includes(col.key)
+                  )}
+                  dataSource={top5Papers}
+                  pagination={false}
+                  rowKey="id"
+                  onRow={onRowClick}
+                  className="papers-table"
+                  size="small"
+                />
+              ) : (
+                <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  Không có dữ liệu để hiển thị
+                </div>
+              )}
             </div>
           </div>
         </div>
