@@ -28,8 +28,24 @@ const { TabPane } = Tabs;
 
 const EditScientificPaperPage = () => {
   const [authors, setAuthors] = useState([
-    { id: 1, mssvMsgv: "", full_name: "", role: "", institution: "" },
-    { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
+    {
+      id: 1,
+      mssvMsgv: "",
+      full_name: "",
+      full_name_eng: "",
+      role: "",
+      institution: "",
+      institutions: [],
+    },
+    {
+      id: 2,
+      mssvMsgv: "",
+      full_name: "",
+      full_name_eng: "",
+      role: "",
+      institution: "",
+      institutions: [],
+    },
   ]);
   const [selectedFile, setSelectedFile] = useState(null);
   const [coverImage, setCoverImage] = useState(null);
@@ -56,6 +72,10 @@ const EditScientificPaperPage = () => {
   const [summary, setSummary] = useState(""); // State for summary
   const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
   const [doi, setDoi] = useState(""); // State for DOI
+  const [scores, setScores] = useState({
+    total: 0,
+    perAuthor: {},
+  });
   const navigate = useNavigate();
   const { id } = useParams(); // Get the paper ID from the URL
 
@@ -83,10 +103,13 @@ const EditScientificPaperPage = () => {
   useEffect(() => {
     const fetchPaperDetails = async () => {
       try {
-        const paperData = await userApi.getScientificPaperById(id); // Fetch paper data by ID
+        // Fetch paper details
+        const paperData = await userApi.getScientificPaperById(id);
+
+        // Set basic paper details
         setTitleVn(paperData.title_vn || "");
         setTitleEn(paperData.title_en || "");
-        setPublishDate(moment(paperData.publish_date)); // Use moment for date formatting
+        setPublishDate(moment(paperData.publish_date));
         setMagazineVi(paperData.magazine_vi || "");
         setMagazineEn(paperData.magazine_en || "");
         setMagazineType(paperData.magazine_type || "");
@@ -100,19 +123,110 @@ const EditScientificPaperPage = () => {
         setDoi(paperData.doi || "");
         setCoverImage(paperData.cover_image || "");
         setSelectedFile(paperData.file || "");
-        setSelectedPaperType(paperData.article_type?._id || ""); // Handle nested object
-        setSelectedPaperGroup(paperData.article_group?._id || ""); // Handle nested object
-        setAuthors(
-          paperData.author.map((author, index) => ({
-            id: index + 1,
-            mssvMsgv: author.user_id || "",
-            full_name: author.author_name_vi || "",
-            full_name_eng: author.author_name_en || "",
-            role: author.role || "",
-            institution: author.work_unit_id?.name_vi || "",
-          }))
-        );
         setLink(paperData.link || "");
+
+        // Set paper type and group
+        setSelectedPaperType(paperData.article_type?._id || "");
+        setSelectedPaperGroup(paperData.article_group?._id || "");
+
+        // Process authors with more details
+        const authorsWithDetails = await Promise.all(
+          paperData.author.map(async (author, index) => {
+            let institutions = [];
+
+            // If author has user_id, fetch their institutions
+            if (author.user_id) {
+              try {
+                const institutionsResponse = await userApi.getUserWorksByUserId(
+                  author.user_id
+                );
+
+                if (
+                  institutionsResponse &&
+                  Array.isArray(institutionsResponse) &&
+                  institutionsResponse.length > 0
+                ) {
+                  // Map the institution IDs to fetch their details
+                  institutions = await Promise.all(
+                    institutionsResponse.map(async (item) => {
+                      try {
+                        const workUnit = await userApi.getWorkUnitById(
+                          item.work_unit_id
+                        );
+                        return {
+                          _id: workUnit._id,
+                          name:
+                            workUnit.name_vi ||
+                            workUnit.name ||
+                            "Unknown Institution",
+                        };
+                      } catch (error) {
+                        console.error(
+                          "Error fetching work unit details:",
+                          error
+                        );
+                        return {
+                          _id: item.work_unit_id,
+                          name: "Unknown Institution",
+                        };
+                      }
+                    })
+                  );
+                } else {
+                  // Fallback: fetch all work units
+                  const allWorkUnits = await userApi.getAllWorkUnits();
+                  institutions = allWorkUnits.map((unit) => ({
+                    _id: unit._id,
+                    name: unit.name_vi || unit.name || "Unknown",
+                  }));
+                }
+              } catch (error) {
+                console.error("Error fetching institutions for author:", error);
+                // Fallback: fetch all work units
+                try {
+                  const allWorkUnits = await userApi.getAllWorkUnits();
+                  institutions = allWorkUnits.map((unit) => ({
+                    _id: unit._id,
+                    name: unit.name_vi || unit.name || "Unknown",
+                  }));
+                } catch (fallbackError) {
+                  console.error("Fallback error:", fallbackError);
+                  institutions = [];
+                }
+              }
+            }
+
+            return {
+              id: index + 1,
+              mssvMsgv: author.user_id || "",
+              full_name: author.author_name_vi || "",
+              full_name_eng: author.author_name_en || "",
+              role: author.role || "",
+              institution: author.work_unit_id?._id || "",
+              institutions: institutions,
+              point: author.point || 0,
+            };
+          })
+        );
+
+        setAuthors(authorsWithDetails);
+
+        // Tính điểm sau khi đã có đầy đủ thông tin
+        setTimeout(() => {
+          handleFieldChange({
+            article_type: paperData.article_type?._id || "",
+            article_group: paperData.article_group?._id || "",
+            doi: paperData.doi || false,
+            featured: paperData.featured || false,
+            authors: authorsWithDetails.map((author, index) => ({
+              id: `author_${index + 1}`,
+              role: author.role,
+              degree: "Bachelor",
+              point: author.point || 0,
+              institutions: author.institutions || [],
+            })),
+          });
+        }, 500);
       } catch (error) {
         console.error("Error fetching paper details:", error);
         message.error("Không thể tải dữ liệu bài báo.");
@@ -177,8 +291,10 @@ const EditScientificPaperPage = () => {
         id: authors.length + 1,
         mssvMsgv: "",
         full_name: "",
+        full_name_eng: "",
         role: "",
         institution: "",
+        institutions: [],
       },
     ]);
   };
@@ -190,36 +306,268 @@ const EditScientificPaperPage = () => {
 
   const handleAuthorChange = async (index, field, value) => {
     const updatedAuthors = [...authors];
-    updatedAuthors[index][field] = value;
+
+    if (field === "institution") {
+      updatedAuthors[index][field] = value; // Đảm bảo đây là ObjectId (_id)
+    } else {
+      updatedAuthors[index][field] = value;
+    }
+
+    // Nếu thay đổi vai trò, cập nhật lại điểm
+    if (field === "role") {
+      handleFieldChange({
+        authors: updatedAuthors.map((author, i) => ({
+          id: `author_${i + 1}`,
+          role: i === index ? value : author.role,
+          degree: "Bachelor",
+          point: 0,
+          institutions: author.institutions || [],
+        })),
+      });
+    }
 
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
-        let userData;
+        // Gọi cả hai hàm để lấy dữ liệu từ giảng viên và sinh viên
+        const lecturerData = await userApi
+          .getLecturerById(value)
+          .catch((error) => {
+            console.log("Error fetching lecturer:", error.message);
+            return null; // Trả về null nếu không tìm thấy giảng viên
+          });
 
-        if (value.startsWith("GV") || value.length === 8) {
-          userData = await userApi.getLecturerById(value);
+        const studentData = await userApi
+          .getStudentById(value)
+          .catch((error) => {
+            console.log("Error fetching student:", error.message);
+            return null; // Trả về null nếu không tìm thấy sinh viên
+          });
+
+        // Ưu tiên dữ liệu từ giảng viên nếu có, nếu không thì lấy từ sinh viên
+        const userData = lecturerData || studentData;
+
+        if (userData) {
+          // Set name information if user data was found
+          updatedAuthors[index].full_name =
+            userData.full_name || userData.name || "";
+
+          try {
+            // Fetch user workplaces
+            const institutionsResponse = await userApi.getUserWorksByUserId(
+              value
+            );
+            console.log("User works response:", institutionsResponse);
+
+            if (
+              institutionsResponse &&
+              Array.isArray(institutionsResponse) &&
+              institutionsResponse.length > 0
+            ) {
+              // Map the institution IDs to fetch their details
+              const institutions = await Promise.all(
+                institutionsResponse.map(async (item) => {
+                  try {
+                    const workUnit = await userApi.getWorkUnitById(
+                      item.work_unit_id
+                    );
+                    return {
+                      _id: workUnit._id,
+                      name:
+                        workUnit.name_vi ||
+                        workUnit.name ||
+                        "Unknown Institution",
+                    };
+                  } catch (workUnitError) {
+                    console.error(
+                      "Error fetching work unit details:",
+                      workUnitError
+                    );
+                    return {
+                      _id: item.work_unit_id,
+                      name: "Unknown Institution",
+                    };
+                  }
+                })
+              );
+
+              updatedAuthors[index].institutions = institutions;
+
+              // If user has institutions, set the first one as default
+              if (institutions.length > 0) {
+                updatedAuthors[index].institution = institutions[0]._id;
+              }
+
+              console.log("Fetched institutions:", institutions);
+            } else {
+              console.log(
+                "No institutions found, fetching all work units as fallback"
+              );
+              // Fallback: if no specific institutions, fetch all work units
+              const allWorkUnits = await userApi.getAllWorkUnits();
+
+              if (allWorkUnits && Array.isArray(allWorkUnits)) {
+                updatedAuthors[index].institutions = allWorkUnits.map(
+                  (unit) => ({
+                    _id: unit._id,
+                    name: unit.name_vi || unit.name || "Unknown",
+                  })
+                );
+              } else {
+                updatedAuthors[index].institutions = [];
+                console.error("Failed to fetch work units:", allWorkUnits);
+              }
+            }
+          } catch (institutionsError) {
+            console.error("Error fetching institutions:", institutionsError);
+
+            // Fallback: fetch all work units if specific user institutions failed
+            try {
+              const allWorkUnits = await userApi.getAllWorkUnits();
+              if (allWorkUnits && Array.isArray(allWorkUnits)) {
+                updatedAuthors[index].institutions = allWorkUnits.map(
+                  (unit) => ({
+                    _id: unit._id,
+                    name: unit.name_vi || unit.name || "Unknown",
+                  })
+                );
+              } else {
+                updatedAuthors[index].institutions = [];
+              }
+            } catch (workUnitsError) {
+              console.error("Error fetching all work units:", workUnitsError);
+              updatedAuthors[index].institutions = [];
+            }
+          }
+
+          // Generate English name from Vietnamese name
+          if (updatedAuthors[index].full_name) {
+            const nameParts = updatedAuthors[index].full_name
+              .normalize("NFD")
+              .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+              .split(" ");
+            const firstName = nameParts.shift(); // Remove the first word
+            updatedAuthors[index].full_name_eng = [...nameParts, firstName]
+              .map(
+                (word) =>
+                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+              )
+              .join(" ");
+          }
         } else {
-          userData = await userApi.getStudentById(value);
-        }
+          // No user found - clear fields
+          updatedAuthors[index].full_name = "";
+          updatedAuthors[index].full_name_eng = "";
 
-        updatedAuthors[index].full_name =
-          userData.full_name || userData.name || "";
-        updatedAuthors[index].institution =
-          userData.department || "Không xác định";
+          // Still try to fetch all work units
+          try {
+            const allWorkUnits = await userApi.getAllWorkUnits();
+            if (allWorkUnits && Array.isArray(allWorkUnits)) {
+              updatedAuthors[index].institutions = allWorkUnits.map((unit) => ({
+                _id: unit._id,
+                name: unit.name_vi || unit.name || "Unknown",
+              }));
+            } else {
+              updatedAuthors[index].institutions = [];
+            }
+          } catch (error) {
+            console.error("Error fetching all work units:", error);
+            updatedAuthors[index].institutions = [];
+          }
+        }
       } catch (error) {
-        console.error("Không tìm thấy thông tin:", error);
+        console.error("Error in handleAuthorChange:", error);
+        // On any error, clear author name and try to fetch all work units
         updatedAuthors[index].full_name = "";
-        updatedAuthors[index].institution = "";
+        updatedAuthors[index].full_name_eng = "";
+
+        try {
+          const allWorkUnits = await userApi.getAllWorkUnits();
+          if (allWorkUnits && Array.isArray(allWorkUnits)) {
+            updatedAuthors[index].institutions = allWorkUnits.map((unit) => ({
+              _id: unit._id,
+              name: unit.name_vi || unit.name || "Unknown",
+            }));
+          } else {
+            updatedAuthors[index].institutions = [];
+          }
+        } catch (workUnitsError) {
+          console.error("Error fetching all work units:", workUnitsError);
+          updatedAuthors[index].institutions = [];
+        }
       }
     }
 
     setAuthors(updatedAuthors);
   };
 
+  const calculateAndSetScore = async (inputData) => {
+    try {
+      // Chuẩn hóa dữ liệu gửi lên API
+      const payload = {
+        createdAt: new Date().toISOString(),
+        doi: inputData.doi || false,
+        featured: inputData.featured || false,
+        article_group: inputData.article_group || "",
+        authors: inputData.authors.map((author) => ({
+          role: author.role,
+          degree: author.degree || "Bachelor",
+          point: author.point || 0,
+          institutions: author.institutions || [],
+        })),
+      };
+
+      const response = await userApi.calculateScoreFromInput(payload);
+      const { totalScore, authorScores } = response;
+
+      console.log("✅ Điểm tổng:", totalScore);
+      console.log("✅ Điểm từng tác giả:", authorScores);
+
+      setScores({ total: totalScore, perAuthor: authorScores });
+    } catch (err) {
+      console.error("❌ Lỗi tính điểm:", err.response?.data || err.message);
+      message.error("Không thể tính điểm. Vui lòng kiểm tra dữ liệu đầu vào.");
+    }
+  };
+
+  const handleFieldChange = (updatedField) => {
+    const updatedInput = {
+      article_type: selectedPaperType,
+      article_group: selectedPaperGroup,
+      authors: authors.map((author, index) => ({
+        id: `author_${index + 1}`,
+        role: author.role,
+        degree: "Bachelor",
+        point: 0,
+        institutions: author.institutions || [],
+      })),
+      doi: doi || false,
+      featured,
+      ...updatedField,
+    };
+
+    calculateAndSetScore(updatedInput);
+  };
+
   const handleClear = () => {
     setAuthors([
-      { id: 1, mssvMsgv: "", full_name: "", role: "", institution: "" },
-      { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
+      {
+        id: 1,
+        mssvMsgv: "",
+        full_name: "",
+        full_name_eng: "",
+        role: "",
+        institution: "",
+        institutions: [],
+      },
+      {
+        id: 2,
+        mssvMsgv: "",
+        full_name: "",
+        full_name_eng: "",
+        role: "",
+        institution: "",
+        institutions: [],
+      },
     ]);
     setSelectedFile(null);
     setCoverImage(null);
@@ -229,55 +577,50 @@ const EditScientificPaperPage = () => {
   const handleSave = async () => {
     try {
       // Validate required fields
-      const requiredFields = {
-        coverImage,
-        selectedFile,
-        authors,
-        selectedDepartment,
-        summary,
-        keywords,
-        selectedPaperType,
-        selectedPaperGroup,
-        titleVn,
-        titleEn,
-        publishDate,
-        magazineVi,
-        magazineEn,
-        magazineType,
-        pageCount,
-        issnIsbn,
-        doi,
-        link,
-      };
+      if (!titleVn) {
+        message.error("Vui lòng nhập tên bài báo (Tiếng Việt)");
+        return;
+      }
 
-      const missingFields = Object.entries(requiredFields)
-        .filter(
-          ([key, value]) =>
-            value === null ||
-            value === undefined ||
-            value === "" ||
-            (Array.isArray(value) && value.length === 0)
+      if (!selectedPaperType) {
+        message.error("Vui lòng chọn loại bài báo");
+        return;
+      }
+
+      if (!selectedPaperGroup) {
+        message.error("Vui lòng chọn nhóm bài báo");
+        return;
+      }
+
+      // Kiểm tra tác giả
+      if (
+        authors.some(
+          (author) =>
+            !author.mssvMsgv ||
+            !author.full_name ||
+            !author.role ||
+            !author.institution
         )
-        .map(([key]) => key);
-
-      if (missingFields.length > 0) {
-        message.error(`Thiếu các trường bắt buộc: ${missingFields.join(", ")}`);
+      ) {
+        message.error("Vui lòng điền đầy đủ thông tin tác giả");
         return;
       }
 
       // Format author_count
       const roleCounts = {
-        primary: 0,
-        corresponding: 0,
-        primaryCorresponding: 0,
-        contributor: 0,
+        MainAuthor: 0,
+        CorrespondingAuthor: 0,
+        MainAndCorrespondingAuthor: 0,
+        Participant: 0,
       };
+
       authors.forEach((author) => {
-        if (author.role && roleCounts.hasOwnProperty(author.role)) {
+        if (author.role) {
           roleCounts[author.role]++;
         }
       });
-      const authorCount = `${authors.length}(${roleCounts.primary},${roleCounts.corresponding},${roleCounts.primaryCorresponding},${roleCounts.contributor})`;
+
+      const authorCount = `${authors.length}(${roleCounts.MainAuthor},${roleCounts.CorrespondingAuthor},${roleCounts.MainAndCorrespondingAuthor},${roleCounts.Participant})`;
 
       // Prepare JSON payload
       const payload = {
@@ -286,16 +629,18 @@ const EditScientificPaperPage = () => {
         title_vn: titleVn || "",
         title_en: titleEn || "",
         author_count: authorCount,
-        authors: authors.map((author) => ({
+        author: authors.map((author, index) => ({
           user_id: author.mssvMsgv || "",
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
           work_unit_id: author.institution || "",
           degree: "Bachelor",
-          point: 0,
-        })), // Ensure this is an array of objects
-        publish_date: publishDate || "",
+          point: scores.perAuthor[`author_${index + 1}`] || 0,
+        })),
+        publish_date: publishDate
+          ? moment(publishDate).format("YYYY-MM-DD")
+          : "",
         magazine_vi: magazineVi || "",
         magazine_en: magazineEn || "",
         magazine_type: magazineType || "",
@@ -317,8 +662,9 @@ const EditScientificPaperPage = () => {
       console.log("Payload:", payload);
 
       // Send data to the backend
-      const response = await userApi.updateScientificPaperById(id, payload); // Updated API call
+      const response = await userApi.updateScientificPaperById(id, payload);
       message.success("Bài báo đã được cập nhật thành công!");
+      navigate("/scientific-paper");
       console.log("Response:", response);
     } catch (error) {
       console.error(
@@ -835,7 +1181,7 @@ const EditScientificPaperPage = () => {
                             htmlFor={`fullNameEng-${index}`}
                             className="block text-sm font-medium text-black pb-1"
                           >
-                            Tên sinh viên / giảng viên (English)
+                            Tên SV/GV (Tiếng Anh)
                           </label>
                           <Input
                             id={`fullNameEng-${index}`}
@@ -861,9 +1207,8 @@ const EditScientificPaperPage = () => {
                       </div>
                       {/* Row 2 */}
                       <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
-                        <div className="col-span-3"></div>
                         {/* Vai trò */}
-                        <div className="col-span-4">
+                        <div className="col-span-3">
                           <label
                             htmlFor={`role-${index}`}
                             className="block text-sm font-medium text-blackpb-1"
@@ -915,6 +1260,25 @@ const EditScientificPaperPage = () => {
                               </Option>
                             ))}
                           </Select>
+                        </div>
+                        {/* Điểm đóng góp */}
+                        <div className="col-span-3">
+                          <label
+                            htmlFor={`contribution-${index}`}
+                            className="block text-sm font-medium text-black pb-1"
+                          >
+                            Điểm đóng góp:
+                          </label>
+                          <div className="relative">
+                            <Input
+                              className="w-1/2 text-center"
+                              readOnly
+                              id={`contribution-${index}`}
+                              value={
+                                scores.perAuthor[`author_${index + 1}`] || 0
+                              }
+                            ></Input>
+                          </div>
                         </div>
                       </div>
                     </div>
