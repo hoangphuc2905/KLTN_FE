@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Input, Button, Form, message, Select, DatePicker, Upload } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import userApi from "../../../api/api";
 
 const { Option } = Select;
 
-const AddStudentModal = ({ onClose, studentData = {} }) => {
+const AddLecturerModal = ({ onClose, lecturerData = {} }) => {
   const [form] = Form.useForm();
   const [departments, setDepartments] = useState([]);
   const departmentId = localStorage.getItem("department");
@@ -36,23 +36,24 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
       const uploadResponse = await userApi.uploadImage(avatarFile);
       const avatarUrl = uploadResponse.url; // Extract the URL from the response
 
-      // Ensure the role is always "student" and set score_year to 0
-      const studentDataWithRole = {
+      // Ensure the role is always the specific role ID
+      const lecturerDataWithRole = {
         ...values,
         avatar: avatarUrl,
-        role: "student",
-        score_year: 0,
+        roles: "67e0033fad59fbe6e1602a4c", // Updated to use the role ID
         department: departmentId,
+        score_year: 0,
+        isActive: true,
       };
 
-      // Call the createStudent API
-      await userApi.createStudent(studentDataWithRole);
+      // Call the createLecturer API
+      await userApi.createLecturer(lecturerDataWithRole);
 
-      message.success("Thêm sinh viên thành công!");
+      message.success("Thêm giảng viên thành công!");
       onClose(); // Close the modal after successful submission
     } catch (error) {
-      console.error("Error adding student:", error);
-      message.error(error.message || "Thêm sinh viên thất bại!");
+      console.error("Error adding lecturer:", error);
+      message.error(error.message || "Thêm giảng viên thất bại!");
     }
   };
 
@@ -62,22 +63,21 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
         form={form}
         layout="vertical"
         initialValues={{
-          ...studentData,
+          ...lecturerData,
           isActive: true,
-          role: "student",
-          score_year: 0,
+          role: "lecturer",
         }}
         onFinish={handleSubmit}
         className="max-w-xl mx-auto"
       >
         <Form.Item
-          label="Mã số sinh viên"
-          name="student_id"
+          label="Mã số giảng viên"
+          name="lecturer_id"
           rules={[
-            { required: true, message: "Vui lòng nhập mã số sinh viên!" },
+            { required: true, message: "Vui lòng nhập mã số giảng viên!" },
           ]}
         >
-          <Input placeholder="Nhập mã số sinh viên" className="rounded-md" />
+          <Input placeholder="Nhập mã số giảng viên" className="rounded-md" />
         </Form.Item>
         <Form.Item
           label="Họ và tên"
@@ -158,14 +158,18 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
             <Button icon={<UploadOutlined />}>Chọn ảnh</Button>
           </Upload>
         </Form.Item>
-        <Form.Item label="Học vị" name="degree" rules={[{ required: false }]}>
+        <Form.Item
+          label="Học vị"
+          name="degree"
+          rules={[{ required: true, message: "Vui lòng chọn học vị!" }]}
+        >
           <Select placeholder="Chọn học vị" className="rounded-md">
             <Option value="Bachelor">Cử nhân</Option>
             <Option value="Master">Thạc sĩ</Option>
             <Option value="Doctor">Tiến sĩ</Option>
-            <Option value="Egineer">Kỹ sư</Option>
+            <Option value="Engineer">Kỹ sư</Option>
             <Option value="Professor">Giáo sư</Option>
-            <Option value="Ossociate_Professor">Phó giáo sư</Option>
+            <Option value="Associate_Professor">Phó giáo sư</Option>
           </Select>
         </Form.Item>
         <Form.Item>
@@ -187,4 +191,4 @@ const AddStudentModal = ({ onClose, studentData = {} }) => {
   );
 };
 
-export default AddStudentModal;
+export default AddLecturerModal;
