@@ -19,32 +19,47 @@ const LoginPage = () => {
 
       console.log("Login response:", data);
 
-      const userId = data.userId;
+      const userId = data.userId || data._id;
       const userType = data.userType;
+      const department = data.department;
+      const email = data.email;
 
       if (!userId) {
         throw new Error("User ID is missing in the response");
       }
 
+      // Xử lý roles
+      let roles = Array.isArray(data.roles) ? data.roles : [data.roles];
+      // Nếu roles là mảng đối tượng, lấy role_name
+      roles = roles.map((role) =>
+        typeof role === "object" && role.role_name ? role.role_name : role
+      );
+
+      // Lưu thông tin vào localStorage
       localStorage.setItem("token", data.token);
       localStorage.setItem("user_id", userId);
-      localStorage.setItem(
-        "roles",
-        JSON.stringify(Array.isArray(data.roles) ? data.roles : [data.roles])
-      );
-      localStorage.setItem("email", data.email);
-      localStorage.setItem("user_type", userType);
-      localStorage.setItem("department", data.department);
+      localStorage.setItem("roles", JSON.stringify(roles));
+      localStorage.setItem("email", email || "");
+      localStorage.setItem("user_type", userType || "");
+      localStorage.setItem("department", department || "");
 
-      if (data.roles.length > 1) {
+      // Lưu current_role (vì chỉ có 1 vai trò)
+      const currentRole = roles[0];
+      if (!currentRole) {
+        throw new Error("No role found in the response");
+      }
+      localStorage.setItem("current_role", currentRole);
+
+      // Chuyển hướng
+      if (roles.length > 1) {
         window.location.href = "/role-selection";
       } else {
-        const defaultPath = defaultRoutes[data.roles[0]] || "/home";
+        const defaultPath = defaultRoutes[currentRole] || "/home";
         window.location.href = defaultPath;
       }
     } catch (error) {
       console.error("Đăng nhập thất bại:", error);
-      message.error("Thông tin đăng nhập không chính xác");
+      message.error(error.message || "Thông tin đăng nhập không chính xác");
     } finally {
       setLoading(false);
     }

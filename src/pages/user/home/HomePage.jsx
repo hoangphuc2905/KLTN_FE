@@ -106,7 +106,6 @@ const HomePage = () => {
     return filteredPapers
       .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
       .map((paper) => {
-        console.log("Paper trong currentPapers:", paper);
         return {
           ...paper,
           author: Array.isArray(paper.author)
@@ -174,7 +173,6 @@ const HomePage = () => {
       try {
         console.log("Bắt đầu tải dữ liệu ban đầu");
         const userId = localStorage.getItem("user_id");
-        console.log("userId:", userId);
 
         const [
           recommendationsResponse,
@@ -196,7 +194,6 @@ const HomePage = () => {
 
         let papers = recommendationsResponse?.data || [];
         if (!Array.isArray(papers) || papers.length === 0) {
-          console.log("Không tìm thấy gợi ý, sử dụng getAllScientificPapers");
           papers = allPapersResponse?.data || [];
         }
 
@@ -205,7 +202,6 @@ const HomePage = () => {
         const pendingPapers = mappedPapers.filter(
           (paper) => paper.status === "pending"
         );
-        console.log("Cập nhật researchPapers:", pendingPapers);
         setResearchPapers(pendingPapers);
 
         const recentPapers = recentPapersResponse?.papers
@@ -243,7 +239,6 @@ const HomePage = () => {
       typeof departmentId !== "string" ||
       departmentId.length !== 24
     ) {
-      console.warn(`Invalid department ID: ${departmentId}`);
       return "Unknown Department";
     }
     try {
@@ -305,7 +300,6 @@ const HomePage = () => {
           return;
         }
 
-        console.log("Đang lấy số lượt xem/tải cho papers:", papersToFetch);
         const updatedPapers = await Promise.all(
           papersToFetch.map(async (paper) => {
             const [viewCount, downloadCount] = await Promise.all([
@@ -337,7 +331,6 @@ const HomePage = () => {
         .filter((paper) => paper.id && !authors[paper.id]);
 
       if (papersToFetch.length === 0) {
-        console.log("Không cần lấy authors, tất cả đã có dữ liệu");
         return;
       }
 
@@ -616,23 +609,31 @@ const HomePage = () => {
     }
   };
 
-  const handleAddPaperToCollection = async () => {
-    if (!selectedCategory) {
-      console.error("Error: No category selected.");
+  const handleAddPaperToCollection = async (category) => {
+    console.log("handleAddPaperToCollection called");
+    console.log("Selected category:", category);
+
+    if (!category) {
+      message.error("Vui lòng chọn danh mục trước khi lưu.");
       return;
     }
     if (!selectedPaper || !selectedPaper.id) {
-      console.error("Error: No paper selected or paper ID is missing.");
+      console.log("Selected paper:", selectedPaper);
+      message.error("Không tìm thấy bài nghiên cứu để lưu.");
       return;
     }
 
-    const collection = collections.find((col) => col.name === selectedCategory);
+    const collection = collections.find((col) => col.name === category);
 
     if (!collection || !collection._id) {
-      console.error(
-        `Error: No matching collection found for the selected category: ${selectedCategory}`
-      );
+      console.error("Không tìm thấy danh mục:", category);
       message.error("Không tìm thấy danh mục phù hợp. Vui lòng thử lại.");
+      return;
+    }
+
+    // Kiểm tra xem bài nghiên cứu đã tồn tại trong danh mục chưa
+    if (collection.papers.some((paper) => paper === selectedPaper.id)) {
+      message.warning("Bài nghiên cứu đã tồn tại trong danh mục này.");
       return;
     }
 
@@ -641,27 +642,53 @@ const HomePage = () => {
         collection_id: collection._id,
         paper_id: selectedPaper.id,
       };
+      console.log("Payload gửi đến API:", payload);
 
-      await userApi.addPaperToCollection(payload);
-      setArchivedPapers((prev) => [...prev, selectedPaper.id]);
-      setIsModalVisible(false);
-      message.success("Bài nghiên cứu đã được thêm vào danh mục lưu trữ!");
+      const response = await userApi.addPaperToCollection(payload);
+      console.log("Phản hồi từ API:", response);
+
+      // Kiểm tra phản hồi từ API
+      if (
+        response &&
+        response.message === "Paper added to collection successfully."
+      ) {
+        setArchivedPapers((prev) => [...prev, selectedPaper.id]);
+        setIsModalVisible(false);
+        message.success("Bài nghiên cứu đã được thêm vào danh mục lưu trữ!");
+      } else if (
+        response &&
+        response.message === "Paper already exists in the collection."
+      ) {
+        console.warn("Paper already exists in the collection:", response);
+        message.warning("Bài nghiên cứu đã tồn tại trong danh mục này.");
+      } else {
+        const errorMessage =
+          response?.message || "API không trả về kết quả thành công.";
+        console.error("Error from API:", errorMessage);
+        message.error(errorMessage);
+      }
     } catch (error) {
       console.error("Error adding paper to collection:", error);
+      message.error(
+        error.message || "Lỗi khi thêm bài nghiên cứu vào danh mục."
+      );
     }
   };
 
   const handleCategoryChange = useCallback((e) => {
-    setSelectedCategory(e.target.value);
+    const newCategory = e.target.value;
+    console.log("Category changed to:", newCategory);
+    setSelectedCategory(newCategory);
   }, []);
 
   const handleOk = useCallback(() => {
+    console.log("handleOk called");
     if (newCategory.trim() && !categories.includes(newCategory)) {
       handleCreateCollection();
     } else {
-      handleAddPaperToCollection();
+      handleAddPaperToCollection(selectedCategory); // Truyền selectedCategory trực tiếp
     }
-  }, [newCategory, categories]);
+  }, [newCategory, categories, selectedCategory]);
 
   const handleCancel = useCallback(() => {
     setIsModalVisible(false);
