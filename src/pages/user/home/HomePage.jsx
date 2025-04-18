@@ -685,7 +685,7 @@ const HomePage = () => {
           className="w-full block"
         >
           <article
-            className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-4 max-md:w-full ${
+            className={`grid grid-cols-[auto,1fr] gap-6 px-4 py-4 bg-white rounded-xl shadow-sm max-md:grid-cols-1 max-md:px-4 max-md:py-4 max-md:w-full max-md:mb-4 ${
               index > 0 ? "mt-3" : ""
             }`}
           >
@@ -790,19 +790,19 @@ const HomePage = () => {
             <Header />
           </div>
           <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20">
-            <div className="flex items-center gap-2 text-gray-600 max-md:text-sm">
+            <div className="flex items-center gap-2 text-gray-600 text-sm max-md:text-xs">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
                 alt="Home Icon"
-                className="w-5 h-5 max-md:w-4 max-md:h-4"
+                className="w-5 h-5 max-md:w-3 max-md:h-3"
               />
               <span>Trang chủ</span>
               <span className="text-gray-400"></span>
               <span className="font-semibold text-sky-900">Tìm kiếm</span>
             </div>
-            <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-3">
+            <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-2">
               <select
-                className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
+                className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-2 max-md:text-xs"
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
               >
@@ -813,7 +813,7 @@ const HomePage = () => {
                   </option>
                 ))}
               </select>
-              <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base">
+              <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:max-w-[95%] max-md:p-2 max-md:text-xs">
                 <option value="">Tất cả</option>
                 <option value="title">Tiêu đề</option>
                 <option value="author">Tác giả</option>
@@ -823,7 +823,7 @@ const HomePage = () => {
               <div className="relative flex-1">
                 <input
                   type="text"
-                  className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:max-w-[95%] max-md:p-3 max-md:text-base"
+                  className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:max-w-[95%] max-md:p-2 max-md:text-xs"
                   placeholder="Nhập từ khóa tìm kiếm..."
                   value={searchQuery}
                   onChange={(e) => {
@@ -839,11 +839,11 @@ const HomePage = () => {
                   }}
                 />
                 {isHistoryVisible && searchHistory.length > 0 && (
-                  <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto">
+                  <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto max-md:text-xs">
                     {searchHistory.map((query, index) => (
                       <li
                         key={index}
-                        className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100"
+                        className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100 max-md:p-1.5"
                       >
                         <span
                           onClick={() => {
@@ -856,7 +856,7 @@ const HomePage = () => {
                           {query}
                         </span>
                         <button
-                          className="text-red-500 hover:text-red-700 ml-2"
+                          className="text-red-500 hover:text-red-700 ml-2 max-md:ml-1"
                           onClick={(e) => {
                             e.stopPropagation();
                             const updatedHistory = searchHistory.filter(
@@ -877,7 +877,7 @@ const HomePage = () => {
                 )}
               </div>
               <button
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-3 max-md:text-base max-md:h-[44px] hover:bg-blue-600"
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:max-w-[95%] max-md:py-2 max-md:text-xs max-md:h-[36px] hover:bg-blue-600"
                 onClick={handleSearch}
               >
                 Tìm kiếm
