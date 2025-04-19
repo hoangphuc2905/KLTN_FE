@@ -75,7 +75,7 @@ const DetailArticlePage = () => {
           receiver_id: author.mssvMsgv,
           receiver_model: author.role === "Chính" ? "Lecturer" : "Student",
           paper_id: id,
-          content: `Yêu cầu chỉnh sửa bài báo "${paper.title_vn}": ${requestContent}`,
+          content: `Yêu cầu chỉnh sửa bài báo ${paper.title_vn}: ${requestContent}`,
           isread: false,
           time: new Date(),
         };

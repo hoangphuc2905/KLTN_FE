@@ -35,6 +35,7 @@ const ScientificPaperPage = () => {
   const columnFilterRef = useRef(null);
   const roleFilterRef = useRef(null);
   const [showRoleFilter, setShowRoleFilter] = useState(false);
+  const [notes, setNotes] = useState({}); // State to store notes for each paper
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({
@@ -60,6 +61,44 @@ const ScientificPaperPage = () => {
   useEffect(() => {
     getAcademicYears();
   }, []);
+
+  // Function to fetch notes based on paper status
+  const fetchNoteForPaper = async (paperId, status) => {
+    try {
+      let response;
+      if (status === "revision") {
+        response = await userApi.getMessagesByPaperByRequestForEdit(paperId);
+      } else if (status === "refused") {
+        response = await userApi.getMessagesByPaperByRejection(paperId);
+      } else {
+        return "";
+      }
+      // Updated to handle the API response structure
+      const noteContent = response?.content || "";
+      return noteContent;
+    } catch (error) {
+      console.error(`Error fetching note for paper ${paperId}:`, error);
+      return "Lỗi khi tải ghi chú";
+    }
+  };
+
+  // Fetch notes when papers change
+  useEffect(() => {
+    const fetchNotes = async () => {
+      const newNotes = {};
+      for (const paper of papers) {
+        if (paper.status === "revision" || paper.status === "refused") {
+          const note = await fetchNoteForPaper(paper._id, paper.status);
+          newNotes[paper._id] = note;
+        } else {
+          newNotes[paper._id] = paper.note || "";
+        }
+      }
+      setNotes(newNotes);
+    };
+
+    fetchNotes();
+  }, [papers]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -583,42 +622,16 @@ const ScientificPaperPage = () => {
       width: 150,
     },
     {
-      title: "CHỈNH SỬA",
-      key: "edit",
-      render: (text, record) => {
-        // Chỉ hiển thị nút chỉnh sửa khi trạng thái là "chờ chỉnh sửa"
-        if (record.status === "revision") {
-          return (
-            <button
-              className="text-[#00A3FF]"
-              onClick={() => handleRowClick(record)}
-            >
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                  fill="currentColor"
-                />
-              </svg>
-            </button>
-          );
-        }
-        // Không hiển thị nút chỉnh sửa cho các trạng thái khác
-        return null;
-      },
-      width: 120,
-      align: "center",
-    },
-    {
       title: "GHI CHÚ",
       dataIndex: "note",
       key: "note",
-      render: (note) => <span className="text-red-600">{note}</span>,
+      render: (note, record) => (
+        <Tooltip placement="topLeft" title={notes[record._id] || note || ""}>
+          <span className="text-red-600">
+            {notes[record._id] || note || ""}
+          </span>
+        </Tooltip>
+      ),
       ellipsis: {
         showTitle: false,
       },

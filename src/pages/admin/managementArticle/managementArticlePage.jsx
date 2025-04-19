@@ -15,6 +15,7 @@ const ManagementAriticle = () => {
   const [selectedYear, setSelectedYear] = useState("Tất cả"); // Default to "Tất cả"
   const [academicYears, setAcademicYears] = useState([]); // Add state for academic years
   const [sortedInfo, setSortedInfo] = useState({}); // Add state for sorting information
+  const [notes, setNotes] = useState({}); // State to store notes for each paper
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -22,11 +23,11 @@ const ManagementAriticle = () => {
         let fetchedPapers = [];
         if (userRole === "admin") {
           const response = await getAllScientificPapers(
-            selectedYear === "Tất cả" ? null : selectedYear // Pass selectedYear directly
+            selectedYear === "Tất cả" ? null : selectedYear
           );
           fetchedPapers = Array.isArray(response.scientificPapers)
             ? response.scientificPapers
-            : []; // Extract scientificPapers array
+            : [];
         } else if (
           [
             "head_of_department",
@@ -36,22 +37,22 @@ const ManagementAriticle = () => {
         ) {
           const response = await getScientificPapersByDepartment(
             userDepartment,
-            selectedYear === "Tất cả" ? null : selectedYear // Pass selectedYear directly
+            selectedYear === "Tất cả" ? null : selectedYear
           );
           fetchedPapers = Array.isArray(response.scientificPapers)
             ? response.scientificPapers
-            : []; // Extract scientificPapers array
+            : [];
         }
-        console.log("Fetched Papers:", fetchedPapers); // Debugging log
+        console.log("Fetched Papers:", fetchedPapers);
         setPapers(fetchedPapers);
       } catch (error) {
         console.error("Error fetching papers:", error);
-        setPapers([]); // Reset to an empty array on error
+        setPapers([]);
       }
     };
 
     fetchPapers();
-  }, [userRole, userDepartment, selectedYear]); // Fetch data whenever selectedYear changes
+  }, [userRole, userDepartment, selectedYear]);
 
   const fetchDepartments = async () => {
     try {
@@ -73,8 +74,8 @@ const ManagementAriticle = () => {
 
   const getAllScientificPapers = async (academicYear) => {
     try {
-      const response = await userApi.getAllScientificPapers(academicYear); // Pass academicYear as a parameter
-      console.log("API Response:", response); // Log the correct response
+      const response = await userApi.getAllScientificPapers(academicYear);
+      console.log("API Response:", response);
       return response;
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
@@ -86,9 +87,9 @@ const ManagementAriticle = () => {
     try {
       const response = await userApi.getScientificPapersByDepartment(
         department,
-        academicYear // Pass academicYear as a parameter
+        academicYear
       );
-      console.log("API Response:", response); // Log the correct response
+      console.log("API Response:", response);
       return response;
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
@@ -100,8 +101,8 @@ const ManagementAriticle = () => {
     try {
       const response = await userApi.getAcademicYears();
       const years = response.academicYears || [];
-      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
-      setSelectedYear("Tất cả"); // Default to "Tất cả"
+      setAcademicYears(["Tất cả", ...years.reverse()]);
+      setSelectedYear("Tất cả");
     } catch (error) {
       console.error("Error fetching academic years:", error);
     }
@@ -110,6 +111,44 @@ const ManagementAriticle = () => {
   useEffect(() => {
     getAcademicYears();
   }, []);
+
+  // Function to fetch notes based on paper status
+  const fetchNoteForPaper = async (paperId, status) => {
+    try {
+      let response;
+      if (status === "revision") {
+        response = await userApi.getMessagesByPaperByRequestForEdit(paperId);
+      } else if (status === "refused") {
+        response = await userApi.getMessagesByPaperByRejection(paperId);
+      } else {
+        return "";
+      }
+      // Updated to handle the API response structure
+      const noteContent = response?.content || "";
+      return noteContent;
+    } catch (error) {
+      console.error(`Error fetching note for paper ${paperId}:`, error);
+      return "Lỗi khi tải ghi chú";
+    }
+  };
+
+  // Fetch notes when papers change
+  useEffect(() => {
+    const fetchNotes = async () => {
+      const newNotes = {};
+      for (const paper of papers) {
+        if (paper.status === "revision" || paper.status === "refused") {
+          const note = await fetchNoteForPaper(paper._id, paper.status);
+          newNotes[paper._id] = note;
+        } else {
+          newNotes[paper._id] = paper.note || "";
+        }
+      }
+      setNotes(newNotes);
+    };
+
+    fetchNotes();
+  }, [papers]);
 
   const [activeTab, setActiveTab] = useState("all");
   const [showFilter, setShowFilter] = useState(false);
@@ -131,7 +170,7 @@ const ManagementAriticle = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusFilterRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10; // Change to 7 items per page
+  const itemsPerPage = 10;
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -381,7 +420,7 @@ const ManagementAriticle = () => {
             approved: "Đã duyệt",
             refused: "Từ chối",
             pending: "Chờ duyệt",
-            revision: "Chờ chỉnh sửa", // Added new status text
+            revision: "Chờ chỉnh sửa",
           }[status.toString()] || "Không xác định";
 
         const statusColor =
@@ -389,7 +428,7 @@ const ManagementAriticle = () => {
             approved: "text-green-600",
             refused: "text-red-600",
             pending: "text-yellow-600",
-            revision: "text-orange-600", // Added new status color
+            revision: "text-orange-600",
           }[status.toString()] || "text-gray-600";
 
         return <span className={statusColor}>{statusText}</span>;
@@ -417,34 +456,19 @@ const ManagementAriticle = () => {
       width: 150,
     },
     {
-      title: "CHỈNH SỬA",
-      key: "edit",
-      render: (text, record) => (
-        <button
-          className="text-[#00A3FF]"
-          onClick={() => handleRowClick(record)}
-        >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-              fill="currentColor"
-            />
-          </svg>
-        </button>
-      ),
-      width: 100,
-    },
-    {
       title: "GHI CHÚ",
       dataIndex: "note",
       key: "note",
-      render: (note) => <span className="text-red-600">{note}</span>,
+      render: (note, record) => (
+        <Tooltip
+          placement="topLeft"
+          title={notes[record._id] || note || ""}
+        >
+          <span className="text-red-600">
+            {notes[record._id] || note || ""}
+          </span>
+        </Tooltip>
+      ),
       ellipsis: {
         showTitle: false,
       },
@@ -470,8 +494,8 @@ const ManagementAriticle = () => {
   };
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow">
         <div className="w-full bg-white">
           <Header />
         </div>
@@ -488,7 +512,7 @@ const ManagementAriticle = () => {
             >
               Trang chủ
             </span>
-            <span className="text-gray-400"> &gt; </span>
+            <span className="text-gray-400"> </span>
             <span className="font-semibold text-sm text-sky-900">
               Bài báo nghiên cứu khoa học
             </span>
@@ -987,7 +1011,6 @@ const ManagementAriticle = () => {
               <Table
                 columns={newColumns}
                 dataSource={papers.filter((paper) => {
-                  // Filter based on the active tab
                   if (activeTab === "all") return true;
                   return paper.status === activeTab;
                 })}
@@ -998,10 +1021,10 @@ const ManagementAriticle = () => {
                     activeTab === "all" ? true : paper.status === activeTab
                   ).length,
                   onChange: (page) => setCurrentPage(page),
-                  showSizeChanger: false, // Disable page size changer
-                  position: ["bottomRight"], // Center the pagination controls
+                  showSizeChanger: false,
+                  position: ["bottomRight"],
                 }}
-                rowKey={(record) => record._id || record.key} // Ensure rowKey is unique
+                rowKey={(record) => record._id || record.key}
                 className="text-sm"
                 scroll={{
                   x: newColumns.reduce(
@@ -1016,10 +1039,10 @@ const ManagementAriticle = () => {
                 locale={{
                   emptyText: (
                     <div style={{ height: "35px" }}>Không có dữ liệu</div>
-                  ), // Add a meaningful empty state
+                  ),
                 }}
                 onChange={(pagination, filters, sorter) => {
-                  setSortedInfo(sorter); // Update sortedInfo state
+                  setSortedInfo(sorter);
                 }}
               />
             </div>
