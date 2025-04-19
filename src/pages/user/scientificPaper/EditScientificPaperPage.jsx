@@ -649,7 +649,7 @@ const EditScientificPaperPage = () => {
         file: selectedFile || "",
         link: link || "",
         doi: doi || "",
-        status: "revision",
+        status: "pending",
         order_no: orderNo,
         featured: featured,
         keywords: keywords || "",
