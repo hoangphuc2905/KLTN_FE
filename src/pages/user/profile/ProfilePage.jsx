@@ -1,13 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [selectedYear, setSelectedYear] = useState("2024");
   const [departmentName, setDepartmentName] = useState("");
+  const [recentlyViewedPapers, setRecentlyViewedPapers] = useState([]);
+  const [contributionStats, setContributionStats] = useState({
+    totalRequired: 10, // Điểm cần đóng góp
+    totalAchieved: 8, // Điểm đã đóng góp
+    percentage: 80, // Phần trăm hoàn thành
+  });
+  const chartRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -48,6 +57,315 @@ const ProfilePage = () => {
 
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    const fetchRecentlyViewedPapers = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) return;
+
+      try {
+        // Trong thực tế, bạn sẽ gọi API để lấy dữ liệu này
+        // const response = await userApi.getRecentlyViewedPapers(userId);
+        // setRecentlyViewedPapers(response.data);
+
+        // Dữ liệu mẫu cho demo
+        setRecentlyViewedPapers([
+          {
+            id: "paper1",
+            title:
+              "Nghiên cứu ứng dụng trí tuệ nhân tạo trong chuẩn đoán bệnh ung thư phổi giai đoạn sớm",
+            author: "Nguyễn Văn A, Trần Thị B",
+            summary:
+              "Nghiên cứu này đề xuất một phương pháp mới sử dụng deep learning để phát hiện các dấu hiệu sớm của bệnh ung thư phổi thông qua phân tích ảnh X-quang và CT scan.",
+            departmentName: "Khoa Công nghệ Thông tin",
+            thumbnailUrl:
+              "https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da",
+            views: 328,
+            downloads: 42,
+            viewDate: "Hôm nay",
+          },
+          {
+            id: "paper2",
+            title:
+              "Phát triển vật liệu composite từ sợi tre và nhựa tái chế thân thiện với môi trường",
+            author: "Lê Xuân C, Phạm Minh D",
+            summary:
+              "Nghiên cứu chế tạo vật liệu composite từ sợi tre và nhựa tái chế có khả năng phân hủy sinh học, góp phần giảm thiểu ô nhiễm môi trường từ rác thải nhựa.",
+            departmentName: "Khoa Kỹ thuật Vật liệu",
+            thumbnailUrl:
+              "https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72",
+            views: 156,
+            downloads: 23,
+            viewDate: "Hôm qua",
+          },
+          {
+            id: "paper3",
+            title:
+              "Ảnh hưởng của biến đổi khí hậu đến sự đa dạng sinh học tại Vườn Quốc gia Cát Tiên",
+            author: "Hoàng Thị E",
+            summary:
+              "Nghiên cứu đánh giá tác động của biến đổi khí hậu đến hệ sinh thái và đa dạng sinh học tại Vườn Quốc gia Cát Tiên, đề xuất các giải pháp bảo tồn hiệu quả.",
+            departmentName: "Khoa Sinh học",
+            thumbnailUrl:
+              "https://cdn.builder.io/api/v1/image/assets/TEMP/aed835d36a2dd64ee06f5306c36e2c710acd8eb301ba94120a7c5fc6b7e141b0",
+            views: 203,
+            downloads: 31,
+            viewDate: "3 ngày trước",
+          },
+          {
+            id: "paper4",
+            title:
+              "Nghiên cứu giải pháp tối ưu hóa lưới điện thông minh tích hợp nguồn năng lượng tái tạo",
+            author: "Đặng Văn F, Ngô Thị G",
+            summary:
+              "Đề xuất mô hình lưới điện thông minh với khả năng tích hợp và quản lý hiệu quả các nguồn năng lượng tái tạo như điện mặt trời và điện gió.",
+            departmentName: "Khoa Điện - Điện tử",
+            thumbnailUrl:
+              "https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da",
+            views: 187,
+            downloads: 29,
+            viewDate: "1 tuần trước",
+          },
+          {
+            id: "paper5",
+            title:
+              "Phát triển thuật toán xử lý ngôn ngữ tự nhiên cho tiếng Việt ứng dụng trong phân tích cảm xúc Phát triển thuật toán xử lý ngôn ngữ tự nhiên cho tiếng Việt ứng dụng trong phân tích cảm xúc",
+            author:
+              "Trần Văn H, Trần Văn H, Trần Văn H, Trần Văn H, Trần Văn H",
+            summary:
+              "Nghiên cứu phát triển các mô hình và thuật toán xử lý ngôn ngữ tự nhiên đặc thù cho tiếng Việt, ứng dụng trong phân tích cảm xúc từ bình luận người dùng trên mạng xã hội. Nghiên cứu phát triển các mô hình và thuật toán xử lý ngôn ngữ tự nhiên đặc thù cho tiếng Việt, ứng dụng trong phân tích cảm xúc từ bình luận người dùng trên mạng xã hội. Nghiên cứu phát triển các mô hình và thuật toán xử lý ngôn ngữ tự nhiên đặc thù cho tiếng Việt, ứng dụng trong phân tích cảm xúc từ bình luận người dùng trên mạng xã hội.",
+            departmentName: "Khoa Công nghệ Thông tin",
+            thumbnailUrl:
+              "https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72",
+            views: 246,
+            downloads: 38,
+            viewDate: "2 tuần trước",
+          },
+        ]);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu bài báo đã xem gần đây:", error);
+      }
+    };
+
+    fetchRecentlyViewedPapers();
+  }, []);
+
+  // Thêm CSS cho thanh cuộn tùy chỉnh
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .custom-scrollbar {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+      
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 0;
+        display: none; /* Chrome, Safari and Opera */
+      }
+      
+      .custom-scrollbar-hover {
+        scrollbar-width: thin;
+        -ms-overflow-style: -ms-autohiding-scrollbar;
+      }
+      
+      .custom-scrollbar-hover::-webkit-scrollbar {
+        width: 5px;
+        background-color: transparent;
+        display: none;
+      }
+      
+      .custom-scrollbar-hover:hover::-webkit-scrollbar {
+        display: block;
+      }
+      
+      .custom-scrollbar-hover::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 10px;
+      }
+      
+      .custom-scrollbar-hover::-webkit-scrollbar-thumb {
+        background-color: rgba(203, 213, 224, 0.5);
+        border-radius: 10px;
+      }
+      
+      .custom-scrollbar-hover:hover::-webkit-scrollbar-thumb {
+        background-color: rgba(203, 213, 224, 0.8);
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Fetch thành tích đóng góp theo năm
+  useEffect(() => {
+    const fetchContributionStats = async () => {
+      try {
+        // Trong thực tế, sẽ gọi API để lấy dữ liệu
+        // const response = await userApi.getContributionStats(user?.id, selectedYear);
+        // setContributionStats(response.data);
+
+        // Dữ liệu mẫu
+        const mockData = {
+          2024: { totalRequired: 10, totalAchieved: 8, percentage: 80 },
+          2023: { totalRequired: 8, totalAchieved: 7, percentage: 87.5 },
+          2022: { totalRequired: 6, totalAchieved: 4, percentage: 66.7 },
+        };
+
+        setContributionStats(mockData[selectedYear]);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu thành tích:", error);
+      }
+    };
+
+    fetchContributionStats();
+  }, [selectedYear]);
+
+  // Cấu hình biểu đồ Highcharts
+  const getChartOptions = () => {
+    return {
+      chart: {
+        type: "pie",
+        height: 300,
+        backgroundColor: "transparent",
+        style: {
+          fontFamily: '"Inter", sans-serif',
+        },
+      },
+      title: {
+        text: null,
+      },
+      tooltip: {
+        pointFormat: "<b>{point.percentage:.1f}%</b>",
+        style: {
+          fontSize: "14px",
+        },
+      },
+      plotOptions: {
+        pie: {
+          borderWidth: 0,
+          shadow: {
+            offsetX: 0,
+            offsetY: 0,
+            width: 5,
+            opacity: 0.15,
+          },
+          dataLabels: {
+            enabled: false,
+          },
+        },
+      },
+      series: [
+        // Vòng tròn bọc ngoài cùng (trang trí)
+        {
+          name: "Outer Wrapper",
+          data: [
+            {
+              name: "Outer Wrapper",
+              y: 1,
+              color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                  [0, "#f0f7ff"],
+                  [1, "#e6f0ff"],
+                ],
+              },
+              dataLabels: { enabled: false },
+            },
+          ],
+          size: "160%",
+          innerSize: "150%",
+          borderWidth: 0,
+          dataLabels: { enabled: false },
+          enableMouseTracking: false,
+        },
+        // Vòng tròn bên ngoài lớn (tổng điểm cần đóng góp)
+        {
+          name: "Tổng điểm",
+          data: [
+            {
+              name: "Tổng điểm",
+              y: 1,
+              color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                  [0, "#eaeff4"],
+                  [1, "#d8e1eb"],
+                ],
+              },
+              dataLabels: { enabled: false },
+            },
+          ],
+          size: "130%",
+          innerSize: "100%",
+          borderWidth: 0,
+          dataLabels: { enabled: false },
+          enableMouseTracking: false,
+        },
+        // Vòng tròn bên trong (điểm đã đóng góp)
+        {
+          name: "Điểm đóng góp",
+          colorByPoint: true,
+          size: "100%",
+          innerSize: "75%",
+          borderRadius: 4,
+          data: [
+            {
+              name: "Đã đạt",
+              y: contributionStats.totalAchieved,
+              color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                  [0, "#00A3FF"],
+                  [1, "#0077FF"],
+                ],
+              },
+              dataLabels: {
+                enabled: false,
+              },
+            },
+            {
+              name: "Còn thiếu",
+              y:
+                contributionStats.totalRequired -
+                contributionStats.totalAchieved,
+              color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                  [0, "#f0f0f0"],
+                  [1, "#e0e0e0"],
+                ],
+              },
+              dataLabels: {
+                enabled: false,
+              },
+            },
+          ],
+        },
+      ],
+      credits: {
+        enabled: false,
+      },
+      responsive: {
+        rules: [
+          {
+            condition: {
+              maxWidth: 500,
+            },
+            chartOptions: {
+              chart: {
+                height: 300,
+              },
+              series: [{ size: "170%" }, { size: "140%" }, { size: "110%" }],
+            },
+          },
+        ],
+      },
+    };
+  };
 
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "2-digit", day: "2-digit" };
@@ -174,56 +492,40 @@ const ProfilePage = () => {
                 <div className="flex gap-5 max-md:flex-col">
                   <div className="w-[28%] max-md:w-full">
                     <div className="flex flex-col pt-7 w-full max-md:mt-10">
-                      <div className="flex flex-col items-center px-6 pt-6 pb-1.5 mt-0 bg-white rounded-3xl border border-black min-h-[474px] max-md:px-4">
+                      <div className="flex flex-col items-center px-6 pt-6 pb-1.5 mt-0 bg-white rounded-3xl border border-black min-h-[320px] max-md:px-4">
                         <div className="flex justify-between w-full">
                           <h3 className="text-sm font-bold leading-none text-black max-md:text-base">
                             Thành tích đóng góp
                           </h3>
                           <select
+                            className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm w-[110px] cursor-pointer hover:bg-[#008AE0] transition-colors"
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="flex z-10 gap-2 items-center pr-10 pl-3 text-sm font-bold leading-none text-black whitespace-nowrap rounded-md border border-solid bg-zinc-100 border-gray-300 h-[19px] w-[110px] max-md:h-[36px] max-md:w-[100px]"
                           >
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                            <option value="2022">2022</option>
+                            <option value="2024">2024-2025</option>
+                            <option value="2023">2023-2024</option>
+                            <option value="2022">2022-2023</option>
                           </select>
                         </div>
-                        <div className="mt-4 max-w-full min-h-[402px] w-[355px]">
-                          <div className="flex flex-col items-center w-full">
-                            <img
-                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/a85564bf2d993b2f5f5e6338fad61fc05c6ae7fb53a9eb0683310e68382b8e5b?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                              className="object-contain max-w-full aspect-square w-[200px]"
-                              alt="Statistics chart"
+                        <div className="mt-4 max-w-full min-h-[280px] w-full">
+                          <div className="flex flex-col items-center w-full relative">
+                            <HighchartsReact
+                              highcharts={Highcharts}
+                              options={getChartOptions()}
+                              ref={chartRef}
                             />
-                          </div>
-                          <div className="mt-4 w-full text-sm leading-loose text-gray-800 max-w-[355px] min-h-[154px] max-md:mt-10">
-                            <div className="flex gap-6 items-start px-8 w-full max-md:px-5">
-                              <div className="flex flex-1 shrink gap-2 items-center whitespace-nowrap rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-green-500 rounded"></div>
-                                <div className="flex-1 shrink self-stretch my-auto basis-0">
-                                  Done
-                                </div>
+
+                            {/* Số liệu ở giữa biểu đồ */}
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                              <div className="text-4xl font-bold text-gray-800">
+                                {contributionStats.percentage}%
                               </div>
-                              <div className="flex flex-1 shrink gap-2 items-center text-right rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-red-500 rounded"></div>
-                                <div className="self-stretch my-auto">
-                                  Overdue work
-                                </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                Hoàn thành
                               </div>
-                            </div>
-                            <div className="flex gap-6 items-start px-8 mt-4 w-full text-right max-md:px-5">
-                              <div className="flex flex-1 shrink gap-2 items-center rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-orange-400 rounded"></div>
-                                <div className="self-stretch my-auto">
-                                  Work finished late
-                                </div>
-                              </div>
-                              <div className="flex flex-1 shrink gap-2 items-center whitespace-nowrap rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-blue-500 rounded"></div>
-                                <div className="self-stretch my-auto">
-                                  Processing
-                                </div>
+                              <div className="text-base font-semibold mt-2 text-sky-600">
+                                {contributionStats.totalAchieved}/
+                                {contributionStats.totalRequired} điểm
                               </div>
                             </div>
                           </div>
@@ -233,38 +535,67 @@ const ProfilePage = () => {
                   </div>
                   <div className="ml-5 w-[72%] max-md:ml-0 max-md:w-full">
                     <div className="mt-2.5 w-full text-xl text-black max-md:mt-10 max-md:text-base">
-                      <div className="relative flex flex-col pl-8 border-gray-300">
-                        {Array(5)
-                          .fill(0)
-                          .map((_, index) => (
-                            <div
-                              key={index}
-                              className="relative flex items-start gap-2 max-md:gap-1"
-                            >
-                              {/* Avatar + Đường dọc */}
-                              <div className="relative flex flex-col items-center">
-                                <div className="w-11 h-11 rounded-full bg-white border border-gray-300 flex items-center justify-center max-md:w-8 max-md:h-8">
-                                  <img
-                                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/aed835d36a2dd64ee06f5306c36e2c710acd8eb301ba94120a7c5fc6b7e141b0"
-                                    className="w-10 h-10 rounded-full max-md:w-6 max-md:h-6"
-                                    alt="Profile"
-                                  />
-                                </div>
-                                {index < 4 && (
-                                  <div className="w-[2px] h-12 bg-gray-300 max-md:h-8"></div>
-                                )}
+                      <div className="relative flex flex-col pl-4 border-gray-300 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        <h3 className="text-base font-bold mb-3 text-gray-800">
+                          Bài báo đã xem gần đây
+                        </h3>
+                        {recentlyViewedPapers.map((paper, index) => (
+                          <Link
+                            to={`/scientific-paper/${paper.id}`}
+                            key={index}
+                            className="mb-4 block"
+                          >
+                            <article className="relative flex gap-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3">
+                              <div className="flex-shrink-0">
+                                <img
+                                  src={paper.thumbnailUrl}
+                                  className="w-16 h-20 object-cover rounded-md border border-gray-200"
+                                  alt={paper.title}
+                                />
                               </div>
-                              {/* Nội dung bên phải */}
-                              <div className="relative flex-auto p-2 bg-white rounded-lg shadow-md w-[700px] max-md:w-full text-sm max-md:text-xs">
-                                <span className="font-bold">Admin</span>
-                                <br />
-                                Duyệt thông tin bài báo
-                                <div className="absolute top-3 right-3 text-gray-500 text-sm max-md:text-xs">
-                                  2 tháng
+                              <div className="flex-grow overflow-hidden pr-2">
+                                <div className="flex justify-between items-start">
+                                  <h4 className="font-bold text-sm line-clamp-2 mb-1 pr-16">
+                                    {paper.title}
+                                  </h4>
+                                  <div className="absolute top-3 right-3 text-xs text-gray-500">
+                                    {paper.viewDate}
+                                  </div>
+                                </div>
+                                <div className="text-xs text-sky-900">
+                                  {paper.author}
+                                </div>
+                                <p className="text-xs text-neutral-800 line-clamp-2 mt-1">
+                                  {paper.summary}
+                                </p>
+                                <div className="text-xs text-sky-900 mt-1">
+                                  {paper.departmentName}
+                                </div>
+
+                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-2 justify-end">
+                                  <div className="flex items-center">
+                                    <img
+                                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                                      className="w-3 h-3 mr-1"
+                                      alt="Views"
+                                    />
+                                    <span className="text-orange-500">
+                                      {paper.views}
+                                    </span>
+                                  </div>
+                                  <div className="flex items-center ml-2">
+                                    <img
+                                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                                      className="w-3 h-3 mr-1"
+                                      alt="Downloads"
+                                    />
+                                    <span>{paper.downloads}</span>
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            </article>
+                          </Link>
+                        ))}
                       </div>
                     </div>
                   </div>
