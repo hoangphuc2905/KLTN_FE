@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
 import { useNavigate } from "react-router-dom";
 import { Filter } from "lucide-react";
 import {
@@ -925,6 +926,8 @@ const ManagementTableDepartmentPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
+
       <Modal
         title="Chi tiết"
         open={isModalVisible}

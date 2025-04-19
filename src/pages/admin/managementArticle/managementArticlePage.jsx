@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
 import { Filter } from "lucide-react";
 import { Input, Select, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
 import userApi from "../../../api/api";
@@ -1025,6 +1026,7 @@ const ManagementAriticle = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
