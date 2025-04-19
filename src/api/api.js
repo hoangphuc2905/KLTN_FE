@@ -1271,6 +1271,61 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+  getMessagesByStatusRejectionByPaperId: async (paperId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/messages/paperbyrejection/${paperId}`
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getMessagesByStatusRequestforEditByPaperId: async (paperId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/messages/paperbyrequestforedit/${paperId}`
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+  getMessagesByPaperByRejection: async (paperId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/messages/paperbyrejection/${paperId}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Lỗi kết nối đến server" };
+    }
+  },
+
+  getMessagesByPaperByRequestForEdit: async (paperId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/messages/paperbyrequestforedit/${paperId}`,
+        {
+          headers: {
+            Accept: "application/json",
+          },
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Lỗi kết nối đến server" };
+    }
+  },
 };
 
 export default userApi;
