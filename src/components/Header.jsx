@@ -179,30 +179,35 @@ const Header = () => {
 
               {menuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 sm:w-60 bg-white shadow-lg rounded-lg py-2 border z-50">
-                  <button
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
-                    onClick={openProfile}
-                  >
-                    👤 Thông tin cá nhân
-                  </button>
-                  <button
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
-                    onClick={openUpdateProfile}
-                  >
-                    👤 Cập nhật thông tin cá nhân
-                  </button>
-                  <button
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
-                    onClick={openWorkHistory}
-                  >
-                    👤 Quá trình công tác
-                  </button>
-                  <button
-                    className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
-                    onClick={() => setShowChangePasswordPopup(true)}
-                  >
-                    🔑 Đổi mật khẩu
-                  </button>
+                  {(localStorage.getItem("current_role") === "student" ||
+                    localStorage.getItem("current_role") === "lecturer") && (
+                    <>
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
+                        onClick={openProfile}
+                      >
+                        👤 Thông tin cá nhân
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
+                        onClick={openUpdateProfile}
+                      >
+                        👤 Cập nhật thông tin cá nhân
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
+                        onClick={openWorkHistory}
+                      >
+                        👤 Quá trình công tác
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
+                        onClick={() => setShowChangePasswordPopup(true)}
+                      >
+                        🔑 Đổi mật khẩu
+                      </button>
+                    </>
+                  )}
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-red-100 text-xs sm:text-sm text-red-500"
                     onClick={handleLogout}

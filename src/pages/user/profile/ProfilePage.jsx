@@ -5,19 +5,25 @@ import Footer from "../../../components/Footer";
 import { useNavigate, Link } from "react-router-dom";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
+import { Pagination } from "antd";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [selectedYear, setSelectedYear] = useState("2024");
   const [departmentName, setDepartmentName] = useState("");
   const [recentlyViewedPapers, setRecentlyViewedPapers] = useState([]);
+  const [recentlyDownloadedPapers, setRecentlyDownloadedPapers] = useState([]);
   const [contributionStats, setContributionStats] = useState({
-    totalRequired: 10, // Điểm cần đóng góp
-    totalAchieved: 8, // Điểm đã đóng góp
-    percentage: 80, // Phần trăm hoàn thành
+    totalRequired: 0,
+    totalAchieved: 0,
+    percentage: 0,
   });
+  const [activeTab, setActiveTab] = useState("viewed"); // Tab state
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
+  const itemsPerPage = 5;
   const chartRef = useRef(null);
   const navigate = useNavigate();
+  const [academicYears, setAcademicYears] = useState([]); // State for academic years
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -64,90 +70,55 @@ const ProfilePage = () => {
       if (!userId) return;
 
       try {
-        // Trong thực tế, bạn sẽ gọi API để lấy dữ liệu này
-        // const response = await userApi.getRecentlyViewedPapers(userId);
-        // setRecentlyViewedPapers(response.data);
-
-        // Dữ liệu mẫu cho demo
-        setRecentlyViewedPapers([
-          {
-            id: "paper1",
-            title:
-              "Nghiên cứu ứng dụng trí tuệ nhân tạo trong chuẩn đoán bệnh ung thư phổi giai đoạn sớm",
-            author: "Nguyễn Văn A, Trần Thị B",
-            summary:
-              "Nghiên cứu này đề xuất một phương pháp mới sử dụng deep learning để phát hiện các dấu hiệu sớm của bệnh ung thư phổi thông qua phân tích ảnh X-quang và CT scan.",
-            departmentName: "Khoa Công nghệ Thông tin",
-            thumbnailUrl:
-              "https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da",
-            views: 328,
-            downloads: 42,
-            viewDate: "Hôm nay",
-          },
-          {
-            id: "paper2",
-            title:
-              "Phát triển vật liệu composite từ sợi tre và nhựa tái chế thân thiện với môi trường",
-            author: "Lê Xuân C, Phạm Minh D",
-            summary:
-              "Nghiên cứu chế tạo vật liệu composite từ sợi tre và nhựa tái chế có khả năng phân hủy sinh học, góp phần giảm thiểu ô nhiễm môi trường từ rác thải nhựa.",
-            departmentName: "Khoa Kỹ thuật Vật liệu",
-            thumbnailUrl:
-              "https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72",
-            views: 156,
-            downloads: 23,
-            viewDate: "Hôm qua",
-          },
-          {
-            id: "paper3",
-            title:
-              "Ảnh hưởng của biến đổi khí hậu đến sự đa dạng sinh học tại Vườn Quốc gia Cát Tiên",
-            author: "Hoàng Thị E",
-            summary:
-              "Nghiên cứu đánh giá tác động của biến đổi khí hậu đến hệ sinh thái và đa dạng sinh học tại Vườn Quốc gia Cát Tiên, đề xuất các giải pháp bảo tồn hiệu quả.",
-            departmentName: "Khoa Sinh học",
-            thumbnailUrl:
-              "https://cdn.builder.io/api/v1/image/assets/TEMP/aed835d36a2dd64ee06f5306c36e2c710acd8eb301ba94120a7c5fc6b7e141b0",
-            views: 203,
-            downloads: 31,
-            viewDate: "3 ngày trước",
-          },
-          {
-            id: "paper4",
-            title:
-              "Nghiên cứu giải pháp tối ưu hóa lưới điện thông minh tích hợp nguồn năng lượng tái tạo",
-            author: "Đặng Văn F, Ngô Thị G",
-            summary:
-              "Đề xuất mô hình lưới điện thông minh với khả năng tích hợp và quản lý hiệu quả các nguồn năng lượng tái tạo như điện mặt trời và điện gió.",
-            departmentName: "Khoa Điện - Điện tử",
-            thumbnailUrl:
-              "https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da",
-            views: 187,
-            downloads: 29,
-            viewDate: "1 tuần trước",
-          },
-          {
-            id: "paper5",
-            title:
-              "Phát triển thuật toán xử lý ngôn ngữ tự nhiên cho tiếng Việt ứng dụng trong phân tích cảm xúc Phát triển thuật toán xử lý ngôn ngữ tự nhiên cho tiếng Việt ứng dụng trong phân tích cảm xúc",
-            author:
-              "Trần Văn H, Trần Văn H, Trần Văn H, Trần Văn H, Trần Văn H",
-            summary:
-              "Nghiên cứu phát triển các mô hình và thuật toán xử lý ngôn ngữ tự nhiên đặc thù cho tiếng Việt, ứng dụng trong phân tích cảm xúc từ bình luận người dùng trên mạng xã hội. Nghiên cứu phát triển các mô hình và thuật toán xử lý ngôn ngữ tự nhiên đặc thù cho tiếng Việt, ứng dụng trong phân tích cảm xúc từ bình luận người dùng trên mạng xã hội. Nghiên cứu phát triển các mô hình và thuật toán xử lý ngôn ngữ tự nhiên đặc thù cho tiếng Việt, ứng dụng trong phân tích cảm xúc từ bình luận người dùng trên mạng xã hội.",
-            departmentName: "Khoa Công nghệ Thông tin",
-            thumbnailUrl:
-              "https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72",
-            views: 246,
-            downloads: 38,
-            viewDate: "2 tuần trước",
-          },
-        ]);
+        const response = await userApi.getAllPaperViewsByUser(userId);
+        const formattedPapers = response.map((item) => ({
+          id: item.paper_id._id,
+          title: item.paper_id.title_vn,
+          author: item.paper_id.author.map((a) => a.author_name_vi).join(", "),
+          summary: item.paper_id.summary,
+          departmentName: item.paper_id.department.department_name,
+          thumbnailUrl: item.paper_id.cover_image,
+          viewDate: new Date(item.paper_id.publish_date).toLocaleDateString(
+            "vi-VN"
+          ),
+        }));
+        setRecentlyViewedPapers(formattedPapers);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu bài báo đã xem gần đây:", error);
       }
     };
 
     fetchRecentlyViewedPapers();
+  }, []);
+
+  useEffect(() => {
+    const fetchRecentlyDownloadedPapers = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) return;
+
+      try {
+        const response = await userApi.getAllPaperDownloadsByUser(userId);
+        const formattedPapers = (response || []).map((item) => ({
+          id: item.paper_id?._id || "N/A",
+          title: item.paper_id?.title_vn || "N/A",
+          author:
+            item.paper_id?.author?.map((a) => a.author_name_vi).join(", ") ||
+            "N/A",
+          summary: item.paper_id?.summary || "N/A",
+          departmentName: item.paper_id?.department?.department_name || "N/A",
+          thumbnailUrl: item.paper_id?.cover_image || "",
+          downloadDate: item.paper_id?.publish_date
+            ? new Date(item.paper_id.publish_date).toLocaleDateString("vi-VN")
+            : "N/A",
+        }));
+        setRecentlyDownloadedPapers(formattedPapers);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu bài báo đã tải gần đây:", error);
+        setRecentlyDownloadedPapers([]);
+      }
+    };
+
+    fetchRecentlyDownloadedPapers();
   }, []);
 
   // Thêm CSS cho thanh cuộn tùy chỉnh
@@ -204,32 +175,65 @@ const ProfilePage = () => {
   useEffect(() => {
     const fetchContributionStats = async () => {
       try {
-        // Trong thực tế, sẽ gọi API để lấy dữ liệu
-        // const response = await userApi.getContributionStats(user?.id, selectedYear);
-        // setContributionStats(response.data);
+        const userId = user?.lecturer_id || user?.student_id;
+        if (!userId) return;
 
-        // Dữ liệu mẫu
-        const mockData = {
-          2024: { totalRequired: 10, totalAchieved: 8, percentage: 80 },
-          2023: { totalRequired: 8, totalAchieved: 7, percentage: 87.5 },
-          2022: { totalRequired: 6, totalAchieved: 4, percentage: 66.7 },
-        };
+        let totalPoints = 0;
 
-        setContributionStats(mockData[selectedYear]);
+        if (selectedYear !== "Tất cả") {
+          const response = await userApi.getTotalPointsByAuthorAndYear(
+            userId,
+            selectedYear
+          );
+          totalPoints = response.total_points || 0;
+        } else {
+          const response = await userApi.getTotalPointsByAuthorAndYear(userId);
+          totalPoints = response.total_points || 0;
+        }
+
+        const totalRequired = 10;
+        const percentage = (totalPoints / totalRequired) * 100;
+
+        setContributionStats({
+          totalRequired,
+          totalAchieved: totalPoints,
+          percentage: Math.min(percentage, 100),
+        });
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu thành tích:", error);
+        setContributionStats({
+          totalRequired: 10,
+          totalAchieved: 0,
+          percentage: 0,
+        });
       }
     };
 
     fetchContributionStats();
-  }, [selectedYear]);
+  }, [selectedYear, user]);
+
+  // Fetch academic years
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]);
+      setSelectedYear("Tất cả");
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
 
   // Cấu hình biểu đồ Highcharts
   const getChartOptions = () => {
     return {
       chart: {
         type: "pie",
-        height: 300,
+        height: 350,
         backgroundColor: "transparent",
         style: {
           fontFamily: '"Inter", sans-serif',
@@ -259,63 +263,16 @@ const ProfilePage = () => {
         },
       },
       series: [
-        // Vòng tròn bọc ngoài cùng (trang trí)
-        {
-          name: "Outer Wrapper",
-          data: [
-            {
-              name: "Outer Wrapper",
-              y: 1,
-              color: {
-                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
-                stops: [
-                  [0, "#f0f7ff"],
-                  [1, "#e6f0ff"],
-                ],
-              },
-              dataLabels: { enabled: false },
-            },
-          ],
-          size: "160%",
-          innerSize: "150%",
-          borderWidth: 0,
-          dataLabels: { enabled: false },
-          enableMouseTracking: false,
-        },
-        // Vòng tròn bên ngoài lớn (tổng điểm cần đóng góp)
-        {
-          name: "Tổng điểm",
-          data: [
-            {
-              name: "Tổng điểm",
-              y: 1,
-              color: {
-                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
-                stops: [
-                  [0, "#eaeff4"],
-                  [1, "#d8e1eb"],
-                ],
-              },
-              dataLabels: { enabled: false },
-            },
-          ],
-          size: "130%",
-          innerSize: "100%",
-          borderWidth: 0,
-          dataLabels: { enabled: false },
-          enableMouseTracking: false,
-        },
-        // Vòng tròn bên trong (điểm đã đóng góp)
         {
           name: "Điểm đóng góp",
           colorByPoint: true,
-          size: "100%",
-          innerSize: "75%",
+          size: "90%",
+          innerSize: "85%",
           borderRadius: 4,
           data: [
             {
               name: "Đã đạt",
-              y: contributionStats.totalAchieved,
+              y: contributionStats.totalAchieved || 0, // Fallback to 0
               color: {
                 linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
                 stops: [
@@ -330,8 +287,8 @@ const ProfilePage = () => {
             {
               name: "Còn thiếu",
               y:
-                contributionStats.totalRequired -
-                contributionStats.totalAchieved,
+                (contributionStats.totalRequired || 0) -
+                (contributionStats.totalAchieved || 0), // Fallback to 0
               color: {
                 linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
                 stops: [
@@ -349,6 +306,9 @@ const ProfilePage = () => {
       credits: {
         enabled: false,
       },
+      accessibility: {
+        enabled: false, // Disable accessibility warning
+      },
       responsive: {
         rules: [
           {
@@ -357,9 +317,9 @@ const ProfilePage = () => {
             },
             chartOptions: {
               chart: {
-                height: 300,
+                height: 400,
               },
-              series: [{ size: "170%" }, { size: "140%" }, { size: "110%" }],
+              series: [{ size: "120%", innerSize: "115%" }],
             },
           },
         ],
@@ -376,6 +336,15 @@ const ProfilePage = () => {
     if (gender === "male") return "Nam";
     if (gender === "female") return "Nữ";
     return "Khác";
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const getPaginatedData = (data) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return data.slice(startIndex, startIndex + itemsPerPage);
   };
 
   return (
@@ -484,11 +453,9 @@ const ProfilePage = () => {
                 </div>
               </div>
               {/* Adjustments for mobile responsiveness */}
-              <h2 className="self-center mt-6 text-sm font-medium leading-none text-black max-md:text-base">
-                TRAO ĐỔI GẦN ĐÂY
-              </h2>
+
               <hr className="object-contain self-stretch mt-3 w-full max-md:max-w-full" />
-              <div className="mt-4 mr-9 max-md:mr-2.5 max-md:max-w-full">
+              <div className="mr-9 max-md:mr-2.5 max-md:max-w-full">
                 <div className="flex gap-5 max-md:flex-col">
                   <div className="w-[28%] max-md:w-full">
                     <div className="flex flex-col pt-7 w-full max-md:mt-10">
@@ -502,9 +469,11 @@ const ProfilePage = () => {
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
                           >
-                            <option value="2024">2024-2025</option>
-                            <option value="2023">2023-2024</option>
-                            <option value="2022">2022-2023</option>
+                            {academicYears.map((year, index) => (
+                              <option key={index} value={year}>
+                                {year}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div className="mt-4 max-w-full min-h-[280px] w-full">
@@ -536,66 +505,140 @@ const ProfilePage = () => {
                   <div className="ml-5 w-[72%] max-md:ml-0 max-md:w-full">
                     <div className="mt-2.5 w-full text-xl text-black max-md:mt-10 max-md:text-base">
                       <div className="relative flex flex-col pl-4 border-gray-300 max-h-[500px] overflow-y-auto custom-scrollbar">
-                        <h3 className="text-base font-bold mb-3 text-gray-800">
-                          Bài báo đã xem gần đây
-                        </h3>
-                        {recentlyViewedPapers.map((paper, index) => (
-                          <Link
-                            to={`/scientific-paper/${paper.id}`}
-                            key={index}
-                            className="mb-4 block"
+                        {/* Sticky Tabs */}
+                        <div className="sticky top-0 bg-white z-10 flex gap-4 mb-4 p-2 shadow-sm">
+                          <button
+                            className={`text-sm font-bold ${
+                              activeTab === "viewed"
+                                ? "text-blue-600 border-b-2 border-blue-600"
+                                : "text-gray-600"
+                            }`}
+                            onClick={() => {
+                              setActiveTab("viewed");
+                              setCurrentPage(1); // Reset to page 1 when switching tabs
+                            }}
                           >
-                            <article className="relative flex gap-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3">
-                              <div className="flex-shrink-0">
-                                <img
-                                  src={paper.thumbnailUrl}
-                                  className="w-16 h-20 object-cover rounded-md border border-gray-200"
-                                  alt={paper.title}
-                                />
-                              </div>
-                              <div className="flex-grow overflow-hidden pr-2">
-                                <div className="flex justify-between items-start">
-                                  <h4 className="font-bold text-sm line-clamp-2 mb-1 pr-16">
-                                    {paper.title}
-                                  </h4>
-                                  <div className="absolute top-3 right-3 text-xs text-gray-500">
-                                    {paper.viewDate}
-                                  </div>
-                                </div>
-                                <div className="text-xs text-sky-900">
-                                  {paper.author}
-                                </div>
-                                <p className="text-xs text-neutral-800 line-clamp-2 mt-1">
-                                  {paper.summary}
-                                </p>
-                                <div className="text-xs text-sky-900 mt-1">
-                                  {paper.departmentName}
-                                </div>
-
-                                <div className="flex items-center gap-2 text-xs text-gray-500 mt-2 justify-end">
-                                  <div className="flex items-center">
-                                    <img
-                                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                                      className="w-3 h-3 mr-1"
-                                      alt="Views"
-                                    />
-                                    <span className="text-orange-500">
-                                      {paper.views}
-                                    </span>
-                                  </div>
-                                  <div className="flex items-center ml-2">
-                                    <img
-                                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                                      className="w-3 h-3 mr-1"
-                                      alt="Downloads"
-                                    />
-                                    <span>{paper.downloads}</span>
-                                  </div>
-                                </div>
-                              </div>
-                            </article>
-                          </Link>
-                        ))}
+                            Bài báo đã xem gần đây
+                          </button>
+                          <button
+                            className={`text-sm font-bold ${
+                              activeTab === "downloaded"
+                                ? "text-blue-600 border-b-2 border-blue-600"
+                                : "text-gray-600"
+                            }`}
+                            onClick={() => {
+                              setActiveTab("downloaded");
+                              setCurrentPage(1); // Reset to page 1 when switching tabs
+                            }}
+                          >
+                            Bài báo đã tải gần đây
+                          </button>
+                        </div>
+                        {/* Content */}
+                        {activeTab === "viewed" &&
+                          (recentlyViewedPapers.length > 0 ? (
+                            getPaginatedData(recentlyViewedPapers).map(
+                              (paper, index) => (
+                                <Link
+                                  to={`/scientific-paper/${paper.id}`}
+                                  key={index}
+                                  className="mb-4 block"
+                                >
+                                  <article className="relative flex gap-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-300">
+                                    <div className="flex-shrink-0">
+                                      <img
+                                        src={paper.thumbnailUrl}
+                                        className="w-16 h-20 object-cover rounded-md border border-gray-200"
+                                        alt={paper.title}
+                                      />
+                                    </div>
+                                    <div className="flex-grow overflow-hidden pr-2">
+                                      <div className="flex justify-between items-start">
+                                        <h4 className="font-bold text-sm line-clamp-2 mb-1 pr-16">
+                                          {paper.title}
+                                        </h4>
+                                        <div className="absolute top-3 right-3 text-xs text-gray-500">
+                                          {paper.viewDate}
+                                        </div>
+                                      </div>
+                                      <div className="text-xs text-sky-900">
+                                        {paper.author}
+                                      </div>
+                                      <p className="text-xs text-neutral-800 line-clamp-2 mt-1">
+                                        {paper.summary}
+                                      </p>
+                                      <div className="text-xs text-sky-900 mt-1">
+                                        {paper.departmentName}
+                                      </div>
+                                    </div>
+                                  </article>
+                                </Link>
+                              )
+                            )
+                          ) : (
+                            <div className="text-center text-gray-500 text-sm mt-4">
+                              Không có bài báo đã xem gần đây.
+                            </div>
+                          ))}
+                        {activeTab === "downloaded" &&
+                          (recentlyDownloadedPapers.length > 0 ? (
+                            getPaginatedData(recentlyDownloadedPapers).map(
+                              (paper, index) => (
+                                <Link
+                                  to={`/scientific-paper/${paper.id}`}
+                                  key={index}
+                                  className="mb-4 block"
+                                >
+                                  <article className="relative flex gap-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-300">
+                                    <div className="flex-shrink-0">
+                                      <img
+                                        src={paper.thumbnailUrl}
+                                        className="w-16 h-20 object-cover rounded-md border border-gray-200"
+                                        alt={paper.title}
+                                      />
+                                    </div>
+                                    <div className="flex-grow overflow-hidden pr-2">
+                                      <div className="flex justify-between items-start">
+                                        <h4 className="font-bold text-sm line-clamp-2 mb-1 pr-16">
+                                          {paper.title}
+                                        </h4>
+                                        <div className="absolute top-3 right-3 text-xs text-gray-500">
+                                          {paper.downloadDate}
+                                        </div>
+                                      </div>
+                                      <div className="text-xs text-sky-900">
+                                        {paper.author}
+                                      </div>
+                                      <p className="text-xs text-neutral-800 line-clamp-2 mt-1">
+                                        {paper.summary}
+                                      </p>
+                                      <div className="text-xs text-sky-900 mt-1">
+                                        {paper.departmentName}
+                                      </div>
+                                    </div>
+                                  </article>
+                                </Link>
+                              )
+                            )
+                          ) : (
+                            <div className="text-center text-gray-500 text-sm mt-4">
+                              Không có bài báo đã tải gần đây.
+                            </div>
+                          ))}
+                        {/* Sticky Pagination */}
+                        <div className="sticky bottom-0 bg-white z-10 p-2 shadow-sm">
+                          <Pagination
+                            current={currentPage}
+                            pageSize={itemsPerPage}
+                            total={
+                              activeTab === "viewed"
+                                ? recentlyViewedPapers.length
+                                : recentlyDownloadedPapers.length
+                            }
+                            onChange={handlePageChange}
+                            showSizeChanger={false}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
