@@ -1326,6 +1326,46 @@ const userApi = {
       throw error.response?.data || { message: "Lỗi kết nối đến server" };
     }
   },
+
+  getAllPaperViewsByUser: async (userId) => {
+    try {
+      const response = await axios.get(`${API_URL}/paperview/user/${userId}`);
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching paper views:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAllPaperDownloadsByUser: async (userId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/paperdownload/user/${userId}`
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching paper downloads:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getTotalPointsByAuthorAndYear: async (userId, academicYear) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/paperauthor/${userId}/total-points`,
+        {
+          params: { academicYear },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching total points by author ID:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
