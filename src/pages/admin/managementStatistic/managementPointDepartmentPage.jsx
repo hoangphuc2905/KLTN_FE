@@ -6,6 +6,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
 import userApi from "../../../api/api";
+import Footer from "../../../components/Footer";
 
 const ManagementPointDepartmentPage = () => {
   const { department } = useParams();
@@ -1235,6 +1236,7 @@ const ManagementPointDepartmentPage = () => {
           )}
         </div>
       </Modal>
+      <Footer />
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
 import userApi from "../../../api/api";
+import Footer from "../../../components/Footer";
 
 const ManagementPoint = () => {
   const [papers, setPapers] = useState([]);
@@ -662,6 +663,7 @@ const ManagementPoint = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

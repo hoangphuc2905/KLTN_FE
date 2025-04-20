@@ -7,6 +7,7 @@ import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
 import userApi from "../../../api/api";
 import { useLocation } from "react-router-dom";
+import Footer from "../../../components/Footer";
 
 const ManagementPointDetailPage = () => {
   const location = useLocation();
@@ -1222,6 +1223,7 @@ const ManagementPointDetailPage = () => {
           )}
         </div>
       </Modal>
+      <Footer />
     </div>
   );
 };

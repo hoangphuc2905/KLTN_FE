@@ -69,13 +69,15 @@ const AdminMenu = ({ currentRole }) => {
             <FaUser /> <span>Quản lý người dùng</span>
           </Link>
 
-          <Link
-            to="/admin/management/data"
-            className="menu-item"
-            onClick={toggleMenu}
-          >
-            <FaDatabase /> <span>Quản lý dữ liệu</span>
-          </Link>
+          {currentRole === "admin" && (
+            <Link
+              to="/admin/management/data"
+              className="menu-item"
+              onClick={toggleMenu}
+            >
+              <FaDatabase /> <span>Quản lý dữ liệu</span>
+            </Link>
+          )}
 
           {currentRole === "admin" && (
             <Link

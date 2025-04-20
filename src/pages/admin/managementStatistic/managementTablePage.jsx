@@ -17,6 +17,7 @@ import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
 import userApi from "../../../api/api";
+import Footer from "../../../components/Footer";
 
 const ManagementTable = () => {
   const [papers, setPapers] = useState([]);
@@ -932,6 +933,8 @@ const ManagementTable = () => {
           </div>
         </div>
       </div>
+      <Footer />
+
       <Modal
         title="Chi tiết"
         open={isModalVisible}

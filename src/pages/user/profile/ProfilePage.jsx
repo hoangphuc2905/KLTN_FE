@@ -1,14 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import Highcharts from "highcharts";
+import HighchartsReact from "highcharts-react-official";
+import { Pagination } from "antd";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [selectedYear, setSelectedYear] = useState("2024");
   const [departmentName, setDepartmentName] = useState("");
+  const [recentlyViewedPapers, setRecentlyViewedPapers] = useState([]);
+  const [recentlyDownloadedPapers, setRecentlyDownloadedPapers] = useState([]);
+  const [contributionStats, setContributionStats] = useState({
+    totalRequired: 0,
+    totalAchieved: 0,
+    percentage: 0,
+  });
+  const [activeTab, setActiveTab] = useState("viewed"); // Tab state
+  const [currentPage, setCurrentPage] = useState(1); // Pagination state
+  const itemsPerPage = 5;
+  const chartRef = useRef(null);
   const navigate = useNavigate();
+  const [academicYears, setAcademicYears] = useState([]); // State for academic years
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -49,6 +64,269 @@ const ProfilePage = () => {
     fetchUserData();
   }, []);
 
+  useEffect(() => {
+    const fetchRecentlyViewedPapers = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) return;
+
+      try {
+        const response = await userApi.getAllPaperViewsByUser(userId);
+        const formattedPapers = response.map((item) => ({
+          id: item.paper_id._id,
+          title: item.paper_id.title_vn,
+          author: item.paper_id.author.map((a) => a.author_name_vi).join(", "),
+          summary: item.paper_id.summary,
+          departmentName: item.paper_id.department.department_name,
+          thumbnailUrl: item.paper_id.cover_image,
+          viewDate: new Date(item.paper_id.publish_date).toLocaleDateString(
+            "vi-VN"
+          ),
+        }));
+        setRecentlyViewedPapers(formattedPapers);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu bài báo đã xem gần đây:", error);
+      }
+    };
+
+    fetchRecentlyViewedPapers();
+  }, []);
+
+  useEffect(() => {
+    const fetchRecentlyDownloadedPapers = async () => {
+      const userId = localStorage.getItem("user_id");
+      if (!userId) return;
+
+      try {
+        const response = await userApi.getAllPaperDownloadsByUser(userId);
+        const formattedPapers = (response || []).map((item) => ({
+          id: item.paper_id?._id || "N/A",
+          title: item.paper_id?.title_vn || "N/A",
+          author:
+            item.paper_id?.author?.map((a) => a.author_name_vi).join(", ") ||
+            "N/A",
+          summary: item.paper_id?.summary || "N/A",
+          departmentName: item.paper_id?.department?.department_name || "N/A",
+          thumbnailUrl: item.paper_id?.cover_image || "",
+          downloadDate: item.paper_id?.publish_date
+            ? new Date(item.paper_id.publish_date).toLocaleDateString("vi-VN")
+            : "N/A",
+        }));
+        setRecentlyDownloadedPapers(formattedPapers);
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu bài báo đã tải gần đây:", error);
+        setRecentlyDownloadedPapers([]);
+      }
+    };
+
+    fetchRecentlyDownloadedPapers();
+  }, []);
+
+  // Thêm CSS cho thanh cuộn tùy chỉnh
+  useEffect(() => {
+    const style = document.createElement("style");
+    style.innerHTML = `
+      .custom-scrollbar {
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
+      }
+      
+      .custom-scrollbar::-webkit-scrollbar {
+        width: 0;
+        display: none; /* Chrome, Safari and Opera */
+      }
+      
+      .custom-scrollbar-hover {
+        scrollbar-width: thin;
+        -ms-overflow-style: -ms-autohiding-scrollbar;
+      }
+      
+      .custom-scrollbar-hover::-webkit-scrollbar {
+        width: 5px;
+        background-color: transparent;
+        display: none;
+      }
+      
+      .custom-scrollbar-hover:hover::-webkit-scrollbar {
+        display: block;
+      }
+      
+      .custom-scrollbar-hover::-webkit-scrollbar-track {
+        background: transparent;
+        border-radius: 10px;
+      }
+      
+      .custom-scrollbar-hover::-webkit-scrollbar-thumb {
+        background-color: rgba(203, 213, 224, 0.5);
+        border-radius: 10px;
+      }
+      
+      .custom-scrollbar-hover:hover::-webkit-scrollbar-thumb {
+        background-color: rgba(203, 213, 224, 0.8);
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // Fetch thành tích đóng góp theo năm
+  useEffect(() => {
+    const fetchContributionStats = async () => {
+      try {
+        const userId = user?.lecturer_id || user?.student_id;
+        if (!userId) return;
+
+        let totalPoints = 0;
+
+        if (selectedYear !== "Tất cả") {
+          const response = await userApi.getTotalPointsByAuthorAndYear(
+            userId,
+            selectedYear
+          );
+          totalPoints = response.total_points || 0;
+        } else {
+          const response = await userApi.getTotalPointsByAuthorAndYear(userId);
+          totalPoints = response.total_points || 0;
+        }
+
+        const totalRequired = 10;
+        const percentage = (totalPoints / totalRequired) * 100;
+
+        setContributionStats({
+          totalRequired,
+          totalAchieved: totalPoints,
+          percentage: Math.min(percentage, 100),
+        });
+      } catch (error) {
+        console.error("Lỗi khi lấy dữ liệu thành tích:", error);
+        setContributionStats({
+          totalRequired: 10,
+          totalAchieved: 0,
+          percentage: 0,
+        });
+      }
+    };
+
+    fetchContributionStats();
+  }, [selectedYear, user]);
+
+  // Fetch academic years
+  const getAcademicYears = async () => {
+    try {
+      const response = await userApi.getAcademicYears();
+      const years = response.academicYears || [];
+      setAcademicYears(["Tất cả", ...years.reverse()]);
+      setSelectedYear("Tất cả");
+    } catch (error) {
+      console.error("Error fetching academic years:", error);
+    }
+  };
+
+  useEffect(() => {
+    getAcademicYears();
+  }, []);
+
+  // Cấu hình biểu đồ Highcharts
+  const getChartOptions = () => {
+    return {
+      chart: {
+        type: "pie",
+        height: 350,
+        backgroundColor: "transparent",
+        style: {
+          fontFamily: '"Inter", sans-serif',
+        },
+      },
+      title: {
+        text: null,
+      },
+      tooltip: {
+        pointFormat: "<b>{point.percentage:.1f}%</b>",
+        style: {
+          fontSize: "14px",
+        },
+      },
+      plotOptions: {
+        pie: {
+          borderWidth: 0,
+          shadow: {
+            offsetX: 0,
+            offsetY: 0,
+            width: 5,
+            opacity: 0.15,
+          },
+          dataLabels: {
+            enabled: false,
+          },
+        },
+      },
+      series: [
+        {
+          name: "Điểm đóng góp",
+          colorByPoint: true,
+          size: "90%",
+          innerSize: "85%",
+          borderRadius: 4,
+          data: [
+            {
+              name: "Đã đạt",
+              y: contributionStats.totalAchieved || 0, // Fallback to 0
+              color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                  [0, "#00A3FF"],
+                  [1, "#0077FF"],
+                ],
+              },
+              dataLabels: {
+                enabled: false,
+              },
+            },
+            {
+              name: "Còn thiếu",
+              y:
+                (contributionStats.totalRequired || 0) -
+                (contributionStats.totalAchieved || 0), // Fallback to 0
+              color: {
+                linearGradient: { x1: 0, x2: 0, y1: 0, y2: 1 },
+                stops: [
+                  [0, "#f0f0f0"],
+                  [1, "#e0e0e0"],
+                ],
+              },
+              dataLabels: {
+                enabled: false,
+              },
+            },
+          ],
+        },
+      ],
+      credits: {
+        enabled: false,
+      },
+      accessibility: {
+        enabled: false, // Disable accessibility warning
+      },
+      responsive: {
+        rules: [
+          {
+            condition: {
+              maxWidth: 500,
+            },
+            chartOptions: {
+              chart: {
+                height: 400,
+              },
+              series: [{ size: "120%", innerSize: "115%" }],
+            },
+          },
+        ],
+      },
+    };
+  };
+
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "2-digit", day: "2-digit" };
     return new Date(dateString).toLocaleDateString("vi-VN", options);
@@ -58,6 +336,15 @@ const ProfilePage = () => {
     if (gender === "male") return "Nam";
     if (gender === "female") return "Nữ";
     return "Khác";
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  const getPaginatedData = (data) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return data.slice(startIndex, startIndex + itemsPerPage);
   };
 
   return (
@@ -166,64 +453,48 @@ const ProfilePage = () => {
                 </div>
               </div>
               {/* Adjustments for mobile responsiveness */}
-              <h2 className="self-center mt-6 text-sm font-medium leading-none text-black max-md:text-base">
-                TRAO ĐỔI GẦN ĐÂY
-              </h2>
+
               <hr className="object-contain self-stretch mt-3 w-full max-md:max-w-full" />
-              <div className="mt-4 mr-9 max-md:mr-2.5 max-md:max-w-full">
+              <div className="mr-9 max-md:mr-2.5 max-md:max-w-full">
                 <div className="flex gap-5 max-md:flex-col">
                   <div className="w-[28%] max-md:w-full">
                     <div className="flex flex-col pt-7 w-full max-md:mt-10">
-                      <div className="flex flex-col items-center px-6 pt-6 pb-1.5 mt-0 bg-white rounded-3xl border border-black min-h-[474px] max-md:px-4">
+                      <div className="flex flex-col items-center px-6 pt-6 pb-1.5 mt-0 bg-white rounded-3xl border border-black min-h-[320px] max-md:px-4">
                         <div className="flex justify-between w-full">
                           <h3 className="text-sm font-bold leading-none text-black max-md:text-base">
                             Thành tích đóng góp
                           </h3>
                           <select
+                            className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm w-[110px] cursor-pointer hover:bg-[#008AE0] transition-colors"
                             value={selectedYear}
                             onChange={(e) => setSelectedYear(e.target.value)}
-                            className="flex z-10 gap-2 items-center pr-10 pl-3 text-sm font-bold leading-none text-black whitespace-nowrap rounded-md border border-solid bg-zinc-100 border-gray-300 h-[19px] w-[110px] max-md:h-[36px] max-md:w-[100px]"
                           >
-                            <option value="2024">2024</option>
-                            <option value="2023">2023</option>
-                            <option value="2022">2022</option>
+                            {academicYears.map((year, index) => (
+                              <option key={index} value={year}>
+                                {year}
+                              </option>
+                            ))}
                           </select>
                         </div>
-                        <div className="mt-4 max-w-full min-h-[402px] w-[355px]">
-                          <div className="flex flex-col items-center w-full">
-                            <img
-                              src="https://cdn.builder.io/api/v1/image/assets/TEMP/a85564bf2d993b2f5f5e6338fad61fc05c6ae7fb53a9eb0683310e68382b8e5b?placeholderIfAbsent=true&apiKey=8e7c4b8b7304489d881fbe06845d5e47"
-                              className="object-contain max-w-full aspect-square w-[200px]"
-                              alt="Statistics chart"
+                        <div className="mt-4 max-w-full min-h-[280px] w-full">
+                          <div className="flex flex-col items-center w-full relative">
+                            <HighchartsReact
+                              highcharts={Highcharts}
+                              options={getChartOptions()}
+                              ref={chartRef}
                             />
-                          </div>
-                          <div className="mt-4 w-full text-sm leading-loose text-gray-800 max-w-[355px] min-h-[154px] max-md:mt-10">
-                            <div className="flex gap-6 items-start px-8 w-full max-md:px-5">
-                              <div className="flex flex-1 shrink gap-2 items-center whitespace-nowrap rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-green-500 rounded"></div>
-                                <div className="flex-1 shrink self-stretch my-auto basis-0">
-                                  Done
-                                </div>
+
+                            {/* Số liệu ở giữa biểu đồ */}
+                            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
+                              <div className="text-4xl font-bold text-gray-800">
+                                {contributionStats.percentage}%
                               </div>
-                              <div className="flex flex-1 shrink gap-2 items-center text-right rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-red-500 rounded"></div>
-                                <div className="self-stretch my-auto">
-                                  Overdue work
-                                </div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                Hoàn thành
                               </div>
-                            </div>
-                            <div className="flex gap-6 items-start px-8 mt-4 w-full text-right max-md:px-5">
-                              <div className="flex flex-1 shrink gap-2 items-center rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-orange-400 rounded"></div>
-                                <div className="self-stretch my-auto">
-                                  Work finished late
-                                </div>
-                              </div>
-                              <div className="flex flex-1 shrink gap-2 items-center whitespace-nowrap rounded-lg basis-0">
-                                <div className="flex shrink-0 self-stretch my-auto w-4 h-4 bg-blue-500 rounded"></div>
-                                <div className="self-stretch my-auto">
-                                  Processing
-                                </div>
+                              <div className="text-base font-semibold mt-2 text-sky-600">
+                                {contributionStats.totalAchieved}/
+                                {contributionStats.totalRequired} điểm
                               </div>
                             </div>
                           </div>
@@ -233,38 +504,141 @@ const ProfilePage = () => {
                   </div>
                   <div className="ml-5 w-[72%] max-md:ml-0 max-md:w-full">
                     <div className="mt-2.5 w-full text-xl text-black max-md:mt-10 max-md:text-base">
-                      <div className="relative flex flex-col pl-8 border-gray-300">
-                        {Array(5)
-                          .fill(0)
-                          .map((_, index) => (
-                            <div
-                              key={index}
-                              className="relative flex items-start gap-2 max-md:gap-1"
-                            >
-                              {/* Avatar + Đường dọc */}
-                              <div className="relative flex flex-col items-center">
-                                <div className="w-11 h-11 rounded-full bg-white border border-gray-300 flex items-center justify-center max-md:w-8 max-md:h-8">
-                                  <img
-                                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/aed835d36a2dd64ee06f5306c36e2c710acd8eb301ba94120a7c5fc6b7e141b0"
-                                    className="w-10 h-10 rounded-full max-md:w-6 max-md:h-6"
-                                    alt="Profile"
-                                  />
-                                </div>
-                                {index < 4 && (
-                                  <div className="w-[2px] h-12 bg-gray-300 max-md:h-8"></div>
-                                )}
-                              </div>
-                              {/* Nội dung bên phải */}
-                              <div className="relative flex-auto p-2 bg-white rounded-lg shadow-md w-[700px] max-md:w-full text-sm max-md:text-xs">
-                                <span className="font-bold">Admin</span>
-                                <br />
-                                Duyệt thông tin bài báo
-                                <div className="absolute top-3 right-3 text-gray-500 text-sm max-md:text-xs">
-                                  2 tháng
-                                </div>
-                              </div>
+                      <div className="relative flex flex-col pl-4 border-gray-300 max-h-[500px] overflow-y-auto custom-scrollbar">
+                        {/* Sticky Tabs */}
+                        <div className="sticky top-0 bg-white z-10 flex gap-4 mb-4 p-2 shadow-sm">
+                          <button
+                            className={`text-sm font-bold ${
+                              activeTab === "viewed"
+                                ? "text-blue-600 border-b-2 border-blue-600"
+                                : "text-gray-600"
+                            }`}
+                            onClick={() => {
+                              setActiveTab("viewed");
+                              setCurrentPage(1); // Reset to page 1 when switching tabs
+                            }}
+                          >
+                            Bài báo đã xem gần đây
+                          </button>
+                          <button
+                            className={`text-sm font-bold ${
+                              activeTab === "downloaded"
+                                ? "text-blue-600 border-b-2 border-blue-600"
+                                : "text-gray-600"
+                            }`}
+                            onClick={() => {
+                              setActiveTab("downloaded");
+                              setCurrentPage(1); // Reset to page 1 when switching tabs
+                            }}
+                          >
+                            Bài báo đã tải gần đây
+                          </button>
+                        </div>
+                        {/* Content */}
+                        {activeTab === "viewed" &&
+                          (recentlyViewedPapers.length > 0 ? (
+                            getPaginatedData(recentlyViewedPapers).map(
+                              (paper, index) => (
+                                <Link
+                                  to={`/scientific-paper/${paper.id}`}
+                                  key={index}
+                                  className="mb-4 block"
+                                >
+                                  <article className="relative flex gap-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-300">
+                                    <div className="flex-shrink-0">
+                                      <img
+                                        src={paper.thumbnailUrl}
+                                        className="w-16 h-20 object-cover rounded-md border border-gray-200"
+                                        alt={paper.title}
+                                      />
+                                    </div>
+                                    <div className="flex-grow overflow-hidden pr-2">
+                                      <div className="flex justify-between items-start">
+                                        <h4 className="font-bold text-sm line-clamp-2 mb-1 pr-16">
+                                          {paper.title}
+                                        </h4>
+                                        <div className="absolute top-3 right-3 text-xs text-gray-500">
+                                          {paper.viewDate}
+                                        </div>
+                                      </div>
+                                      <div className="text-xs text-sky-900">
+                                        {paper.author}
+                                      </div>
+                                      <p className="text-xs text-neutral-800 line-clamp-2 mt-1">
+                                        {paper.summary}
+                                      </p>
+                                      <div className="text-xs text-sky-900 mt-1">
+                                        {paper.departmentName}
+                                      </div>
+                                    </div>
+                                  </article>
+                                </Link>
+                              )
+                            )
+                          ) : (
+                            <div className="text-center text-gray-500 text-sm mt-4">
+                              Không có bài báo đã xem gần đây.
                             </div>
                           ))}
+                        {activeTab === "downloaded" &&
+                          (recentlyDownloadedPapers.length > 0 ? (
+                            getPaginatedData(recentlyDownloadedPapers).map(
+                              (paper, index) => (
+                                <Link
+                                  to={`/scientific-paper/${paper.id}`}
+                                  key={index}
+                                  className="mb-4 block"
+                                >
+                                  <article className="relative flex gap-3 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow p-3 border border-gray-300">
+                                    <div className="flex-shrink-0">
+                                      <img
+                                        src={paper.thumbnailUrl}
+                                        className="w-16 h-20 object-cover rounded-md border border-gray-200"
+                                        alt={paper.title}
+                                      />
+                                    </div>
+                                    <div className="flex-grow overflow-hidden pr-2">
+                                      <div className="flex justify-between items-start">
+                                        <h4 className="font-bold text-sm line-clamp-2 mb-1 pr-16">
+                                          {paper.title}
+                                        </h4>
+                                        <div className="absolute top-3 right-3 text-xs text-gray-500">
+                                          {paper.downloadDate}
+                                        </div>
+                                      </div>
+                                      <div className="text-xs text-sky-900">
+                                        {paper.author}
+                                      </div>
+                                      <p className="text-xs text-neutral-800 line-clamp-2 mt-1">
+                                        {paper.summary}
+                                      </p>
+                                      <div className="text-xs text-sky-900 mt-1">
+                                        {paper.departmentName}
+                                      </div>
+                                    </div>
+                                  </article>
+                                </Link>
+                              )
+                            )
+                          ) : (
+                            <div className="text-center text-gray-500 text-sm mt-4">
+                              Không có bài báo đã tải gần đây.
+                            </div>
+                          ))}
+                        {/* Sticky Pagination */}
+                        <div className="sticky bottom-0 bg-white z-10 p-2 shadow-sm">
+                          <Pagination
+                            current={currentPage}
+                            pageSize={itemsPerPage}
+                            total={
+                              activeTab === "viewed"
+                                ? recentlyViewedPapers.length
+                                : recentlyDownloadedPapers.length
+                            }
+                            onChange={handlePageChange}
+                            showSizeChanger={false}
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>

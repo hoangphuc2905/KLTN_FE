@@ -11,6 +11,7 @@ import {
   Dropdown,
 } from "antd";
 import Header from "../../../components/Header";
+import Footer from "../../../components/Footer";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 import AddStudentModal from "./AddStudentModal";
@@ -1296,6 +1297,7 @@ const ManagementUsers = () => {
           </div>
         )}
       </Modal>
+      <Footer />
 
       <Modal
         title="Thêm sinh viên"

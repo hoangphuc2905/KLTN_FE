@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Added import
 import userApi from "../api/api";
 import Header from "./Header";
+import Footer from "./Footer";
 
 const NotificationPage = () => {
   const [notifications, setNotifications] = useState([]);
@@ -83,6 +84,10 @@ const NotificationPage = () => {
       try {
         if (notification.message_type === "Request for Edit") {
           navigate(`/scientific-paper/edit/${notification.paper_id._id}`);
+        } else if (notification.message_type === "Request for Approval") {
+          navigate(
+            `/admin/management/ariticle/detail/${notification.paper_id._id}`
+          );
         } else {
           navigate(`/scientific-paper/${notification.paper_id._id}`);
         }
@@ -97,34 +102,41 @@ const NotificationPage = () => {
   };
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="max-w-screen-xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-        <Header />
-        <h2 className="text-2xl font-semibold text-gray-800 mb-6">Thông báo</h2>
-        {notifications.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6">
-            {notifications.map((notification, index) => (
-              <div
-                key={index}
-                className={`p-4 rounded-lg shadow-md cursor-pointer ${
-                  notification.isread ? "bg-white" : "bg-blue-100"
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  {translateMessageType(notification.message_type)}
-                </h3>
-                <p className="text-gray-600 mb-2">{notification.content}</p>
-                <p className="text-sm text-gray-400">
-                  {new Date(notification.createdAt).toLocaleDateString("vi-VN")}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-600">Không có thông báo nào.</p>
-        )}
+    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+      <div className="flex-grow">
+        <div className="max-w-screen-xl mx-auto px-4 md:px-6 lg:px-8 py-8">
+          <Header />
+          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
+            Thông báo
+          </h2>
+          {notifications.length > 0 ? (
+            <div className="grid grid-cols-1 gap-6">
+              {notifications.map((notification, index) => (
+                <div
+                  key={index}
+                  className={`p-4 rounded-lg shadow-md cursor-pointer ${
+                    notification.isread ? "bg-white" : "bg-blue-100"
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    {translateMessageType(notification.message_type)}
+                  </h3>
+                  <p className="text-gray-600 mb-2">{notification.content}</p>
+                  <p className="text-sm text-gray-400">
+                    {new Date(notification.createdAt).toLocaleDateString(
+                      "vi-VN"
+                    )}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-600">Không có thông báo nào.</p>
+          )}
+        </div>
       </div>
+      <Footer />
     </div>
   );
 };
