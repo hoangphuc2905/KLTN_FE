@@ -77,8 +77,25 @@ const donutOptions = {
         boxWidth: 10,
       },
     },
+    tooltip: {
+      callbacks: {
+        label: function (tooltipItem) {
+          const label = tooltipItem.label || "";
+          const value = tooltipItem.raw || 0;
+          return `${label}: ${value}`;
+        },
+      },
+    },
+    datalabels: {
+      color: "#000",
+      font: {
+        size: 12,
+        weight: "bold",
+      },
+      formatter: (value) => value, // Display the number of articles
+    },
   },
-  cutout: "70%",
+  cutout: 0, // Remove the cutout effect to make it a full pie chart
 };
 
 const ManagementDepartmentChart = () => {
@@ -858,7 +875,13 @@ const ManagementDepartmentChart = () => {
               {hasTypeChartData ? (
                 <Bar
                   data={filteredTypeChartData}
-                  options={getChartOptions(filteredTypeChartData)}
+                  options={{
+                    ...getChartOptions(filteredTypeChartData),
+                    plugins: {
+                      ...getChartOptions(filteredTypeChartData).plugins,
+                      datalabels: false, // Disable data labels
+                    },
+                  }}
                   height={200}
                   width={500}
                 />
@@ -934,6 +957,10 @@ const ManagementDepartmentChart = () => {
                   data={topContributorsChartData}
                   options={{
                     ...getChartOptions(topContributorsChartData),
+                    plugins: {
+                      ...getChartOptions(topContributorsChartData).plugins,
+                      datalabels: false, // Disable data labels
+                    },
                     scales: {
                       y: {
                         beginAtZero: true,
