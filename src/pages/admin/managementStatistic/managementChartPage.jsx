@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import Header from "../../../components/Header";
-import { Home, ChevronRight } from "lucide-react";
 import Footer from "../../../components/Footer";
 import CountUp from "react-countup";
 import {
@@ -13,6 +12,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Table } from "antd";
 import { useNavigate } from "react-router-dom";
@@ -25,11 +25,12 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels
 );
 
 // Hàm tính toán options cho biểu đồ dựa trên dữ liệu thực tế
-const getChartOptions = (data) => {
+const getChartOptions = (data, showDataLabels = false) => {
   const maxValue =
     data && data.datasets && data.datasets[0] && data.datasets[0].data
       ? Math.max(
@@ -39,7 +40,6 @@ const getChartOptions = (data) => {
 
   const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
 
-  // Ensure stepSize is reasonable to avoid too many ticks
   const step = Math.min(
     roundedMax > 100 ? 20 : roundedMax > 50 ? 10 : 5,
     Math.ceil(roundedMax / 10)
@@ -54,9 +54,7 @@ const getChartOptions = (data) => {
       },
       tooltip: {
         callbacks: {
-          // Use this to customize tooltip content
           title: function (tooltipItems) {
-            // For department chart, show full department name on hover
             if (data.originalLabels && tooltipItems[0]) {
               const index = tooltipItems[0].dataIndex;
               return data.originalLabels[index] || tooltipItems[0].label;
@@ -65,6 +63,16 @@ const getChartOptions = (data) => {
           },
         },
       },
+      datalabels: showDataLabels
+        ? {
+            color: "#000",
+            font: {
+              size: 12,
+              weight: "bold",
+            },
+            formatter: (value) => value, // Display the number of articles
+          }
+        : false,
     },
     scales: {
       y: {
@@ -272,8 +280,8 @@ const Dashboard = () => {
   }, [selectedYear]);
 
   const donutOptions = {
-    responsive: false, // Đặt responsive là false
-    maintainAspectRatio: false, // Đặt maintainAspectRatio là false
+    responsive: false,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "right",
@@ -281,11 +289,19 @@ const Dashboard = () => {
         labels: {
           usePointStyle: true,
           padding: 20,
-          boxWidth: 10, // Adjust the box width to fit more labels
+          boxWidth: 10,
         },
       },
+      datalabels: {
+        color: "#000",
+        font: {
+          size: 12,
+          weight: "bold",
+        },
+        formatter: (value) => value, // Display the number of articles
+      },
     },
-    cutout: "70%",
+    cutout: 0, // Remove the cutout effect to make it a full pie chart
   };
 
   const [topPapers, setTopPapers] = useState([]);
@@ -763,7 +779,7 @@ const Dashboard = () => {
               {hasTypeChartData ? (
                 <Bar
                   data={filteredTypeChartData}
-                  options={getChartOptions(filteredTypeChartData)}
+                  options={getChartOptions(filteredTypeChartData, false)} // Disable data labels
                   height={200}
                   width={500}
                 />
@@ -827,7 +843,7 @@ const Dashboard = () => {
               {hasDepartmentChartData ? (
                 <Bar
                   data={filteredDepartmentChartData}
-                  options={getChartOptions(filteredDepartmentChartData)}
+                  options={getChartOptions(filteredDepartmentChartData, false)} // Disable data labels
                   height={200}
                   width={540}
                 />
@@ -889,8 +905,7 @@ const Dashboard = () => {
                 </div>
               </div>
               {hasFieldChartData ? (
-                <div className="flex justify-start items-center relative">
-                  <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
+                <div className="flex flex-col items-center">
                   <Doughnut
                     data={filteredDonutChartData}
                     options={donutOptions}

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { Filter } from "lucide-react";
-import { Input, Table, Checkbox, Divider, Tooltip, Modal } from "antd";
+import { Input, Table, Checkbox, Divider, Tooltip, Modal, Spin } from "antd"; // Import Spin for loading spinner
 import { useNavigate } from "react-router-dom";
 import userApi from "../../../api/api";
 import Footer from "../../../components/Footer";
@@ -46,6 +46,7 @@ const ScientificPaperPage = () => {
   const [sortedInfo, setSortedInfo] = useState({});
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("Tất cả");
+  const [isLoading, setIsLoading] = useState(true); // State to track loading status
 
   const getAcademicYears = async () => {
     try {
@@ -169,6 +170,7 @@ const ScientificPaperPage = () => {
 
   useEffect(() => {
     const fetchPapers = async () => {
+      setIsLoading(true); // Set loading to true before fetching
       try {
         const user_id = localStorage.getItem("user_id");
         if (!user_id) {
@@ -197,6 +199,8 @@ const ScientificPaperPage = () => {
       } catch (error) {
         console.error("Error fetching scientific papers:", error);
         setPapers([]); // Fallback to an empty array on error
+      } finally {
+        setIsLoading(false); // Set loading to false after fetching
       }
     };
 
@@ -1210,8 +1214,14 @@ const ScientificPaperPage = () => {
                     </div>
                   )}
                 </div>
-                {papers.length === 0 ? (
-                  <p>Loading or no data available...</p> // Add a fallback UI for empty data
+                {isLoading ? (
+                  <div className="flex justify-center items-center h-64">
+                    <Spin size="large" />
+                  </div>
+                ) : papers.length === 0 ? (
+                  <div className="flex justify-center items-center h-64">
+                    <p>Không có dữ liệu để hiển thị.</p>
+                  </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <Table
