@@ -46,7 +46,8 @@ const ManagementTable = () => {
       title: "STT",
       dataIndex: "id",
       key: "id",
-      render: (text, record, index) => index + 1,
+      render: (text, record, index) =>
+        (currentPage - 1) * itemsPerPage + index + 1,
       width: 75,
       sorter: (a, b) => a.id - b.id,
     },
@@ -94,6 +95,7 @@ const ManagementTable = () => {
       dataIndex: "authors",
       key: "authors",
       ellipsis: { showTitle: false },
+      sorter: (a, b) => a.authors.localeCompare(b.authors || ""),
       render: (authors) => (
         <Tooltip placement="topLeft" title={authors}>
           {authors}
@@ -119,6 +121,7 @@ const ManagementTable = () => {
       dataIndex: "roles",
       key: "roles",
       ellipsis: { showTitle: false },
+      sorter: (a, b) => a.roles.localeCompare(b.roles || ""),
       render: (roles) => (
         <Tooltip placement="topLeft" title={roles}>
           {roles
@@ -134,6 +137,7 @@ const ManagementTable = () => {
       dataIndex: "institutions",
       key: "institutions",
       ellipsis: { showTitle: false },
+      sorter: (a, b) => a.institutions.localeCompare(b.institutions || ""),
       render: (institutions) => (
         <Tooltip placement="topLeft" title={institutions}>
           {institutions}
