@@ -20,7 +20,10 @@ import AddScoringFormulaPage from "./AddScoringFormulaPage";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+
 dayjs.extend(isSameOrBefore);
+dayjs.extend(isSameOrAfter);
 const ItemTypes = {
   ATTRIBUTE: "attribute",
 };
@@ -246,7 +249,8 @@ const ManagementFormulas = () => {
   const filteredFormulas = recentFormulas.filter((formula) => {
     const startDateMatch =
       !filterStartDate ||
-      dayjs(formula.startDate).isSameOrAfter(filterStartDate, "day");
+      (formula.startDate &&
+        dayjs(formula.startDate).isSameOrAfter(filterStartDate, "day"));
     const endDateMatch =
       !filterEndDate ||
       (formula.endDate &&
@@ -510,24 +514,14 @@ const ManagementFormulas = () => {
   }, [recentFormulas]);
 
   const handleFilterStartDateChange = (date) => {
-    console.log("Selected Start Date:", date?.format("YYYY-MM-DD")); // Debugging log
-    if (filterEndDate && date && date.isSameOrAfter(filterEndDate, "day")) {
-      message.error("Ngày bắt đầu phải trước ngày kết thúc.");
-      return;
-    }
     setFilterStartDate(date);
+    // Nếu ngày kết thúc hiện tại nhỏ hơn ngày bắt đầu mới, reset ngày kết thúc
+    if (filterEndDate && date && date.isAfter(filterEndDate)) {
+      setFilterEndDate(null);
+    }
   };
 
   const handleFilterEndDateChange = (date) => {
-    console.log("Selected End Date:", date?.format("YYYY-MM-DD")); // Debugging log
-    if (
-      filterStartDate &&
-      date &&
-      date.isSameOrBefore(filterStartDate, "day")
-    ) {
-      message.error("Ngày kết thúc phải sau ngày bắt đầu.");
-      return;
-    }
     setFilterEndDate(date);
   };
 
@@ -714,43 +708,56 @@ const ManagementFormulas = () => {
                                   Ngày bắt đầu:
                                 </label>
                                 <DatePicker
-                                  value={filterStartDate} // Use dayjs object directly
+                                  value={filterStartDate}
                                   onChange={handleFilterStartDateChange}
                                   className="w-full date-picker"
+                                  format="DD-MM-YYYY"
+                                  placeholder="Chọn ngày bắt đầu"
                                   getPopupContainer={(triggerNode) =>
                                     triggerNode.parentNode
                                   }
                                 />
-                                <label className="block text-gray-700 text-xs">
+                                <label className="block text-gray-700 text-xs mt-2">
                                   Ngày kết thúc:
                                 </label>
                                 <DatePicker
-                                  value={filterEndDate} // Use dayjs object directly
+                                  value={filterEndDate}
                                   onChange={handleFilterEndDateChange}
                                   className="w-full date-picker"
+                                  format="DD-MM-YYYY"
+                                  placeholder="Chọn ngày kết thúc"
                                   disabledDate={(current) =>
                                     filterStartDate &&
                                     current &&
-                                    current.isSameOrBefore(
-                                      filterStartDate,
-                                      "day"
-                                    )
+                                    current.isBefore(filterStartDate, "day")
                                   }
                                   getPopupContainer={(triggerNode) =>
                                     triggerNode.parentNode
                                   }
                                 />
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setFilterStartDate(null);
-                                  setFilterEndDate(null);
-                                }}
-                                className="w-full mt-2 bg-blue-500 text-white py-1 rounded-md text-xs"
-                              >
-                                Bỏ lọc tất cả
-                              </button>
+                              <div className="flex flex-col gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    if (filterStartDate || filterEndDate) {
+                                      setFilterStartDate(null);
+                                      setFilterEndDate(null);
+                                      message.success("Đã xóa bộ lọc");
+                                    }
+                                  }}
+                                  className="w-full bg-gray-200 text-gray-700 py-1 rounded-md text-xs hover:bg-gray-300"
+                                >
+                                  Xóa bộ lọc
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setShowFilter(false)}
+                                  className="w-full bg-blue-500 text-white py-1 rounded-md text-xs hover:bg-blue-600"
+                                >
+                                  Áp dụng
+                                </button>
+                              </div>
                             </form>
                           </div>
                         )}
