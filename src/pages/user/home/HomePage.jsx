@@ -60,7 +60,7 @@ const HomePage = () => {
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
   const [currentPage, setCurrentPage] = useState(1);
-  const papersPerPage = 7;
+  const papersPerPage = 10;
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
