@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Modal,
   Input,
@@ -9,6 +9,8 @@ import {
   Checkbox,
   Tooltip,
   Dropdown,
+  Divider,
+  Spin,
 } from "antd";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
@@ -22,6 +24,7 @@ import {
   EditOutlined,
 } from "@ant-design/icons";
 import * as XLSX from "xlsx";
+import { Filter, ChevronDown } from "lucide-react";
 
 const ManagementUsers = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
@@ -34,8 +37,11 @@ const ManagementUsers = () => {
   const [filterDepartment, setFilterDepartment] = useState(["Tất cả"]);
   const [filterPosition, setFilterPosition] = useState("Tất cả");
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
+  const [sortKey, setSortKey] = useState(null);
+  const [sortOrder, setSortOrder] = useState(null);
   const [userCurrentPage, setUserCurrentPage] = useState(1);
   const [lecturerCurrentPage, setLecturerCurrentPage] = useState(1);
+  const [loading, setLoading] = useState(true);
   const itemsPerPage = 10;
 
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -46,15 +52,14 @@ const ManagementUsers = () => {
 
   const filterRef = useRef(null);
   const departmentFilterRef = useRef(null);
+  const statusFilterRef = useRef(null);
   const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const navigate = useNavigate();
 
   const [roleOptions, setRoleOptions] = useState([]);
-
   const [isStudentModalVisible, setIsStudentModalVisible] = useState(false);
   const [isLecturerModalVisible, setIsLecturerModalVisible] = useState(false);
-
   const [excelData, setExcelData] = useState([]);
   const [isExcelModalVisible, setIsExcelModalVisible] = useState(false);
 
@@ -89,12 +94,12 @@ const ManagementUsers = () => {
 
   const handleAddStudent = async () => {
     setIsStudentModalVisible(true);
-    await reloadData(); // Reload data after adding a student
+    await reloadData();
   };
 
   const handleAddLecturer = async () => {
     setIsLecturerModalVisible(true);
-    await reloadData(); // Reload data after adding a lecturer
+    await reloadData();
   };
 
   const handleExcelUpload = (e) => {
@@ -150,7 +155,7 @@ const ManagementUsers = () => {
       formData.append(
         "data",
         JSON.stringify({
-          [activeTab === "user" ? "students" : "lecturers"]: validatedExcelData, // Send appropriate data
+          [activeTab === "user" ? "students" : "lecturers"]: validatedExcelData,
         })
       );
 
@@ -171,7 +176,6 @@ const ManagementUsers = () => {
       message.success("Dữ liệu đã được lưu thành công!");
       setIsExcelModalVisible(false);
       fileInput.value = "";
-
       await reloadData();
     } catch (error) {
       console.error("Error importing data from Excel:", error);
@@ -249,22 +253,40 @@ const ManagementUsers = () => {
     department_in_charge: "Cán bộ phụ trách khoa",
   };
 
+  const degreeMapping = {
+    Bachelor: "Cử nhân",
+    Master: "Thạc sĩ",
+    Doctor: "Tiến sĩ",
+    Egineer: "Kỹ sư",
+    Professor: "Giáo sư",
+    Ossociate_Professor: "Phó giáo sư",
+  };
+
+  const degreePriority = {
+    Professor: 1,
+    Ossociate_Professor: 2,
+    Doctor: 3,
+    Master: 4,
+    Bachelor: 5,
+    Egineer: 6,
+  };
+
   useEffect(() => {
     const fetchRoles = async () => {
       try {
         const roles = await userApi.getAllRoles();
         setRoleOptions(
           roles
-            .filter((role) => role.role_name) // Ensure valid roles
+            .filter((role) => role.role_name)
             .map((role) => ({
-              label: roleMapping[role.role_name] || role.role_name, // Map to Vietnamese
-              value: role.role_name, // Use role_name as value
-              _id: role._id, // Include _id for API calls
+              label: roleMapping[role.role_name] || role.role_name,
+              value: role.role_name,
+              _id: role._id,
             }))
         );
       } catch (error) {
         console.error("Error fetching roles:", error);
-        setRoleOptions([]); // Fallback to an empty array
+        setRoleOptions([]);
       }
     };
 
@@ -291,8 +313,8 @@ const ManagementUsers = () => {
       }
       if (
         showStatusFilter &&
-        filterRef.current &&
-        !filterRef.current.contains(event.target)
+        statusFilterRef.current &&
+        !statusFilterRef.current.contains(event.target)
       ) {
         setShowStatusFilter(false);
       }
@@ -310,7 +332,7 @@ const ManagementUsers = () => {
         if (userRole === "admin") {
           const lecturersData = await userApi.getAllLecturers();
           const students = await userApi.getAllStudents();
-
+          console.log("Fetched data (admin):", { students, lecturersData });
           setUsers(students);
           setLecturers(lecturersData);
         } else if (
@@ -324,21 +346,22 @@ const ManagementUsers = () => {
             console.error("Department ID is missing in localStorage");
             return;
           }
-
           const data = await userApi.getLecturerAndStudentByDepartment(
             departmentId
           );
-          console.log("Data theo khoa $departmentId:", data);
+          console.log("Fetched data (department):", data);
           setUsers(data.students || []);
           setLecturers(data.lecturers || []);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
-  }, [userRole]);
+  }, [userRole, departmentId]);
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -346,7 +369,6 @@ const ManagementUsers = () => {
     if (user.roles) {
       setNewRole(user.roles.map((role) => role.role_name));
     }
-
     setIsModalVisible(true);
   };
 
@@ -356,13 +378,11 @@ const ManagementUsers = () => {
         const updatedStatus = newStatus === "Hoạt động";
 
         if (activeTab === "user") {
-          // Update student status
           await userApi.updateStatusStudentById(
             selectedUser.student_id,
             updatedStatus
           );
         } else if (activeTab === "lecturer") {
-          // Update lecturer status
           await userApi.updateStatusLecturerById(
             selectedUser.lecturer_id,
             updatedStatus
@@ -378,11 +398,9 @@ const ManagementUsers = () => {
             throw new Error("Lecturer ID is missing");
           }
 
-          // Ensure roles are unique
           const uniqueRoles = [...new Set(newRole)];
           const currentRoles = selectedUser.roles.map((role) => role.role_name);
 
-          // Add new roles
           for (const role of uniqueRoles) {
             if (!currentRoles.includes(role)) {
               try {
@@ -392,12 +410,7 @@ const ManagementUsers = () => {
                   role
                 );
               } catch (error) {
-                console.error("Error assigning role:", {
-                  message: error.message,
-                  response: error.response?.data,
-                  status: error.response?.status,
-                  config: error.config,
-                });
+                console.error("Error assigning role:", error);
                 throw new Error(
                   error.response?.data?.message || "Failed to assign role"
                 );
@@ -405,7 +418,6 @@ const ManagementUsers = () => {
             }
           }
 
-          // Remove unchecked roles
           for (const role of currentRoles) {
             if (!uniqueRoles.includes(role)) {
               try {
@@ -415,12 +427,7 @@ const ManagementUsers = () => {
                   role
                 );
               } catch (error) {
-                console.error("Error removing role:", {
-                  message: error.message,
-                  response: error.response?.data,
-                  status: error.response?.status,
-                  config: error.config,
-                });
+                console.error("Error removing role:", error);
                 throw new Error(
                   error.response?.data?.message || "Failed to remove role"
                 );
@@ -430,41 +437,7 @@ const ManagementUsers = () => {
         }
 
         message.success("Cập nhật trạng thái và chức vụ thành công!");
-        // Reload table data
-        const fetchData = async () => {
-          try {
-            const departmentId = localStorage.getItem("department");
-
-            if (userRole === "admin") {
-              const lecturersData = await userApi.getAllLecturers();
-              const students = await userApi.getAllStudents();
-
-              setUsers(students);
-              setLecturers(lecturersData);
-            } else if (
-              [
-                "head_of_department",
-                "deputy_head_of_department",
-                "department_in_charge",
-              ].includes(userRole)
-            ) {
-              if (!departmentId) {
-                console.error("Department ID is missing in localStorage");
-                return;
-              }
-
-              const data = await userApi.getLecturerAndStudentByDepartment(
-                departmentId
-              );
-              setUsers(data.students || []);
-              setLecturers(data.lecturers || []);
-            }
-          } catch (error) {
-            console.error("Error fetching data:", error);
-          }
-        };
-
-        fetchData();
+        await reloadData();
       } catch (error) {
         console.error("Error updating status or roles:", error);
         message.error(
@@ -481,35 +454,30 @@ const ManagementUsers = () => {
 
   const handleSearchByName = (e) => {
     setFilterName(e.target.value);
+    setUserCurrentPage(1);
+    setLecturerCurrentPage(1);
   };
 
   const handleSearchById = (e) => {
     setFilterId(e.target.value);
+    setUserCurrentPage(1);
+    setLecturerCurrentPage(1);
   };
 
   const handleRoleChange = (checkedValues) => {
-    // Ensure "lecturer" is always included
     const filteredRoles = checkedValues.filter((role) => role !== "lecturer");
-
-    // Enforce a maximum of one additional role
     const allowedRoles = [
       "head_of_department",
       "deputy_head_of_department",
       "department_in_charge",
       "admin",
     ];
-
     const selectedAllowedRole = filteredRoles.find((role) =>
       allowedRoles.includes(role)
     );
-
-    if (selectedAllowedRole) {
-      // Keep "lecturer" and the newly selected role
-      setNewRole(["lecturer", selectedAllowedRole]);
-    } else {
-      // If no additional role is selected, keep only "lecturer"
-      setNewRole(["lecturer"]);
-    }
+    setNewRole(
+      selectedAllowedRole ? ["lecturer", selectedAllowedRole] : ["lecturer"]
+    );
   };
 
   const handleRoleDelete = async (role) => {
@@ -521,8 +489,6 @@ const ManagementUsers = () => {
     try {
       const adminId = localStorage.getItem("user_id");
       const lecturerId = selectedUser?.lecturer_id;
-
-      // Tìm roleObject từ roleOptions
       const roleObject = roleOptions.find((r) => r.value === role);
 
       if (!roleObject) {
@@ -534,55 +500,17 @@ const ManagementUsers = () => {
       console.log("Deleting role with parameters:", {
         adminId,
         lecturerId,
-        roleId: roleObject._id, // Đảm bảo key là `roleId`
+        roleId: roleObject._id,
       });
 
       if (!adminId || !lecturerId || !roleObject._id) {
         throw new Error("Thiếu thông tin người dùng, quản trị viên hoặc quyền");
       }
 
-      // Gửi request đến API
       await userApi.deleteRole(adminId, lecturerId, roleObject._id);
       message.success(`Đã xóa quyền ${roleMapping[role] || role} thành công!`);
-
-      // Cập nhật UI
       setNewRole((prevRoles) => prevRoles.filter((r) => r !== role));
-
-      // Reload table data
-      const fetchData = async () => {
-        try {
-          const departmentId = localStorage.getItem("department");
-
-          if (userRole === "admin") {
-            const lecturersData = await userApi.getAllLecturers();
-            const students = await userApi.getAllStudents();
-
-            setUsers(students);
-            setLecturers(lecturersData);
-          } else if (
-            [
-              "head_of_department",
-              "deputy_head_of_department",
-              "department_in_charge",
-            ].includes(userRole)
-          ) {
-            if (!departmentId) {
-              console.error("Department ID is missing in localStorage");
-              return;
-            }
-
-            const data = await userApi.getLecturerAndStudentByDepartment(
-              departmentId
-            );
-            setUsers(data.students || []);
-            setLecturers(data.lecturers || []);
-          }
-        } catch (error) {
-          console.error("Error fetching data:", error);
-        }
-      };
-
-      fetchData();
+      await reloadData();
     } catch (error) {
       console.error("Error deleting role:", error);
       message.error(error.message || "Không thể xóa quyền, vui lòng thử lại!");
@@ -621,54 +549,114 @@ const ManagementUsers = () => {
 
   const displayedUsers = activeTab === "user" ? users : lecturers;
 
-  const uniquePositions = [
-    "Tất cả",
-    ...new Set(displayedUsers.map((user) => user.position)),
-  ];
-  const uniqueDepartments = [
-    ...new Set(
-      displayedUsers.map((user) => {
-        if (
-          typeof user.department === "object" &&
-          user.department.department_name
-        ) {
-          return user.department.department_name; // Use department_name directly
-        }
-        return user.department;
+  const uniqueDepartments = useMemo(
+    () => [
+      "Tất cả",
+      ...new Set(
+        displayedUsers.map((user) =>
+          typeof user.department === "object" && user.department.department_name
+            ? user.department.department_name
+            : user.department || "Không xác định"
+        )
+      ),
+    ],
+    [displayedUsers]
+  );
+
+  const uniquePositions = useMemo(
+    () => [
+      "Tất cả",
+      ...new Set(
+        displayedUsers.map((user) => user.position || "Không xác định")
+      ),
+    ],
+    [displayedUsers]
+  );
+
+  const uniqueStatuses = ["Tất cả", "Hoạt động", "Không hoạt động"];
+
+  const filteredUsers = useMemo(() => {
+    console.log("Filtering users:", {
+      filterName,
+      filterId,
+      filterDepartment,
+      filterPosition,
+      filterStatus,
+    });
+
+    return displayedUsers
+      .filter((user) => {
+        const userDepartmentName =
+          typeof user.department === "object" && user.department.department_name
+            ? user.department.department_name
+            : user.department || "Không xác định";
+
+        return (
+          (!filterName ||
+            user.full_name.toLowerCase().includes(filterName.toLowerCase())) &&
+          (!filterId ||
+            (activeTab === "user" && user.student_id.includes(filterId)) ||
+            (activeTab === "lecturer" &&
+              user.lecturer_id.includes(filterId))) &&
+          (filterDepartment.length === 0 ||
+            filterDepartment.includes("Tất cả") ||
+            filterDepartment.includes(userDepartmentName)) &&
+          (filterPosition === "Tất cả" || user.position === filterPosition) &&
+          (filterStatus.length === 0 ||
+            filterStatus.includes("Tất cả") ||
+            filterStatus.includes(
+              user.isActive ? "Hoạt động" : "Không hoạt động"
+            ))
+        );
       })
-    ),
-  ];
+      .sort((a, b) => {
+        if (!sortKey || !sortOrder) return 0;
 
-  const uniqueStatuses = ["Hoạt động", "Không hoạt động"];
-  // const uniqueRoles = [...new Set(lecturers.map((lecturer) => lecturer.role))];
+        const getValue = (user, key) => {
+          if (key === "full_name") return user.full_name.toLowerCase();
+          if (key === "id")
+            return activeTab === "user" ? user.student_id : user.lecturer_id;
+          if (key === "department") {
+            return typeof user.department === "object" &&
+              user.department.department_name
+              ? user.department.department_name
+              : user.department || "Không xác định";
+          }
+          if (key === "roles") {
+            const roles = Array.isArray(user.roles)
+              ? user.roles.filter((role) => role.role_name !== "lecturer")
+              : [];
+            return roles.length > 0 ? roles[0].role_name : "lecturer";
+          }
+          if (key === "degree") {
+            return degreePriority[user.degree] || 999;
+          }
+          if (key === "isActive") {
+            return user.isActive ? 0 : 1;
+          }
+          return "";
+        };
 
-  const filteredUsers = displayedUsers.filter((user) => {
-    const userDepartmentName =
-      typeof user.department === "object" && user.department.department_name
-        ? user.department.department_name
-        : user.department;
+        const valueA = getValue(a, sortKey);
+        const valueB = getValue(b, sortKey);
 
-    return (
-      (filterName === "" || user.full_name.includes(filterName)) &&
-      (filterId === "" ||
-        (activeTab === "user" && user.student_id.includes(filterId)) ||
-        (activeTab === "lecturer" && user.lecturer_id.includes(filterId))) &&
-      (filterDepartment.includes("Tất cả") ||
-        filterDepartment.includes(userDepartmentName)) &&
-      (filterPosition === "Tất cả" || user.position === filterPosition) &&
-      (filterStatus.includes("Tất cả") ||
-        filterStatus.includes(user.isActive ? "Hoạt động" : "Không hoạt động"))
-    );
-  });
-
-  const degreeMapping = {
-    Bachelor: "Cử nhân",
-    Master: "Thạc sĩ",
-    Doctor: "Tiến sĩ",
-    Egineer: "Kỹ sư",
-    Professor: "Giáo sư",
-    Ossociate_Professor: "Phó giáo sư",
-  };
+        if (typeof valueA === "string") {
+          return sortOrder === "ascend"
+            ? valueA.localeCompare(valueB)
+            : valueB.localeCompare(valueA);
+        }
+        return sortOrder === "ascend" ? valueA - valueB : valueB - valueA;
+      });
+  }, [
+    displayedUsers,
+    filterName,
+    filterId,
+    filterDepartment,
+    filterPosition,
+    filterStatus,
+    sortKey,
+    sortOrder,
+  ]);
 
   const columns =
     activeTab === "user"
@@ -678,57 +666,54 @@ const ManagementUsers = () => {
             dataIndex: "id",
             key: "id",
             render: (text, record, index) =>
-              (userCurrentPage - 1) * itemsPerPage + index + 1, // Adjust index for user tab
+              (userCurrentPage - 1) * itemsPerPage + index + 1,
             width: 65,
             fixed: "left",
           },
           {
-            title: "MSGV",
+            title: "MSSV",
             dataIndex: "student_id",
-            key: "student_id",
+            key: "id",
             width: 150,
-            ellipsis: {
-              showTitle: false,
-            },
+            ellipsis: { showTitle: false },
             render: (student_id) => (
               <Tooltip placement="topLeft" title={student_id}>
                 {student_id}
               </Tooltip>
             ),
+            sorter: true,
           },
           {
             title: "HỌ VÀ TÊN",
             dataIndex: "full_name",
             key: "full_name",
             width: 200,
-            ellipsis: {
-              showTitle: false,
-            },
+            ellipsis: { showTitle: false },
             render: (full_name) => (
               <Tooltip placement="topLeft" title={full_name}>
                 {full_name}
               </Tooltip>
             ),
+            sorter: true,
           },
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
             width: 200,
-            ellipsis: {
-              showTitle: false,
-            },
+            ellipsis: { showTitle: false },
             render: (department) => {
               const deptName =
                 typeof department === "object" && department.department_name
                   ? department.department_name
-                  : department.department_name || "Đang tải...";
+                  : department || "Không xác định";
               return (
                 <Tooltip placement="topLeft" title={deptName}>
                   {deptName}
                 </Tooltip>
               );
             },
+            sorter: true,
           },
           {
             title: "TRẠNG THÁI",
@@ -744,6 +729,7 @@ const ManagementUsers = () => {
                 {isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             ),
+            sorter: true,
           },
           {
             title: "CHỈNH SỬA",
@@ -778,66 +764,61 @@ const ManagementUsers = () => {
             dataIndex: "id",
             key: "id",
             render: (text, record, index) =>
-              (lecturerCurrentPage - 1) * itemsPerPage + index + 1, // Adjust index for lecturer tab
+              (lecturerCurrentPage - 1) * itemsPerPage + index + 1,
             width: 65,
             fixed: "left",
           },
           {
             title: "MSGV",
             dataIndex: "lecturer_id",
-            key: "lecturer_id",
+            key: "id",
             width: 150,
-            ellipsis: {
-              showTitle: false,
-            },
+            ellipsis: { showTitle: false },
             render: (lecturer_id) => (
               <Tooltip placement="topLeft" title={lecturer_id}>
                 {lecturer_id}
               </Tooltip>
             ),
+            sorter: true,
           },
           {
             title: "HỌ VÀ TÊN",
             dataIndex: "full_name",
             key: "full_name",
             width: 200,
-            ellipsis: {
-              showTitle: false,
-            },
+            ellipsis: { showTitle: false },
             render: (full_name) => (
               <Tooltip placement="topLeft" title={full_name}>
                 {full_name}
               </Tooltip>
             ),
+            sorter: true,
           },
           {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
             width: 200,
-            ellipsis: {
-              showTitle: false,
-            },
+            ellipsis: { showTitle: false },
             render: (department) => {
               const deptName =
                 typeof department === "object" && department.department_name
                   ? department.department_name
-                  : department.department_name || "Đang tải...";
+                  : department || "Không xác định";
               return (
                 <Tooltip placement="topLeft" title={deptName}>
                   {deptName}
                 </Tooltip>
               );
             },
+            sorter: true,
           },
           {
             title: "CHỨC VỤ",
             dataIndex: "roles",
             key: "roles",
-            width: 180,
-            ellipsis: {
-              showTitle: false,
-            },
+            width: 120,
+            ellipsis: { showTitle: false },
             render: (roles) => {
               const roleText = Array.isArray(roles)
                 ? roles
@@ -856,15 +837,14 @@ const ManagementUsers = () => {
                 </Tooltip>
               );
             },
+            sorter: true,
           },
           {
             title: "CHỨC DANH",
             dataIndex: "degree",
             key: "degree",
-            width: 150,
-            ellipsis: {
-              showTitle: false,
-            },
+            width: 120,
+            ellipsis: { showTitle: false },
             render: (degree) => {
               const degreeText = degreeMapping[degree] || "Không xác định";
               return (
@@ -873,12 +853,13 @@ const ManagementUsers = () => {
                 </Tooltip>
               );
             },
+            sorter: true,
           },
           {
             title: "TRẠNG THÁI",
             dataIndex: "isActive",
             key: "isActive",
-            width: 150,
+            width: 120,
             render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
@@ -888,11 +869,12 @@ const ManagementUsers = () => {
                 {isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             ),
+            sorter: true,
           },
           {
             title: "CHỈNH SỬA",
             key: "edit",
-            width: 100,
+            width: 140,
             fixed: "right",
             render: (text, record) => {
               const isHeadOfDepartment = record.roles?.some(
@@ -908,7 +890,7 @@ const ManagementUsers = () => {
                 (userRole === "department_in_charge" &&
                   (isHeadOfDepartment || isDeputyHeadOfDepartment))
               ) {
-                return null; // Hide the button
+                return null;
               }
 
               return (
@@ -938,169 +920,184 @@ const ManagementUsers = () => {
   const filterForm = (
     <form
       ref={filterRef}
-      className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3"
+      className="relative px-4 py-5 w-[300px] bg-white rounded-lg border border-gray-200 shadow-lg max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3"
     >
-      <div className="mb-3">
-        <label className="block text-gray-700 text-xs">Họ và tên:</label>
-        <Input
-          value={filterName}
-          onChange={handleSearchByName}
-          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-        />
-      </div>
+      <div className="max-h-[300px] overflow-y-auto pr-1">
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm mb-1">Họ và tên:</label>
+          <Input
+            value={filterName}
+            onChange={handleSearchByName}
+            placeholder="Nhập họ và tên"
+            className="w-full h-[32px] text-sm"
+          />
+        </div>
 
-      <div className="mb-3">
-        <label className="block text-gray-700 text-xs">
-          {activeTab === "user" ? "MSSV" : "MSGV"}:
-        </label>
-        <Input
-          value={filterId}
-          onChange={handleSearchById}
-          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-        />
-      </div>
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm mb-1">
+            {activeTab === "user" ? "MSSV" : "MSGV"}:
+          </label>
+          <Input
+            value={filterId}
+            onChange={handleSearchById}
+            placeholder={`Nhập ${activeTab === "user" ? "MSSV" : "MSGV"}`}
+            className="w-full h-[32px] text-sm"
+          />
+        </div>
 
-      <div className="mb-3">
-        <label className="block text-gray-700 text-xs">Khoa:</label>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowDepartmentFilter(!showDepartmentFilter)}
-            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
-          >
-            {filterDepartment.length === 0
-              ? "Chọn khoa"
-              : filterDepartment.length === uniqueDepartments.length
-              ? "Tất cả"
-              : filterDepartment.join(", ")}
-          </button>
-          {showDepartmentFilter && (
-            <div
-              ref={departmentFilterRef}
-              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2"
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm mb-1">Khoa:</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowDepartmentFilter(!showDepartmentFilter)}
+              className="w-full h-[32px] bg-white rounded-md border border-gray-300 text-sm text-left px-3 flex items-center justify-between"
             >
-              <Checkbox
-                indeterminate={
-                  filterDepartment.length > 0 &&
-                  filterDepartment.length < uniqueDepartments.length
-                }
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setFilterDepartment(uniqueDepartments);
-                  } else {
-                    setFilterDepartment([]);
-                  }
-                }}
-                checked={filterDepartment.length === uniqueDepartments.length}
+              <span className="truncate max-w-[380px]">
+                {filterDepartment.length === 0
+                  ? "Chọn khoa"
+                  : filterDepartment.length === uniqueDepartments.length
+                  ? "Tất cả"
+                  : filterDepartment.join(", ")}
+              </span>
+              <DownOutlined className="text-xs" />
+            </button>
+            {showDepartmentFilter && (
+              <div
+                ref={departmentFilterRef}
+                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-3 w-full shadow-md max-h-[250px] overflow-y-auto"
               >
-                Tất cả
-              </Checkbox>
-              <Checkbox.Group
-                options={uniqueDepartments.map((department) => ({
-                  label: department,
-                  value: department,
-                }))}
-                value={filterDepartment}
-                onChange={(checkedValues) => {
-                  if (checkedValues.length === 0) {
-                    setFilterDepartment([]); // Khi không chọn gì, dữ liệu sẽ trống
-                  } else if (
-                    checkedValues.length === uniqueDepartments.length
-                  ) {
-                    setFilterDepartment(uniqueDepartments); // Chọn lại tất cả
-                  } else {
+                <Checkbox
+                  indeterminate={
+                    filterDepartment.length > 0 &&
+                    filterDepartment.length < uniqueDepartments.length
+                  }
+                  onChange={(e) => {
+                    setFilterDepartment(
+                      e.target.checked ? uniqueDepartments : []
+                    );
+                    setUserCurrentPage(1);
+                    setLecturerCurrentPage(1);
+                  }}
+                  checked={filterDepartment.length === uniqueDepartments.length}
+                >
+                  Tất cả
+                </Checkbox>
+                <Checkbox.Group
+                  options={uniqueDepartments.map((department) => ({
+                    label: department,
+                    value: department,
+                  }))}
+                  value={filterDepartment}
+                  onChange={(checkedValues) => {
                     setFilterDepartment(checkedValues);
-                  }
-                }}
-                className="flex flex-col gap-2 mt-2"
-              />
-            </div>
-          )}
+                    setUserCurrentPage(1);
+                    setLecturerCurrentPage(1);
+                  }}
+                  className="flex flex-col gap-2 mt-2"
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      {activeTab === "lecturer" && (
-        <div className="mb-3">
-          <label className="block text-gray-700 text-xs">Chức vụ:</label>
-          <Select
-            value={filterPosition}
-            onChange={(value) => setFilterPosition(value)}
-            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-            key="degree-select"
-          >
-            {uniquePositions.map((position) => (
-              <Select.Option key={position} value={position}>
-                {position}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
-      )}
+        {activeTab === "lecturer" && (
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm mb-1">Chức vụ:</label>
+            <Select
+              value={filterPosition}
+              onChange={(value) => {
+                setFilterPosition(value);
+                setUserCurrentPage(1);
+                setLecturerCurrentPage(1);
+              }}
+              className="w-full h-[32px] text-sm"
+            >
+              {uniquePositions.map((position) => (
+                <Select.Option key={position} value={position}>
+                  {position}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        )}
 
-      <div className="mb-3">
-        <label className="block text-gray-700 text-xs">Trạng thái:</label>
-        <div className="relative">
-          <button
-            type="button"
-            onClick={() => setShowStatusFilter(!showStatusFilter)}
-            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left"
-          >
-            {filterStatus.length === 0
-              ? "Chọn trạng thái"
-              : filterStatus.length === uniqueStatuses.length
-              ? "Tất cả"
-              : filterStatus.join(", ")}
-          </button>
-          {showStatusFilter && (
-            <div className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2">
-              <Checkbox
-                indeterminate={
-                  filterStatus.length > 0 &&
-                  filterStatus.length < uniqueStatuses.length
-                }
-                onChange={(e) => {
-                  if (e.target.checked) {
-                    setFilterStatus(uniqueStatuses);
-                  } else {
-                    setFilterStatus([]);
-                  }
-                }}
-                checked={filterStatus.length === uniqueStatuses.length}
+        <div className="mb-4">
+          <label className="block text-gray-700 text-sm mb-1">
+            Trạng thái:
+          </label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowStatusFilter(!showStatusFilter)}
+              className="w-full h-[32px] bg-white rounded-md border border-gray-300 text-sm text-left px-3 flex items-center justify-between"
+            >
+              <span className="truncate max-w-[380px]">
+                {filterStatus.length === 0
+                  ? "Chọn trạng thái"
+                  : filterStatus.length === uniqueStatuses.length
+                  ? "Tất cả"
+                  : filterStatus.join(", ")}
+              </span>
+              <DownOutlined className="text-xs" />
+            </button>
+            {showStatusFilter && (
+              <div
+                ref={statusFilterRef}
+                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-3 w-full shadow-md"
               >
-                Tất cả
-              </Checkbox>
-              <Checkbox.Group
-                options={uniqueStatuses}
-                value={filterStatus}
-                onChange={(checkedValues) => {
-                  if (checkedValues.length === 0) {
-                    setFilterStatus([]); // Khi không chọn gì, dữ liệu sẽ trống
-                  } else if (checkedValues.length === uniqueStatuses.length) {
-                    setFilterStatus(uniqueStatuses); // Chọn lại tất cả
-                  } else {
-                    setFilterStatus(checkedValues);
+                <Checkbox
+                  indeterminate={
+                    filterStatus.length > 0 &&
+                    filterStatus.length < uniqueStatuses.length
                   }
-                }}
-                className="flex flex-col gap-2 mt-2"
-              />
-            </div>
-          )}
+                  onChange={(e) => {
+                    setFilterStatus(e.target.checked ? uniqueStatuses : []);
+                    setUserCurrentPage(1);
+                    setLecturerCurrentPage(1);
+                  }}
+                  checked={filterStatus.length === uniqueStatuses.length}
+                >
+                  Tất cả
+                </Checkbox>
+                <Checkbox.Group
+                  options={uniqueStatuses
+                    .filter((status) => status !== "Tất cả")
+                    .map((status) => ({
+                      label: status,
+                      value: status,
+                    }))}
+                  value={filterStatus}
+                  onChange={(checkedValues) => {
+                    setFilterStatus(checkedValues);
+                    setUserCurrentPage(1);
+                    setLecturerCurrentPage(1);
+                  }}
+                  className="flex flex-col gap-2 mt-2"
+                />
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <button
-        type="button"
-        onClick={() => {
-          setFilterName("");
-          setFilterId("");
-          setFilterDepartment(["Tất cả"]);
-          setFilterPosition("Tất cả");
-          setFilterStatus(["Tất cả"]);
-        }}
-        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
-      >
-        Bỏ lọc tất cả
-      </button>
+        <Divider className="my-4" />
+        <button
+          type="button"
+          onClick={() => {
+            setFilterName("");
+            setFilterId("");
+            setFilterDepartment([]);
+            setFilterPosition("Tất cả");
+            setFilterStatus([]);
+            setShowFilter(false);
+            setUserCurrentPage(1);
+            setLecturerCurrentPage(1);
+          }}
+          className="w-full bg-blue-500 text-white py-2 rounded-md text-sm hover:bg-blue-600 transition-colors"
+        >
+          Bỏ lọc tất cả
+        </button>
+      </div>
     </form>
   );
 
@@ -1192,15 +1189,11 @@ const ManagementUsers = () => {
                   className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                   onClick={() => setShowFilter(!showFilter)}
                 >
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/3161/3161370.png"
-                    alt="Filter Icon"
-                    className="w-4 h-4"
-                  />
+                  <Filter className="w-4 h-4" />
                   <span className="text-xs">Bộ lọc</span>
                 </button>
                 {showFilter && (
-                  <div className="absolute top-full mt-2 z-50 shadow-lg">
+                  <div className="absolute top-full mt-2 z-50 right-0 shadow-lg">
                     {filterForm}
                   </div>
                 )}
@@ -1233,7 +1226,20 @@ const ManagementUsers = () => {
                     ),
                   }}
                   locale={{
-                    emptyText: <div style={{ height: "35px" }}></div>,
+                    emptyText: (
+                      <div className="text-center py-8 text-gray-500">
+                        Không có người dùng phù hợp với bộ lọc
+                      </div>
+                    ),
+                  }}
+                  onChange={(pagination, filters, sorter) => {
+                    if (sorter.field) {
+                      setSortKey(sorter.field);
+                      setSortOrder(sorter.order);
+                    } else {
+                      setSortKey(null);
+                      setSortOrder(null);
+                    }
                   }}
                 />
               </div>
@@ -1260,7 +1266,7 @@ const ManagementUsers = () => {
       <Modal
         title={`Cập nhật trạng thái - ${
           selectedUser?.full_name || "Người dùng"
-        }`} // Display user name
+        }`}
         visible={isModalVisible}
         onOk={handleOk}
         onCancel={handleCancel}
@@ -1281,11 +1287,11 @@ const ManagementUsers = () => {
             <label className="block text-gray-700 text-sm">Chức vụ:</label>
             <Checkbox.Group
               options={[
-                { label: "Giảng viên", value: "lecturer", disabled: true }, // Always include "lecturer" as disabled
+                { label: "Giảng viên", value: "lecturer", disabled: true },
                 ...roleOptions.filter((role) => role.value !== "lecturer"),
               ]}
               value={newRole}
-              onChange={(checkedValues) => setNewRole(checkedValues)}
+              onChange={handleRoleChange}
               className="flex flex-col gap-2"
             />
             <div className="mt-3">
@@ -1297,7 +1303,6 @@ const ManagementUsers = () => {
           </div>
         )}
       </Modal>
-      <Footer />
 
       <Modal
         title="Thêm sinh viên"
@@ -1305,10 +1310,7 @@ const ManagementUsers = () => {
         onCancel={handleStudentModalCancel}
         footer={null}
       >
-        <AddStudentModal
-          onClose={handleStudentModalCancel}
-          studentData={{}} // Pass an empty object or appropriate data to avoid undefined
-        />
+        <AddStudentModal onClose={handleStudentModalCancel} studentData={{}} />
       </Modal>
 
       <Modal
@@ -1319,7 +1321,7 @@ const ManagementUsers = () => {
       >
         <AddLecturerModal
           onClose={handleLecturerModalCancel}
-          lecturerData={{}} // Pass an empty object or appropriate data to avoid undefined
+          lecturerData={{}}
         />
       </Modal>
 
@@ -1354,6 +1356,7 @@ const ManagementUsers = () => {
           scroll={{ x: true }}
         />
       </Modal>
+      <Footer />
     </div>
   );
 };
