@@ -179,7 +179,7 @@ const Header = () => {
 
               {menuOpen && (
                 <div className="absolute top-full right-0 mt-2 w-48 sm:w-60 bg-white shadow-lg rounded-lg py-2 border z-50">
-                  {(localStorage.getItem("current_role") === "student" ||
+                  {(localStorage.getItem("current_role") === "Student" ||
                     localStorage.getItem("current_role") === "lecturer") && (
                     <>
                       <button
