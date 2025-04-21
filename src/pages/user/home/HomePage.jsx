@@ -12,6 +12,7 @@ import { Modal, Button, Input, message, Spin } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
+import { debounce } from "lodash";
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -102,6 +103,10 @@ const HomePage = () => {
     });
   }, [researchPapers, selectedDepartment, searchQuery]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedDepartment]);
+
   const currentPapers = useMemo(() => {
     return filteredPapers
       .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
@@ -171,9 +176,7 @@ const HomePage = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        console.log("Bắt đầu tải dữ liệu ban đầu");
         const userId = localStorage.getItem("user_id");
-
         const [
           recommendationsResponse,
           allPapersResponse,
@@ -192,30 +195,27 @@ const HomePage = () => {
           userApi.getAllDepartments(),
         ]);
 
-        let papers = recommendationsResponse?.data || [];
-        if (!Array.isArray(papers) || papers.length === 0) {
-          papers = allPapersResponse?.data || [];
-        }
-
+        const papers = recommendationsResponse?.data?.length
+          ? recommendationsResponse.data
+          : allPapersResponse?.data || [];
         const mappedPapers = await Promise.all(papers.map(mapPaperData));
-
-        const pendingPapers = mappedPapers.filter(
-          (paper) => paper.status === "pending"
+        setResearchPapers(
+          mappedPapers.filter((paper) => paper.status === "approved")
         );
-        setResearchPapers(pendingPapers);
 
-        const recentPapers = recentPapersResponse?.papers
-          ? await Promise.all(recentPapersResponse.papers.map(mapPaperData))
-          : [];
-        setRecentPapers(recentPapers);
+        setRecentPapers(
+          recentPapersResponse?.papers
+            ? await Promise.all(recentPapersResponse.papers.map(mapPaperData))
+            : []
+        );
 
-        const featuredPapers = featuredPapersResponse?.papers
-          ? await Promise.all(featuredPapersResponse.papers.map(mapPaperData))
-          : [];
-        setFeaturedPapers(featuredPapers);
+        setFeaturedPapers(
+          featuredPapersResponse?.papers
+            ? await Promise.all(featuredPapersResponse.papers.map(mapPaperData))
+            : []
+        );
 
         setCollections(collectionsResponse || []);
-
         const departmentMapping = departmentsResponse.reduce(
           (acc, department) => {
             acc[department.id] = department.department_name;
@@ -226,7 +226,7 @@ const HomePage = () => {
         setDepartments(departmentMapping);
         setDepartmentsList(departmentsResponse);
       } catch (error) {
-        console.error("Lỗi khi tải dữ liệu ban đầu:", error);
+        console.error("Error loading initial data:", error);
       }
     };
 
@@ -281,46 +281,36 @@ const HomePage = () => {
     }
   };
 
+  const fetchCountsForCurrentPapers = async () => {
+    try {
+      const papersToFetch = filteredPapers
+        .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
+        .filter((paper) => paper.id && !paper.views && !paper.downloads);
+
+      if (papersToFetch.length === 0) return;
+
+      const updatedPapers = await Promise.all(
+        papersToFetch.map(async (paper) => {
+          const [viewCount, downloadCount] = await Promise.all([
+            fetchViewCount(paper.id),
+            fetchDownloadCount(paper.id),
+          ]);
+          return { ...paper, views: viewCount, downloads: downloadCount };
+        })
+      );
+
+      setResearchPapers((prev) =>
+        prev.map((paper) => {
+          const updated = updatedPapers.find((p) => p.id === paper.id);
+          return updated || paper;
+        })
+      );
+    } catch (error) {
+      console.error("Error fetching view/download counts:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchCountsForCurrentPapers = async () => {
-      try {
-        if (filteredPapers.length === 0) {
-          console.log(
-            "filteredPapers rỗng, không gọi fetchCountsForCurrentPapers"
-          );
-          return;
-        }
-
-        const papersToFetch = filteredPapers
-          .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
-          .filter((paper) => paper.id && !paper.views && !paper.downloads);
-
-        if (papersToFetch.length === 0) {
-          console.log("Không cần lấy counts, tất cả paper đã có dữ liệu");
-          return;
-        }
-
-        const updatedPapers = await Promise.all(
-          papersToFetch.map(async (paper) => {
-            const [viewCount, downloadCount] = await Promise.all([
-              fetchViewCount(paper.id),
-              fetchDownloadCount(paper.id),
-            ]);
-            return { ...paper, views: viewCount, downloads: downloadCount };
-          })
-        );
-
-        setResearchPapers((prev) =>
-          prev.map((paper) => {
-            const updated = updatedPapers.find((p) => p.id === paper.id);
-            return updated || paper;
-          })
-        );
-      } catch (error) {
-        console.error("Lỗi khi lấy số lượt xem/tải:", error);
-      }
-    };
-
     fetchCountsForCurrentPapers();
   }, [filteredPapers, currentPage]);
 
@@ -369,61 +359,53 @@ const HomePage = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  const handleSearch = useCallback(async () => {
-    try {
-      console.log(
-        "Bắt đầu tìm kiếm với query:",
-        searchQuery,
-        "khoa:",
-        selectedDepartment
-      );
-      const criteria = "title";
-      const response = await userApi.semanticSearch(
-        searchQuery,
-        selectedDepartment,
-        criteria
-      );
-      console.log("Kết quả tìm kiếm:", response);
-
-      let papers = [];
-      if (response && response.results) {
-        papers = response.results
-          .filter((result) => result.paper && result.paper._id)
-          .map((result) => {
-            const paper = result.paper;
-            return {
-              id: paper._id,
-              title: paper.title_vn || paper.title_en || "No Title",
-              author:
-                paper.author
-                  ?.map((a) => a.author_name_vi || a.author_name_en)
-                  .join(", ") || "Unknown Author",
-              department: paper.department || "Unknown Department",
-              thumbnailUrl: paper.cover_image || "",
-              summary: paper.summary || "No Summary",
-              publish_date: paper.publish_date,
-              keywords: paper.keywords || [],
-              file: paper.file || "",
-              doi: paper.doi || "",
-              status: paper.status,
-            };
-          });
-      }
-      console.log("Bài báo sau tìm kiếm:", papers);
-      setResearchPapers(papers);
-
-      if (searchQuery.trim()) {
-        const updatedHistory = [
+  const debouncedSearch = useCallback(
+    debounce(async () => {
+      try {
+        console.log("Searching with query:", searchQuery);
+        const criteria = "title";
+        const response = await userApi.semanticSearch(
           searchQuery,
-          ...searchHistory.filter((q) => q !== searchQuery),
-        ].slice(0, 5);
-        setSearchHistory(updatedHistory);
-        localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+          selectedDepartment,
+          criteria
+        );
+        const papers =
+          response?.results?.map((result) => ({
+            id: result.paper._id,
+            title: result.paper.title_vn || result.paper.title_en || "No Title",
+            author:
+              result.paper.author
+                ?.map((a) => a.author_name_vi || a.author_name_en)
+                .join(", ") || "Unknown Author",
+            department: result.paper.department || "Unknown Department",
+            thumbnailUrl: result.paper.cover_image || "",
+            summary: result.paper.summary || "No Summary",
+            publish_date: result.paper.publish_date,
+            keywords: result.paper.keywords || [],
+            file: result.paper.file || "",
+            doi: result.paper.doi || "",
+            status: result.paper.status,
+          })) || [];
+        setResearchPapers(papers);
+        if (searchQuery.trim()) {
+          const updatedHistory = [
+            searchQuery,
+            ...searchHistory.filter((q) => q !== searchQuery),
+          ].slice(0, 5);
+          setSearchHistory(updatedHistory);
+          localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+        }
+      } catch (error) {
+        console.error("Search error:", error);
       }
-    } catch (error) {
-      console.error("Lỗi tìm kiếm:", error);
-    }
-  }, [searchQuery, selectedDepartment, searchHistory]);
+    }, 500),
+    [searchQuery, selectedDepartment, searchHistory]
+  );
+
+  useEffect(() => {
+    debouncedSearch();
+    return debouncedSearch.cancel;
+  }, [searchQuery, selectedDepartment]);
 
   const isPaperInCollection = async (userId, paperId) => {
     if (!userId || !paperId) {
@@ -865,7 +847,7 @@ const HomePage = () => {
               <span className="font-semibold text-sky-900">Tìm kiếm</span>
             </div>
             <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-1.5">
-              <select
+              {/* <select
                 className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
                 value={selectedDepartment}
                 onChange={(e) => setSelectedDepartment(e.target.value)}
@@ -876,7 +858,7 @@ const HomePage = () => {
                     {department.department_name}
                   </option>
                 ))}
-              </select>
+              </select> */}
               <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs">
                 <option value="">Tất cả</option>
                 <option value="title">Tiêu đề</option>
@@ -897,7 +879,7 @@ const HomePage = () => {
                   onFocus={() => setIsHistoryVisible(true)}
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
-                      handleSearch();
+                      debouncedSearch();
                       setIsHistoryVisible(false);
                     }
                   }}
@@ -912,7 +894,7 @@ const HomePage = () => {
                         <span
                           onClick={() => {
                             setSearchQuery(query);
-                            handleSearch();
+                            debouncedSearch();
                             setIsHistoryVisible(false);
                           }}
                           className="flex-1 truncate"
@@ -942,7 +924,7 @@ const HomePage = () => {
               </div>
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:py-1.5 max-md:text-xs max-md:h-[32px] hover:bg-blue-600"
-                onClick={handleSearch}
+                onClick={debouncedSearch}
               >
                 Tìm kiếm
               </button>

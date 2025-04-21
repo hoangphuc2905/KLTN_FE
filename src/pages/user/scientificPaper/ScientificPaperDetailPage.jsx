@@ -727,10 +727,17 @@ const ScientificPaperDetailPage = () => {
                         {paper.submitter}
                       </span>
                     </p>
-                    <p className="mt-2">
-                      Cơ quan đứng tên:{" "}
-                      <span className="text-[#174371] font-bold">
-                        {paper.institution}
+                    <p className="mt-2 flex items-center">
+                      Đánh giá:{" "}
+                      <span className="text-[#174371] font-bold ml-2 flex items-center">
+                        {[...Array(5)].map((_, index) => (
+                          <img
+                            key={index}
+                            src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
+                            alt="Star"
+                            className="w-4 h-4"
+                          />
+                        ))}
                       </span>
                     </p>
                   </div>

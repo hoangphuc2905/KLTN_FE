@@ -190,13 +190,6 @@ const StatisticsChartPage = () => {
   }));
   const [showDonutFilter, setShowDonutFilter] = useState(false);
   const [selectedDonutFilters, setSelectedDonutFilters] = useState([]);
-  const donutFilterOptions = [];
-  const userId = localStorage.getItem("user_id");
-  const [totalPapers, setTotalPapers] = useState(0);
-  const [totalViews, setTotalViews] = useState(0);
-  const [totalDownloads, setTotalDownloads] = useState(0);
-  const [top5Papers, setTop5Papers] = useState([]);
-  const [totalPoints, setTotalPoints] = useState(0);
   const [donutChartData, setDonutChartData] = useState({
     labels: [],
     datasets: [
@@ -218,6 +211,17 @@ const StatisticsChartPage = () => {
       },
     ],
   });
+  const donutFilterOptions = donutChartData.labels.map((label) => ({
+    label,
+    value: label,
+  }));
+
+  const userId = localStorage.getItem("user_id");
+  const [totalPapers, setTotalPapers] = useState(0);
+  const [totalViews, setTotalViews] = useState(0);
+  const [totalDownloads, setTotalDownloads] = useState(0);
+  const [top5Papers, setTop5Papers] = useState([]);
+  const [totalPoints, setTotalPoints] = useState(0);
 
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("Tất cả");
@@ -819,17 +823,25 @@ const StatisticsChartPage = () => {
                       },
                     ],
                   }}
-                  options={getChartOptions({
-                    datasets: [
-                      {
-                        data: Object.values(typeCounts).filter((_, index) =>
-                          selectedTypeFilters.includes(
-                            Object.keys(typeCounts)[index]
-                          )
-                        ),
+                  options={{
+                    ...getChartOptions({
+                      datasets: [
+                        {
+                          data: Object.values(typeCounts).filter((_, index) =>
+                            selectedTypeFilters.includes(
+                              Object.keys(typeCounts)[index]
+                            )
+                          ),
+                        },
+                      ],
+                    }),
+                    plugins: {
+                      ...getChartOptions({}).plugins,
+                      datalabels: {
+                        display: false, // Disable numbers inside the chart
                       },
-                    ],
-                  })}
+                    },
+                  }}
                   height={200}
                   width={500}
                 />
@@ -936,21 +948,30 @@ const StatisticsChartPage = () => {
                       },
                     ],
                   }}
-                  options={getChartOptions({
-                    datasets: [
-                      {
-                        data: pointChartData.labels
-                          .filter((label, index) =>
-                            selectedPointFilters.includes(label)
-                          )
-                          .map((label) => {
-                            const index = pointChartData.labels.indexOf(label);
-                            return pointChartData.datasets[0].data[index];
-                          }),
+                  options={{
+                    ...getChartOptions({
+                      datasets: [
+                        {
+                          data: pointChartData.labels
+                            .filter((label, index) =>
+                              selectedPointFilters.includes(label)
+                            )
+                            .map((label) => {
+                              const index =
+                                pointChartData.labels.indexOf(label);
+                              return pointChartData.datasets[0].data[index];
+                            }),
+                        },
+                      ],
+                      originalLabels: pointChartData.originalLabels,
+                    }),
+                    plugins: {
+                      ...getChartOptions({}).plugins,
+                      datalabels: {
+                        display: false, // Disable numbers inside the chart
                       },
-                    ],
-                    originalLabels: pointChartData.originalLabels,
-                  })}
+                    },
+                  }}
                   height={200}
                   width={540}
                 />
@@ -976,12 +997,13 @@ const StatisticsChartPage = () => {
                   {showDonutFilter && (
                     <div
                       className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "220px" }}
+                      style={{ width: "250px" }}
                     >
                       <div className="px-4 py-3 w-full">
-                        <label className="flex items-center mb-2">
+                        <label key="All" className="flex items-center mb-2">
                           <input
                             type="checkbox"
+                            value="All"
                             checked={
                               selectedDonutFilters.length ===
                               donutFilterOptions.length
@@ -1007,6 +1029,7 @@ const StatisticsChartPage = () => {
                             >
                               <input
                                 type="checkbox"
+                                value={option.value}
                                 checked={selectedDonutFilters.includes(
                                   option.value
                                 )}
@@ -1036,11 +1059,57 @@ const StatisticsChartPage = () => {
                 </div>
               </div>
               {hasDonutChartData ? (
-                <div className="flex justify-start items-center relative">
-                  <div className="absolute inset-0 flex flex-col justify-center items-center"></div>
+                <div className="flex flex-col items-center">
                   <Doughnut
-                    data={donutChartData}
-                    options={donutOptions}
+                    data={{
+                      labels: donutChartData.labels.filter(
+                        (label) =>
+                          selectedDonutFilters.length === 0 ||
+                          selectedDonutFilters.includes(label)
+                      ),
+                      datasets: [
+                        {
+                          data: donutChartData.labels
+                            .filter(
+                              (label) =>
+                                selectedDonutFilters.length === 0 ||
+                                selectedDonutFilters.includes(label)
+                            )
+                            .map((label) => {
+                              const index =
+                                donutChartData.labels.indexOf(label);
+                              return donutChartData.datasets[0].data[index];
+                            }),
+                          backgroundColor:
+                            donutChartData.datasets[0].backgroundColor,
+                          borderWidth: 0,
+                        },
+                      ],
+                    }}
+                    options={{
+                      responsive: false,
+                      maintainAspectRatio: false,
+                      plugins: {
+                        legend: {
+                          position: "right",
+                          align: "center",
+                          labels: {
+                            usePointStyle: true,
+                            padding: 20,
+                            boxWidth: 10,
+                          },
+                        },
+                        datalabels: {
+                          color: "#000",
+                          font: {
+                            size: 12,
+                            weight: "bold",
+                          },
+                          formatter: (value) => value,
+                        },
+                      },
+                      cutout: "50%", // Adjust cutout for better visualization
+                    }}
                     height={200}
                     width={500}
                   />
