@@ -67,6 +67,28 @@ const authApi = {
       throw error.response?.data || error.message;
     }
   },
+
+  registerStudent: async (data) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/register`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Error during student registration:", error);
+      throw error.response?.data || "Registration failed.";
+    }
+  },
+
+  approveStudent: async (studentId) => {
+    try {
+      const response = await axios.patch(
+        `${API_URL}/auth/approve/${studentId}`
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error during student approval:", error);
+      throw error.response?.data || "Approval failed.";
+    }
+  },
 };
 
 export default authApi;

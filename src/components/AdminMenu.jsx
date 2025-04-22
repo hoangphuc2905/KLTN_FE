@@ -13,6 +13,7 @@ import {
   FaCalculator,
   FaFileAlt,
   FaChartPie,
+  FaUserCheck,
 } from "react-icons/fa";
 import "./Sidebar.scss";
 import PropTypes from "prop-types";
@@ -68,6 +69,16 @@ const AdminMenu = ({ currentRole }) => {
           >
             <FaUser /> <span>Quản lý người dùng</span>
           </Link>
+
+          {currentRole === "department_in_charge" && (
+            <Link
+              to="/admin/management/user-approval"
+              className="menu-item"
+              onClick={toggleMenu}
+            >
+              <FaUserCheck /> <span>Quản lý tài khoản</span>
+            </Link>
+          )}
 
           {currentRole === "admin" && (
             <Link
