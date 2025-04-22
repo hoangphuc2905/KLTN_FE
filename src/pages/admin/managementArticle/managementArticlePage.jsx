@@ -7,6 +7,428 @@ import { Input, Select, Table, Checkbox, Divider, Tooltip } from "antd";
 import userApi from "../../../api/api";
 import { update } from "lodash";
 
+// Định nghĩa FilterPanel trực tiếp trong file
+const FilterPanel = ({
+  uniquePaperTypes,
+  uniqueGroups,
+  uniqueRoles,
+  uniqueInstitutions,
+  uniqueStatuses,
+  activeTab,
+  onFilterChange,
+}) => {
+  // State cho từng filter riêng biệt
+  const [filterPaperType, setFilterPaperType] = useState(["Tất cả"]);
+  const [filterGroup, setFilterGroup] = useState(["Tất cả"]);
+  const [filterPaperTitle, setFilterPaperTitle] = useState("");
+  const [filterAuthorName, setFilterAuthorName] = useState("");
+  const [filterAuthorCountFrom, setFilterAuthorCountFrom] = useState("");
+  const [filterAuthorCountTo, setFilterAuthorCountTo] = useState("");
+  const [filterRole, setFilterRole] = useState(["Tất cả"]);
+  const [filterInstitution, setFilterInstitution] = useState(["Tất cả"]);
+  const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
+
+  // Các trạng thái cố định
+  const statusOptions = ["Đã duyệt", "Chờ duyệt", "Chờ chỉnh sửa", "Từ chối"];
+
+  // State cho các dropdown
+  const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
+  const [showGroupFilter, setShowGroupFilter] = useState(false);
+  const [showRoleFilter, setShowRoleFilter] = useState(false);
+  const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
+
+  // Refs cho các dropdown
+  const paperTypeFilterRef = useRef(null);
+  const groupFilterRef = useRef(null);
+  const roleFilterRef = useRef(null);
+  const institutionFilterRef = useRef(null);
+  const statusFilterRef = useRef(null);
+
+  // Thông báo thay đổi filter lên component cha
+  useEffect(() => {
+    onFilterChange({
+      paperType: filterPaperType,
+      group: filterGroup,
+      paperTitle: filterPaperTitle,
+      authorName: filterAuthorName,
+      authorCountFrom: filterAuthorCountFrom,
+      authorCountTo: filterAuthorCountTo,
+      role: filterRole,
+      institution: filterInstitution,
+      status: filterStatus,
+    });
+  }, [
+    filterPaperType,
+    filterGroup,
+    filterPaperTitle,
+    filterAuthorName,
+    filterAuthorCountFrom,
+    filterAuthorCountTo,
+    filterRole,
+    filterInstitution,
+    filterStatus,
+    onFilterChange,
+  ]);
+
+  // Reset tất cả filter về giá trị mặc định
+  const resetAllFilters = () => {
+    setFilterPaperType(["Tất cả"]);
+    setFilterGroup(["Tất cả"]);
+    setFilterPaperTitle("");
+    setFilterAuthorName("");
+    setFilterAuthorCountFrom("");
+    setFilterAuthorCountTo("");
+    setFilterRole(["Tất cả"]);
+    setFilterInstitution(["Tất cả"]);
+    setFilterStatus(["Tất cả"]);
+  };
+
+  return (
+    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 max-h-[500px] overflow-y-auto">
+      {/* Loại bài báo */}
+      <div className="mb-3">
+        <label className="block text-gray-700 text-xs">Loại bài báo:</label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowPaperTypeFilter(!showPaperTypeFilter)}
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
+          >
+            <span className="truncate">
+              {filterPaperType.includes("Tất cả")
+                ? "Tất cả"
+                : filterPaperType.join(", ")}
+            </span>
+            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+          </button>
+          {showPaperTypeFilter && (
+            <div
+              ref={paperTypeFilterRef}
+              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
+              style={{
+                width: "300px",
+                maxHeight: "200px",
+                overflowY: "auto",
+              }}
+            >
+              <Checkbox
+                checked={filterPaperType.includes("Tất cả")}
+                onChange={(e) => {
+                  setFilterPaperType(e.target.checked ? ["Tất cả"] : []);
+                }}
+              >
+                Tất cả
+              </Checkbox>
+              <Checkbox.Group
+                options={uniquePaperTypes
+                  .filter((type) => type !== "Tất cả")
+                  .map((type) => ({
+                    label: type,
+                    value: type,
+                  }))}
+                value={filterPaperType.filter((type) => type !== "Tất cả")}
+                onChange={(checkedValues) => {
+                  if (checkedValues.length === 0) {
+                    setFilterPaperType(["Tất cả"]);
+                  } else {
+                    setFilterPaperType(checkedValues);
+                  }
+                }}
+                className="flex flex-col gap-1 mt-1"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Thuộc nhóm */}
+      <div className="mb-3">
+        <label className="block text-gray-700 text-xs">Thuộc nhóm:</label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowGroupFilter(!showGroupFilter)}
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
+          >
+            <span className="truncate">
+              {filterGroup.includes("Tất cả")
+                ? "Tất cả"
+                : filterGroup.join(", ")}
+            </span>
+            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+          </button>
+          {showGroupFilter && (
+            <div
+              ref={groupFilterRef}
+              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
+              style={{
+                width: "300px",
+                maxHeight: "200px",
+                overflowY: "auto",
+              }}
+            >
+              <Checkbox
+                checked={filterGroup.includes("Tất cả")}
+                onChange={(e) => {
+                  setFilterGroup(e.target.checked ? ["Tất cả"] : []);
+                }}
+              >
+                Tất cả
+              </Checkbox>
+              <Checkbox.Group
+                options={uniqueGroups
+                  .filter((group) => group !== "Tất cả")
+                  .map((group) => ({
+                    label: group,
+                    value: group,
+                  }))}
+                value={filterGroup.filter((group) => group !== "Tất cả")}
+                onChange={(checkedValues) => {
+                  if (checkedValues.length === 0) {
+                    setFilterGroup(["Tất cả"]);
+                  } else {
+                    setFilterGroup(checkedValues);
+                  }
+                }}
+                className="flex flex-col gap-1 mt-1"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Vai trò */}
+      <div className="mb-3">
+        <label className="block text-gray-700 text-xs">Vai trò:</label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowRoleFilter(!showRoleFilter)}
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
+          >
+            <span className="truncate">
+              {filterRole.includes("Tất cả") ? "Tất cả" : filterRole.join(", ")}
+            </span>
+            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+          </button>
+          {showRoleFilter && (
+            <div
+              ref={roleFilterRef}
+              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
+              style={{
+                width: "300px",
+                maxHeight: "200px",
+                overflowY: "auto",
+              }}
+            >
+              <Checkbox
+                checked={filterRole.includes("Tất cả")}
+                onChange={(e) => {
+                  setFilterRole(e.target.checked ? ["Tất cả"] : []);
+                }}
+              >
+                Tất cả
+              </Checkbox>
+              <Checkbox.Group
+                options={uniqueRoles
+                  .filter((role) => role !== "Tất cả")
+                  .map((role) => ({
+                    label: role,
+                    value: role,
+                  }))}
+                value={filterRole.filter((role) => role !== "Tất cả")}
+                onChange={(checkedValues) => {
+                  if (checkedValues.length === 0) {
+                    setFilterRole(["Tất cả"]);
+                  } else {
+                    setFilterRole(checkedValues);
+                  }
+                }}
+                className="flex flex-col gap-1 mt-1"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Khoa */}
+      <div className="mb-3">
+        <label className="block text-gray-700 text-xs">Khoa:</label>
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setShowInstitutionFilter(!showInstitutionFilter)}
+            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
+          >
+            <span className="truncate">
+              {filterInstitution.includes("Tất cả")
+                ? "Tất cả"
+                : filterInstitution.join(", ")}
+            </span>
+            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+          </button>
+          {showInstitutionFilter && (
+            <div
+              ref={institutionFilterRef}
+              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
+              style={{
+                width: "300px",
+                maxHeight: "200px",
+                overflowY: "auto",
+              }}
+            >
+              <Checkbox
+                checked={filterInstitution.includes("Tất cả")}
+                onChange={(e) => {
+                  setFilterInstitution(e.target.checked ? ["Tất cả"] : []);
+                }}
+              >
+                Tất cả
+              </Checkbox>
+              <Checkbox.Group
+                options={uniqueInstitutions
+                  .filter((inst) => inst !== "Tất cả")
+                  .map((inst) => ({
+                    label: inst,
+                    value: inst,
+                  }))}
+                value={filterInstitution.filter((inst) => inst !== "Tất cả")}
+                onChange={(checkedValues) => {
+                  if (checkedValues.length === 0) {
+                    setFilterInstitution(["Tất cả"]);
+                  } else {
+                    setFilterInstitution(checkedValues);
+                  }
+                }}
+                className="flex flex-col gap-1 mt-1"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Trạng thái - chỉ hiển thị khi activeTab là "all" */}
+      {activeTab === "all" && (
+        <div className="mb-3">
+          <label className="block text-gray-700 text-xs">Trạng thái:</label>
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowStatusFilter(!showStatusFilter)}
+              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
+            >
+              <span className="truncate">
+                {filterStatus.includes("Tất cả")
+                  ? "Tất cả"
+                  : filterStatus.join(", ")}
+              </span>
+              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+            </button>
+            {showStatusFilter && (
+              <div
+                ref={statusFilterRef}
+                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
+                style={{
+                  width: "300px",
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                }}
+              >
+                <Checkbox
+                  checked={filterStatus.includes("Tất cả")}
+                  onChange={(e) => {
+                    setFilterStatus(e.target.checked ? ["Tất cả"] : []);
+                  }}
+                >
+                  Tất cả
+                </Checkbox>
+                <Checkbox.Group
+                  options={statusOptions.map((status) => ({
+                    label: status,
+                    value: status,
+                  }))}
+                  value={filterStatus.filter((status) => status !== "Tất cả")}
+                  onChange={(checkedValues) => {
+                    if (checkedValues.length === 0) {
+                      setFilterStatus(["Tất cả"]);
+                    } else {
+                      setFilterStatus(checkedValues);
+                    }
+                  }}
+                  className="flex flex-col gap-1 mt-1"
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tên bài báo */}
+      <div className="mb-3">
+        <label className="block text-gray-700 text-xs">Tên bài báo:</label>
+        <Input
+          type="text"
+          value={filterPaperTitle}
+          onChange={(e) => setFilterPaperTitle(e.target.value)}
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+        />
+      </div>
+
+      {/* Tên tác giả */}
+      <div className="mb-3">
+        <label className="block text-gray-700 text-xs">Tên tác giả:</label>
+        <Input
+          type="text"
+          value={filterAuthorName}
+          onChange={(e) => setFilterAuthorName(e.target.value)}
+          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+        />
+      </div>
+
+      {/* Số tác giả */}
+      <div className="mb-3">
+        <label className="block text-gray-700 text-xs">Số tác giả:</label>
+        <div className="flex gap-2">
+          <div>
+            <Input
+              type="number"
+              placeholder="Từ"
+              value={filterAuthorCountFrom}
+              onChange={(e) =>
+                setFilterAuthorCountFrom(Math.max(0, e.target.value))
+              }
+              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+              min={0}
+            />
+          </div>
+          <div>
+            <Input
+              type="number"
+              placeholder="Đến"
+              value={filterAuthorCountTo}
+              onChange={(e) =>
+                setFilterAuthorCountTo(Math.max(0, e.target.value))
+              }
+              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
+              min={0}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Nút reset filter */}
+      <button
+        type="button"
+        onClick={resetAllFilters}
+        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
+      >
+        Bỏ lọc tất cả
+      </button>
+    </form>
+  );
+};
+
 const ManagementAriticle = () => {
   const navigate = useNavigate();
   const [papers, setPapers] = useState([]);
@@ -164,7 +586,13 @@ const ManagementAriticle = () => {
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusFilterRef = useRef(null);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPages, setCurrentPages] = useState({
+    all: 1,
+    approved: 1,
+    pending: 1,
+    revision: 1,
+    refused: 1,
+  });
   const itemsPerPage = 10;
 
   const filterRef = useRef(null);
@@ -223,6 +651,15 @@ const ManagementAriticle = () => {
       })
     ),
   ];
+
+  // Đếm số lượng bài báo theo trạng thái từ mảng papers gốc (chưa lọc)
+  const paperCounts = {
+    all: papers.length,
+    approved: papers.filter((paper) => paper.status === "approved").length,
+    pending: papers.filter((paper) => paper.status === "pending").length,
+    revision: papers.filter((paper) => paper.status === "revision").length,
+    refused: papers.filter((paper) => paper.status === "refused").length,
+  };
 
   // Filter papers based on all criteria
   const filteredPapers = papers.filter((paper) => {
@@ -399,7 +836,8 @@ const ManagementAriticle = () => {
       dataIndex: "paper_id",
       key: "paper_id",
       render: (text, record, index) => index + 1,
-      width: 65,
+      width: 75,
+      sorter: (a, b) => a.paper_id - b.paper_id,
     },
     {
       title: "LOẠI BÀI BÁO",
@@ -412,6 +850,10 @@ const ManagementAriticle = () => {
         </Tooltip>
       ),
       width: 150,
+      sorter: (a, b) =>
+        (a.article_type?.type_name || "").localeCompare(
+          b.article_type?.type_name || ""
+        ),
     },
     {
       title: "THUỘC NHÓM",
@@ -424,6 +866,10 @@ const ManagementAriticle = () => {
         </Tooltip>
       ),
       width: 150,
+      sorter: (a, b) =>
+        (a.article_group?.group_name || "").localeCompare(
+          b.article_group?.group_name || ""
+        ),
     },
     {
       title: "TÊN BÀI BÁO NGHIÊN CỨU KHOA HỌC",
@@ -436,6 +882,7 @@ const ManagementAriticle = () => {
         </Tooltip>
       ),
       width: 300,
+      sorter: (a, b) => (a.title_vn || "").localeCompare(b.title_vn || ""),
     },
     {
       title: "TÁC GIẢ",
@@ -450,7 +897,16 @@ const ManagementAriticle = () => {
           {author.map((a) => a.author_name_vi).join(", ")}
         </Tooltip>
       ),
-      width: 200,
+      width: 180,
+      sorter: (a, b) => {
+        const authorsA = a.author
+          .map((author) => author.author_name_vi)
+          .join(", ");
+        const authorsB = b.author
+          .map((author) => author.author_name_vi)
+          .join(", ");
+        return authorsA.localeCompare(authorsB);
+      },
     },
     {
       title: "SỐ T/GIẢ",
@@ -462,7 +918,8 @@ const ManagementAriticle = () => {
           {author_count}
         </Tooltip>
       ),
-      width: 100,
+      width: 120,
+      sorter: (a, b) => a.author_count - b.author_count,
     },
     {
       title: "VAI TRÒ",
@@ -489,7 +946,12 @@ const ManagementAriticle = () => {
           </Tooltip>
         );
       },
-      width: 150,
+      width: 180,
+      sorter: (a, b) => {
+        const roleMapA = a.author.map((a) => a.role).join(",");
+        const roleMapB = b.author.map((b) => b.role).join(",");
+        return roleMapA.localeCompare(roleMapB);
+      },
     },
     {
       title: "KHOA",
@@ -504,7 +966,11 @@ const ManagementAriticle = () => {
           {department?.department_name || "Không xác định"}
         </Tooltip>
       ),
-      width: 150,
+      width: 200,
+      sorter: (a, b) =>
+        (a.department?.department_name || "").localeCompare(
+          b.department?.department_name || ""
+        ),
     },
     {
       title: "NGÀY CÔNG BỐ",
@@ -522,6 +988,7 @@ const ManagementAriticle = () => {
         );
       },
       width: 150,
+      sorter: (a, b) => new Date(a.publish_date) - new Date(b.publish_date),
     },
     {
       title: "MINH CHỨNG",
@@ -557,6 +1024,7 @@ const ManagementAriticle = () => {
       },
       ellipsis: { showTitle: false },
       width: 150,
+      sorter: (a, b) => a.status.localeCompare(b.status),
     },
     {
       title: "NGÀY THÊM",
@@ -572,6 +1040,7 @@ const ManagementAriticle = () => {
         );
       },
       width: 150,
+      sorter: (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
     },
     {
       title: "NGÀY CẬP NHẬT",
@@ -586,7 +1055,8 @@ const ManagementAriticle = () => {
           </Tooltip>
         );
       },
-      width: 150,
+      width: 160,
+      sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
     },
     {
       title: "GHI CHÚ",
@@ -601,6 +1071,11 @@ const ManagementAriticle = () => {
       ),
       ellipsis: { showTitle: false },
       width: 200,
+      sorter: (a, b) => {
+        const noteA = notes[a._id] || a.note || "";
+        const noteB = notes[b._id] || b.note || "";
+        return noteA.localeCompare(noteB);
+      },
     },
   ];
 
@@ -620,6 +1095,23 @@ const ManagementAriticle = () => {
       setCheckedList([]);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showColumnFilter &&
+        columnFilterRef.current &&
+        !columnFilterRef.current.contains(event.target)
+      ) {
+        setShowColumnFilter(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showColumnFilter]);
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
@@ -661,7 +1153,7 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("all")}
               >
-                Tất cả ({filteredPapers.length})
+                Tất cả ({paperCounts.all})
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -671,12 +1163,7 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("approved")}
               >
-                Đã duyệt (
-                {
-                  filteredPapers.filter((paper) => paper.status === "approved")
-                    .length
-                }
-                )
+                Đã duyệt ({paperCounts.approved})
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -686,12 +1173,7 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("pending")}
               >
-                Chờ duyệt (
-                {
-                  filteredPapers.filter((paper) => paper.status === "pending")
-                    .length
-                }
-                )
+                Chờ duyệt ({paperCounts.pending})
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -701,12 +1183,7 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("revision")}
               >
-                Chờ chỉnh sửa (
-                {
-                  filteredPapers.filter((paper) => paper.status === "revision")
-                    .length
-                }
-                )
+                Chờ chỉnh sửa ({paperCounts.revision})
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -716,12 +1193,7 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("refused")}
               >
-                Từ chối (
-                {
-                  filteredPapers.filter((paper) => paper.status === "refused")
-                    .length
-                }
-                )
+                Từ chối ({paperCounts.refused})
               </button>
             </div>
             <div className="flex items-center">
@@ -759,436 +1231,25 @@ const ManagementAriticle = () => {
                     ref={filterRef}
                     className="absolute top-full mt-2 z-50 shadow-lg"
                   >
-                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 max-h-[500px] overflow-y-auto">
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Loại bài báo:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowPaperTypeFilter(!showPaperTypeFilter)
-                            }
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
-                          >
-                            <span className="truncate">
-                              {filterPaperType.length === 0 ||
-                              filterPaperType.includes("Tất cả")
-                                ? "Tất cả"
-                                : filterPaperType.join(", ")}
-                            </span>
-                            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                          </button>
-                          {showPaperTypeFilter && (
-                            <div
-                              ref={paperTypeFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
-                              style={{
-                                width: "300px",
-                                maxHeight: "200px",
-                                overflowY: "auto",
-                              }}
-                            >
-                              <Checkbox
-                                checked={
-                                  filterPaperType.includes("Tất cả") ||
-                                  filterPaperType.length === 0
-                                }
-                                onChange={(e) => {
-                                  setFilterPaperType(
-                                    e.target.checked ? ["Tất cả"] : []
-                                  );
-                                }}
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniquePaperTypes
-                                  .filter((type) => type !== "Tất cả")
-                                  .map((type) => ({
-                                    label: type,
-                                    value: type,
-                                  }))}
-                                value={filterPaperType.filter(
-                                  (type) => type !== "Tất cả"
-                                )}
-                                onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterPaperType(["Tất cả"]);
-                                  } else {
-                                    setFilterPaperType(checkedValues);
-                                  }
-                                }}
-                                className="flex flex-col gap-1 mt-1"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Thuộc nhóm:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setShowGroupFilter(!showGroupFilter)}
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
-                          >
-                            <span className="truncate">
-                              {filterGroup.includes("Tất cả") ||
-                              filterGroup.length === 0
-                                ? "Tất cả"
-                                : filterGroup.join(", ")}
-                            </span>
-                            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                          </button>
-                          {showGroupFilter && (
-                            <div
-                              ref={groupFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
-                              style={{
-                                width: "300px",
-                                maxHeight: "200px",
-                                overflowY: "auto",
-                              }}
-                            >
-                              <Checkbox
-                                checked={
-                                  filterGroup.includes("Tất cả") ||
-                                  filterGroup.length === 0
-                                }
-                                onChange={(e) => {
-                                  setFilterGroup(
-                                    e.target.checked ? ["Tất cả"] : []
-                                  );
-                                }}
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniqueGroups
-                                  .filter((group) => group !== "Tất cả")
-                                  .map((group) => ({
-                                    label: group,
-                                    value: group,
-                                  }))}
-                                value={filterGroup.filter(
-                                  (group) => group !== "Tất cả"
-                                )}
-                                onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterGroup(["Tất cả"]);
-                                  } else if (
-                                    checkedValues.length ===
-                                    uniqueGroups.length - 1
-                                  ) {
-                                    setFilterGroup(["Tất cả"]);
-                                  } else {
-                                    setFilterGroup(checkedValues);
-                                  }
-                                }}
-                                className="flex flex-col gap-1 mt-1"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="block text-gray-700 text-xs">
-                          Tên bài báo:
-                        </label>
-                        <Input
-                          type="text"
-                          value={filterPaperTitle}
-                          onChange={(e) => setFilterPaperTitle(e.target.value)}
-                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-gray-700 text-xs">
-                          Tên tác giả:
-                        </label>
-                        <Input
-                          type="text"
-                          value={filterAuthorName}
-                          onChange={(e) => setFilterAuthorName(e.target.value)}
-                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                        />
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Số tác giả:
-                        </label>
-                        <div className="flex gap-2">
-                          <div>
-                            <Input
-                              type="number"
-                              placeholder="Từ"
-                              value={filterAuthorCountFrom}
-                              onChange={(e) =>
-                                setFilterAuthorCountFrom(
-                                  Math.max(0, e.target.value)
-                                )
-                              }
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                              min={0}
-                            />
-                          </div>
-                          <div>
-                            <Input
-                              type="number"
-                              placeholder="Đến"
-                              value={filterAuthorCountTo}
-                              onChange={(e) =>
-                                setFilterAuthorCountTo(
-                                  Math.max(0, e.target.value)
-                                )
-                              }
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                              min={0}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Vai trò:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() => setShowRoleFilter(!showRoleFilter)}
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
-                          >
-                            <span className="truncate">
-                              {filterRole.includes("Tất cả") ||
-                              filterRole.length === 0
-                                ? "Tất cả"
-                                : filterRole.join(", ")}
-                            </span>
-                            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                          </button>
-                          {showRoleFilter && (
-                            <div
-                              ref={roleFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
-                              style={{
-                                width: "300px",
-                                maxHeight: "200px",
-                                overflowY: "auto",
-                              }}
-                            >
-                              <Checkbox
-                                checked={
-                                  filterRole.includes("Tất cả") ||
-                                  filterRole.length === 0
-                                }
-                                onChange={(e) => {
-                                  setFilterRole(
-                                    e.target.checked ? ["Tất cả"] : []
-                                  );
-                                }}
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniqueRoles
-                                  .filter((role) => role !== "Tất cả")
-                                  .map((role) => ({
-                                    label: role,
-                                    value: role,
-                                  }))}
-                                value={filterRole.filter(
-                                  (role) => role !== "Tất cả"
-                                )}
-                                onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterRole(["Tất cả"]);
-                                  } else if (
-                                    checkedValues.length ===
-                                    uniqueRoles.length - 1
-                                  ) {
-                                    setFilterRole(["Tất cả"]);
-                                  } else {
-                                    setFilterRole(checkedValues);
-                                  }
-                                }}
-                                className="flex flex-col gap-1 mt-1"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Khoa:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowInstitutionFilter(!showInstitutionFilter)
-                            }
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
-                          >
-                            <span className="truncate">
-                              {filterInstitution.includes("Tất cả") ||
-                              filterInstitution.length === 0
-                                ? "Tất cả"
-                                : filterInstitution.join(", ")}
-                            </span>
-                            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                          </button>
-                          {showInstitutionFilter && (
-                            <div
-                              ref={institutionFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
-                              style={{
-                                width: "300px",
-                                maxHeight: "200px",
-                                overflowY: "auto",
-                              }}
-                            >
-                              <Checkbox
-                                checked={
-                                  filterInstitution.includes("Tất cả") ||
-                                  filterInstitution.length === 0
-                                }
-                                onChange={(e) => {
-                                  setFilterInstitution(
-                                    e.target.checked ? ["Tất cả"] : []
-                                  );
-                                }}
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniqueInstitutions
-                                  .filter((inst) => inst !== "Tất cả")
-                                  .map((inst) => ({
-                                    label: inst,
-                                    value: inst,
-                                  }))}
-                                value={filterInstitution.filter(
-                                  (inst) => inst !== "Tất cả"
-                                )}
-                                onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterInstitution(["Tất cả"]);
-                                  } else if (
-                                    checkedValues.length ===
-                                    uniqueInstitutions.length - 1
-                                  ) {
-                                    setFilterInstitution(["Tất cả"]);
-                                  } else {
-                                    setFilterInstitution(checkedValues);
-                                  }
-                                }}
-                                className="flex flex-col gap-1 mt-1"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="mb-3">
-                        <label className="block text-gray-700 text-xs">
-                          Trạng thái:
-                        </label>
-                        <div className="relative">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setShowStatusFilter(!showStatusFilter)
-                            }
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex items-center justify-between"
-                          >
-                            <span className="truncate">
-                              {filterStatus.includes("Tất cả") ||
-                              filterStatus.length === 0
-                                ? "Tất cả"
-                                : filterStatus.join(", ")}
-                            </span>
-                            <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                          </button>
-                          {showStatusFilter && (
-                            <div
-                              ref={statusFilterRef}
-                              className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 shadow-lg"
-                              style={{
-                                width: "300px",
-                                maxHeight: "200px",
-                                overflowY: "auto",
-                              }}
-                            >
-                              <Checkbox
-                                checked={
-                                  filterStatus.includes("Tất cả") ||
-                                  filterStatus.length === 0
-                                }
-                                onChange={(e) => {
-                                  setFilterStatus(
-                                    e.target.checked ? ["Tất cả"] : []
-                                  );
-                                }}
-                              >
-                                Tất cả
-                              </Checkbox>
-                              <Checkbox.Group
-                                options={uniqueStatuses
-                                  .filter((status) => status !== "Tất cả")
-                                  .map((status) => ({
-                                    label: status,
-                                    value: status,
-                                  }))}
-                                value={filterStatus.filter(
-                                  (status) => status !== "Tất cả"
-                                )}
-                                onChange={(checkedValues) => {
-                                  if (checkedValues.length === 0) {
-                                    setFilterStatus(["Tất cả"]);
-                                  } else if (
-                                    checkedValues.length ===
-                                    uniqueStatuses.length - 1
-                                  ) {
-                                    setFilterStatus(["Tất cả"]);
-                                  } else {
-                                    setFilterStatus(checkedValues);
-                                  }
-                                }}
-                                className="flex flex-col gap-1 mt-1"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFilterPaperType([]);
-                          setFilterGroup([]);
-                          setFilterPaperTitle("");
-                          setFilterAuthorName("");
-                          setFilterAuthorCountFrom("");
-                          setFilterAuthorCountTo("");
-                          setFilterRole([]);
-                          setFilterInstitution([]);
-                          setFilterStatus([]);
-                        }}
-                        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
-                      >
-                        Bỏ lọc tất cả
-                      </button>
-                    </form>
+                    <FilterPanel
+                      uniquePaperTypes={uniquePaperTypes}
+                      uniqueGroups={uniqueGroups}
+                      uniqueRoles={uniqueRoles}
+                      uniqueInstitutions={uniqueInstitutions}
+                      uniqueStatuses={uniqueStatuses}
+                      activeTab={activeTab}
+                      onFilterChange={(filterConfig) => {
+                        setFilterPaperType(filterConfig.paperType);
+                        setFilterGroup(filterConfig.group);
+                        setFilterPaperTitle(filterConfig.paperTitle);
+                        setFilterAuthorName(filterConfig.authorName);
+                        setFilterAuthorCountFrom(filterConfig.authorCountFrom);
+                        setFilterAuthorCountTo(filterConfig.authorCountTo);
+                        setFilterRole(filterConfig.role);
+                        setFilterInstitution(filterConfig.institution);
+                        setFilterStatus(filterConfig.status);
+                      }}
+                    />
                   </div>
                 )}
                 <button
@@ -1224,38 +1285,69 @@ const ManagementAriticle = () => {
                   </div>
                 )}
               </div>
-              <Table
-                columns={newColumns}
-                dataSource={filteredPapers}
-                pagination={{
-                  current: currentPage,
-                  pageSize: itemsPerPage,
-                  total: filteredPapers.length,
-                  onChange: (page) => setCurrentPage(page),
-                  showSizeChanger: false,
-                  position: ["bottomRight"],
+              <div
+                className="table-container"
+                style={{
+                  width: "100%",
+                  overflowX: "auto",
+                  position: "relative",
                 }}
-                rowKey={(record) => record._id || record.key}
-                className="text-sm"
-                scroll={{
-                  x: newColumns.reduce(
-                    (total, col) => total + (col.width || 0),
-                    0
-                  ),
-                }}
-                onRow={(record) => ({
-                  onClick: () => handleRowClick(record),
-                  style: { cursor: "pointer" },
-                })}
-                locale={{
-                  emptyText: (
-                    <div style={{ height: "35px" }}>Không có dữ liệu</div>
-                  ),
-                }}
-                onChange={(pagination, filters, sorter) => {
-                  setSortedInfo(sorter);
-                }}
-              />
+              >
+                <div
+                  style={{
+                    minWidth: "1200px",
+                    position: "relative",
+                  }}
+                >
+                  <Table
+                    columns={
+                      newColumns.length > 0
+                        ? newColumns
+                        : [
+                            {
+                              dataIndex: "placeholder",
+                              key: "placeholder",
+                              render: () =>
+                                "Please select at least one column to display",
+                            },
+                          ]
+                    }
+                    dataSource={newColumns.length > 0 ? filteredPapers : []}
+                    pagination={{
+                      current: currentPages[activeTab],
+                      pageSize: itemsPerPage,
+                      total: filteredPapers.length,
+                      onChange: (page) => {
+                        // Cập nhật trang hiện tại cho tab đang active
+                        setCurrentPages((prev) => ({
+                          ...prev,
+                          [activeTab]: page,
+                        }));
+                      },
+                      showSizeChanger: false,
+                      position: ["bottomRight"],
+                    }}
+                    rowKey={(record) => record._id || record.key}
+                    className="text-sm"
+                    scroll={{
+                      x: 1265,
+                    }}
+                    onRow={(record) => ({
+                      onClick: () =>
+                        newColumns.length > 0 && handleRowClick(record),
+                      style: {
+                        cursor: newColumns.length > 0 ? "pointer" : "default",
+                      },
+                    })}
+                    locale={{
+                      emptyText: <div style={{ height: "35px" }}></div>,
+                    }}
+                    onChange={(pagination, filters, sorter) => {
+                      setSortedInfo(sorter);
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
