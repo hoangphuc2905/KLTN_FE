@@ -626,6 +626,29 @@ const ScientificPaperPage = () => {
       width: 150,
     },
     {
+      title: "NGÀY CẬP NHẬT",
+      dataIndex: "updatedAt", // Truy cập vào trường updatedAt
+      key: "dateUpdated",
+      sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+      sortOrder:
+        sortedInfo.columnKey === "dateUpdated" ? sortedInfo.order : null,
+      ellipsis: {
+        showTitle: false,
+      },
+      render: (updatedAt) => {
+        if (!updatedAt) {
+          return "Không có dữ liệu"; // Xử lý trường hợp không có ngày cập nhật
+        }
+        const formattedDate = new Date(updatedAt).toLocaleDateString("vi-VN"); // Định dạng ngày theo kiểu dd/mm/yyyy
+        return (
+          <Tooltip placement="topLeft" title={formattedDate}>
+            {formattedDate}
+          </Tooltip>
+        );
+      },
+      width: 150,
+    },
+    {
       title: "GHI CHÚ",
       dataIndex: "note",
       key: "note",

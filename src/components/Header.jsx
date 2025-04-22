@@ -208,6 +208,14 @@ const Header = () => {
                       </button>
                     </>
                   )}
+                  {user?.roles?.length > 1 && (
+                    <button
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
+                      onClick={() => (window.location.href = "/role-selection")}
+                    >
+                      🔄 Chuyển quyền
+                    </button>
+                  )}
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-red-100 text-xs sm:text-sm text-red-500"
                     onClick={handleLogout}

@@ -5,6 +5,7 @@ import Footer from "../../../components/Footer";
 import { Filter, ChevronDown } from "lucide-react";
 import { Input, Select, Table, Checkbox, Divider, Tooltip } from "antd";
 import userApi from "../../../api/api";
+import { update } from "lodash";
 
 const ManagementAriticle = () => {
   const navigate = useNavigate();
@@ -564,6 +565,21 @@ const ManagementAriticle = () => {
       ellipsis: { showTitle: false },
       render: (createdAt) => {
         const formattedDate = new Date(createdAt).toLocaleDateString("vi-VN");
+        return (
+          <Tooltip placement="topLeft" title={formattedDate}>
+            {formattedDate}
+          </Tooltip>
+        );
+      },
+      width: 150,
+    },
+    {
+      title: "NGÀY CẬP NHẬT",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      ellipsis: { showTitle: false },
+      render: (updatedAt) => {
+        const formattedDate = new Date(updatedAt).toLocaleDateString("vi-VN");
         return (
           <Tooltip placement="topLeft" title={formattedDate}>
             {formattedDate}

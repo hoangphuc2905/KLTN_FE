@@ -141,6 +141,7 @@ const ManagementTable = () => {
                 institution: departmentName, // Use the fetched department name
                 publicationDate: paper.publish_date || "N/A",
                 dateAdded: paper.createdAt || "N/A",
+                updatedAt: paper.updatedAt || "N/A",
               };
             })
           );
@@ -369,6 +370,21 @@ const ManagementTable = () => {
       render: (dateAdded) => (
         <Tooltip placement="topLeft" title={formatDate(dateAdded)}>
           {formatDate(dateAdded)}
+        </Tooltip>
+      ),
+      width: 150,
+    },
+    {
+      title: "NGÀY CẬP NHẬT",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      ellipsis: {
+        showTitle: false,
+      },
+      sorter: (a, b) => new Date(a.updatedAt) - new Date(b.updatedAt),
+      render: (updatedAt) => (
+        <Tooltip placement="topLeft" title={formatDate(updatedAt)}>
+          {formatDate(updatedAt)}
         </Tooltip>
       ),
       width: 150,

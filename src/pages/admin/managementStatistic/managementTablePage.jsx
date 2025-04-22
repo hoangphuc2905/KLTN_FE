@@ -171,6 +171,21 @@ const ManagementTable = () => {
       ),
       width: 150,
     },
+    {
+      title: "NGÀY CẬP NHẬT",
+      dataIndex: "updatedAt",
+      key: "updatedAt",
+      ellipsis: { showTitle: false },
+      render: (updatedAt) => {
+        const formattedDate = new Date(updatedAt).toLocaleDateString("vi-VN");
+        return (
+          <Tooltip placement="topLeft" title={formattedDate}>
+            {formattedDate}
+          </Tooltip>
+        );
+      },
+      width: 150,
+    },
   ];
 
   const [showGroupFilter, setShowGroupFilter] = useState(false);
