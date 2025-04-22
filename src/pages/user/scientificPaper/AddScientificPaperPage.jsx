@@ -1718,6 +1718,24 @@ const AddScientificPaperPage = () => {
                                 setAuthorTouched(newTouched);
                               }}
                               required
+                              showSearch
+                              filterOption={(input, option) =>
+                                option?.children
+                                  ?.toLowerCase()
+                                  .includes(input.toLowerCase())
+                              }
+                              onInputKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  const value = e.target.value.trim();
+                                  if (value) {
+                                    handleAuthorChange(
+                                      index,
+                                      "institution",
+                                      value
+                                    );
+                                  }
+                                }
+                              }}
                             >
                               {author.institutions?.map((institution) => (
                                 <Option
