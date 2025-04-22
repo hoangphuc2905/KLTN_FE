@@ -34,6 +34,13 @@ const ManagementUsers = () => {
   const [filterDepartment, setFilterDepartment] = useState(["Tất cả"]);
   const [filterPosition, setFilterPosition] = useState(["Tất cả"]);
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
+  const [filterEmail, setFilterEmail] = useState(""); // Thêm state cho email
+  const [filterPhone, setFilterPhone] = useState(""); // Thêm state cho phone
+  const [filterGender, setFilterGender] = useState(["Tất cả"]); // Thêm state cho gender
+  const [filterDateOfBirth, setFilterDateOfBirth] = useState(""); // Thêm state cho date_of_birth
+  const [filterCccd, setFilterCccd] = useState(""); // Thêm state cho cccd
+  const [filterAddress, setFilterAddress] = useState(""); // Thêm state cho address
+  const [filterRole, setFilterRole] = useState(["Tất cả"]); // Thêm state cho chức vụ
   const [sortKey, setSortKey] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
   const [userCurrentPage, setUserCurrentPage] = useState(1);
@@ -59,10 +66,14 @@ const ManagementUsers = () => {
   const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
   const [showPositionFilter, setShowPositionFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const [showGenderFilter, setShowGenderFilter] = useState(false); // Thêm state cho gender filter
+  const [showRoleFilter, setShowRoleFilter] = useState(false); // Thêm state cho role filter
   const filterRef = useRef(null);
   const departmentFilterRef = useRef(null);
   const positionFilterRef = useRef(null);
   const statusFilterRef = useRef(null);
+  const genderFilterRef = useRef(null); // Thêm ref cho gender filter
+  const roleFilterRef = useRef(null); // Thêm ref cho role filter
 
   const reloadData = async () => {
     try {
@@ -358,13 +369,34 @@ const ManagementUsers = () => {
       ) {
         setShowStatusFilter(false);
       }
+      if (
+        showGenderFilter &&
+        genderFilterRef.current &&
+        !genderFilterRef.current.contains(event.target)
+      ) {
+        setShowGenderFilter(false);
+      }
+      if (
+        showRoleFilter &&
+        roleFilterRef.current &&
+        !roleFilterRef.current.contains(event.target)
+      ) {
+        setShowRoleFilter(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [showFilter, showDepartmentFilter, showPositionFilter, showStatusFilter]);
+  }, [
+    showFilter,
+    showDepartmentFilter,
+    showPositionFilter,
+    showStatusFilter,
+    showGenderFilter,
+    showRoleFilter,
+  ]);
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -552,13 +584,39 @@ const ManagementUsers = () => {
     () => [
       "Tất cả",
       ...new Set(
-        displayedUsers.map((user) => user.position || "Không xác định")
+        lecturers
+          .filter((lecturer) => lecturer.degree)
+          .map((lecturer) => degreeMapping[lecturer.degree] || "Không xác định")
       ),
+    ],
+    [lecturers]
+  );
+
+  const uniqueStatuses = ["Tất cả", "Hoạt động", "Không hoạt động"];
+
+  const uniqueGenders = useMemo(
+    () => [
+      "Tất cả",
+      ...new Set(displayedUsers.map((user) => user.gender || "Khác")),
     ],
     [displayedUsers]
   );
 
-  const uniqueStatuses = ["Tất cả", "Hoạt động", "Không hoạt động"];
+  const uniqueRoles = useMemo(
+    () => [
+      "Tất cả",
+      ...new Set(
+        displayedUsers.flatMap((user) =>
+          user.roles
+            ? user.roles.map(
+                (role) => roleMapping[role.role_name] || role.role_name
+              )
+            : []
+        )
+      ),
+    ],
+    [displayedUsers]
+  );
 
   const filteredUsers = useMemo(() => {
     return displayedUsers
@@ -567,6 +625,16 @@ const ManagementUsers = () => {
           typeof user.department === "object" && user.department.department_name
             ? user.department.department_name
             : user.department || "Không xác định";
+
+        const userRoles = user.roles
+          ? user.roles.map(
+              (role) => roleMapping[role.role_name] || role.role_name
+            )
+          : [];
+
+        const userDegree = user.degree
+          ? degreeMapping[user.degree] || "Không xác định"
+          : "Không xác định";
 
         return (
           (!filterName ||
@@ -578,11 +646,36 @@ const ManagementUsers = () => {
           (filterDepartment.includes("Tất cả") ||
             filterDepartment.includes(userDepartmentName)) &&
           (filterPosition.includes("Tất cả") ||
-            filterPosition.includes(user.position || "Không xác định")) &&
+            filterPosition.includes(userDegree)) &&
           (filterStatus.includes("Tất cả") ||
             filterStatus.includes(
               user.isActive ? "Hoạt động" : "Không hoạt động"
-            ))
+            )) &&
+          (!filterEmail ||
+            (user.email || "")
+              .toLowerCase()
+              .includes(filterEmail.toLowerCase())) &&
+          (!filterPhone ||
+            (user.phone || "")
+              .toLowerCase()
+              .includes(filterPhone.toLowerCase())) &&
+          (filterGender.includes("Tất cả") ||
+            filterGender.includes(user.gender || "Khác")) &&
+          (!filterDateOfBirth ||
+            (user.date_of_birth &&
+              new Date(user.date_of_birth)
+                .toLocaleDateString("vi-VN")
+                .includes(filterDateOfBirth))) &&
+          (!filterCccd ||
+            (user.cccd || "")
+              .toLowerCase()
+              .includes(filterCccd.toLowerCase())) &&
+          (!filterAddress ||
+            (user.address || "")
+              .toLowerCase()
+              .includes(filterAddress.toLowerCase())) &&
+          (filterRole.includes("Tất cả") ||
+            filterRole.some((role) => userRoles.includes(role)))
         );
       })
       .sort((a, b) => {
@@ -610,7 +703,6 @@ const ManagementUsers = () => {
           if (key === "isActive") {
             return user.isActive ? 0 : 1;
           }
-          // Add support for sorting the new fields
           if (key === "email") return (user.email || "").toLowerCase();
           if (key === "phone") return (user.phone || "").toLowerCase();
           if (key === "gender") return (user.gender || "").toLowerCase();
@@ -641,8 +733,15 @@ const ManagementUsers = () => {
     filterDepartment,
     filterPosition,
     filterStatus,
+    filterEmail,
+    filterPhone,
+    filterGender,
+    filterDateOfBirth,
+    filterCccd,
+    filterAddress,
     sortKey,
     sortOrder,
+    filterRole,
   ]);
 
   const columns =
@@ -700,7 +799,7 @@ const ManagementUsers = () => {
             title: "SỐ ĐIỆN THOẠI",
             dataIndex: "phone",
             key: "phone",
-            width: 130,
+            width: 150,
             ellipsis: { showTitle: false },
             render: (phone) => (
               <Tooltip placement="topLeft" title={phone}>
@@ -713,7 +812,7 @@ const ManagementUsers = () => {
             title: "GIỚI TÍNH",
             dataIndex: "gender",
             key: "gender",
-            width: 100,
+            width: 130,
             render: (gender) => (
               <span>
                 {gender === "male"
@@ -729,7 +828,7 @@ const ManagementUsers = () => {
             title: "NGÀY SINH",
             dataIndex: "date_of_birth",
             key: "date_of_birth",
-            width: 120,
+            width: 140,
             ellipsis: { showTitle: false },
             render: (date) => (
               <Tooltip
@@ -790,7 +889,7 @@ const ManagementUsers = () => {
             title: "TRẠNG THÁI",
             dataIndex: "isActive",
             key: "isActive",
-            width: 120,
+            width: 140,
             render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
@@ -805,7 +904,7 @@ const ManagementUsers = () => {
           {
             title: "CHỈNH SỬA",
             key: "edit",
-            width: 100,
+            width: 130,
             fixed: "right",
             render: (text, record) => (
               <button
@@ -856,7 +955,7 @@ const ManagementUsers = () => {
             title: "HỌ VÀ TÊN",
             dataIndex: "full_name",
             key: "full_name",
-            width: 160,
+            width: 180,
             ellipsis: { showTitle: false },
             render: (full_name) => (
               <Tooltip placement="topLeft" title={full_name}>
@@ -882,7 +981,7 @@ const ManagementUsers = () => {
             title: "SỐ ĐIỆN THOẠI",
             dataIndex: "phone",
             key: "phone",
-            width: 130,
+            width: 150,
             ellipsis: { showTitle: false },
             render: (phone) => (
               <Tooltip placement="topLeft" title={phone}>
@@ -895,7 +994,7 @@ const ManagementUsers = () => {
             title: "GIỚI TÍNH",
             dataIndex: "gender",
             key: "gender",
-            width: 100,
+            width: 130,
             render: (gender) => (
               <span>
                 {gender === "male"
@@ -911,7 +1010,7 @@ const ManagementUsers = () => {
             title: "NGÀY SINH",
             dataIndex: "date_of_birth",
             key: "date_of_birth",
-            width: 120,
+            width: 140,
             ellipsis: { showTitle: false },
             render: (date) => (
               <Tooltip
@@ -953,7 +1052,7 @@ const ManagementUsers = () => {
             title: "KHOA",
             dataIndex: "department",
             key: "department",
-            width: 160,
+            width: 180,
             ellipsis: { showTitle: false },
             render: (department) => {
               const deptName =
@@ -998,7 +1097,7 @@ const ManagementUsers = () => {
             title: "CHỨC DANH",
             dataIndex: "degree",
             key: "degree",
-            width: 120,
+            width: 140,
             ellipsis: { showTitle: false },
             render: (degree) => {
               const degreeText = degreeMapping[degree] || "Không xác định";
@@ -1014,7 +1113,7 @@ const ManagementUsers = () => {
             title: "TRẠNG THÁI",
             dataIndex: "isActive",
             key: "isActive",
-            width: 120,
+            width: 140,
             render: (isActive) => (
               <span
                 className={`px-2 py-1 rounded text-sm ${
@@ -1029,7 +1128,7 @@ const ManagementUsers = () => {
           {
             title: "CHỈNH SỬA",
             key: "edit",
-            width: 100,
+            width: 130,
             fixed: "right",
             render: (text, record) => {
               const isHeadOfDepartment = record.roles?.some(
@@ -1232,69 +1331,140 @@ const ManagementUsers = () => {
                           </div>
                         </div>
 
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            Chức danh:
-                          </label>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowPositionFilter(!showPositionFilter);
-                              }}
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
-                            >
-                              <span className="truncate">
-                                {filterPosition.includes("Tất cả")
-                                  ? "Tất cả"
-                                  : filterPosition.join(", ")}
-                              </span>
-                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                            </button>
-                            {showPositionFilter && (
-                              <div
-                                ref={positionFilterRef}
-                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
-                              >
-                                <div className="max-h-[100px] overflow-y-auto pr-1">
-                                  <Checkbox
-                                    checked={filterPosition.includes("Tất cả")}
-                                    onChange={(e) => {
-                                      setFilterPosition(
-                                        e.target.checked ? ["Tất cả"] : []
-                                      );
-                                    }}
+                        {/* Chỉ hiển thị bộ lọc chức danh và chức vụ khi đang ở tab giảng viên */}
+                        {activeTab === "lecturer" && (
+                          <>
+                            <div className="mb-3">
+                              <label className="block text-gray-700 text-xs">
+                                Chức danh:
+                              </label>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowPositionFilter(!showPositionFilter);
+                                  }}
+                                  className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                                >
+                                  <span className="truncate">
+                                    {filterPosition.includes("Tất cả")
+                                      ? "Tất cả"
+                                      : filterPosition.join(", ")}
+                                  </span>
+                                  <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                                </button>
+                                {showPositionFilter && (
+                                  <div
+                                    ref={positionFilterRef}
+                                    className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
                                   >
-                                    Tất cả
-                                  </Checkbox>
-                                  <Checkbox.Group
-                                    options={uniquePositions
-                                      .filter((pos) => pos !== "Tất cả")
-                                      .map((pos) => ({
-                                        label: pos,
-                                        value: pos,
-                                      }))}
-                                    value={filterPosition.filter(
-                                      (pos) => pos !== "Tất cả"
-                                    )}
-                                    onChange={(checkedValues) => {
-                                      if (
-                                        checkedValues.length ===
-                                        uniquePositions.length - 1
-                                      ) {
-                                        setFilterPosition(["Tất cả"]);
-                                      } else {
-                                        setFilterPosition(checkedValues);
-                                      }
-                                    }}
-                                    className="flex flex-col gap-2 mt-2"
-                                  />
-                                </div>
+                                    <div className="max-h-[100px] overflow-y-auto pr-1">
+                                      <Checkbox
+                                        checked={filterPosition.includes(
+                                          "Tất cả"
+                                        )}
+                                        onChange={(e) => {
+                                          setFilterPosition(
+                                            e.target.checked ? ["Tất cả"] : []
+                                          );
+                                        }}
+                                      >
+                                        Tất cả
+                                      </Checkbox>
+                                      <Checkbox.Group
+                                        options={uniquePositions
+                                          .filter((pos) => pos !== "Tất cả")
+                                          .map((pos) => ({
+                                            label: pos,
+                                            value: pos,
+                                          }))}
+                                        value={filterPosition.filter(
+                                          (pos) => pos !== "Tất cả"
+                                        )}
+                                        onChange={(checkedValues) => {
+                                          if (
+                                            checkedValues.length ===
+                                            uniquePositions.length - 1
+                                          ) {
+                                            setFilterPosition(["Tất cả"]);
+                                          } else {
+                                            setFilterPosition(checkedValues);
+                                          }
+                                        }}
+                                        className="flex flex-col gap-2 mt-2"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
                               </div>
-                            )}
-                          </div>
-                        </div>
+                            </div>
+
+                            <div className="mb-3">
+                              <label className="block text-gray-700 text-xs">
+                                Chức vụ:
+                              </label>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowRoleFilter(!showRoleFilter);
+                                  }}
+                                  className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                                >
+                                  <span className="truncate">
+                                    {filterRole.includes("Tất cả")
+                                      ? "Tất cả"
+                                      : filterRole.join(", ")}
+                                  </span>
+                                  <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                                </button>
+                                {showRoleFilter && (
+                                  <div
+                                    ref={roleFilterRef}
+                                    className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
+                                  >
+                                    <div className="max-h-[100px] overflow-y-auto pr-1">
+                                      <Checkbox
+                                        checked={filterRole.includes("Tất cả")}
+                                        onChange={(e) => {
+                                          setFilterRole(
+                                            e.target.checked ? ["Tất cả"] : []
+                                          );
+                                        }}
+                                      >
+                                        Tất cả
+                                      </Checkbox>
+                                      <Checkbox.Group
+                                        options={uniqueRoles
+                                          .filter((role) => role !== "Tất cả")
+                                          .map((role) => ({
+                                            label: role,
+                                            value: role,
+                                          }))}
+                                        value={filterRole.filter(
+                                          (role) => role !== "Tất cả"
+                                        )}
+                                        onChange={(checkedValues) => {
+                                          if (
+                                            checkedValues.length ===
+                                            uniqueRoles.length - 1
+                                          ) {
+                                            setFilterRole(["Tất cả"]);
+                                          } else {
+                                            setFilterRole(checkedValues);
+                                          }
+                                        }}
+                                        className="flex flex-col gap-2 mt-2"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
 
                         <div className="mb-3">
                           <label className="block text-gray-700 text-xs">
@@ -1362,6 +1532,83 @@ const ManagementUsers = () => {
 
                         <div className="mb-3">
                           <label className="block text-gray-700 text-xs">
+                            Giới tính:
+                          </label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowGenderFilter(!showGenderFilter);
+                              }}
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                            >
+                              <span className="truncate">
+                                {filterGender.includes("Tất cả")
+                                  ? "Tất cả"
+                                  : filterGender
+                                      .map((g) =>
+                                        g === "male"
+                                          ? "Nam"
+                                          : g === "female"
+                                          ? "Nữ"
+                                          : "Khác"
+                                      )
+                                      .join(", ")}
+                              </span>
+                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                            </button>
+                            {showGenderFilter && (
+                              <div
+                                ref={genderFilterRef}
+                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
+                              >
+                                <div className="max-h-[100px] overflow-y-auto pr-1">
+                                  <Checkbox
+                                    checked={filterGender.includes("Tất cả")}
+                                    onChange={(e) => {
+                                      setFilterGender(
+                                        e.target.checked ? ["Tất cả"] : []
+                                      );
+                                    }}
+                                  >
+                                    Tất cả
+                                  </Checkbox>
+                                  <Checkbox.Group
+                                    options={uniqueGenders
+                                      .filter((gender) => gender !== "Tất cả")
+                                      .map((gender) => ({
+                                        label:
+                                          gender === "male"
+                                            ? "Nam"
+                                            : gender === "female"
+                                            ? "Nữ"
+                                            : "Khác",
+                                        value: gender,
+                                      }))}
+                                    value={filterGender.filter(
+                                      (gender) => gender !== "Tất cả"
+                                    )}
+                                    onChange={(checkedValues) => {
+                                      if (
+                                        checkedValues.length ===
+                                        uniqueGenders.length - 1
+                                      ) {
+                                        setFilterGender(["Tất cả"]);
+                                      } else {
+                                        setFilterGender(checkedValues);
+                                      }
+                                    }}
+                                    className="flex flex-col gap-2 mt-2"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
                             Họ và tên:
                           </label>
                           <Input
@@ -1383,6 +1630,69 @@ const ManagementUsers = () => {
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                           />
                         </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Email:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterEmail}
+                            onChange={(e) => setFilterEmail(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Số điện thoại:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterPhone}
+                            onChange={(e) => setFilterPhone(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Ngày sinh:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterDateOfBirth}
+                            onChange={(e) =>
+                              setFilterDateOfBirth(e.target.value)
+                            }
+                            placeholder="dd/mm/yyyy"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            CCCD:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterCccd}
+                            onChange={(e) => setFilterCccd(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Địa chỉ:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterAddress}
+                            onChange={(e) => setFilterAddress(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
                       </div>
 
                       <button
@@ -1393,6 +1703,13 @@ const ManagementUsers = () => {
                           setFilterDepartment(["Tất cả"]);
                           setFilterPosition(["Tất cả"]);
                           setFilterStatus(["Tất cả"]);
+                          setFilterEmail("");
+                          setFilterPhone("");
+                          setFilterGender(["Tất cả"]);
+                          setFilterDateOfBirth("");
+                          setFilterCccd("");
+                          setFilterAddress("");
+                          setFilterRole(["Tất cả"]);
                         }}
                         className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
                       >
