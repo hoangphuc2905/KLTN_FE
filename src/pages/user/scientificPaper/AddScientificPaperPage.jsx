@@ -638,7 +638,6 @@ const AddScientificPaperPage = () => {
       const areAuthorsValid = validateAuthors();
       const isFileValid = validateFile();
 
-      // Check if all validations passed
       if (
         !isPaperTypeValid ||
         !isPaperGroupValid ||
@@ -658,49 +657,87 @@ const AddScientificPaperPage = () => {
         return;
       }
 
-      // Compute author_count using the same logic as displayed in the UI
+      const randomUUID = () => {
+        return "xxxxxxxxxxxx".replace(/[x]/g, function () {
+          return (Math.random() * 16) | 0;
+        });
+      };
+
+      // Handle custom institutions
+      const updatedAuthors = await Promise.all(
+        authors.map(async (author) => {
+          if (
+            !/^[a-f\d]{24}$/i.test(author.institution) &&
+            author.institution
+          ) {
+            // Save custom institution to the database
+            try {
+              const response = await userApi.createWorkUnit({
+                work_unit_id: randomUUID(),
+                name_vi: author.institution,
+                name_en: author.institution, // Assuming the same name for English
+                address_vi: "Unknown Address", // Default value
+                address_en: "Unknown Address", // Default value
+              });
+              return {
+                ...author,
+                institution: response._id, // Use the returned ObjectId
+              };
+            } catch (error) {
+              console.error("Error saving custom institution:", error);
+              message.error(
+                `Không thể lưu cơ quan công tác: ${author.institution}`
+              );
+              throw error;
+            }
+          }
+          return author;
+        })
+      );
+
+      // Compute author_count
       const counts = {
         primary: 0,
         corresponding: 0,
         primaryCorresponding: 0,
         contributor: 0,
       };
-      authors.forEach((author) => {
+      updatedAuthors.forEach((author) => {
         if (author.role === "MainAuthor") counts.primary++;
         if (author.role === "CorrespondingAuthor") counts.corresponding++;
         if (author.role === "MainAndCorrespondingAuthor")
           counts.primaryCorresponding++;
         if (author.role === "Participant") counts.contributor++;
       });
-      const authorCount = `${authors.length}(${counts.primary},${counts.corresponding},${counts.primaryCorresponding},${counts.contributor})`;
+      const authorCount = `${updatedAuthors.length}(${counts.primary},${counts.corresponding},${counts.primaryCorresponding},${counts.contributor})`;
 
       // Prepare JSON payload
       const payload = {
         article_type: selectedPaperType || "",
         article_group:
           paperGroups.find((group) => group.group_name === selectedPaperGroup)
-            ?._id || "", // Lưu ObjectId xuống DB
+            ?._id || "",
         title_vn: titleVn || "",
-        title_en: titleEn || "",
-        author_count: authorCount, // Use the computed author_count
-        author: authors.map((author, index) => ({
+        ...(titleEn && { title_en: titleEn }),
+        author_count: authorCount,
+        author: updatedAuthors.map((author, index) => ({
           user_id: author.mssvMsgv || "",
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
-          work_unit_id: author.institution || null, // Ensure this is the ObjectId (_id)
+          work_unit_id: author.institution, // Ensure this is a valid ObjectId
           degree: "Bachelor",
           point: parseFloat(scores.perAuthor[`author_${index + 1}`]) || 0,
         })),
         publish_date: publishDate || "",
         magazine_vi: magazineVi || "",
-        magazine_en: magazineEn || "",
-        magazine_type: magazineType || "",
+        ...(magazineEn && { magazine_en: magazineEn }),
+        ...(magazineType && { magazine_type: magazineType }),
         page: pageCount || 0,
         issn_isbn: issnIsbn || "",
         file: selectedFile || "",
         link: link || "",
-        doi: doi || "",
+        ...(doi && { doi: doi }),
         status: "pending",
         order_no: orderNo,
         featured: featured,
@@ -712,17 +749,6 @@ const AddScientificPaperPage = () => {
 
       // Debugging: Log payload
       console.log("Payload:", payload);
-
-      // Validate ObjectId format for work_unit_id
-      const invalidAuthors = payload.author.filter(
-        (author) =>
-          !author.work_unit_id || !/^[a-f\d]{24}$/i.test(author.work_unit_id)
-      );
-
-      if (invalidAuthors.length > 0) {
-        message.error("Một hoặc nhiều tác giả có work_unit_id không hợp lệ.");
-        return;
-      }
 
       // Send data to the backend
       const response = await userApi.createScientificPaper(payload);
@@ -740,10 +766,6 @@ const AddScientificPaperPage = () => {
         message.error("Không thể lưu bài báo. Vui lòng thử lại.");
       }
     }
-  };
-
-  const showIconModal = () => {
-    setIsIconModalVisible(true);
   };
 
   const handleIconModalOk = () => {
@@ -1718,24 +1740,62 @@ const AddScientificPaperPage = () => {
                                 setAuthorTouched(newTouched);
                               }}
                               required
-                              showSearch
-                              filterOption={(input, option) =>
-                                option?.children
-                                  ?.toLowerCase()
-                                  .includes(input.toLowerCase())
-                              }
-                              onInputKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  const value = e.target.value.trim();
-                                  if (value) {
-                                    handleAuthorChange(
-                                      index,
-                                      "institution",
-                                      value
-                                    );
-                                  }
-                                }
-                              }}
+                              dropdownRender={(menu) => (
+                                <>
+                                  {menu}
+                                  <div className="p-2 flex items-center gap-2">
+                                    <Input
+                                      placeholder="Nhập cơ quan công tác"
+                                      value={
+                                        authors[index].institutionInput || ""
+                                      }
+                                      onChange={(e) => {
+                                        handleAuthorChange(
+                                          index,
+                                          "institutionInput",
+                                          e.target.value
+                                        );
+                                        const newErrors = [...authorErrors];
+                                        if (!newErrors[index])
+                                          newErrors[index] = {};
+                                        newErrors[index].institution = "";
+                                        setAuthorErrors(newErrors);
+                                      }}
+                                    />
+                                    <Button
+                                      type="primary"
+                                      size="small"
+                                      onClick={() => {
+                                        const value =
+                                          authors[
+                                            index
+                                          ].institutionInput?.trim();
+                                        if (value) {
+                                          handleAuthorChange(
+                                            index,
+                                            "institution",
+                                            value
+                                          );
+                                          const newErrors = [...authorErrors];
+                                          if (!newErrors[index])
+                                            newErrors[index] = {};
+                                          newErrors[index].institution = "";
+                                          setAuthorErrors(newErrors);
+                                          message.success(
+                                            "Cơ quan công tác đã được thêm vào"
+                                          );
+                                        } else {
+                                          message.error(
+                                            "Vui lòng nhập cơ quan công tác!"
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      Thêm
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             >
                               {author.institutions?.map((institution) => (
                                 <Option
