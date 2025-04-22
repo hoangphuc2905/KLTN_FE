@@ -68,12 +68,477 @@ const ManagementUsers = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const [showGenderFilter, setShowGenderFilter] = useState(false); // Thêm state cho gender filter
   const [showRoleFilter, setShowRoleFilter] = useState(false); // Thêm state cho role filter
+  const [showColumnFilter, setShowColumnFilter] = useState(false);
+
   const filterRef = useRef(null);
   const departmentFilterRef = useRef(null);
   const positionFilterRef = useRef(null);
   const statusFilterRef = useRef(null);
   const genderFilterRef = useRef(null); // Thêm ref cho gender filter
   const roleFilterRef = useRef(null); // Thêm ref cho role filter
+  const columnFilterRef = useRef(null);
+
+  const roleMapping = {
+    admin: "Quản trị viên",
+    lecturer: "Giảng viên",
+    head_of_department: "Trưởng khoa",
+    deputy_head_of_department: "Phó khoa",
+    department_in_charge: "Cán bộ phụ trách khoa",
+  };
+
+  const degreeMapping = {
+    Bachelor: "Cử nhân",
+    Master: "Thạc sĩ",
+    Doctor: "Tiến sĩ",
+    Egineer: "Kỹ sư",
+    Professor: "Giáo sư",
+    Ossociate_Professor: "Phó giáo sư",
+  };
+
+  const degreePriority = {
+    Professor: 1,
+    Ossociate_Professor: 2,
+    Doctor: 3,
+    Master: 4,
+    Bachelor: 5,
+    Egineer: 6,
+  };
+
+  // Định nghĩa columns trước khi sử dụng
+  const getUserColumns = () => [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+      render: (text, record, index) =>
+        (userCurrentPage - 1) * itemsPerPage + index + 1,
+      width: 65,
+      fixed: "left",
+    },
+    {
+      title: "MSSV",
+      dataIndex: "student_id",
+      key: "student_id",
+      width: 120,
+      ellipsis: { showTitle: false },
+      render: (student_id) => (
+        <Tooltip placement="topLeft" title={student_id}>
+          {student_id}
+        </Tooltip>
+      ),
+      sorter: (a, b) => a.student_id?.localeCompare(b.student_id || ""),
+    },
+    {
+      title: "HỌ VÀ TÊN",
+      dataIndex: "full_name",
+      key: "full_name",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (full_name) => (
+        <Tooltip placement="topLeft" title={full_name}>
+          {full_name}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "EMAIL",
+      dataIndex: "email",
+      key: "email",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (email) => (
+        <Tooltip placement="topLeft" title={email}>
+          {email}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "SỐ ĐIỆN THOẠI",
+      dataIndex: "phone",
+      key: "phone",
+      width: 150,
+      ellipsis: { showTitle: false },
+      render: (phone) => (
+        <Tooltip placement="topLeft" title={phone}>
+          {phone}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "GIỚI TÍNH",
+      dataIndex: "gender",
+      key: "gender",
+      width: 130,
+      render: (gender) => (
+        <span>
+          {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : "Khác"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "NGÀY SINH",
+      dataIndex: "date_of_birth",
+      key: "date_of_birth",
+      width: 140,
+      ellipsis: { showTitle: false },
+      render: (date) => (
+        <Tooltip
+          placement="topLeft"
+          title={date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        >
+          {date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CCCD",
+      dataIndex: "cccd",
+      key: "cccd",
+      width: 130,
+      ellipsis: { showTitle: false },
+      render: (cccd) => (
+        <Tooltip placement="topLeft" title={cccd}>
+          {cccd}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "ĐỊA CHỈ",
+      dataIndex: "address",
+      key: "address",
+      width: 200,
+      ellipsis: { showTitle: false },
+      render: (address) => (
+        <Tooltip placement="topLeft" title={address}>
+          {address}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "KHOA",
+      dataIndex: "department",
+      key: "department",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (department) => {
+        const deptName =
+          typeof department === "object" && department.department_name
+            ? department.department_name
+            : department || "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={deptName}>
+            {deptName}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "TRẠNG THÁI",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 140,
+      render: (isActive) => (
+        <span
+          className={`px-2 py-1 rounded text-sm ${
+            isActive ? "text-green-700" : "text-red-700"
+          }`}
+        >
+          {isActive ? "Hoạt động" : "Không hoạt động"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CHỈNH SỬA",
+      key: "edit",
+      width: 130,
+      fixed: "right",
+      render: (text, record) => (
+        <button
+          className="text-blue-500"
+          onClick={() => handleEditClick(record)}
+        >
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 20 20"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+      ),
+      align: "center",
+    },
+  ];
+
+  const getLecturerColumns = () => [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+      render: (text, record, index) =>
+        (lecturerCurrentPage - 1) * itemsPerPage + index + 1,
+      width: 65,
+      fixed: "left",
+    },
+    {
+      title: "MSGV",
+      dataIndex: "lecturer_id",
+      key: "lecturer_id",
+      width: 120,
+      ellipsis: { showTitle: false },
+      render: (lecturer_id) => (
+        <Tooltip placement="topLeft" title={lecturer_id}>
+          {lecturer_id}
+        </Tooltip>
+      ),
+      sorter: (a, b) => a.lecturer_id?.localeCompare(b.lecturer_id || ""),
+    },
+    {
+      title: "HỌ VÀ TÊN",
+      dataIndex: "full_name",
+      key: "full_name",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (full_name) => (
+        <Tooltip placement="topLeft" title={full_name}>
+          {full_name}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "EMAIL",
+      dataIndex: "email",
+      key: "email",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (email) => (
+        <Tooltip placement="topLeft" title={email}>
+          {email}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "SỐ ĐIỆN THOẠI",
+      dataIndex: "phone",
+      key: "phone",
+      width: 150,
+      ellipsis: { showTitle: false },
+      render: (phone) => (
+        <Tooltip placement="topLeft" title={phone}>
+          {phone}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "GIỚI TÍNH",
+      dataIndex: "gender",
+      key: "gender",
+      width: 130,
+      render: (gender) => (
+        <span>
+          {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : "Khác"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "NGÀY SINH",
+      dataIndex: "date_of_birth",
+      key: "date_of_birth",
+      width: 140,
+      ellipsis: { showTitle: false },
+      render: (date) => (
+        <Tooltip
+          placement="topLeft"
+          title={date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        >
+          {date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CCCD",
+      dataIndex: "cccd",
+      key: "cccd",
+      width: 130,
+      ellipsis: { showTitle: false },
+      render: (cccd) => (
+        <Tooltip placement="topLeft" title={cccd}>
+          {cccd}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "ĐỊA CHỈ",
+      dataIndex: "address",
+      key: "address",
+      width: 200,
+      ellipsis: { showTitle: false },
+      render: (address) => (
+        <Tooltip placement="topLeft" title={address}>
+          {address}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "KHOA",
+      dataIndex: "department",
+      key: "department",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (department) => {
+        const deptName =
+          typeof department === "object" && department.department_name
+            ? department.department_name
+            : department || "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={deptName}>
+            {deptName}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "CHỨC VỤ",
+      dataIndex: "roles",
+      key: "roles",
+      width: 120,
+      ellipsis: { showTitle: false },
+      render: (roles) => {
+        const roleText = Array.isArray(roles)
+          ? roles
+              .filter(
+                (role) => !(roles.length > 1 && role.role_name === "lecturer")
+              )
+              .map((role) => roleMapping[role.role_name] || role.role_name)
+              .join(", ")
+          : "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={roleText}>
+            {roleText}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "CHỨC DANH",
+      dataIndex: "degree",
+      key: "degree",
+      width: 140,
+      ellipsis: { showTitle: false },
+      render: (degree) => {
+        const degreeText = degreeMapping[degree] || "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={degreeText}>
+            {degreeText}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "TRẠNG THÁI",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 140,
+      render: (isActive) => (
+        <span
+          className={`px-2 py-1 rounded text-sm ${
+            isActive ? "text-green-700" : "text-red-700"
+          }`}
+        >
+          {isActive ? "Hoạt động" : "Không hoạt động"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CHỈNH SỬA",
+      key: "edit",
+      width: 130,
+      fixed: "right",
+      render: (text, record) => {
+        const isHeadOfDepartment = record.roles?.some(
+          (role) => role.role_name === "head_of_department"
+        );
+        const isDeputyHeadOfDepartment = record.roles?.some(
+          (role) => role.role_name === "deputy_head_of_department"
+        );
+
+        if (
+          (userRole === "deputy_head_of_department" && isHeadOfDepartment) ||
+          (userRole === "department_in_charge" &&
+            (isHeadOfDepartment || isDeputyHeadOfDepartment))
+        ) {
+          return null;
+        }
+
+        return (
+          <button
+            className="text-blue-500"
+            onClick={() => handleEditClick(record)}
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
+                fill="currentColor"
+              />
+            </svg>
+          </button>
+        );
+      },
+      align: "center",
+    },
+  ];
+
+  const columns =
+    activeTab === "user" ? getUserColumns() : getLecturerColumns();
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((col) => col.key)
+  );
+
+  // Các hàm xử lý khác
+  const handleColumnVisibilityChange = (selectedColumns) => {
+    setVisibleColumns(selectedColumns);
+  };
+
+  const filteredColumns = columns.filter((col) =>
+    visibleColumns.includes(col.key)
+  );
+
+  const columnOptions = columns.map((col) => ({
+    label: col.title,
+    value: col.key,
+  }));
 
   const reloadData = async () => {
     try {
@@ -256,32 +721,6 @@ const ManagementUsers = () => {
     },
   ];
 
-  const roleMapping = {
-    admin: "Quản trị viên",
-    lecturer: "Giảng viên",
-    head_of_department: "Trưởng khoa",
-    deputy_head_of_department: "Phó khoa",
-    department_in_charge: "Cán bộ phụ trách khoa",
-  };
-
-  const degreeMapping = {
-    Bachelor: "Cử nhân",
-    Master: "Thạc sĩ",
-    Doctor: "Tiến sĩ",
-    Egineer: "Kỹ sư",
-    Professor: "Giáo sư",
-    Ossociate_Professor: "Phó giáo sư",
-  };
-
-  const degreePriority = {
-    Professor: 1,
-    Ossociate_Professor: 2,
-    Doctor: 3,
-    Master: 4,
-    Bachelor: 5,
-    Egineer: 6,
-  };
-
   useEffect(() => {
     const fetchRoles = async () => {
       try {
@@ -383,6 +822,13 @@ const ManagementUsers = () => {
       ) {
         setShowRoleFilter(false);
       }
+      if (
+        showColumnFilter &&
+        columnFilterRef.current &&
+        !columnFilterRef.current.contains(event.target)
+      ) {
+        setShowColumnFilter(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -396,7 +842,12 @@ const ManagementUsers = () => {
     showStatusFilter,
     showGenderFilter,
     showRoleFilter,
+    showColumnFilter,
   ]);
+
+  useEffect(() => {
+    setVisibleColumns(columns.map((col) => col.key));
+  }, [activeTab]);
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -744,433 +1195,6 @@ const ManagementUsers = () => {
     filterRole,
   ]);
 
-  const columns =
-    activeTab === "user"
-      ? [
-          {
-            title: "STT",
-            dataIndex: "id",
-            key: "id",
-            render: (text, record, index) =>
-              (userCurrentPage - 1) * itemsPerPage + index + 1,
-            width: 65,
-            fixed: "left",
-          },
-          {
-            title: "MSSV",
-            dataIndex: "student_id",
-            key: "id",
-            width: 120,
-            ellipsis: { showTitle: false },
-            render: (student_id) => (
-              <Tooltip placement="topLeft" title={student_id}>
-                {student_id}
-              </Tooltip>
-            ),
-            sorter: (a, b) => a.student_id.localeCompare(b.student_id),
-          },
-          {
-            title: "HỌ VÀ TÊN",
-            dataIndex: "full_name",
-            key: "full_name",
-            width: 180,
-            ellipsis: { showTitle: false },
-            render: (full_name) => (
-              <Tooltip placement="topLeft" title={full_name}>
-                {full_name}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "EMAIL",
-            dataIndex: "email",
-            key: "email",
-            width: 180,
-            ellipsis: { showTitle: false },
-            render: (email) => (
-              <Tooltip placement="topLeft" title={email}>
-                {email}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "SỐ ĐIỆN THOẠI",
-            dataIndex: "phone",
-            key: "phone",
-            width: 150,
-            ellipsis: { showTitle: false },
-            render: (phone) => (
-              <Tooltip placement="topLeft" title={phone}>
-                {phone}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "GIỚI TÍNH",
-            dataIndex: "gender",
-            key: "gender",
-            width: 130,
-            render: (gender) => (
-              <span>
-                {gender === "male"
-                  ? "Nam"
-                  : gender === "female"
-                  ? "Nữ"
-                  : "Khác"}
-              </span>
-            ),
-            sorter: true,
-          },
-          {
-            title: "NGÀY SINH",
-            dataIndex: "date_of_birth",
-            key: "date_of_birth",
-            width: 140,
-            ellipsis: { showTitle: false },
-            render: (date) => (
-              <Tooltip
-                placement="topLeft"
-                title={date ? new Date(date).toLocaleDateString("vi-VN") : ""}
-              >
-                {date ? new Date(date).toLocaleDateString("vi-VN") : ""}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "CCCD",
-            dataIndex: "cccd",
-            key: "cccd",
-            width: 130,
-            ellipsis: { showTitle: false },
-            render: (cccd) => (
-              <Tooltip placement="topLeft" title={cccd}>
-                {cccd}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "ĐỊA CHỈ",
-            dataIndex: "address",
-            key: "address",
-            width: 200,
-            ellipsis: { showTitle: false },
-            render: (address) => (
-              <Tooltip placement="topLeft" title={address}>
-                {address}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "KHOA",
-            dataIndex: "department",
-            key: "department",
-            width: 180,
-            ellipsis: { showTitle: false },
-            render: (department) => {
-              const deptName =
-                typeof department === "object" && department.department_name
-                  ? department.department_name
-                  : department || "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={deptName}>
-                  {deptName}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "TRẠNG THÁI",
-            dataIndex: "isActive",
-            key: "isActive",
-            width: 140,
-            render: (isActive) => (
-              <span
-                className={`px-2 py-1 rounded text-sm ${
-                  isActive ? "text-green-700" : "text-red-700"
-                }`}
-              >
-                {isActive ? "Hoạt động" : "Không hoạt động"}
-              </span>
-            ),
-            sorter: true,
-          },
-          {
-            title: "CHỈNH SỬA",
-            key: "edit",
-            width: 130,
-            fixed: "right",
-            render: (text, record) => (
-              <button
-                className="text-blue-500"
-                onClick={() => handleEditClick(record)}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
-            ),
-            align: "center",
-          },
-        ]
-      : [
-          {
-            title: "STT",
-            dataIndex: "id",
-            key: "id",
-            render: (text, record, index) =>
-              (lecturerCurrentPage - 1) * itemsPerPage + index + 1,
-            width: 65,
-            fixed: "left",
-          },
-          {
-            title: "MSGV",
-            dataIndex: "lecturer_id",
-            key: "id",
-            width: 120,
-            ellipsis: { showTitle: false },
-            render: (lecturer_id) => (
-              <Tooltip placement="topLeft" title={lecturer_id}>
-                {lecturer_id}
-              </Tooltip>
-            ),
-            sorter: (a, b) => a.lecturer_id.localeCompare(b.lecturer_id),
-          },
-          {
-            title: "HỌ VÀ TÊN",
-            dataIndex: "full_name",
-            key: "full_name",
-            width: 180,
-            ellipsis: { showTitle: false },
-            render: (full_name) => (
-              <Tooltip placement="topLeft" title={full_name}>
-                {full_name}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "EMAIL",
-            dataIndex: "email",
-            key: "email",
-            width: 180,
-            ellipsis: { showTitle: false },
-            render: (email) => (
-              <Tooltip placement="topLeft" title={email}>
-                {email}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "SỐ ĐIỆN THOẠI",
-            dataIndex: "phone",
-            key: "phone",
-            width: 150,
-            ellipsis: { showTitle: false },
-            render: (phone) => (
-              <Tooltip placement="topLeft" title={phone}>
-                {phone}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "GIỚI TÍNH",
-            dataIndex: "gender",
-            key: "gender",
-            width: 130,
-            render: (gender) => (
-              <span>
-                {gender === "male"
-                  ? "Nam"
-                  : gender === "female"
-                  ? "Nữ"
-                  : "Khác"}
-              </span>
-            ),
-            sorter: true,
-          },
-          {
-            title: "NGÀY SINH",
-            dataIndex: "date_of_birth",
-            key: "date_of_birth",
-            width: 140,
-            ellipsis: { showTitle: false },
-            render: (date) => (
-              <Tooltip
-                placement="topLeft"
-                title={date ? new Date(date).toLocaleDateString("vi-VN") : ""}
-              >
-                {date ? new Date(date).toLocaleDateString("vi-VN") : ""}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "CCCD",
-            dataIndex: "cccd",
-            key: "cccd",
-            width: 130,
-            ellipsis: { showTitle: false },
-            render: (cccd) => (
-              <Tooltip placement="topLeft" title={cccd}>
-                {cccd}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "ĐỊA CHỈ",
-            dataIndex: "address",
-            key: "address",
-            width: 200,
-            ellipsis: { showTitle: false },
-            render: (address) => (
-              <Tooltip placement="topLeft" title={address}>
-                {address}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "KHOA",
-            dataIndex: "department",
-            key: "department",
-            width: 180,
-            ellipsis: { showTitle: false },
-            render: (department) => {
-              const deptName =
-                typeof department === "object" && department.department_name
-                  ? department.department_name
-                  : department || "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={deptName}>
-                  {deptName}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "CHỨC VỤ",
-            dataIndex: "roles",
-            key: "roles",
-            width: 120,
-            ellipsis: { showTitle: false },
-            render: (roles) => {
-              const roleText = Array.isArray(roles)
-                ? roles
-                    .filter(
-                      (role) =>
-                        !(roles.length > 1 && role.role_name === "lecturer")
-                    )
-                    .map(
-                      (role) => roleMapping[role.role_name] || role.role_name
-                    )
-                    .join(", ")
-                : "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={roleText}>
-                  {roleText}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "CHỨC DANH",
-            dataIndex: "degree",
-            key: "degree",
-            width: 140,
-            ellipsis: { showTitle: false },
-            render: (degree) => {
-              const degreeText = degreeMapping[degree] || "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={degreeText}>
-                  {degreeText}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "TRẠNG THÁI",
-            dataIndex: "isActive",
-            key: "isActive",
-            width: 140,
-            render: (isActive) => (
-              <span
-                className={`px-2 py-1 rounded text-sm ${
-                  isActive ? "text-green-700" : "text-red-700"
-                }`}
-              >
-                {isActive ? "Hoạt động" : "Không hoạt động"}
-              </span>
-            ),
-            sorter: true,
-          },
-          {
-            title: "CHỈNH SỬA",
-            key: "edit",
-            width: 130,
-            fixed: "right",
-            render: (text, record) => {
-              const isHeadOfDepartment = record.roles?.some(
-                (role) => role.role_name === "head_of_department"
-              );
-              const isDeputyHeadOfDepartment = record.roles?.some(
-                (role) => role.role_name === "deputy_head_of_department"
-              );
-
-              if (
-                (userRole === "deputy_head_of_department" &&
-                  isHeadOfDepartment) ||
-                (userRole === "department_in_charge" &&
-                  (isHeadOfDepartment || isDeputyHeadOfDepartment))
-              ) {
-                return null;
-              }
-
-              return (
-                <button
-                  className="text-blue-500"
-                  onClick={() => handleEditClick(record)}
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </button>
-              );
-            },
-            align: "center",
-          },
-        ];
-
   const totalStudents = users.length;
   const totalLecturers = lecturers.length;
 
@@ -1252,11 +1276,21 @@ const ManagementUsers = () => {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs mr-2"
                   onClick={() => setShowFilter(!showFilter)}
                 >
                   <Filter className="w-4 h-4" />
                   <span className="text-xs">Bộ lọc</span>
+                </button>
+                <button
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  onClick={() => {
+                    setShowColumnFilter(!showColumnFilter);
+                    setShowFilter(false);
+                  }}
+                >
+                  <Filter className="w-4 h-4" />
+                  <span className="text-xs">Chọn cột</span>
                 </button>
                 {showFilter && (
                   <div
@@ -1718,10 +1752,44 @@ const ManagementUsers = () => {
                     </form>
                   </div>
                 )}
+                {showColumnFilter && (
+                  <div
+                    ref={columnFilterRef}
+                    className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                  >
+                    <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                      <Checkbox
+                        indeterminate={
+                          visibleColumns.length > 0 &&
+                          visibleColumns.length < columns.length
+                        }
+                        onChange={(e) => {
+                          setVisibleColumns(
+                            e.target.checked
+                              ? columns.map((col) => col.key)
+                              : []
+                          );
+                        }}
+                        checked={visibleColumns.length === columns.length}
+                      >
+                        Chọn tất cả
+                      </Checkbox>
+                      <div className="max-h-[300px] overflow-y-auto pr-1 mt-2">
+                        <Checkbox.Group
+                          options={columnOptions}
+                          value={visibleColumns}
+                          onChange={handleColumnVisibilityChange}
+                          className="flex flex-col gap-2"
+                        />
+                      </div>
+                      <Divider className="mt-4" />
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="overflow-x-auto">
                 <Table
-                  columns={columns}
+                  columns={filteredColumns}
                   dataSource={filteredUsers}
                   pagination={{
                     current:
