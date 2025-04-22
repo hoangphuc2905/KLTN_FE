@@ -596,6 +596,50 @@ const ManagementUsers = () => {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData =
+      activeTab === "user"
+        ? [
+            [
+              "student_id",
+              "full_name",
+              "email",
+              "phone",
+              "gender",
+              "date_of_birth",
+              "cccd",
+              "address",
+              "start_date",
+            ],
+          ]
+        : [
+            [
+              "lecturer_id",
+              "full_name",
+              "email",
+              "phone",
+              "gender",
+              "date_of_birth",
+              "cccd",
+              "address",
+              "start_date",
+            ],
+          ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      activeTab === "user" ? "Student Template" : "Lecturer Template"
+    );
+
+    XLSX.writeFile(
+      workbook,
+      activeTab === "user" ? "Student_Template.xlsx" : "Lecturer_Template.xlsx"
+    );
+  };
+
   const handleExcelSave = async () => {
     try {
       const fileInput =
@@ -691,12 +735,17 @@ const ManagementUsers = () => {
         <span
           onClick={() => document.getElementById("studentExcelInput").click()}
         >
-          Từ Excel
+          Nhập từ Excel
         </span>
       ),
     },
     {
       key: "2",
+      icon: <FileExcelOutlined />,
+      label: <span onClick={handleDownloadTemplate}>Tải file excel mẫu</span>,
+    },
+    {
+      key: "3",
       icon: <EditOutlined />,
       label: <span onClick={handleAddStudent}>Thủ công</span>,
     },
@@ -710,12 +759,17 @@ const ManagementUsers = () => {
         <span
           onClick={() => document.getElementById("lecturerExcelInput").click()}
         >
-          Từ Excel
+          Nhập từ Excel
         </span>
       ),
     },
     {
       key: "2",
+      icon: <FileExcelOutlined />,
+      label: <span onClick={handleDownloadTemplate}>Tải file excel mẫu</span>,
+    },
+    {
+      key: "3",
       icon: <EditOutlined />,
       label: <span onClick={handleAddLecturer}>Thủ công</span>,
     },
