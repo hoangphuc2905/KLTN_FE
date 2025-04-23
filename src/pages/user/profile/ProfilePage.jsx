@@ -25,6 +25,28 @@ const ProfilePage = () => {
   const navigate = useNavigate();
   const [academicYears, setAcademicYears] = useState([]); // State for academic years
 
+  const formatViewDate = (viewDate) => {
+    const now = new Date();
+    const viewedDate = new Date(viewDate);
+
+    const diffInTime = now - viewedDate;
+    const diffInMinutes = Math.floor(diffInTime / (1000 * 60));
+    const diffInHours = Math.floor(diffInTime / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInTime / (1000 * 60 * 60 * 24));
+
+    if (diffInMinutes < 60) {
+      return `${diffInMinutes} phút trước`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours} giờ trước`;
+    } else if (diffInDays === 1) {
+      return "Hôm qua";
+    } else if (diffInDays === 2) {
+      return "2 ngày trước";
+    } else {
+      return viewedDate.toLocaleDateString("vi-VN");
+    }
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem("token");
@@ -78,9 +100,7 @@ const ProfilePage = () => {
           summary: item.paper_id.summary,
           departmentName: item.paper_id.department.department_name,
           thumbnailUrl: item.paper_id.cover_image,
-          viewDate: new Date(item.paper_id.publish_date).toLocaleDateString(
-            "vi-VN"
-          ),
+          viewDate: formatViewDate(item.createdAt), // Use createdAt for view time
         }));
         setRecentlyViewedPapers(formattedPapers);
       } catch (error) {
@@ -558,7 +578,8 @@ const ProfilePage = () => {
                                           {paper.title}
                                         </h4>
                                         <div className="absolute top-3 right-3 text-xs text-gray-500">
-                                          {paper.viewDate}
+                                          {paper.viewDate}{" "}
+                                          {/* Display formatted view date */}
                                         </div>
                                       </div>
                                       <div className="text-xs text-sky-900">
