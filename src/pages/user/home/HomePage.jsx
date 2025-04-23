@@ -843,7 +843,7 @@ const HomePage = () => {
                 className="w-5 h-5 max-md:w-3 max-md:h-3"
               />
               <span>Trang chủ</span>
-              <span className="text-gray-400"></span>
+              <span className="text-gray-400"> &gt; </span>
               <span className="font-semibold text-sky-900">Tìm kiếm</span>
             </div>
             <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-1.5">

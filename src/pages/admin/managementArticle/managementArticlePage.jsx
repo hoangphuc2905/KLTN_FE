@@ -439,6 +439,7 @@ const ManagementAriticle = () => {
   const [academicYears, setAcademicYears] = useState([]);
   const [sortedInfo, setSortedInfo] = useState({});
   const [notes, setNotes] = useState({});
+  const [filteredCounts, setFilteredCounts] = useState(null); // Add state for filtered counts
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -759,6 +760,240 @@ const ManagementAriticle = () => {
     return true;
   });
 
+  // Update filtered counts whenever the filtered papers change
+  useEffect(() => {
+    const isFilterActive =
+      !filterPaperType.includes("Tất cả") ||
+      !filterGroup.includes("Tất cả") ||
+      filterPaperTitle !== "" ||
+      filterAuthorName !== "" ||
+      filterAuthorCountFrom !== "" ||
+      filterAuthorCountTo !== "" ||
+      !filterRole.includes("Tất cả") ||
+      !filterInstitution.includes("Tất cả") ||
+      !filterStatus.includes("Tất cả");
+
+    if (isFilterActive) {
+      // Calculate counts from filtered papers if filters are active
+      setFilteredCounts({
+        all: papers.filter((paper) => {
+          // Apply all filters except the tab filter
+          const matchesFilter =
+            (filterPaperType.includes("Tất cả") ||
+              filterPaperType.includes(paper.article_type?.type_name)) &&
+            (filterGroup.includes("Tất cả") ||
+              filterGroup.includes(paper.article_group?.group_name)) &&
+            (!filterPaperTitle ||
+              paper.title_vn
+                ?.toLowerCase()
+                .includes(filterPaperTitle.toLowerCase())) &&
+            (!filterAuthorName ||
+              paper.author.some((a) =>
+                a.author_name_vi
+                  ?.toLowerCase()
+                  .includes(filterAuthorName.toLowerCase())
+              )) &&
+            (!filterAuthorCountFrom ||
+              (paper.author_count >= parseInt(filterAuthorCountFrom) &&
+                !isNaN(paper.author_count))) &&
+            (!filterAuthorCountTo ||
+              (paper.author_count <= parseInt(filterAuthorCountTo) &&
+                !isNaN(paper.author_count))) &&
+            (filterRole.includes("Tất cả") ||
+              paper.author.some((a) => {
+                const roleMapping = {
+                  MainAuthor: "Chính",
+                  CorrespondingAuthor: "Liên hệ",
+                  MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+                  Participant: "Tham gia",
+                };
+                return filterRole.includes(
+                  roleMapping[a.role] || "Không xác định"
+                );
+              })) &&
+            (filterInstitution.includes("Tất cả") ||
+              filterInstitution.includes(paper.department?.department_name)) &&
+            (filterStatus.includes("Tất cả") ||
+              filterStatus.includes(
+                {
+                  approved: "Đã duyệt",
+                  refused: "Từ chối",
+                  pending: "Chờ duyệt",
+                  revision: "Chờ chỉnh sửa",
+                }[paper.status] || "Không xác định"
+              ));
+          return matchesFilter;
+        }).length,
+        approved: papers.filter(
+          (paper) =>
+            paper.status === "approved" &&
+            (filterPaperType.includes("Tất cả") ||
+              filterPaperType.includes(paper.article_type?.type_name)) &&
+            (filterGroup.includes("Tất cả") ||
+              filterGroup.includes(paper.article_group?.group_name)) &&
+            (!filterPaperTitle ||
+              paper.title_vn
+                ?.toLowerCase()
+                .includes(filterPaperTitle.toLowerCase())) &&
+            (!filterAuthorName ||
+              paper.author.some((a) =>
+                a.author_name_vi
+                  ?.toLowerCase()
+                  .includes(filterAuthorName.toLowerCase())
+              )) &&
+            (!filterAuthorCountFrom ||
+              (paper.author_count >= parseInt(filterAuthorCountFrom) &&
+                !isNaN(paper.author_count))) &&
+            (!filterAuthorCountTo ||
+              (paper.author_count <= parseInt(filterAuthorCountTo) &&
+                !isNaN(paper.author_count))) &&
+            (filterRole.includes("Tất cả") ||
+              paper.author.some((a) => {
+                const roleMapping = {
+                  MainAuthor: "Chính",
+                  CorrespondingAuthor: "Liên hệ",
+                  MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+                  Participant: "Tham gia",
+                };
+                return filterRole.includes(
+                  roleMapping[a.role] || "Không xác định"
+                );
+              })) &&
+            (filterInstitution.includes("Tất cả") ||
+              filterInstitution.includes(paper.department?.department_name))
+        ).length,
+        pending: papers.filter(
+          (paper) =>
+            paper.status === "pending" &&
+            (filterPaperType.includes("Tất cả") ||
+              filterPaperType.includes(paper.article_type?.type_name)) &&
+            (filterGroup.includes("Tất cả") ||
+              filterGroup.includes(paper.article_group?.group_name)) &&
+            (!filterPaperTitle ||
+              paper.title_vn
+                ?.toLowerCase()
+                .includes(filterPaperTitle.toLowerCase())) &&
+            (!filterAuthorName ||
+              paper.author.some((a) =>
+                a.author_name_vi
+                  ?.toLowerCase()
+                  .includes(filterAuthorName.toLowerCase())
+              )) &&
+            (!filterAuthorCountFrom ||
+              (paper.author_count >= parseInt(filterAuthorCountFrom) &&
+                !isNaN(paper.author_count))) &&
+            (!filterAuthorCountTo ||
+              (paper.author_count <= parseInt(filterAuthorCountTo) &&
+                !isNaN(paper.author_count))) &&
+            (filterRole.includes("Tất cả") ||
+              paper.author.some((a) => {
+                const roleMapping = {
+                  MainAuthor: "Chính",
+                  CorrespondingAuthor: "Liên hệ",
+                  MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+                  Participant: "Tham gia",
+                };
+                return filterRole.includes(
+                  roleMapping[a.role] || "Không xác định"
+                );
+              })) &&
+            (filterInstitution.includes("Tất cả") ||
+              filterInstitution.includes(paper.department?.department_name))
+        ).length,
+        revision: papers.filter(
+          (paper) =>
+            paper.status === "revision" &&
+            (filterPaperType.includes("Tất cả") ||
+              filterPaperType.includes(paper.article_type?.type_name)) &&
+            (filterGroup.includes("Tất cả") ||
+              filterGroup.includes(paper.article_group?.group_name)) &&
+            (!filterPaperTitle ||
+              paper.title_vn
+                ?.toLowerCase()
+                .includes(filterPaperTitle.toLowerCase())) &&
+            (!filterAuthorName ||
+              paper.author.some((a) =>
+                a.author_name_vi
+                  ?.toLowerCase()
+                  .includes(filterAuthorName.toLowerCase())
+              )) &&
+            (!filterAuthorCountFrom ||
+              (paper.author_count >= parseInt(filterAuthorCountFrom) &&
+                !isNaN(paper.author_count))) &&
+            (!filterAuthorCountTo ||
+              (paper.author_count <= parseInt(filterAuthorCountTo) &&
+                !isNaN(paper.author_count))) &&
+            (filterRole.includes("Tất cả") ||
+              paper.author.some((a) => {
+                const roleMapping = {
+                  MainAuthor: "Chính",
+                  CorrespondingAuthor: "Liên hệ",
+                  MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+                  Participant: "Tham gia",
+                };
+                return filterRole.includes(
+                  roleMapping[a.role] || "Không xác định"
+                );
+              })) &&
+            (filterInstitution.includes("Tất cả") ||
+              filterInstitution.includes(paper.department?.department_name))
+        ).length,
+        refused: papers.filter(
+          (paper) =>
+            paper.status === "refused" &&
+            (filterPaperType.includes("Tất cả") ||
+              filterPaperType.includes(paper.article_type?.type_name)) &&
+            (filterGroup.includes("Tất cả") ||
+              filterGroup.includes(paper.article_group?.group_name)) &&
+            (!filterPaperTitle ||
+              paper.title_vn
+                ?.toLowerCase()
+                .includes(filterPaperTitle.toLowerCase())) &&
+            (!filterAuthorName ||
+              paper.author.some((a) =>
+                a.author_name_vi
+                  ?.toLowerCase()
+                  .includes(filterAuthorName.toLowerCase())
+              )) &&
+            (!filterAuthorCountFrom ||
+              (paper.author_count >= parseInt(filterAuthorCountFrom) &&
+                !isNaN(paper.author_count))) &&
+            (!filterAuthorCountTo ||
+              (paper.author_count <= parseInt(filterAuthorCountTo) &&
+                !isNaN(paper.author_count))) &&
+            (filterRole.includes("Tất cả") ||
+              paper.author.some((a) => {
+                const roleMapping = {
+                  MainAuthor: "Chính",
+                  CorrespondingAuthor: "Liên hệ",
+                  MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+                  Participant: "Tham gia",
+                };
+                return filterRole.includes(
+                  roleMapping[a.role] || "Không xác định"
+                );
+              })) &&
+            (filterInstitution.includes("Tất cả") ||
+              filterInstitution.includes(paper.department?.department_name))
+        ).length,
+      });
+    } else {
+      // Reset to original counts if no filters active
+      setFilteredCounts(null);
+    }
+  }, [
+    papers,
+    filterPaperType,
+    filterGroup,
+    filterPaperTitle,
+    filterAuthorName,
+    filterAuthorCountFrom,
+    filterAuthorCountTo,
+    filterRole,
+    filterInstitution,
+    filterStatus,
+  ]);
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -835,7 +1070,10 @@ const ManagementAriticle = () => {
       title: "STT",
       dataIndex: "paper_id",
       key: "paper_id",
-      render: (text, record, index) => index + 1,
+      render: (text, record, index) => {
+        const currentPage = currentPages[activeTab];
+        return (currentPage - 1) * itemsPerPage + index + 1;
+      },
       width: 75,
       sorter: (a, b) => a.paper_id - b.paper_id,
     },
@@ -1132,7 +1370,7 @@ const ManagementAriticle = () => {
             >
               Trang chủ
             </span>
-            <span className="text-gray-400"> </span>
+            <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Bài báo nghiên cứu khoa học
             </span>
@@ -1153,7 +1391,7 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("all")}
               >
-                Tất cả ({paperCounts.all})
+                Tất cả ({filteredCounts ? filteredCounts.all : paperCounts.all})
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -1163,7 +1401,11 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("approved")}
               >
-                Đã duyệt ({paperCounts.approved})
+                Đã duyệt (
+                {filteredCounts
+                  ? filteredCounts.approved
+                  : paperCounts.approved}
+                )
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -1173,7 +1415,8 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("pending")}
               >
-                Chờ duyệt ({paperCounts.pending})
+                Chờ duyệt (
+                {filteredCounts ? filteredCounts.pending : paperCounts.pending})
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -1183,7 +1426,11 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("revision")}
               >
-                Chờ chỉnh sửa ({paperCounts.revision})
+                Chờ chỉnh sửa (
+                {filteredCounts
+                  ? filteredCounts.revision
+                  : paperCounts.revision}
+                )
               </button>
               <button
                 className={`px-4 py-2 text-center text-xs ${
@@ -1193,7 +1440,8 @@ const ManagementAriticle = () => {
                 } rounded-lg`}
                 onClick={() => setActiveTab("refused")}
               >
-                Từ chối ({paperCounts.refused})
+                Từ chối (
+                {filteredCounts ? filteredCounts.refused : paperCounts.refused})
               </button>
             </div>
             <div className="flex items-center">
