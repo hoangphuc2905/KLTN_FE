@@ -61,7 +61,7 @@ const HomePage = () => {
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
   const [currentPage, setCurrentPage] = useState(1);
-  const papersPerPage = 10;
+  const [papersPerPage, setPapersPerPage] = useState(10); // New state for papers per page
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -105,7 +105,7 @@ const HomePage = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedDepartment]);
+  }, [selectedDepartment, papersPerPage]); // Reset page when papersPerPage changes
 
   const currentPapers = useMemo(() => {
     return filteredPapers
@@ -129,7 +129,7 @@ const HomePage = () => {
             departments[paper.department_name] || "Unknown Department",
         };
       });
-  }, [filteredPapers, currentPage, departments]);
+  }, [filteredPapers, currentPage, departments, papersPerPage]);
 
   const displayedPapers = useMemo(() => {
     return activeTab === "recent"
@@ -155,7 +155,7 @@ const HomePage = () => {
       department: paper.department || "Unknown Department",
       departmentId: paper.department || "",
       departmentName: departmentName || "Unknown Department",
-      thumbnailUrl: paper.cover_image || "", // Ensure consistency with backend field
+      thumbnailUrl: paper.cover_image || "",
       summary: paper.summary || "No Summary",
       publish_date: paper.publish_date || "",
       magazine: paper.magazine_vi || paper.magazine_en || "Unknown Magazine",
@@ -312,7 +312,7 @@ const HomePage = () => {
 
   useEffect(() => {
     fetchCountsForCurrentPapers();
-  }, [filteredPapers, currentPage]);
+  }, [filteredPapers, currentPage, papersPerPage]);
 
   useEffect(() => {
     const fetchMetadataForCurrentPapers = async () => {
@@ -352,11 +352,16 @@ const HomePage = () => {
     };
 
     fetchMetadataForCurrentPapers();
-  }, [filteredPapers, currentPage, authors]);
+  }, [filteredPapers, currentPage, authors, papersPerPage]);
 
   const handlePageChange = useCallback((newPage) => {
     setCurrentPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const handlePapersPerPageChange = useCallback((e) => {
+    setPapersPerPage(Number(e.target.value));
+    setCurrentPage(1); // Reset to first page when changing papers per page
   }, []);
 
   const debouncedSearch = useCallback(
@@ -613,7 +618,6 @@ const HomePage = () => {
       return;
     }
 
-    // Kiểm tra xem bài nghiên cứu đã tồn tại trong danh mục chưa
     if (collection.papers.some((paper) => paper === selectedPaper.id)) {
       message.warning("Bài nghiên cứu đã tồn tại trong danh mục này.");
       return;
@@ -629,7 +633,6 @@ const HomePage = () => {
       const response = await userApi.addPaperToCollection(payload);
       console.log("Phản hồi từ API:", response);
 
-      // Kiểm tra phản hồi từ API
       if (
         response &&
         response.message === "Paper added to collection successfully."
@@ -668,7 +671,7 @@ const HomePage = () => {
     if (newCategory.trim() && !categories.includes(newCategory)) {
       handleCreateCollection();
     } else {
-      handleAddPaperToCollection(selectedCategory); // Truyền selectedCategory trực tiếp
+      handleAddPaperToCollection(selectedCategory);
     }
   }, [newCategory, categories, selectedCategory]);
 
@@ -690,8 +693,8 @@ const HomePage = () => {
       <div
         style={{
           ...style,
-          height: window.innerWidth <= 768 ? 160 : style.height, // Much increased height for mobile
-          marginBottom: window.innerWidth <= 768 ? 0 : 0, // Remove negative margin
+          height: window.innerWidth <= 768 ? 160 : style.height,
+          marginBottom: window.innerWidth <= 768 ? 0 : 0,
         }}
       >
         <Link
@@ -847,18 +850,6 @@ const HomePage = () => {
               <span className="font-semibold text-sky-900">Tìm kiếm</span>
             </div>
             <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-1.5">
-              {/* <select
-                className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value)}
-              >
-                <option value="">Chọn Khoa</option>
-                {departmentsList.map((department) => (
-                  <option key={department.id} value={department.id}>
-                    {department.department_name}
-                  </option>
-                ))}
-              </select> */}
               <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs">
                 <option value="">Tất cả</option>
                 <option value="title">Tiêu đề</option>
@@ -950,7 +941,19 @@ const HomePage = () => {
                       {PaperItem}
                     </FixedSizeList>
                   )}
-                  <div className="flex justify-center mt-6 gap-2 max-md:mt-3">
+                  <div className="flex justify-center items-center mt-6 gap-2 max-md:mt-3 max-md:flex-wrap">
+                    <div className="flex items-center gap-2">
+                      <select
+                        className="p-1 border rounded-md text-sm max-md:text-xs max-md:p-0.5"
+                        value={papersPerPage}
+                        onChange={handlePapersPerPageChange}
+                      >
+                        <option value={10}>10</option>
+                        <option value={20}>20</option>
+                        <option value={30}>30</option>
+                      </select>
+                      <span className="text-sm max-md:text-xs">bài/trang</span>
+                    </div>
                     <button
                       className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
                       disabled={currentPage === 1}
@@ -1038,6 +1041,7 @@ const HomePage = () => {
                                   alt={paper.title}
                                 />
                               </Link>
+                              10
                             </div>
                             <div className="flex flex-col text-sm tracking-tight leading-none text-slate-400 w-fit max-md:text-xs">
                               <Link to={`/scientific-paper/${paper.id}`}>
@@ -1076,7 +1080,7 @@ const HomePage = () => {
           title="Thêm vào Lưu trữ"
           open={isModalVisible}
           onOk={handleOk}
-          onCancel={handleCancel}
+          onCancel={handleOk}
           footer={[
             <Button
               key="back"

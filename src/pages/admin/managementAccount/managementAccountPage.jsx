@@ -611,6 +611,17 @@ const ManagementUsers = () => {
               "address",
               "start_date",
             ],
+            [
+              "2100001",
+              "Nguyễn Văn A",
+              "nguyenvana@example.com",
+              "0123456789",
+              "male",
+              "01/01/2000",
+              "123456789",
+              "123 Lê Văn Sỹ, Quận 3, TP.HCM",
+              "01/09/2020",
+            ],
           ]
         : [
             [
@@ -623,6 +634,17 @@ const ManagementUsers = () => {
               "cccd",
               "address",
               "start_date",
+            ],
+            [
+              "0147895",
+              "Trần Thị B",
+              "tranthib@example.com",
+              "0987654321",
+              "female",
+              "15/05/1985",
+              "987654321",
+              "456 Nguyễn Thị Minh Khai, Quận 1, TP.HCM",
+              "01/09/2015",
             ],
           ];
 
