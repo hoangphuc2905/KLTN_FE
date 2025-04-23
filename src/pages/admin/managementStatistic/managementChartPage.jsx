@@ -29,7 +29,7 @@ ChartJS.register(
   ChartDataLabels
 );
 
-// Hàm tính toán options cho biểu đồ dựa trên dữ liệu thực tế
+// Existing getChartOptions function (unchanged)
 const getChartOptions = (data, showDataLabels = false) => {
   const maxValue =
     data && data.datasets && data.datasets[0] && data.datasets[0].data
@@ -40,10 +40,7 @@ const getChartOptions = (data, showDataLabels = false) => {
 
   const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
 
-  const step = Math.min(
-    roundedMax > 100 ? 20 : roundedMax > 50 ? 10 : 5,
-    Math.ceil(roundedMax / 10)
-  );
+  const step = Math.min(Math.ceil(roundedMax / 5), Math.ceil(roundedMax / 10));
 
   return {
     responsive: false,
@@ -70,7 +67,7 @@ const getChartOptions = (data, showDataLabels = false) => {
               size: 12,
               weight: "bold",
             },
-            formatter: (value) => value, // Display the number of articles
+            formatter: (value) => value,
           }
         : false,
     },
@@ -86,6 +83,32 @@ const getChartOptions = (data, showDataLabels = false) => {
   };
 };
 
+// Existing donutOptions (unchanged)
+const donutOptions = {
+  responsive: false,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: "right",
+      align: "center",
+      labels: {
+        usePointStyle: true,
+        padding: 20,
+        boxWidth: 10,
+      },
+    },
+    datalabels: {
+      color: "#000",
+      font: {
+        size: 12,
+        weight: "bold",
+      },
+      formatter: (value) => value,
+    },
+  },
+  cutout: 0,
+};
+
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalPapers: 0,
@@ -96,6 +119,12 @@ const Dashboard = () => {
 
   const [selectedYear, setSelectedYear] = useState("Tất cả");
 
+  // New state for chart types
+  const [typeChartType, setTypeChartType] = useState("bar"); // "bar" or "doughnut"
+  const [departmentChartType, setDepartmentChartType] = useState("bar"); // "bar" or "doughnut"
+  const [fieldChartType, setFieldChartType] = useState("doughnut"); // "bar" or "doughnut"
+
+  // Existing useEffect for stats (unchanged)
   useEffect(() => {
     const fetchStatistics = async () => {
       try {
@@ -132,6 +161,7 @@ const Dashboard = () => {
     ],
   });
 
+  // Existing useEffect for typeChartData (unchanged)
   useEffect(() => {
     const fetchTypeChartData = async () => {
       try {
@@ -144,7 +174,7 @@ const Dashboard = () => {
           const backgroundColor = labels.map(
             (_, index) =>
               ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][index % 5]
-          ); // Generate colors dynamically
+          );
 
           setTypeChartData({
             labels,
@@ -158,7 +188,6 @@ const Dashboard = () => {
             ],
           });
 
-          // Đặt các loại dữ liệu vào selectedQuarters khi dữ liệu được tải
           setSelectedQuarters(["All", ...labels]);
         } else {
           console.error("Unexpected API response structure:", response);
@@ -183,6 +212,7 @@ const Dashboard = () => {
     ],
   });
 
+  // Existing useEffect for departmentChartData (unchanged)
   useEffect(() => {
     const fetchDepartmentChartData = async () => {
       try {
@@ -195,9 +225,8 @@ const Dashboard = () => {
           const backgroundColor = labels.map(
             (_, index) =>
               ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFC700"][index % 5]
-          ); // Generate colors dynamically
+          );
 
-          // Format department names to add ellipsis if too long
           const formattedLabels = labels.map((label) =>
             label.length > 10 ? label.substring(0, 10) + "..." : label
           );
@@ -212,7 +241,6 @@ const Dashboard = () => {
                 borderRadius: 6,
               },
             ],
-            // Store original labels for filters and tooltips
             originalLabels: labels,
           });
         } else {
@@ -238,6 +266,7 @@ const Dashboard = () => {
     ],
   });
 
+  // Existing useEffect for top5ByFieldChartData (unchanged)
   useEffect(() => {
     const fetchTop5ByTypeChartData = async () => {
       try {
@@ -245,10 +274,9 @@ const Dashboard = () => {
           selectedYear !== "Tất cả" ? selectedYear : undefined
         );
         if (response && response.data) {
-          // Get entries and sort them by value in descending order
           const entries = Object.entries(response.data)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 5); // Take only top 5
+            .slice(0, 5);
 
           const labels = entries.map((entry) => entry[0]);
           const data = entries.map((entry) => entry[1]);
@@ -279,33 +307,9 @@ const Dashboard = () => {
     fetchTop5ByTypeChartData();
   }, [selectedYear]);
 
-  const donutOptions = {
-    responsive: false,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: "right",
-        align: "center",
-        labels: {
-          usePointStyle: true,
-          padding: 20,
-          boxWidth: 10,
-        },
-      },
-      datalabels: {
-        color: "#000",
-        font: {
-          size: 12,
-          weight: "bold",
-        },
-        formatter: (value) => value, // Display the number of articles
-      },
-    },
-    cutout: 0, // Remove the cutout effect to make it a full pie chart
-  };
-
   const [topPapers, setTopPapers] = useState([]);
 
+  // Existing useEffect for topPapers (unchanged)
   useEffect(() => {
     const fetchTopPapers = async () => {
       try {
@@ -316,7 +320,7 @@ const Dashboard = () => {
           setTopPapers(response.papers);
         } else {
           console.warn("No data found for top papers:", response);
-          setTopPapers([]); // Set empty array to indicate no data
+          setTopPapers([]);
         }
       } catch (error) {
         if (error.response?.status === 404) {
@@ -324,7 +328,7 @@ const Dashboard = () => {
             "No data found for the selected academic year:",
             error.response.data
           );
-          setTopPapers([]); // Set empty array to indicate no data
+          setTopPapers([]);
         } else {
           console.error(
             "Failed to fetch top papers:",
@@ -337,6 +341,7 @@ const Dashboard = () => {
     fetchTopPapers();
   }, [selectedYear]);
 
+  // Existing columns and onRowClick (unchanged)
   const columns = [
     {
       title: "STT",
@@ -390,7 +395,6 @@ const Dashboard = () => {
     },
   ];
 
-  // Add the row click handler for the entire table
   const onRowClick = (record) => {
     return {
       onClick: () => {
@@ -414,13 +418,13 @@ const Dashboard = () => {
 
   const [academicYears, setAcademicYears] = useState([]);
 
-  // Fetch academic years
+  // Existing getAcademicYears and useEffect (unchanged)
   const getAcademicYears = async () => {
     try {
       const response = await userApi.getAcademicYears();
       const years = response.academicYears || [];
-      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
-      setSelectedYear("Tất cả"); // Default to "Tất cả"
+      setAcademicYears(["Tất cả", ...years.reverse()]);
+      setSelectedYear("Tất cả");
     } catch (error) {
       console.error("Error fetching academic years:", error);
     }
@@ -430,34 +434,28 @@ const Dashboard = () => {
     getAcademicYears();
   }, []);
 
+  // Existing filter handlers (unchanged)
   const handleQuarterChange = (event) => {
     const value = event.target.value;
 
     if (value === "All") {
-      // Nếu click vào "Tất cả"
       if (selectedQuarters.includes("All")) {
-        // Nếu đang chọn "Tất cả" thì bỏ chọn tất cả
         setSelectedQuarters([]);
       } else {
-        // Nếu chưa chọn "Tất cả" thì chọn tất cả
         setSelectedQuarters(["All", ...typeChartData.labels]);
       }
     } else {
-      // Nếu click vào một mục cụ thể
       if (selectedQuarters.includes(value)) {
-        // Nếu đã chọn thì bỏ chọn mục đó và bỏ chọn "Tất cả"
         const newSelected = selectedQuarters.filter(
           (item) => item !== value && item !== "All"
         );
         setSelectedQuarters(newSelected);
       } else {
-        // Nếu chưa chọn thì thêm mục đó
         const newSelected = [
           ...selectedQuarters.filter((item) => item !== "All"),
           value,
         ];
 
-        // Nếu đã chọn tất cả các mục khác thì thêm cả "Tất cả"
         if (newSelected.length === typeChartData.labels.length) {
           newSelected.push("All");
         }
@@ -471,30 +469,23 @@ const Dashboard = () => {
     const value = event.target.value;
 
     if (value === "All") {
-      // Nếu click vào "Tất cả"
       if (selectedRoles.includes("All")) {
-        // Nếu đang chọn "Tất cả" thì bỏ chọn tất cả
         setSelectedRoles([]);
       } else {
-        // Nếu chưa chọn "Tất cả" thì chọn tất cả
         setSelectedRoles(["All", ...departmentChartData.originalLabels]);
       }
     } else {
-      // Nếu click vào một mục cụ thể
       if (selectedRoles.includes(value)) {
-        // Nếu đã chọn thì bỏ chọn mục đó và bỏ chọn "Tất cả"
         const newSelected = selectedRoles.filter(
           (item) => item !== value && item !== "All"
         );
         setSelectedRoles(newSelected);
       } else {
-        // Nếu chưa chọn thì thêm mục đó
         const newSelected = [
           ...selectedRoles.filter((item) => item !== "All"),
           value,
         ];
 
-        // Nếu đã chọn tất cả các mục khác thì thêm cả "Tất cả"
         if (newSelected.length === departmentChartData.originalLabels.length) {
           newSelected.push("All");
         }
@@ -508,30 +499,23 @@ const Dashboard = () => {
     const value = event.target.value;
 
     if (value === "All") {
-      // Nếu click vào "Tất cả"
       if (selectedFields.includes("All")) {
-        // Nếu đang chọn "Tất cả" thì bỏ chọn tất cả
         setSelectedFields([]);
       } else {
-        // Nếu chưa chọn "Tất cả" thì chọn tất cả
         setSelectedFields(["All", ...top5ByFieldChartData.labels]);
       }
     } else {
-      // Nếu click vào một mục cụ thể
       if (selectedFields.includes(value)) {
-        // Nếu đã chọn thì bỏ chọn mục đó và bỏ chọn "Tất cả"
         const newSelected = selectedFields.filter(
           (item) => item !== value && item !== "All"
         );
         setSelectedFields(newSelected);
       } else {
-        // Nếu chưa chọn thì thêm mục đó
         const newSelected = [
           ...selectedFields.filter((item) => item !== "All"),
           value,
         ];
 
-        // Nếu đã chọn tất cả các mục khác thì thêm cả "Tất cả"
         if (newSelected.length === top5ByFieldChartData.labels.length) {
           newSelected.push("All");
         }
@@ -541,6 +525,7 @@ const Dashboard = () => {
     }
   };
 
+  // Existing handleClickOutside (unchanged)
   const handleClickOutside = (event) => {
     if (filterRef.current && !filterRef.current.contains(event.target)) {
       setShowFilter(false);
@@ -566,6 +551,7 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Existing filtered chart data (unchanged)
   const filteredTypeChartData = {
     ...typeChartData,
     datasets: [
@@ -621,7 +607,7 @@ const Dashboard = () => {
     ],
   };
 
-  // Check if there's any data to display in the charts
+  // Existing data checks (unchanged)
   const hasTypeChartData =
     selectedQuarters.length > 0 &&
     filteredTypeChartData.datasets[0].data.some((value) => value > 0);
@@ -665,7 +651,6 @@ const Dashboard = () => {
             >
               Trang chủ
             </span>
-
             <span className="text-gray-400"> &gt; </span>
             <span className="cursor-pointer hover:text-blue-500">Thống kê</span>
             <span className="text-gray-400"> &gt; </span>
@@ -675,7 +660,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards (unchanged) */}
         <div className="self-center w-full max-w-[1563px] px-6 mt-4">
           <div className="flex justify-between items-center">
             <div className="flex gap-4 justify-center w-full">
@@ -726,63 +711,89 @@ const Dashboard = () => {
         {/* Charts */}
         <div className="self-center w-full max-w-[1563px] px-6 mt-6">
           <div className="grid grid-cols-2 gap-6">
+            {/* Statistics by Type */}
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
                   {getTypeChartTitle()}
                 </h2>
-                <div className="relative" ref={filterRef}>
+                <div className="flex items-center gap-2">
                   <button
                     className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowFilter(!showFilter)}
+                    onClick={() =>
+                      setTypeChartType(
+                        typeChartType === "bar" ? "doughnut" : "bar"
+                      )
+                    }
                   >
-                    <span className="text-xs">Bộ lọc</span>
+                    <span>
+                      {typeChartType === "bar" ? "Biểu đồ tròn" : "Biểu đồ cột"}
+                    </span>
                   </button>
-                  {showFilter && (
-                    <div
-                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "200px", right: "0" }}
+                  <div className="relative" ref={filterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowFilter(!showFilter)}
                     >
-                      <div className="px-4 py-3 w-full">
-                        <label key="All" className="flex items-center mb-2">
-                          <input
-                            type="checkbox"
-                            value="All"
-                            checked={selectedQuarters.includes("All")}
-                            onChange={handleQuarterChange}
-                            className="mr-2"
-                          />
-                          Tất cả
-                        </label>
-                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
-                          {typeChartData.labels.map((label) => (
-                            <label
-                              key={label}
-                              className="flex items-center mb-2"
-                            >
-                              <input
-                                type="checkbox"
-                                value={label}
-                                checked={selectedQuarters.includes(label)}
-                                onChange={handleQuarterChange}
-                                className="mr-2"
-                              />
-                              {label}
-                            </label>
-                          ))}
+                      <span className="text-xs">Bộ lọc</span>
+                    </button>
+                    {showFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "200px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label key="All" className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              value="All"
+                              checked={selectedQuarters.includes("All")}
+                              onChange={handleQuarterChange}
+                              className="mr-2"
+                            />
+                            Tất cả
+                          </label>
+                          <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
+                            {typeChartData.labels.map((label) => (
+                              <label
+                                key={label}
+                                className="flex items-center mb-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  value={label}
+                                  checked={selectedQuarters.includes(label)}
+                                  onChange={handleQuarterChange}
+                                  className="mr-2"
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
               {hasTypeChartData ? (
-                <Bar
-                  data={filteredTypeChartData}
-                  options={getChartOptions(filteredTypeChartData, false)} // Disable data labels
-                  height={200}
-                  width={500}
-                />
+                typeChartType === "bar" ? (
+                  <Bar
+                    data={filteredTypeChartData}
+                    options={getChartOptions(filteredTypeChartData, false)}
+                    height={200}
+                    width={500}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <Doughnut
+                      data={filteredTypeChartData}
+                      options={donutOptions}
+                      height={200}
+                      width={500}
+                    />
+                  </div>
+                )
               ) : (
                 <div className="flex items-center justify-center h-[200px] text-gray-500">
                   Không có dữ liệu để hiển thị
@@ -790,63 +801,94 @@ const Dashboard = () => {
               )}
             </div>
 
+            {/* Top 5 Departments */}
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
                   Top 5 khoa có nhiều bài nghiên cứu
                 </h2>
-                <div className="relative" ref={roleFilterRef}>
+                <div className="flex items-center gap-2">
                   <button
                     className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowRoleFilter(!showRoleFilter)}
+                    onClick={() =>
+                      setDepartmentChartType(
+                        departmentChartType === "bar" ? "doughnut" : "bar"
+                      )
+                    }
                   >
-                    <span className="text-xs">Bộ lọc</span>
+                    <span>
+                      {departmentChartType === "bar"
+                        ? "Biểu đồ tròn"
+                        : "Biểu đồ cột"}
+                    </span>
                   </button>
-                  {showRoleFilter && (
-                    <div
-                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "250px", right: "0" }}
+                  <div className="relative" ref={roleFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowRoleFilter(!showRoleFilter)}
                     >
-                      <div className="px-4 py-3 w-full">
-                        <label key="All" className="flex items-center mb-2">
-                          <input
-                            type="checkbox"
-                            value="All"
-                            checked={selectedRoles.includes("All")}
-                            onChange={handleRoleChange}
-                            className="mr-2"
-                          />
-                          Tất cả
-                        </label>
-                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
-                          {departmentChartData.originalLabels.map((label) => (
-                            <label
-                              key={label}
-                              className="flex items-center mb-2"
-                            >
-                              <input
-                                type="checkbox"
-                                value={label}
-                                checked={selectedRoles.includes(label)}
-                                onChange={handleRoleChange}
-                                className="mr-2"
-                              />
-                              {label}
-                            </label>
-                          ))}
+                      <span className="text-xs">Bộ lọc</span>
+                    </button>
+                    {showRoleFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "250px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label key="All" className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              value="All"
+                              checked={selectedRoles.includes("All")}
+                              onChange={handleRoleChange}
+                              className="mr-2"
+                            />
+                            Tất cả
+                          </label>
+                          <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
+                            {departmentChartData.originalLabels.map((label) => (
+                              <label
+                                key={label}
+                                className="flex items-center mb-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  value={label}
+                                  checked={selectedRoles.includes(label)}
+                                  onChange={handleRoleChange}
+                                  className="mr-2"
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
               {hasDepartmentChartData ? (
-                <Bar
-                  data={filteredDepartmentChartData}
-                  options={getChartOptions(filteredDepartmentChartData, false)} // Disable data labels
-                  height={200}
-                  width={540}
-                />
+                departmentChartType === "bar" ? (
+                  <Bar
+                    data={filteredDepartmentChartData}
+                    options={getChartOptions(
+                      filteredDepartmentChartData,
+                      false
+                    )}
+                    height={200}
+                    width={540}
+                  />
+                ) : (
+                  <div className="flex flex-col items-center">
+                    <Doughnut
+                      data={filteredDepartmentChartData}
+                      options={donutOptions}
+                      height={200}
+                      width={500}
+                    />
+                  </div>
+                )
               ) : (
                 <div className="flex items-center justify-center h-[200px] text-gray-500">
                   Không có dữ liệu để hiển thị
@@ -854,71 +896,99 @@ const Dashboard = () => {
               )}
             </div>
 
+            {/* Top 5 Fields */}
             <div className="bg-white rounded-xl p-6">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
                   Top 5 lĩnh vực có nhiều bài nghiên cứu
                 </h2>
-                <div className="relative" ref={fieldFilterRef}>
+                <div className="flex items-center gap-2">
                   <button
                     className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowFieldFilter(!showFieldFilter)}
+                    onClick={() =>
+                      setFieldChartType(
+                        fieldChartType === "doughnut" ? "bar" : "doughnut"
+                      )
+                    }
                   >
-                    <span className="text-xs">Bộ lọc</span>
+                    <span>
+                      {fieldChartType === "doughnut"
+                        ? "Biểu đồ cột"
+                        : "Biểu đồ tròn"}
+                    </span>
                   </button>
-                  {showFieldFilter && (
-                    <div
-                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "250px", right: "0" }}
+                  <div className="relative" ref={fieldFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowFieldFilter(!showFieldFilter)}
                     >
-                      <div className="px-4 py-3 w-full">
-                        <label key="All" className="flex items-center mb-2">
-                          <input
-                            type="checkbox"
-                            value="All"
-                            checked={selectedFields.includes("All")}
-                            onChange={handleFieldChange}
-                            className="mr-2"
-                          />
-                          Tất cả
-                        </label>
-                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
-                          {top5ByFieldChartData.labels.map((label) => (
-                            <label
-                              key={label}
-                              className="flex items-center mb-2"
-                            >
-                              <input
-                                type="checkbox"
-                                value={label}
-                                checked={selectedFields.includes(label)}
-                                onChange={handleFieldChange}
-                                className="mr-2"
-                              />
-                              {label}
-                            </label>
-                          ))}
+                      <span className="text-xs">Bộ lọc</span>
+                    </button>
+                    {showFieldFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "250px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label key="All" className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              value="All"
+                              checked={selectedFields.includes("All")}
+                              onChange={handleFieldChange}
+                              className="mr-2"
+                            />
+                            Tất cả
+                          </label>
+                          <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
+                            {top5ByFieldChartData.labels.map((label) => (
+                              <label
+                                key={label}
+                                className="flex items-center mb-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  value={label}
+                                  checked={selectedFields.includes(label)}
+                                  onChange={handleFieldChange}
+                                  className="mr-2"
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
               {hasFieldChartData ? (
-                <div className="flex flex-col items-center">
-                  <Doughnut
+                fieldChartType === "doughnut" ? (
+                  <div className="flex flex-col items-center">
+                    <Doughnut
+                      data={filteredDonutChartData}
+                      options={donutOptions}
+                      height={200}
+                      width={500}
+                    />
+                  </div>
+                ) : (
+                  <Bar
                     data={filteredDonutChartData}
-                    options={donutOptions}
+                    options={getChartOptions(filteredDonutChartData, false)}
                     height={200}
                     width={500}
                   />
-                </div>
+                )
               ) : (
                 <div className="flex items-center justify-center h-[200px] text-gray-500">
                   Không có dữ liệu để hiển thị
                 </div>
               )}
             </div>
+
+            {/* Top 5 Papers Table (unchanged) */}
             <div className="bg-white rounded-xl p-6 shadow-md">
               <h2 className="font-semibold text-gray-700 mb-4">
                 Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất
