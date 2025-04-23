@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { useNavigate } from "react-router-dom";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Table, Tooltip, Modal, Space, Checkbox } from "antd";
+import { Input, Table, Tooltip, Modal, Space, Checkbox, Select } from "antd";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
@@ -15,6 +15,7 @@ const StatisticsTablePage = () => {
   const [fromAuthorCount, setFromAuthorCount] = useState("");
   const [toAuthorCount, setToAuthorCount] = useState("");
   const navigate = useNavigate();
+  const [pageSize, setPageSize] = useState(10);
 
   const [showFilter, setShowFilter] = useState(false);
   const uniqueGroups = [
@@ -600,6 +601,11 @@ const StatisticsTablePage = () => {
     showPaperTypeFilter,
   ]);
 
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
@@ -1065,16 +1071,46 @@ const StatisticsTablePage = () => {
                   </div>
                 )}
               </div>
+              <div className="flex justify-end mb-4">
+                <Select
+                  value={pageSize}
+                  onChange={handlePageSizeChange}
+                  className="w-[100px]"
+                >
+                  <Select.Option value={10}>10</Select.Option>
+                  <Select.Option value={20}>20</Select.Option>
+                  <Select.Option value={50}>50</Select.Option>
+                  <Select.Option value={100}>100</Select.Option>
+                </Select>
+              </div>
               <Table
                 columns={filteredColumns}
                 dataSource={filteredPapers}
                 pagination={{
                   current: currentPage,
-                  pageSize: itemsPerPage,
+                  pageSize: pageSize,
                   total: filteredPapers.length,
                   onChange: (page) => setCurrentPage(page),
+                  showSizeChanger: false,
+                  showTotal: (total, range) => (
+                    <div className="flex items-center">
+                      <Select
+                        value={pageSize}
+                        onChange={handlePageSizeChange}
+                        style={{ width: 120, marginRight: 16 }}
+                        options={[
+                          { value: 10, label: "10 / trang" },
+                          { value: 20, label: "20 / trang" },
+                          { value: 30, label: "30 / trang" },
+                          { value: 50, label: "50 / trang" },
+                          { value: 100, label: "100 / trang" },
+                        ]}
+                      />
+                      <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                    </div>
+                  ),
                 }}
-                rowKey={(record) => record.id || record.key}
+                rowKey="id"
                 className="text-sm"
                 onRow={(record) => ({
                   onClick: () => handleRowClick(record),

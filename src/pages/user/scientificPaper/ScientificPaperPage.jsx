@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Table, Checkbox, Tooltip, Modal, Spin } from "antd";
+import { Input, Table, Checkbox, Tooltip, Modal, Spin, Select } from "antd";
 import { useNavigate } from "react-router-dom";
 import userApi from "../../../api/api";
 import Footer from "../../../components/Footer";
@@ -31,7 +31,8 @@ const ScientificPaperPage = () => {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
   const statusFilterRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
+  const itemsPerPage = pageSize;
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -249,6 +250,11 @@ const ScientificPaperPage = () => {
 
   const handleModalClose = () => {
     setIsModalVisible(false);
+  };
+
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   const columns = [
@@ -1215,6 +1221,10 @@ const ScientificPaperPage = () => {
                         pageSize: itemsPerPage,
                         total: filteredPapers.length,
                         onChange: (page) => setCurrentPage(page),
+                        showSizeChanger: true,
+                        pageSizeOptions: ["10", "20", "50", "100"],
+                        onShowSizeChange: (_, size) =>
+                          handlePageSizeChange(size),
                       }}
                       rowKey="key"
                       className="text-sm max-sm:text-xs"

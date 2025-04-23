@@ -33,6 +33,8 @@ const ManagementTable = () => {
   const [roles, setRoles] = useState([]);
   const [institutions, setInstitutions] = useState([]);
   const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // New state for page size
 
   const roleMapping = {
     MainAuthor: "Chính",
@@ -46,8 +48,7 @@ const ManagementTable = () => {
       title: "STT",
       dataIndex: "id",
       key: "id",
-      render: (text, record, index) =>
-        (currentPage - 1) * itemsPerPage + index + 1,
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1, // Updated to use pageSize
       width: 75,
       sorter: (a, b) => a.id - b.id,
     },
@@ -202,10 +203,8 @@ const ManagementTable = () => {
   const [showRoleFilter, setShowRoleFilter] = useState(false);
   const [filterInstitution, setFilterInstitution] = useState(["Tất cả"]);
   const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
-  const itemsPerPage = 10;
 
   const [showColumnFilter, setShowColumnFilter] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(
@@ -348,6 +347,12 @@ const ManagementTable = () => {
     if (!isNaN(value) && value >= 0) {
       setToAuthorCount(value);
     }
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // Reset to first page when page size changes
   };
 
   const downloadExcel = async () => {
@@ -1008,7 +1013,7 @@ const ManagementTable = () => {
                       <button
                         type="button"
                         onClick={() => {
-                          setFilterPaperType(["Tất cả"]); // Updated to reset to array with "Tất cả"
+                          setFilterPaperType(["Tất cả"]);
                           setFilterGroup(["Tất cả"]);
                           setFilterPaperTitle("");
                           setFilterAuthorName("");
@@ -1041,7 +1046,10 @@ const ManagementTable = () => {
                   >
                     <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <Checkbox
-                        indeterminate={false}
+                        indeterminate={
+                          visibleColumns.length > 0 &&
+                          visibleColumns.length < columns.length
+                        }
                         onChange={(e) => {
                           setVisibleColumns(
                             e.target.checked
@@ -1073,27 +1081,47 @@ const ManagementTable = () => {
                   </Spin>
                 </div>
               ) : (
-                <Table
-                  columns={filteredColumns}
-                  dataSource={filteredPapers}
-                  pagination={{
-                    current: currentPage,
-                    pageSize: itemsPerPage,
-                    total: filteredPapers.length,
-                    onChange: (page) => setCurrentPage(page),
-                  }}
-                  rowKey="id"
-                  className="text-sm"
-                  onRow={(record) => ({
-                    onClick: () => handleRowClick(record),
-                  })}
-                  scroll={{
-                    x: filteredColumns.reduce(
-                      (total, col) => total + (col.width || 0),
-                      0
-                    ),
-                  }}
-                />
+                <>
+                  <Table
+                    columns={filteredColumns}
+                    dataSource={filteredPapers}
+                    pagination={{
+                      current: currentPage,
+                      pageSize: pageSize,
+                      total: filteredPapers.length,
+                      onChange: (page) => setCurrentPage(page),
+                      showSizeChanger: false,
+                      showTotal: (total, range) => (
+                        <div className="flex items-center">
+                          <Select
+                            value={pageSize}
+                            onChange={handlePageSizeChange}
+                            style={{ width: 120, marginRight: 16 }}
+                            options={[
+                              { value: 10, label: "10 / trang" },
+                              { value: 20, label: "20 / trang" },
+                              { value: 30, label: "30 / trang" },
+                              { value: 50, label: "50 / trang" },
+                              { value: 100, label: "100 / trang" },
+                            ]}
+                          />
+                          <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                        </div>
+                      ),
+                    }}
+                    rowKey="id"
+                    className="text-sm"
+                    onRow={(record) => ({
+                      onClick: () => handleRowClick(record),
+                    })}
+                    scroll={{
+                      x: filteredColumns.reduce(
+                        (total, col) => total + (col.width || 0),
+                        0
+                      ),
+                    }}
+                  />
+                </>
               )}
             </div>
           </div>
