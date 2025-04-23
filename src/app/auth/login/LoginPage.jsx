@@ -2,7 +2,7 @@ import { useState } from "react";
 import { message } from "antd";
 import authApi from "../../../api/authApi";
 import defaultRoutes from "../../../configs/defaultRoutes";
-const Logo = new URL("../../../assets/logoLogin.png", import.meta.url).href;
+const Logo = new URL("../../../assets/logo.png", import.meta.url).href;
 const Image = new URL("../../../assets/background.png", import.meta.url).href;
 
 const LoginPage = () => {
@@ -67,12 +67,22 @@ const LoginPage = () => {
 
   return (
     <div className="flex overflow-hidden flex-col pb-24 bg-white max-md:pb-12">
-      <header className="flex flex-col items-center h-[60px] px-20 w-full bg-white shadow-[0px_4px_4px_rgba(0,0,0,0.25)] max-md:px-5 max-md:max-w-full">
-        <img
-          src={Logo}
-          alt="Logo"
-          className="object-contain z-10 h-full max-w-full aspect-[7.19] w-[600px] max-md:w-[200px]"
-        />
+      <header className="flex items-center h-[60px] px-20 w-full bg-white shadow-[0px_4px_4px_rgba(0,0,0,0.25)] max-md:px-5 max-md:max-w-full">
+        <div className="flex items-center w-full">
+          <div className="flex items-center">
+            <img
+              src={Logo}
+              alt="Logo"
+              className="object-contain h-full max-w-full  w-[100px] max-md:w-[50px]"
+            />
+          </div>
+          <div className="flex-1 flex justify-center">
+            <h1 className="text-sm font-bold text-center text-zinc-800 max-md:text-xs">
+              HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC <br />
+              CỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM
+            </h1>
+          </div>
+        </div>
       </header>
 
       <main className="self-center mt-10 w-full max-w-[1400px] max-md:mt-5 max-md:max-w-full">
