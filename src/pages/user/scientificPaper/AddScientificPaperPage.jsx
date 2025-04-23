@@ -31,6 +31,7 @@ const AddScientificPaperPage = () => {
     { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
   ]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [originalFileName, setOriginalFileName] = useState(""); // State to store the original file name
   const [coverImage, setCoverImage] = useState(null);
   const [paperTypes, setPaperTypes] = useState([]);
   const [paperGroups, setPaperGroups] = useState([]);
@@ -406,10 +407,18 @@ const AddScientificPaperPage = () => {
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
+        // Check file size (limit to 3.5MB)
+        const maxSize = 3.5 * 1024 * 1024; // 3.5MB in bytes
+        if (file.size > maxSize) {
+          message.error("Kích thước tệp vượt quá giới hạn 3.5MB.");
+          return;
+        }
+
         try {
+          setOriginalFileName(file.name); // Save the original file name for display
           const response = await userApi.uploadFile(file);
-          setSelectedFile(response.url);
-          setFileError(""); // Xóa lỗi khi có file
+          setSelectedFile(response.url); // Save the Cloudinary URL for backend
+          setFileError(""); // Clear error when file is uploaded
           setFileTouched(true);
           message.success("File đã được tải lên thành công!");
           console.log("Uploaded file response:", response);
@@ -419,6 +428,8 @@ const AddScientificPaperPage = () => {
             error.response?.data || error.message
           );
           message.error("Không thể tải file lên. Vui lòng thử lại.");
+          setOriginalFileName(""); // Reset original file name on error
+          setSelectedFile(null); // Reset Cloudinary URL on error
         }
       } else {
         setFileTouched(true);
@@ -429,7 +440,8 @@ const AddScientificPaperPage = () => {
   };
 
   const handleRemoveFile = () => {
-    setSelectedFile(null);
+    setOriginalFileName(""); // Clear the original file name
+    setSelectedFile(null); // Clear the Cloudinary URL
     if (fileTouched) {
       setFileError("Vui lòng tải lên file");
     }
@@ -658,6 +670,7 @@ const AddScientificPaperPage = () => {
       { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
     ]);
     setSelectedFile(null);
+    setOriginalFileName(""); // Clear the original file name
     setCoverImage(null);
     message.info("Đã xóa trắng thông tin.");
   };
@@ -1931,7 +1944,7 @@ const AddScientificPaperPage = () => {
                       <Input
                         id="file-upload"
                         placeholder="Upload file..."
-                        value={selectedFile || ""}
+                        value={originalFileName || ""} // Display the original file name
                         readOnly
                         status={fileError ? "error" : ""}
                       />
