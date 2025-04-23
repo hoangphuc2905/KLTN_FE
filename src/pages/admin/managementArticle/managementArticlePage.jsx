@@ -1132,7 +1132,7 @@ const ManagementAriticle = () => {
             >
               Trang chủ
             </span>
-            <span className="text-gray-400"> </span>
+            <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Bài báo nghiên cứu khoa học
             </span>
