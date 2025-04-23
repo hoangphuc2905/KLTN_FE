@@ -44,6 +44,15 @@ const getChartOptions = (data, showDataLabels = false) => {
 
   const step = Math.min(Math.ceil(roundedMax / 5), Math.ceil(roundedMax / 10));
 
+  // Lọc ra các indices của các giá trị data khác 0
+  const nonZeroIndices =
+    data && data.datasets && data.datasets[0] && data.datasets[0].data
+      ? data.datasets[0].data
+          .map((value, index) => ({ value, index }))
+          .filter((item) => item.value > 0)
+          .map((item) => item.index)
+      : [];
+
   return {
     responsive: false,
     maintainAspectRatio: false,
@@ -74,6 +83,16 @@ const getChartOptions = (data, showDataLabels = false) => {
         : false,
     },
     scales: {
+      x: {
+        ticks: {
+          callback: function (value, index) {
+            // Chỉ hiển thị label cho các cột có giá trị > 0
+            return nonZeroIndices.includes(index)
+              ? this.getLabelForValue(value)
+              : "";
+          },
+        },
+      },
       y: {
         beginAtZero: true,
         max: roundedMax,
@@ -231,9 +250,13 @@ const Dashboard = () => {
               ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFC700"][index % 5]
           );
 
-          const formattedLabels = labels.map((label) =>
-            label.length > 10 ? label.substring(0, 10) + "..." : label
-          );
+          // Khi là biểu đồ cột mới rút gọn tên khoa
+          const formattedLabels =
+            departmentChartType === "bar"
+              ? labels.map((label) =>
+                  label.length > 10 ? label.substring(0, 10) + "..." : label
+                )
+              : labels;
 
           setDepartmentChartData({
             labels: formattedLabels,
@@ -256,7 +279,7 @@ const Dashboard = () => {
     };
 
     fetchDepartmentChartData();
-  }, [selectedYear]);
+  }, [selectedYear, departmentChartType]);
 
   const [top5ByFieldChartData, setTop5ByFieldChartData] = useState({
     labels: [],
@@ -288,8 +311,16 @@ const Dashboard = () => {
               ["#00A3FF", "#7239EA", "#F1416C", "#39eaa3", "#FFC700"][index % 5]
           );
 
+          // Tạo formattedLabels cho biểu đồ cột
+          const formattedLabels =
+            fieldChartType === "bar"
+              ? labels.map((label) =>
+                  label.length > 10 ? label.substring(0, 10) + "..." : label
+                )
+              : labels;
+
           setTop5ByFieldChartData({
-            labels,
+            labels: formattedLabels,
             datasets: [
               {
                 data,
@@ -298,6 +329,7 @@ const Dashboard = () => {
                 borderRadius: 6,
               },
             ],
+            originalLabels: labels,
           });
         } else {
           console.error("Unexpected API response structure:", response);
@@ -308,7 +340,7 @@ const Dashboard = () => {
     };
 
     fetchTop5ByTypeChartData();
-  }, [selectedYear]);
+  }, [selectedYear, fieldChartType]);
 
   const [topPapers, setTopPapers] = useState([]);
 
@@ -593,41 +625,62 @@ const Dashboard = () => {
     };
   }, []);
 
+  // Thay đổi cách lọc dữ liệu để ẩn hoàn toàn các cột bằng 0
   const filteredTypeChartData = {
-    ...typeChartData,
+    labels: selectedQuarters.includes("All")
+      ? typeChartData.labels
+      : typeChartData.labels.filter((label, index) =>
+          selectedQuarters.includes(label)
+        ),
     datasets: [
       {
         ...typeChartData.datasets[0],
         data: selectedQuarters.includes("All")
           ? typeChartData.datasets[0].data
-          : typeChartData.datasets[0].data.map((value, index) =>
-              selectedQuarters.includes(typeChartData.labels[index]) ? value : 0
+          : typeChartData.datasets[0].data.filter((_, index) =>
+              selectedQuarters.includes(typeChartData.labels[index])
+            ),
+        backgroundColor: selectedQuarters.includes("All")
+          ? typeChartData.datasets[0].backgroundColor
+          : typeChartData.datasets[0].backgroundColor.filter((_, index) =>
+              selectedQuarters.includes(typeChartData.labels[index])
             ),
       },
     ],
   };
 
   const filteredDepartmentChartData = {
-    ...departmentChartData,
+    labels: selectedRoles.includes("All")
+      ? departmentChartData.labels
+      : departmentChartData.labels.filter((_, index) =>
+          selectedRoles.includes(departmentChartData.originalLabels[index])
+        ),
     datasets: [
       {
         ...departmentChartData.datasets[0],
         data: selectedRoles.includes("All")
           ? departmentChartData.datasets[0].data
-          : departmentChartData.datasets[0].data.map((value, index) =>
+          : departmentChartData.datasets[0].data.filter((_, index) =>
               selectedRoles.includes(departmentChartData.originalLabels[index])
-                ? value
-                : 0
+            ),
+        backgroundColor: selectedRoles.includes("All")
+          ? departmentChartData.datasets[0].backgroundColor
+          : departmentChartData.datasets[0].backgroundColor.filter((_, index) =>
+              selectedRoles.includes(departmentChartData.originalLabels[index])
             ),
       },
     ],
+    originalLabels: selectedRoles.includes("All")
+      ? departmentChartData.originalLabels
+      : departmentChartData.originalLabels.filter((label) =>
+          selectedRoles.includes(label)
+        ),
   };
 
   const filteredDonutChartData = {
-    ...top5ByFieldChartData,
     labels: selectedFields.includes("All")
       ? top5ByFieldChartData.labels
-      : top5ByFieldChartData.labels.filter((label, index) =>
+      : top5ByFieldChartData.labels.filter((label) =>
           selectedFields.includes(label)
         ),
     datasets: [
@@ -646,6 +699,11 @@ const Dashboard = () => {
             ),
       },
     ],
+    originalLabels: selectedFields.includes("All")
+      ? top5ByFieldChartData.originalLabels
+      : top5ByFieldChartData.originalLabels?.filter((label, index) =>
+          selectedFields.includes(top5ByFieldChartData.labels[index])
+        ),
   };
 
   const hasTypeChartData =
@@ -1000,7 +1058,7 @@ const Dashboard = () => {
                       width={500}
                     />
                   ) : (
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-start">
                       <Doughnut
                         data={filteredTypeChartData}
                         options={donutOptions}
@@ -1175,7 +1233,7 @@ const Dashboard = () => {
                       width={540}
                     />
                   ) : (
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-start">
                       <Doughnut
                         data={filteredDepartmentChartData}
                         options={donutOptions}
@@ -1338,7 +1396,7 @@ const Dashboard = () => {
               <div ref={fieldChartRef}>
                 {hasFieldChartData ? (
                   fieldChartType === "doughnut" ? (
-                    <div className="flex flex-col items-center">
+                    <div className="flex flex-col items-start">
                       <Doughnut
                         data={filteredDonutChartData}
                         options={donutOptions}
