@@ -16,6 +16,7 @@ const FilterPanel = ({
   uniqueStatuses,
   activeTab,
   onFilterChange,
+  onClearAllFilters, // New prop to handle clearing all filters
 }) => {
   // State cho từng filter riêng biệt
   const [filterPaperType, setFilterPaperType] = useState(["Tất cả"]);
@@ -82,6 +83,11 @@ const FilterPanel = ({
     setFilterRole(["Tất cả"]);
     setFilterInstitution(["Tất cả"]);
     setFilterStatus(["Tất cả"]);
+
+    // Call the parent component's handler to reset filtered counts
+    if (onClearAllFilters) {
+      onClearAllFilters();
+    }
   };
 
   return (
@@ -1496,6 +1502,21 @@ const ManagementAriticle = () => {
                         setFilterRole(filterConfig.role);
                         setFilterInstitution(filterConfig.institution);
                         setFilterStatus(filterConfig.status);
+                      }}
+                      onClearAllFilters={() => {
+                        // Reset all filters to default values
+                        setFilterPaperType(["Tất cả"]);
+                        setFilterGroup(["Tất cả"]);
+                        setFilterPaperTitle("");
+                        setFilterAuthorName("");
+                        setFilterAuthorCountFrom("");
+                        setFilterAuthorCountTo("");
+                        setFilterRole(["Tất cả"]);
+                        setFilterInstitution(["Tất cả"]);
+                        setFilterStatus(["Tất cả"]);
+
+                        // Reset filtered counts to original counts
+                        setFilteredCounts(null);
                       }}
                     />
                   </div>

@@ -24,8 +24,8 @@ const Footer = () => {
             </div>
 
             {/* Links */}
-            <div className="w-full md:w-1/3 px-4 text-center md:text-left md:pl-12">
-              <h3 className="font-bold text-red-600 text-sm pb-3">Liên kết</h3>
+            <div className="w-full md:w-1/3 px-4 text-center md:text-left md:pl-28">
+              <h3 className="font-bold text-red-600 text-sm pb-2">Liên kết</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
@@ -74,12 +74,12 @@ const Footer = () => {
             <div className="w-full md:w-1/3 px-4 text-center md:text-left">
               <h3 className="font-bold text-red-600 text-sm pb-2">Liên hệ</h3>
               <p className="text-sm pb-1">
-                12 Nguyễn Văn Bảo, Q. Gò Vấp, TP. Hồ Chí Minh Khoa Công nghệ
-                Thông tin - Lầu 1 - Nhà H
+                Địa chỉ: 12 Nguyễn Văn Bảo, Q. Gò Vấp, TP. Hồ Chí Minh Khoa Công
+                nghệ Thông tin - Lầu 1 - Nhà H
               </p>
               <p className="text-sm pb-1">
-                <i className="fa fa-phone-square"></i>Phone: 0283.8940 390 - ext
-                838
+                <i className="fa fa-phone-square"></i>Phone: 0868434509 (Thanh)
+                - 0368564833 (Phúc)
               </p>
               <p className="text-sm">
                 <i className="fa fa-envelope"></i>E-mail:{" "}
@@ -87,11 +87,13 @@ const Footer = () => {
                   href="mailto:csm@iuh.edu.vn"
                   className="text-blue-600 hover:underline"
                 >
-                  csm@iuh.edu.vn
+                  hethongnckhiuh@gmail.com
                 </a>
               </p>
-              <div className="mt-4">
-                <h6 className="text-sm">Follow us</h6>
+              <div className="mt-1">
+                <h6 className="text-sm">
+                  © 2024 Khoa Công nghệ thông tin - Kỹ thuật phần mềm
+                </h6>
                 <ul className="flex justify-center md:justify-start space-x-4 mt-2">
                   <li>
                     <a
