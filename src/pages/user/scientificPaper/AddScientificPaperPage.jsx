@@ -57,6 +57,9 @@ const AddScientificPaperPage = () => {
   const [summary, setSummary] = useState(""); // State for summary
   const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
   const [doi, setDoi] = useState(""); // State for DOI
+  const [coverImageError, setCoverImageError] = useState("");
+  const [coverImageTouched, setCoverImageTouched] = useState(false);
+  // Removed duplicate declarations of fileError and fileTouched
   const navigate = useNavigate();
 
   // State để lưu điểm
@@ -127,6 +130,16 @@ const AddScientificPaperPage = () => {
     return true;
   };
 
+  // Validation function for paper img
+  const validateCoverImage = () => {
+    if (!coverImage) {
+      setCoverImageError("Vui lòng tải lên ảnh bìa");
+      return false;
+    }
+    setCoverImageError("");
+    return true;
+  };
+
   // Validation functions for other required fields
   const validatePaperGroup = () => {
     if (!selectedPaperGroup) {
@@ -157,9 +170,20 @@ const AddScientificPaperPage = () => {
 
   const validatePublishDate = () => {
     if (!publishDate) {
-      setPublishDateError("Vui lòng chọn");
+      setPublishDateError("Chọn ngày");
       return false;
     }
+
+    // Check if publish date is in the future
+    const selectedDate = new Date(publishDate);
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to start of day
+
+    if (selectedDate > currentDate) {
+      setPublishDateError("< ngày hiện tại");
+      return false;
+    }
+
     setPublishDateError("");
     return true;
   };
@@ -263,7 +287,7 @@ const AddScientificPaperPage = () => {
 
   const validateFile = () => {
     if (!selectedFile) {
-      setFileError("Vui lòng tải lên file");
+      setFileError("error"); // Chỉ đặt trạng thái để hiển thị viền đỏ
       return false;
     }
     setFileError("");
@@ -360,8 +384,9 @@ const AddScientificPaperPage = () => {
     const file = e.target.files[0];
     if (file) {
       try {
-        const response = await userApi.uploadImage(file); // Call uploadImage function
-        setCoverImage(response.url); // Use the uploaded image's URL
+        const response = await userApi.uploadImage(file);
+        setCoverImage(response.url);
+        setCoverImageError(""); // Clear error when image is selected
         message.success("Ảnh bìa đã được tải lên thành công!");
         console.log("Uploaded image response:", response);
       } catch (error) {
@@ -382,9 +407,10 @@ const AddScientificPaperPage = () => {
       const file = e.target.files[0];
       if (file) {
         try {
-          const response = await userApi.uploadFile(file); // Call uploadFile function
-          setSelectedFile(response.url); // Use the uploaded file's URL
-          setFileError(""); // Clear error when file is selected
+          const response = await userApi.uploadFile(file);
+          setSelectedFile(response.url);
+          setFileError(""); // Xóa lỗi khi có file
+          setFileTouched(true);
           message.success("File đã được tải lên thành công!");
           console.log("Uploaded file response:", response);
         } catch (error) {
@@ -394,16 +420,19 @@ const AddScientificPaperPage = () => {
           );
           message.error("Không thể tải file lên. Vui lòng thử lại.");
         }
+      } else {
+        setFileTouched(true);
+        validateFile();
       }
-      // Removed validation that showed error when no file was selected
     };
-
-    // Show file selector dialog
     input.click();
   };
 
   const handleRemoveFile = () => {
     setSelectedFile(null);
+    if (fileTouched) {
+      setFileError("Vui lòng tải lên file");
+    }
   };
 
   const handleAddAuthor = () => {
@@ -458,6 +487,12 @@ const AddScientificPaperPage = () => {
           updatedAuthors[index].full_name =
             userData.full_name || userData.name || "";
 
+          // Xóa lỗi cho full_name khi có dữ liệu
+          const newErrors = [...authorErrors];
+          if (!newErrors[index]) newErrors[index] = {};
+          newErrors[index].full_name = "";
+          setAuthorErrors(newErrors);
+
           try {
             // Fetch user workplaces
             const institutionsResponse = await userApi.getUserWorksByUserId(
@@ -502,6 +537,12 @@ const AddScientificPaperPage = () => {
               // If user has institutions, set the first one as default
               if (institutions.length > 0) {
                 updatedAuthors[index].institution = institutions[0]._id;
+
+                // Clear institution error when data is loaded from API
+                const newErrors = [...authorErrors];
+                if (!newErrors[index]) newErrors[index] = {};
+                newErrors[index].institution = "";
+                setAuthorErrors(newErrors);
               }
 
               console.log("Fetched institutions:", institutions);
@@ -637,6 +678,7 @@ const AddScientificPaperPage = () => {
       const isLinkValid = validateLink();
       const areAuthorsValid = validateAuthors();
       const isFileValid = validateFile();
+      const isCoverImageValid = validateCoverImage();
 
       if (
         !isPaperTypeValid ||
@@ -651,7 +693,8 @@ const AddScientificPaperPage = () => {
         !isSummaryValid ||
         !isLinkValid ||
         !areAuthorsValid ||
-        !isFileValid
+        !isFileValid ||
+        !isCoverImageValid
       ) {
         message.error("Vui lòng điền đầy đủ thông tin bắt buộc");
         return;
@@ -839,13 +882,17 @@ const AddScientificPaperPage = () => {
                   <div className="flex flex-col w-[260px] justify-center">
                     <label
                       htmlFor="cover-upload"
-                      className="cursor-pointer relative"
+                      className={`cursor-pointer relative ${
+                        coverImageError
+                          ? "border-2 border-red-500 rounded-lg"
+                          : ""
+                      }`}
                       aria-label="Upload cover image"
                     >
                       <img
                         src={
                           coverImage ||
-                          "https://via.placeholder.com/180x200?text=Bìa+Bài+Báo"
+                          "https://cdn-icons-png.flaticon.com/128/4904/4904233.png"
                         }
                         alt="Bìa bài báo"
                         className="w-[210px] h-[315px] object-contain border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
@@ -853,6 +900,11 @@ const AddScientificPaperPage = () => {
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 text-white font-semibold text-sm rounded-lg transition duration-300">
                         Chọn ảnh
                       </div>
+                      {coverImageError && (
+                        <div className="absolute top-0 right-0 bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                          {coverImageError}
+                        </div>
+                      )}
                     </label>
                     <input
                       id="cover-upload"
@@ -862,6 +914,11 @@ const AddScientificPaperPage = () => {
                       className="hidden"
                       aria-hidden="true"
                     />
+                    {coverImageError && (
+                      <div className="text-red-500 text-xs mt-1">
+                        {coverImageError}
+                      </div>
+                    )}
                   </div>
                   {/* Các input bên cạnh ảnh */}
                   <div className="w-full grid grid-cols-1 pl-4">
@@ -1037,7 +1094,7 @@ const AddScientificPaperPage = () => {
                 <div className="flex gap-4 mt-4">
                   {/* Bên dưới ảnh: 4 input xếp dọc (bằng ảnh) */}
                   <div className="flex flex-col w-[260px] gap-4">
-                    {/* Ngày cô bố */}
+                    {/* Ngày công bố */}
                     <div className="">
                       <label
                         htmlFor="publishDate"
@@ -1052,18 +1109,35 @@ const AddScientificPaperPage = () => {
                             publishDateError ? "border-red-500" : ""
                           }`}
                           placeholder="Ngày công bố"
-                          status={publishDateError ? "error" : ""}
                           onChange={(date, dateString) => {
                             setPublishDate(dateString);
-                            setPublishDateError("");
+                            setPublishDateTouched(true);
+
+                            // Perform validation
+                            if (date) {
+                              const selectedDate = new Date(date);
+                              const currentDate = new Date();
+                              currentDate.setHours(0, 0, 0, 0);
+
+                              if (selectedDate > currentDate) {
+                                // Future date - show error
+                                setPublishDateError("< ngày hiện tại");
+                              } else {
+                                // Valid date - clear error
+                                setPublishDateError("");
+                              }
+                            } else {
+                              // No date - show error
+                              setPublishDateError("Vui lòng chọn ngày công bố");
+                            }
                           }}
                           onBlur={() => {
-                            setPublishDateTouched(true);
-                            validatePublishDate();
-                          }}
-                          onClick={() => {
                             if (!publishDateTouched) {
                               setPublishDateTouched(true);
+                            }
+                            // Keep existing error or validate if no date is selected
+                            if (!publishDate && !publishDateError) {
+                              setPublishDateError("Chọn ngày");
                             }
                           }}
                         />
@@ -1076,6 +1150,7 @@ const AddScientificPaperPage = () => {
                         )}
                       </div>
                     </div>
+
                     {/* Số trang */}
                     <div className="">
                       <label
@@ -1538,21 +1613,17 @@ const AddScientificPaperPage = () => {
                               status={
                                 authorErrors[index]?.full_name ? "error" : ""
                               }
-                              className={`${
-                                authorErrors[index]?.full_name
-                                  ? "border-red-500"
-                                  : ""
-                              }`}
                               onChange={(e) => {
                                 handleAuthorChange(
                                   index,
                                   "full_name",
                                   e.target.value
                                 );
-                                // Clear error when value is entered
                                 const newErrors = [...authorErrors];
                                 if (!newErrors[index]) newErrors[index] = {};
-                                newErrors[index].full_name = "";
+                                newErrors[index].full_name = e.target.value
+                                  ? ""
+                                  : "error";
                                 setAuthorErrors(newErrors);
                               }}
                               onBlur={() => {
@@ -1560,15 +1631,11 @@ const AddScientificPaperPage = () => {
                                 if (!newTouched[index]) newTouched[index] = {};
                                 newTouched[index].full_name = true;
                                 setAuthorTouched(newTouched);
-
-                                // Validate on blur - set error to trigger red styling only
                                 const newErrors = [...authorErrors];
                                 if (!newErrors[index]) newErrors[index] = {};
-                                if (!author.full_name) {
-                                  newErrors[index].full_name = "error";
-                                } else {
-                                  newErrors[index].full_name = "";
-                                }
+                                newErrors[index].full_name = author.full_name
+                                  ? ""
+                                  : "error";
                                 setAuthorErrors(newErrors);
                               }}
                               onClick={() => {
@@ -1866,6 +1933,7 @@ const AddScientificPaperPage = () => {
                         placeholder="Upload file..."
                         value={selectedFile || ""}
                         readOnly
+                        status={fileError ? "error" : ""}
                       />
                       <Button type="primary" onClick={handleFileChange}>
                         Choose

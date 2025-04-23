@@ -9,12 +9,16 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Bar, Doughnut } from "react-chartjs-2";
 import { Table, Checkbox } from "antd";
 import { useNavigate } from "react-router-dom";
 import userApi from "../../../api/api";
 import { useEffect, useState, useRef } from "react";
 import CountUp from "react-countup";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import * as XLSX from "xlsx";
 
 ChartJS.register(
   CategoryScale,
@@ -23,12 +27,12 @@ ChartJS.register(
   ArcElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  ChartDataLabels
 );
 
 // Hàm tính toán options cho biểu đồ dựa trên dữ liệu thực tế
-const getChartOptions = (data) => {
-  // Tìm giá trị cao nhất trong dữ liệu
+const getChartOptions = (data, showDataLabels = false) => {
   const maxValue =
     data && data.datasets && data.datasets[0] && data.datasets[0].data
       ? Math.max(
@@ -36,11 +40,17 @@ const getChartOptions = (data) => {
         )
       : 0;
 
-  // Làm tròn lên chục gần nhất
-  const roundedMax = Math.ceil(maxValue / 10) * 10;
+  const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
+  const step = Math.min(Math.ceil(roundedMax / 5), Math.ceil(roundedMax / 10));
 
-  // Tính toán bước (step) phù hợp dựa trên khoảng giá trị
-  const step = roundedMax > 100 ? 20 : roundedMax > 50 ? 10 : 5;
+  // Lọc ra các indices của các giá trị data khác 0
+  const nonZeroIndices =
+    data && data.datasets && data.datasets[0] && data.datasets[0].data
+      ? data.datasets[0].data
+          .map((value, index) => ({ value, index }))
+          .filter((item) => item.value > 0)
+          .map((item) => item.index)
+      : [];
 
   return {
     responsive: false,
@@ -51,9 +61,7 @@ const getChartOptions = (data) => {
       },
       tooltip: {
         callbacks: {
-          // Use this to customize tooltip content
           title: function (tooltipItems) {
-            // For point chart, show full title on hover
             if (data.originalLabels && tooltipItems[0]) {
               const index = tooltipItems[0].dataIndex;
               return data.originalLabels[index] || tooltipItems[0].label;
@@ -62,8 +70,27 @@ const getChartOptions = (data) => {
           },
         },
       },
+      datalabels: showDataLabels
+        ? {
+            color: "#000",
+            font: {
+              size: 12,
+              weight: "bold",
+            },
+            formatter: (value) => value,
+          }
+        : false,
     },
     scales: {
+      x: {
+        ticks: {
+          callback: function (value, index) {
+            return nonZeroIndices.includes(index)
+              ? this.getLabelForValue(value)
+              : "";
+          },
+        },
+      },
       y: {
         beginAtZero: true,
         max: roundedMax,
@@ -88,8 +115,16 @@ const donutOptions = {
         boxWidth: 10,
       },
     },
+    datalabels: {
+      color: "#000",
+      font: {
+        size: 12,
+        weight: "bold",
+      },
+      formatter: (value) => value,
+    },
   },
-  cutout: "70%",
+  cutout: 0,
 };
 
 const columns = [
@@ -159,14 +194,21 @@ const columnOptions = columns.map((col) => ({
 
 const StatisticsChartPage = () => {
   const navigate = useNavigate();
-  const [selectedTypeFilters, setSelectedTypeFilters] = useState([]);
+  const [selectedTypeFilters, setSelectedTypeFilters] = useState(["All"]);
   const [showTypeFilter, setShowTypeFilter] = useState(false);
   const [typeCounts, setTypeCounts] = useState({});
+  const [typeChartType, setTypeChartType] = useState("bar");
+  const [showTypeChartFilter, setShowTypeChartFilter] = useState(false);
+  const [showTypeDownloadFilter, setShowTypeDownloadFilter] = useState(false);
+
   const [visibleColumns, setVisibleColumns] = useState(
     columns.map((col) => col.key)
   );
   const [showPointFilter, setShowPointFilter] = useState(false);
-  const [selectedPointFilters, setSelectedPointFilters] = useState([]);
+  const [selectedPointFilters, setSelectedPointFilters] = useState(["All"]);
+  const [pointChartType, setPointChartType] = useState("bar");
+  const [showPointChartFilter, setShowPointChartFilter] = useState(false);
+  const [showPointDownloadFilter, setShowPointDownloadFilter] = useState(false);
   const [pointChartData, setPointChartData] = useState({
     labels: [],
     datasets: [
@@ -184,12 +226,12 @@ const StatisticsChartPage = () => {
       },
     ],
   });
-  const pointFilterOptions = pointChartData.labels.map((label) => ({
-    label,
-    value: label,
-  }));
+
   const [showDonutFilter, setShowDonutFilter] = useState(false);
-  const [selectedDonutFilters, setSelectedDonutFilters] = useState([]);
+  const [selectedDonutFilters, setSelectedDonutFilters] = useState(["All"]);
+  const [donutChartType, setDonutChartType] = useState("doughnut");
+  const [showDonutChartFilter, setShowDonutChartFilter] = useState(false);
+  const [showDonutDownloadFilter, setShowDonutDownloadFilter] = useState(false);
   const [donutChartData, setDonutChartData] = useState({
     labels: [],
     datasets: [
@@ -211,10 +253,6 @@ const StatisticsChartPage = () => {
       },
     ],
   });
-  const donutFilterOptions = donutChartData.labels.map((label) => ({
-    label,
-    value: label,
-  }));
 
   const userId = localStorage.getItem("user_id");
   const [totalPapers, setTotalPapers] = useState(0);
@@ -222,16 +260,29 @@ const StatisticsChartPage = () => {
   const [totalDownloads, setTotalDownloads] = useState(0);
   const [top5Papers, setTop5Papers] = useState([]);
   const [totalPoints, setTotalPoints] = useState(0);
-
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("Tất cả");
+
+  // Refs for click outside handling
+  const typeFilterRef = useRef(null);
+  const pointFilterRef = useRef(null);
+  const donutFilterRef = useRef(null);
+  const typeChartFilterRef = useRef(null);
+  const pointChartFilterRef = useRef(null);
+  const donutChartFilterRef = useRef(null);
+  const typeDownloadFilterRef = useRef(null);
+  const pointDownloadFilterRef = useRef(null);
+  const donutDownloadFilterRef = useRef(null);
+  const typeChartRef = useRef(null);
+  const pointChartRef = useRef(null);
+  const donutChartRef = useRef(null);
 
   const getAcademicYears = async () => {
     try {
       const response = await userApi.getAcademicYears();
       const years = response.academicYears || [];
-      setAcademicYears(["Tất cả", ...years.reverse()]); // Reverse to ensure the latest year is first
-      setSelectedYear("Tất cả"); // Default to "Tất cả"
+      setAcademicYears(["Tất cả", ...years.reverse()]);
+      setSelectedYear("Tất cả");
     } catch (error) {
       console.error("Error fetching academic years:", error);
     }
@@ -241,45 +292,32 @@ const StatisticsChartPage = () => {
     getAcademicYears();
   }, []);
 
-  // Add refs for click outside handling
-  const typeFilterRef = useRef(null);
-  const pointFilterRef = useRef(null);
-  const donutFilterRef = useRef(null);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (userId) {
-          // Fetch total papers with selected academic year
           const papersResponse = await userApi.getTotalPapersByAuthorId(
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Total Papers API Response:", papersResponse);
           setTotalPapers(papersResponse.total_papers);
 
-          // Fetch total views
           const viewsResponse = await userApi.getTotalViewsByAuthorId(
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Total Views API Response:", viewsResponse);
           setTotalViews(viewsResponse.total_views);
 
-          // Fetch total downloads
           const downloadsResponse = await userApi.getTotalDownloadsByAuthorId(
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Total Downloads API Response:", downloadsResponse);
           setTotalDownloads(downloadsResponse.total_downloads);
 
-          // Fetch total points
           const pointsResponse = await userApi.getTotalPointByAuthorId(
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Total Points API Response:", pointsResponse);
           setTotalPoints(pointsResponse.total_points);
         }
       } catch (error) {
@@ -298,8 +336,6 @@ const StatisticsChartPage = () => {
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Top 5 Papers for Table API Response:", top5Response);
-
           if (
             top5Response &&
             top5Response.papers &&
@@ -315,17 +351,13 @@ const StatisticsChartPage = () => {
             }));
             setTop5Papers(formattedPapers);
           } else {
-            console.warn("No papers found for the table.");
             setTop5Papers([]);
           }
         } else {
           setTop5Papers([]);
         }
       } catch (error) {
-        console.error(
-          "Error fetching top 5 papers for table:",
-          error.message || error
-        );
+        console.error("Error fetching top 5 papers for table:", error);
         setTop5Papers([]);
       }
     };
@@ -337,8 +369,6 @@ const StatisticsChartPage = () => {
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Top 5 Papers by Points API Response:", pointsResponse);
-
           if (
             pointsResponse &&
             pointsResponse.papers &&
@@ -348,12 +378,13 @@ const StatisticsChartPage = () => {
               title: paper.title_vn || paper.title_en,
               contributionScore: paper.contributionScore,
             }));
+            const labels = formattedChartData.map((paper) =>
+              paper.title.length > 10
+                ? paper.title.substring(0, 10) + "..."
+                : paper.title
+            );
             setPointChartData({
-              labels: formattedChartData.map((paper) =>
-                paper.title.length > 20
-                  ? paper.title.substring(0, 20) + "..."
-                  : paper.title
-              ),
+              labels,
               originalLabels: formattedChartData.map((paper) => paper.title),
               datasets: [
                 {
@@ -372,15 +403,8 @@ const StatisticsChartPage = () => {
                 },
               ],
             });
-            setSelectedPointFilters(
-              formattedChartData.map((paper) =>
-                paper.title.length > 20
-                  ? paper.title.substring(0, 20) + "..."
-                  : paper.title
-              )
-            );
+            setSelectedPointFilters(["All", ...labels]);
           } else {
-            console.warn("No papers found for the chart.");
             setPointChartData({
               labels: ["No data"],
               datasets: [
@@ -390,6 +414,7 @@ const StatisticsChartPage = () => {
                 },
               ],
             });
+            setSelectedPointFilters([]);
           }
         } else {
           setPointChartData({
@@ -401,12 +426,10 @@ const StatisticsChartPage = () => {
               },
             ],
           });
+          setSelectedPointFilters([]);
         }
       } catch (error) {
-        console.error(
-          "Error fetching top 5 papers by points:",
-          error.message || error
-        );
+        console.error("Error fetching top 5 papers by points:", error);
         setPointChartData({
           labels: ["No data"],
           datasets: [
@@ -416,6 +439,7 @@ const StatisticsChartPage = () => {
             },
           ],
         });
+        setSelectedPointFilters([]);
       }
     };
 
@@ -426,19 +450,18 @@ const StatisticsChartPage = () => {
             userId,
             selectedYear === "Tất cả" ? null : selectedYear
           );
-          console.log("Top 5 Paper Types API Response:", response);
-
           if (response && response.data && response.data.length > 0) {
             const formattedData = response.data.map((item) => ({
               type:
-                item.type.length > 20
-                  ? item.type.substring(0, 20) + "..."
+                item.type.length > 10
+                  ? item.type.substring(0, 10) + "..."
                   : item.type,
               count: item.count,
             }));
-
+            const labels = formattedData.map((item) => item.type);
             setDonutChartData({
-              labels: formattedData.map((item) => item.type),
+              labels,
+              originalLabels: response.data.map((item) => item.type),
               datasets: [
                 {
                   data: formattedData.map((item) => item.count),
@@ -458,8 +481,8 @@ const StatisticsChartPage = () => {
                 },
               ],
             });
+            setSelectedDonutFilters(["All", ...labels]);
           } else {
-            console.warn("No paper types found for this user.");
             setDonutChartData({
               labels: ["No data"],
               datasets: [
@@ -469,6 +492,7 @@ const StatisticsChartPage = () => {
                 },
               ],
             });
+            setSelectedDonutFilters([]);
           }
         } else {
           setDonutChartData({
@@ -480,12 +504,10 @@ const StatisticsChartPage = () => {
               },
             ],
           });
+          setSelectedDonutFilters([]);
         }
       } catch (error) {
-        console.error(
-          "Error fetching top 5 paper types:",
-          error.message || error
-        );
+        console.error("Error fetching top 5 paper types:", error);
         setDonutChartData({
           labels: ["No data"],
           datasets: [
@@ -495,6 +517,7 @@ const StatisticsChartPage = () => {
             },
           ],
         });
+        setSelectedDonutFilters([]);
       }
     };
 
@@ -510,10 +533,9 @@ const StatisticsChartPage = () => {
           userId,
           selectedYear === "Tất cả" ? null : selectedYear
         );
-        console.log("Type Statistics API Response:", response);
         if (response && response.data) {
           setTypeCounts(response.data);
-          setSelectedTypeFilters(Object.keys(response.data));
+          setSelectedTypeFilters(["All", ...Object.keys(response.data)]);
         }
       } catch (error) {
         console.error("Error fetching type statistics:", error);
@@ -523,7 +545,6 @@ const StatisticsChartPage = () => {
     fetchTypeStatistics();
   }, [userId, selectedYear]);
 
-  // Add click outside handler to close filter dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -544,7 +565,42 @@ const StatisticsChartPage = () => {
       ) {
         setShowDonutFilter(false);
       }
-      // Removing the column filter reference
+      if (
+        typeChartFilterRef.current &&
+        !typeChartFilterRef.current.contains(event.target)
+      ) {
+        setShowTypeChartFilter(false);
+      }
+      if (
+        pointChartFilterRef.current &&
+        !pointChartFilterRef.current.contains(event.target)
+      ) {
+        setShowPointChartFilter(false);
+      }
+      if (
+        donutChartFilterRef.current &&
+        !donutChartFilterRef.current.contains(event.target)
+      ) {
+        setShowDonutChartFilter(false);
+      }
+      if (
+        typeDownloadFilterRef.current &&
+        !typeDownloadFilterRef.current.contains(event.target)
+      ) {
+        setShowTypeDownloadFilter(false);
+      }
+      if (
+        pointDownloadFilterRef.current &&
+        !pointDownloadFilterRef.current.contains(event.target)
+      ) {
+        setShowPointDownloadFilter(false);
+      }
+      if (
+        donutDownloadFilterRef.current &&
+        !donutDownloadFilterRef.current.contains(event.target)
+      ) {
+        setShowDonutDownloadFilter(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -553,61 +609,91 @@ const StatisticsChartPage = () => {
     };
   }, []);
 
-  const handleTypeFilterChange = (selectedFilters) => {
-    setSelectedTypeFilters(selectedFilters);
-
-    // Update the chart data based on the selected type filters
-    const filteredLabels = Object.keys(typeCounts).filter((type) =>
-      selectedFilters.includes(type)
-    );
-    const filteredData = filteredLabels.map((label) => typeCounts[label]);
-
-    setPointChartData({
-      labels: filteredLabels,
-      datasets: [
-        {
-          data: filteredData,
-          backgroundColor: [
-            "#00A3FF",
-            "#7239EA",
-            "#F1416C",
-            "#39eaa3",
-            "#FFB700",
-          ],
-          borderWidth: 0,
-          borderRadius: 6,
-        },
-      ],
-    });
+  const handleTypeFilterChange = (event) => {
+    const value = event.target.value;
+    if (value === "All") {
+      if (selectedTypeFilters.includes("All")) {
+        setSelectedTypeFilters([]);
+      } else {
+        setSelectedTypeFilters(["All", ...Object.keys(typeCounts)]);
+      }
+    } else {
+      if (selectedTypeFilters.includes(value)) {
+        const newSelected = selectedTypeFilters.filter(
+          (item) => item !== value && item !== "All"
+        );
+        setSelectedTypeFilters(newSelected);
+      } else {
+        const newSelected = [
+          ...selectedTypeFilters.filter((item) => item !== "All"),
+          value,
+        ];
+        if (newSelected.length === Object.keys(typeCounts).length) {
+          newSelected.push("All");
+        }
+        setSelectedTypeFilters(newSelected);
+      }
+    }
   };
 
-  const handlePointFilterChange = (selectedFilters) => {
-    setSelectedPointFilters(selectedFilters);
-
-    // Update the type and donut chart filters based on the selected point filters
-    const filteredTypes = [];
-    setSelectedTypeFilters([...new Set(filteredTypes)]);
-
-    const filteredDepartments = [];
-    setSelectedDonutFilters([...new Set(filteredDepartments)]);
+  const handlePointFilterChange = (event) => {
+    const value = event.target.value;
+    if (value === "All") {
+      if (selectedPointFilters.includes("All")) {
+        setSelectedPointFilters([]);
+      } else {
+        setSelectedPointFilters(["All", ...pointChartData.labels]);
+      }
+    } else {
+      if (selectedPointFilters.includes(value)) {
+        const newSelected = selectedPointFilters.filter(
+          (item) => item !== value && item !== "All"
+        );
+        setSelectedPointFilters(newSelected);
+      } else {
+        const newSelected = [
+          ...selectedPointFilters.filter((item) => item !== "All"),
+          value,
+        ];
+        if (newSelected.length === pointChartData.labels.length) {
+          newSelected.push("All");
+        }
+        setSelectedPointFilters(newSelected);
+      }
+    }
   };
 
-  const handleDonutFilterChange = (selectedFilters) => {
-    setSelectedDonutFilters(selectedFilters);
-
-    // Update the type and point chart filters based on the selected donut filters
-    const filteredTypes = [];
-    setSelectedTypeFilters([...new Set(filteredTypes)]);
-
-    const filteredLabels = [];
-    setSelectedPointFilters(filteredLabels);
+  const handleDonutFilterChange = (event) => {
+    const value = event.target.value;
+    if (value === "All") {
+      if (selectedDonutFilters.includes("All")) {
+        setSelectedDonutFilters([]);
+      } else {
+        setSelectedDonutFilters(["All", ...donutChartData.labels]);
+      }
+    } else {
+      if (selectedDonutFilters.includes(value)) {
+        const newSelected = selectedDonutFilters.filter(
+          (item) => item !== value && item !== "All"
+        );
+        setSelectedDonutFilters(newSelected);
+      } else {
+        const newSelected = [
+          ...selectedDonutFilters.filter((item) => item !== "All"),
+          value,
+        ];
+        if (newSelected.length === donutChartData.labels.length) {
+          newSelected.push("All");
+        }
+        setSelectedDonutFilters(newSelected);
+      }
+    }
   };
 
   const handleColumnVisibilityChange = (selectedKeys) => {
     setVisibleColumns(selectedKeys);
   };
 
-  // Add onRow click handler for the table
   const onRowClick = (record) => {
     return {
       onClick: () => {
@@ -622,21 +708,225 @@ const StatisticsChartPage = () => {
     };
   };
 
-  // Check if there's any data to display in the charts
+  const filteredTypeChartData = {
+    labels: selectedTypeFilters.includes("All")
+      ? Object.keys(typeCounts).filter((label) => typeCounts[label] > 0)
+      : Object.keys(typeCounts).filter(
+          (label) =>
+            selectedTypeFilters.includes(label) && typeCounts[label] > 0
+        ),
+    datasets: [
+      {
+        data: selectedTypeFilters.includes("All")
+          ? Object.values(typeCounts).filter((value) => value > 0)
+          : Object.keys(typeCounts)
+              .filter(
+                (label) =>
+                  selectedTypeFilters.includes(label) && typeCounts[label] > 0
+              )
+              .map((label) => typeCounts[label]),
+        backgroundColor: selectedTypeFilters.includes("All")
+          ? Object.values(typeCounts)
+              .map(
+                (_, index) =>
+                  ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
+                    index % 5
+                  ]
+              )
+              .filter((_, index) => Object.values(typeCounts)[index] > 0)
+          : Object.keys(typeCounts)
+              .filter(
+                (label) =>
+                  selectedTypeFilters.includes(label) && typeCounts[label] > 0
+              )
+              .map(
+                (_, index) =>
+                  ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
+                    index % 5
+                  ]
+              ),
+        borderWidth: 0,
+        borderRadius: 6,
+      },
+    ],
+  };
+
+  const filteredPointChartData = {
+    labels: selectedPointFilters.includes("All")
+      ? pointChartData.labels
+      : pointChartData.labels.filter((label) =>
+          selectedPointFilters.includes(label)
+        ),
+    datasets: [
+      {
+        data: selectedPointFilters.includes("All")
+          ? pointChartData.datasets[0].data
+          : pointChartData.datasets[0].data.filter((_, index) =>
+              selectedPointFilters.includes(pointChartData.labels[index])
+            ),
+        backgroundColor: selectedPointFilters.includes("All")
+          ? pointChartData.datasets[0].backgroundColor
+          : pointChartData.datasets[0].backgroundColor.filter((_, index) =>
+              selectedPointFilters.includes(pointChartData.labels[index])
+            ),
+        borderWidth: 0,
+        borderRadius: 6,
+      },
+    ],
+    originalLabels: selectedPointFilters.includes("All")
+      ? pointChartData.originalLabels
+      : pointChartData.originalLabels.filter((_, index) =>
+          selectedPointFilters.includes(pointChartData.labels[index])
+        ),
+  };
+
+  const filteredDonutChartData = {
+    labels: selectedDonutFilters.includes("All")
+      ? donutChartData.labels
+      : donutChartData.labels.filter((label) =>
+          selectedDonutFilters.includes(label)
+        ),
+    datasets: [
+      {
+        data: selectedDonutFilters.includes("All")
+          ? donutChartData.datasets[0].data
+          : donutChartData.datasets[0].data.filter((_, index) =>
+              selectedDonutFilters.includes(donutChartData.labels[index])
+            ),
+        backgroundColor: selectedDonutFilters.includes("All")
+          ? donutChartData.datasets[0].backgroundColor
+          : donutChartData.datasets[0].backgroundColor.filter((_, index) =>
+              selectedDonutFilters.includes(donutChartData.labels[index])
+            ),
+        borderWidth: 0,
+      },
+    ],
+    originalLabels: selectedDonutFilters.includes("All")
+      ? donutChartData.originalLabels
+      : donutChartData.originalLabels.filter((_, index) =>
+          selectedDonutFilters.includes(donutChartData.labels[index])
+        ),
+  };
+
   const hasTypeChartData =
     selectedTypeFilters.length > 0 &&
-    Object.keys(typeCounts).filter((type) => selectedTypeFilters.includes(type))
-      .length > 0 &&
-    Object.values(typeCounts).some((value) => value > 0);
+    filteredTypeChartData.datasets[0].data.some((value) => value > 0);
 
   const hasPointChartData =
     selectedPointFilters.length > 0 &&
-    pointChartData.datasets[0].data.some((value) => value > 0);
+    filteredPointChartData.datasets[0].data.some((value) => value > 0);
 
   const hasDonutChartData =
-    donutChartData.labels.length > 0 &&
-    donutChartData.labels[0] !== "No data" &&
-    donutChartData.datasets[0].data.some((value) => value > 0);
+    selectedDonutFilters.length > 0 &&
+    filteredDonutChartData.datasets[0].data.some((value) => value > 0);
+
+  const getTypeChartTitle = () => {
+    if (selectedTypeFilters.includes("All")) {
+      return "Biểu đồ Thống kê theo loại";
+    } else {
+      const selected = selectedTypeFilters.join(", ");
+      return `Biểu đồ Thống kê theo loại ${
+        selected.length > 30 ? selected.substring(0, 30) + "..." : selected
+      }`;
+    }
+  };
+
+  const generatePDF = async (chartRef, title, data) => {
+    if (!chartRef.current) {
+      console.error("Chart reference is null");
+      return;
+    }
+    try {
+      const canvas = await html2canvas(chartRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgWidth = 190;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+      let position = 20;
+
+      pdf.text(title, 10, 10);
+      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.addPage();
+      pdf.text("Dữ liệu chi tiết", 10, 10);
+      let y = 20;
+      data.labels.forEach((label, index) => {
+        const value = data.datasets[0].data[index];
+        pdf.text(`${label}: ${value}`, 10, y);
+        y += 10;
+      });
+
+      pdf.save(`${title}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
+  const generateExcel = (data, title) => {
+    try {
+      const worksheetData = data.labels.map((label, index) => ({
+        Label: label,
+        Value: data.datasets[0].data[index],
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+    }
+  };
+
+  const handleDownload = (chartType, format, chartRef, data, title) => {
+    if (format === "pdf") {
+      generatePDF(chartRef, title, data);
+    } else if (format === "excel") {
+      generateExcel(data, title);
+    }
+  };
+
+  const handleChartTypeChange = (chartSection, type) => {
+    if (chartSection === "type") {
+      setTypeChartType(type);
+      setShowTypeChartFilter(false);
+    } else if (chartSection === "point") {
+      setPointChartType(type);
+      setShowPointChartFilter(false);
+    } else if (chartSection === "donut") {
+      setDonutChartType(type);
+      setShowDonutChartFilter(false);
+    }
+  };
+
+  const handleDownloadFormat = (
+    chartSection,
+    format,
+    chartRef,
+    data,
+    title
+  ) => {
+    if (format) {
+      handleDownload(chartSection, format, chartRef, data, title);
+    }
+    if (chartSection === "type") {
+      setShowTypeDownloadFilter(false);
+    } else if (chartSection === "point") {
+      setShowPointDownloadFilter(false);
+    } else if (chartSection === "donut") {
+      setShowDonutDownloadFilter(false);
+    }
+  };
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -728,398 +1018,517 @@ const StatisticsChartPage = () => {
         {/* Charts */}
         <div className="self-center w-full max-w-[1563px] px-6 mt-6">
           <div className="grid grid-cols-2 gap-6">
+            {/* Type Chart */}
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê theo loại
+                  {getTypeChartTitle()}
                 </h2>
-                <div className="relative" ref={typeFilterRef}>
-                  <button
-                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowTypeFilter(!showTypeFilter)}
-                  >
-                    <span className="text-xs">Bộ lọc</span>
-                  </button>
-                  {showTypeFilter && (
-                    <div
-                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "220px" }}
+                <div className="flex items-center gap-2">
+                  <div className="relative" ref={typeChartFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() =>
+                        setShowTypeChartFilter(!showTypeChartFilter)
+                      }
                     >
-                      <div className="px-4 py-3 w-full">
-                        <label className="flex items-center mb-2">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedTypeFilters.length ===
-                              Object.keys(typeCounts).length
-                            }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedTypeFilters(Object.keys(typeCounts));
-                              } else {
-                                setSelectedTypeFilters([]);
+                      <span className="text-xs">Loại biểu đồ</span>
+                    </button>
+                    {showTypeChartFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="radio"
+                              value="bar"
+                              checked={typeChartType === "bar"}
+                              onChange={() =>
+                                handleChartTypeChange("type", "bar")
                               }
-                            }}
-                            className="mr-2"
-                          />
-                          Tất cả
-                        </label>
-                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
-                          {Object.keys(typeCounts).map((type) => (
-                            <label
-                              key={type}
-                              className="flex items-center mb-2"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedTypeFilters.includes(type)}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedTypeFilters([
-                                      ...selectedTypeFilters,
-                                      type,
-                                    ]);
-                                  } else {
-                                    setSelectedTypeFilters(
-                                      selectedTypeFilters.filter(
-                                        (t) => t !== type
-                                      )
-                                    );
-                                  }
-                                }}
-                                className="mr-2"
-                              />
-                              {type}
-                            </label>
-                          ))}
+                              className="mr-2"
+                            />
+                            Biểu đồ cột
+                          </label>
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="radio"
+                              value="doughnut"
+                              checked={typeChartType === "doughnut"}
+                              onChange={() =>
+                                handleChartTypeChange("type", "doughnut")
+                              }
+                              className="mr-2"
+                            />
+                            Biểu đồ tròn
+                          </label>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="relative" ref={typeFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowTypeFilter(!showTypeFilter)}
+                    >
+                      <span className="text-xs">Bộ lọc</span>
+                    </button>
+                    {showTypeFilter && (
+                      <div
+                        className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "220px" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              value="All"
+                              checked={selectedTypeFilters.includes("All")}
+                              onChange={handleTypeFilterChange}
+                              className="mr-2"
+                            />
+                            Tất cả
+                          </label>
+                          <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
+                            {Object.keys(typeCounts).map((type) => (
+                              <label
+                                key={type}
+                                className="flex items-center mb-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  value={type}
+                                  checked={selectedTypeFilters.includes(type)}
+                                  onChange={handleTypeFilterChange}
+                                  className="mr-2"
+                                />
+                                {type}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative" ref={typeDownloadFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() =>
+                        setShowTypeDownloadFilter(!showTypeDownloadFilter)
+                      }
+                    >
+                      <span className="text-xs">Xuất file</span>
+                    </button>
+                    {showTypeDownloadFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              handleDownloadFormat(
+                                "type",
+                                "pdf",
+                                typeChartRef,
+                                filteredTypeChartData,
+                                getTypeChartTitle()
+                              )
+                            }
+                          >
+                            PDF
+                          </div>
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              handleDownloadFormat(
+                                "type",
+                                "excel",
+                                typeChartRef,
+                                filteredTypeChartData,
+                                getTypeChartTitle()
+                              )
+                            }
+                          >
+                            Excel
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              {hasTypeChartData ? (
-                <Bar
-                  data={{
-                    labels: Object.keys(typeCounts).filter((type) =>
-                      selectedTypeFilters.includes(type)
-                    ),
-                    datasets: [
-                      {
-                        data: Object.values(typeCounts).filter((_, index) =>
-                          selectedTypeFilters.includes(
-                            Object.keys(typeCounts)[index]
-                          )
-                        ),
-                        backgroundColor: [
-                          "#00A3FF",
-                          "#7239EA",
-                          "#F1416C",
-                          "#7239EA",
-                          "#FF0000",
-                        ],
-                        borderWidth: 0,
-                        borderRadius: 6,
-                      },
-                    ],
-                  }}
-                  options={{
-                    ...getChartOptions({
-                      datasets: [
-                        {
-                          data: Object.values(typeCounts).filter((_, index) =>
-                            selectedTypeFilters.includes(
-                              Object.keys(typeCounts)[index]
-                            )
-                          ),
-                        },
-                      ],
-                    }),
-                    plugins: {
-                      ...getChartOptions({}).plugins,
-                      datalabels: {
-                        display: false, // Disable numbers inside the chart
-                      },
-                    },
-                  }}
-                  height={200}
-                  width={500}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-[200px] text-gray-500">
-                  Không có dữ liệu để hiển thị
-                </div>
-              )}
+              <div ref={typeChartRef}>
+                {hasTypeChartData ? (
+                  typeChartType === "bar" ? (
+                    <Bar
+                      data={filteredTypeChartData}
+                      options={getChartOptions(filteredTypeChartData, false)}
+                      height={200}
+                      width={500}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-start">
+                      <Doughnut
+                        data={filteredTypeChartData}
+                        options={donutOptions}
+                        height={200}
+                        width={500}
+                      />
+                    </div>
+                  )
+                ) : (
+                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                    Không có dữ liệu để hiển thị
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Point Chart */}
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
                   Top 5 bài có điểm đóng góp cao nhất
                 </h2>
-                <div className="relative" ref={pointFilterRef}>
-                  <button
-                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowPointFilter(!showPointFilter)}
-                  >
-                    <span className="text-xs">Bộ lọc</span>
-                  </button>
-                  {showPointFilter && (
-                    <div
-                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "220px" }}
+                <div className="flex items-center gap-2">
+                  <div className="relative" ref={pointChartFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() =>
+                        setShowPointChartFilter(!showPointChartFilter)
+                      }
                     >
-                      <div className="px-4 py-3 w-full">
-                        <label className="flex items-center mb-2">
-                          <input
-                            type="checkbox"
-                            checked={
-                              selectedPointFilters.length ===
-                              pointFilterOptions.length
-                            }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedPointFilters(
-                                  pointFilterOptions.map((opt) => opt.value)
-                                );
-                              } else {
-                                setSelectedPointFilters([]);
+                      <span className="text-xs">Loại biểu đồ</span>
+                    </button>
+                    {showPointChartFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="radio"
+                              value="bar"
+                              checked={pointChartType === "bar"}
+                              onChange={() =>
+                                handleChartTypeChange("point", "bar")
                               }
-                            }}
-                            className="mr-2"
-                          />
-                          Tất cả
-                        </label>
-                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
-                          {pointFilterOptions.map((option) => (
-                            <label
-                              key={option.value}
-                              className="flex items-center mb-2"
-                            >
-                              <input
-                                type="checkbox"
-                                checked={selectedPointFilters.includes(
-                                  option.value
-                                )}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedPointFilters([
-                                      ...selectedPointFilters,
-                                      option.value,
-                                    ]);
-                                  } else {
-                                    setSelectedPointFilters(
-                                      selectedPointFilters.filter(
-                                        (t) => t !== option.value
-                                      )
-                                    );
-                                  }
-                                }}
-                                className="mr-2"
-                              />
-                              {option.label}
-                            </label>
-                          ))}
+                              className="mr-2"
+                            />
+                            Biểu đồ cột
+                          </label>
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="radio"
+                              value="doughnut"
+                              checked={pointChartType === "doughnut"}
+                              onChange={() =>
+                                handleChartTypeChange("point", "doughnut")
+                              }
+                              className="mr-2"
+                            />
+                            Biểu đồ tròn
+                          </label>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="relative" ref={pointFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowPointFilter(!showPointFilter)}
+                    >
+                      <span className="text-xs">Bộ lọc</span>
+                    </button>
+                    {showPointFilter && (
+                      <div
+                        className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "220px" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              value="All"
+                              checked={selectedPointFilters.includes("All")}
+                              onChange={handlePointFilterChange}
+                              className="mr-2"
+                            />
+                            Tất cả
+                          </label>
+                          <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
+                            {pointChartData.labels.map((label) => (
+                              <label
+                                key={label}
+                                className="flex items-center mb-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  value={label}
+                                  checked={selectedPointFilters.includes(label)}
+                                  onChange={handlePointFilterChange}
+                                  className="mr-2"
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative" ref={pointDownloadFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() =>
+                        setShowPointDownloadFilter(!showPointDownloadFilter)
+                      }
+                    >
+                      <span className="text-xs">Xuất file</span>
+                    </button>
+                    {showPointDownloadFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              handleDownloadFormat(
+                                "point",
+                                "pdf",
+                                pointChartRef,
+                                filteredPointChartData,
+                                "Top 5 bài có điểm đóng góp cao nhất"
+                              )
+                            }
+                          >
+                            PDF
+                          </div>
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              handleDownloadFormat(
+                                "point",
+                                "excel",
+                                pointChartRef,
+                                filteredPointChartData,
+                                "Top 5 bài có điểm đóng góp cao nhất"
+                              )
+                            }
+                          >
+                            Excel
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              {hasPointChartData ? (
-                <Bar
-                  data={{
-                    labels: pointChartData.labels.filter((label, index) =>
-                      selectedPointFilters.includes(label)
-                    ),
-                    datasets: [
-                      {
-                        data: pointChartData.labels
-                          .filter((label, index) =>
-                            selectedPointFilters.includes(label)
-                          )
-                          .map((label) => {
-                            const index = pointChartData.labels.indexOf(label);
-                            return pointChartData.datasets[0].data[index];
-                          }),
-                        backgroundColor:
-                          pointChartData.datasets[0].backgroundColor,
-                        borderWidth: 0,
-                        borderRadius: 6,
-                      },
-                    ],
-                  }}
-                  options={{
-                    ...getChartOptions({
-                      datasets: [
-                        {
-                          data: pointChartData.labels
-                            .filter((label, index) =>
-                              selectedPointFilters.includes(label)
-                            )
-                            .map((label) => {
-                              const index =
-                                pointChartData.labels.indexOf(label);
-                              return pointChartData.datasets[0].data[index];
-                            }),
-                        },
-                      ],
-                      originalLabels: pointChartData.originalLabels,
-                    }),
-                    plugins: {
-                      ...getChartOptions({}).plugins,
-                      datalabels: {
-                        display: false, // Disable numbers inside the chart
-                      },
-                    },
-                  }}
-                  height={200}
-                  width={540}
-                />
-              ) : (
-                <div className="flex items-center justify-center h-[200px] text-gray-500">
-                  Không có dữ liệu để hiển thị
-                </div>
-              )}
+              <div ref={pointChartRef}>
+                {hasPointChartData ? (
+                  pointChartType === "bar" ? (
+                    <Bar
+                      data={filteredPointChartData}
+                      options={getChartOptions(filteredPointChartData, false)}
+                      height={200}
+                      width={540}
+                    />
+                  ) : (
+                    <div className="flex flex-col items-start">
+                      <Doughnut
+                        data={filteredPointChartData}
+                        options={donutOptions}
+                        height={200}
+                        width={500}
+                      />
+                    </div>
+                  )
+                ) : (
+                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                    Không có dữ liệu để hiển thị
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Donut Chart */}
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="font-semibold text-gray-700">
-                  Biểu đồ Thống kê top 5 bài báo theo lĩnh vực nghiên cứu
+                  Top 5 bài báo theo lĩnh vực nghiên cứu
                 </h2>
-                <div className="relative" ref={donutFilterRef}>
-                  <button
-                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowDonutFilter(!showDonutFilter)}
-                  >
-                    <span className="text-xs">Bộ lọc</span>
-                  </button>
-                  {showDonutFilter && (
-                    <div
-                      className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "250px" }}
+                <div className="flex items-center gap-2">
+                  <div className="relative" ref={donutChartFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() =>
+                        setShowDonutChartFilter(!showDonutChartFilter)
+                      }
                     >
-                      <div className="px-4 py-3 w-full">
-                        <label key="All" className="flex items-center mb-2">
-                          <input
-                            type="checkbox"
-                            value="All"
-                            checked={
-                              selectedDonutFilters.length ===
-                              donutFilterOptions.length
-                            }
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSelectedDonutFilters(
-                                  donutFilterOptions.map((opt) => opt.value)
-                                );
-                              } else {
-                                setSelectedDonutFilters([]);
+                      <span className="text-xs">Loại biểu đồ</span>
+                    </button>
+                    {showDonutChartFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="radio"
+                              value="bar"
+                              checked={donutChartType === "bar"}
+                              onChange={() =>
+                                handleChartTypeChange("donut", "bar")
                               }
-                            }}
-                            className="mr-2"
-                          />
-                          Tất cả
-                        </label>
-                        <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
-                          {donutFilterOptions.map((option) => (
-                            <label
-                              key={option.value}
-                              className="flex items-center mb-2"
-                            >
-                              <input
-                                type="checkbox"
-                                value={option.value}
-                                checked={selectedDonutFilters.includes(
-                                  option.value
-                                )}
-                                onChange={(e) => {
-                                  if (e.target.checked) {
-                                    setSelectedDonutFilters([
-                                      ...selectedDonutFilters,
-                                      option.value,
-                                    ]);
-                                  } else {
-                                    setSelectedDonutFilters(
-                                      selectedDonutFilters.filter(
-                                        (t) => t !== option.value
-                                      )
-                                    );
-                                  }
-                                }}
-                                className="mr-2"
-                              />
-                              {option.label}
-                            </label>
-                          ))}
+                              className="mr-2"
+                            />
+                            Biểu đồ cột
+                          </label>
+                          <label className="flex items-center mb-2">
+                            <input
+                              type="radio"
+                              value="doughnut"
+                              checked={donutChartType === "doughnut"}
+                              onChange={() =>
+                                handleChartTypeChange("donut", "doughnut")
+                              }
+                              className="mr-2"
+                            />
+                            Biểu đồ tròn
+                          </label>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                  <div className="relative" ref={donutFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowDonutFilter(!showDonutFilter)}
+                    >
+                      <span className="text-xs">Bộ lọc</span>
+                    </button>
+                    {showDonutFilter && (
+                      <div
+                        className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "250px" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <label key="All" className="flex items-center mb-2">
+                            <input
+                              type="checkbox"
+                              value="All"
+                              checked={selectedDonutFilters.includes("All")}
+                              onChange={handleDonutFilterChange}
+                              className="mr-2"
+                            />
+                            Tất cả
+                          </label>
+                          <div className="max-h-[150px] overflow-y-auto pr-1 mt-2">
+                            {donutChartData.labels.map((label) => (
+                              <label
+                                key={label}
+                                className="flex items-center mb-2"
+                              >
+                                <input
+                                  type="checkbox"
+                                  value={label}
+                                  checked={selectedDonutFilters.includes(label)}
+                                  onChange={handleDonutFilterChange}
+                                  className="mr-2"
+                                />
+                                {label}
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="relative" ref={donutDownloadFilterRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() =>
+                        setShowDonutDownloadFilter(!showDonutDownloadFilter)
+                      }
+                    >
+                      <span className="text-xs">Xuất file</span>
+                    </button>
+                    {showDonutDownloadFilter && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              handleDownloadFormat(
+                                "donut",
+                                "pdf",
+                                donutChartRef,
+                                filteredDonutChartData,
+                                "Top 5 lĩnh vực nghiên cứu"
+                              )
+                            }
+                          >
+                            PDF
+                          </div>
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              handleDownloadFormat(
+                                "donut",
+                                "excel",
+                                donutChartRef,
+                                filteredDonutChartData,
+                                "Top 5 lĩnh vực nghiên cứu"
+                              )
+                            }
+                          >
+                            Excel
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-              {hasDonutChartData ? (
-                <div className="flex flex-col items-center">
-                  <Doughnut
-                    data={{
-                      labels: donutChartData.labels.filter(
-                        (label) =>
-                          selectedDonutFilters.length === 0 ||
-                          selectedDonutFilters.includes(label)
-                      ),
-                      datasets: [
-                        {
-                          data: donutChartData.labels
-                            .filter(
-                              (label) =>
-                                selectedDonutFilters.length === 0 ||
-                                selectedDonutFilters.includes(label)
-                            )
-                            .map((label) => {
-                              const index =
-                                donutChartData.labels.indexOf(label);
-                              return donutChartData.datasets[0].data[index];
-                            }),
-                          backgroundColor:
-                            donutChartData.datasets[0].backgroundColor,
-                          borderWidth: 0,
-                        },
-                      ],
-                    }}
-                    options={{
-                      responsive: false,
-                      maintainAspectRatio: false,
-                      plugins: {
-                        legend: {
-                          position: "right",
-                          align: "center",
-                          labels: {
-                            usePointStyle: true,
-                            padding: 20,
-                            boxWidth: 10,
-                          },
-                        },
-                        datalabels: {
-                          color: "#000",
-                          font: {
-                            size: 12,
-                            weight: "bold",
-                          },
-                          formatter: (value) => value,
-                        },
-                      },
-                      cutout: "50%", // Adjust cutout for better visualization
-                    }}
-                    height={200}
-                    width={500}
-                  />
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-[200px] text-gray-500">
-                  Không có dữ liệu để hiển thị
-                </div>
-              )}
+              <div ref={donutChartRef}>
+                {hasDonutChartData ? (
+                  donutChartType === "doughnut" ? (
+                    <div className="flex flex-col items-start">
+                      <Doughnut
+                        data={filteredDonutChartData}
+                        options={donutOptions}
+                        height={200}
+                        width={500}
+                      />
+                    </div>
+                  ) : (
+                    <Bar
+                      data={filteredDonutChartData}
+                      options={getChartOptions(filteredDonutChartData, false)}
+                      height={200}
+                      width={500}
+                    />
+                  )
+                ) : (
+                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                    Không có dữ liệu để hiển thị
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Table */}
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="font-semibold text-gray-700">

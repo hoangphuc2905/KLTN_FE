@@ -446,6 +446,7 @@ const ManagementAriticle = () => {
   const [sortedInfo, setSortedInfo] = useState({});
   const [notes, setNotes] = useState({});
   const [filteredCounts, setFilteredCounts] = useState(null); // Add state for filtered counts
+  const [pageSize, setPageSize] = useState(10); // Thêm state cho pageSize, mặc định là 10
 
   useEffect(() => {
     const fetchPapers = async () => {
@@ -600,7 +601,6 @@ const ManagementAriticle = () => {
     revision: 1,
     refused: 1,
   });
-  const itemsPerPage = 10;
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -1071,6 +1071,19 @@ const ManagementAriticle = () => {
     navigate(`/admin/management/ariticle/detail/${record._id}`);
   };
 
+  // Hàm xử lý khi thay đổi pageSize
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    // Đặt lại trang hiện tại về 1 khi thay đổi pageSize
+    setCurrentPages({
+      all: 1,
+      approved: 1,
+      pending: 1,
+      revision: 1,
+      refused: 1,
+    });
+  };
+
   const columns = [
     {
       title: "STT",
@@ -1078,7 +1091,7 @@ const ManagementAriticle = () => {
       key: "paper_id",
       render: (text, record, index) => {
         const currentPage = currentPages[activeTab];
-        return (currentPage - 1) * itemsPerPage + index + 1;
+        return (currentPage - 1) * pageSize + index + 1; // Sử dụng pageSize động
       },
       width: 75,
       sorter: (a, b) => a.paper_id - b.paper_id,
@@ -1584,7 +1597,7 @@ const ManagementAriticle = () => {
                     dataSource={newColumns.length > 0 ? filteredPapers : []}
                     pagination={{
                       current: currentPages[activeTab],
-                      pageSize: itemsPerPage,
+                      pageSize: pageSize, // Sử dụng pageSize động
                       total: filteredPapers.length,
                       onChange: (page) => {
                         // Cập nhật trang hiện tại cho tab đang active
@@ -1593,8 +1606,26 @@ const ManagementAriticle = () => {
                           [activeTab]: page,
                         }));
                       },
-                      showSizeChanger: false,
+                      showSizeChanger: false, // Tắt showSizeChanger mặc định của Ant Design
                       position: ["bottomRight"],
+                      // Thêm bộ chọn pageSize tùy chỉnh
+                      showTotal: (total) => (
+                        <div className="flex items-center gap-2">
+                          <span>Hiển thị</span>
+                          <Select
+                            value={pageSize}
+                            onChange={handlePageSizeChange}
+                            style={{ width: 80 }}
+                            options={[
+                              { value: 10, label: "10" },
+                              { value: 20, label: "20" },
+                              { value: 30, label: "30" },
+                              { value: 50, label: "50" },
+                            ]}
+                          />
+                          <span>của {total} bản ghi</span>
+                        </div>
+                      ),
                     }}
                     rowKey={(record) => record._id || record.key}
                     className="text-sm"
