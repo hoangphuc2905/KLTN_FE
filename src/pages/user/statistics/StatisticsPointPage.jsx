@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Table, Checkbox, Tooltip, Modal, Space } from "antd";
+import { Input, Table, Checkbox, Tooltip, Modal, Space, Select } from "antd";
 import { saveAs } from "file-saver";
 import ExcelJS from "exceljs";
 import { useNavigate } from "react-router-dom";
@@ -40,10 +40,10 @@ const StatisticsPointPage = () => {
   const [filterTotalPointsFrom, setFilterTotalPointsFrom] = useState("");
   const [filterTotalPointsTo, setFilterTotalPointsTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
   const [sortedInfo, setSortedInfo] = useState({});
-  const itemsPerPage = 10;
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -284,8 +284,7 @@ const StatisticsPointPage = () => {
       title: "STT",
       dataIndex: "id",
       key: "id",
-      render: (text, record, index) =>
-        (currentPage - 1) * itemsPerPage + index + 1,
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1,
       sorter: (a, b) => a.id - b.id,
       sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null,
       width: 75,
@@ -588,6 +587,11 @@ const StatisticsPointPage = () => {
     printWindow.document.write(tableHTML);
     printWindow.document.close();
     printWindow.print();
+  };
+
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   useEffect(() => {
@@ -1159,9 +1163,13 @@ const StatisticsPointPage = () => {
                 dataSource={filteredPapers}
                 pagination={{
                   current: currentPage,
-                  pageSize: itemsPerPage,
+                  pageSize: pageSize,
                   total: filteredPapers.length,
                   onChange: (page) => setCurrentPage(page),
+                  showSizeChanger: true,
+                  pageSizeOptions: ["10", "20", "50", "100"],
+                  onShowSizeChange: (current, size) =>
+                    handlePageSizeChange(size),
                 }}
                 rowKey="id"
                 className="text-sm"

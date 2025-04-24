@@ -9,6 +9,7 @@ import {
   Tooltip,
   Dropdown,
   Divider,
+  Select,
 } from "antd";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
@@ -34,18 +35,18 @@ const ManagementUsers = () => {
   const [filterDepartment, setFilterDepartment] = useState(["Tất cả"]);
   const [filterPosition, setFilterPosition] = useState(["Tất cả"]);
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
-  const [filterEmail, setFilterEmail] = useState(""); // Thêm state cho email
-  const [filterPhone, setFilterPhone] = useState(""); // Thêm state cho phone
-  const [filterGender, setFilterGender] = useState(["Tất cả"]); // Thêm state cho gender
-  const [filterDateOfBirth, setFilterDateOfBirth] = useState(""); // Thêm state cho date_of_birth
-  const [filterCccd, setFilterCccd] = useState(""); // Thêm state cho cccd
-  const [filterAddress, setFilterAddress] = useState(""); // Thêm state cho address
-  const [filterRole, setFilterRole] = useState(["Tất cả"]); // Thêm state cho chức vụ
+  const [filterEmail, setFilterEmail] = useState("");
+  const [filterPhone, setFilterPhone] = useState("");
+  const [filterGender, setFilterGender] = useState(["Tất cả"]);
+  const [filterDateOfBirth, setFilterDateOfBirth] = useState("");
+  const [filterCccd, setFilterCccd] = useState("");
+  const [filterAddress, setFilterAddress] = useState("");
+  const [filterRole, setFilterRole] = useState(["Tất cả"]);
   const [sortKey, setSortKey] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
   const [userCurrentPage, setUserCurrentPage] = useState(1);
   const [lecturerCurrentPage, setLecturerCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10); // New state for page size
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -66,16 +67,16 @@ const ManagementUsers = () => {
   const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
   const [showPositionFilter, setShowPositionFilter] = useState(false);
   const [showStatusFilter, setShowStatusFilter] = useState(false);
-  const [showGenderFilter, setShowGenderFilter] = useState(false); // Thêm state cho gender filter
-  const [showRoleFilter, setShowRoleFilter] = useState(false); // Thêm state cho role filter
+  const [showGenderFilter, setShowGenderFilter] = useState(false);
+  const [showRoleFilter, setShowRoleFilter] = useState(false);
   const [showColumnFilter, setShowColumnFilter] = useState(false);
 
   const filterRef = useRef(null);
   const departmentFilterRef = useRef(null);
   const positionFilterRef = useRef(null);
   const statusFilterRef = useRef(null);
-  const genderFilterRef = useRef(null); // Thêm ref cho gender filter
-  const roleFilterRef = useRef(null); // Thêm ref cho role filter
+  const genderFilterRef = useRef(null);
+  const roleFilterRef = useRef(null);
   const columnFilterRef = useRef(null);
 
   const roleMapping = {
@@ -111,7 +112,7 @@ const ManagementUsers = () => {
       dataIndex: "id",
       key: "id",
       render: (text, record, index) =>
-        (userCurrentPage - 1) * itemsPerPage + index + 1,
+        (userCurrentPage - 1) * pageSize + index + 1,
       width: 65,
       fixed: "left",
     },
@@ -247,7 +248,7 @@ const ManagementUsers = () => {
       width: 140,
       render: (isActive) => (
         <span
-          className={`px-2 py-1 rounded text-sm ${
+          className={`px-2/additional py-1 rounded text-sm ${
             isActive ? "text-green-700" : "text-red-700"
           }`}
         >
@@ -279,7 +280,7 @@ const ManagementUsers = () => {
       dataIndex: "id",
       key: "id",
       render: (text, record, index) =>
-        (lecturerCurrentPage - 1) * itemsPerPage + index + 1,
+        (lecturerCurrentPage - 1) * pageSize + index + 1,
       width: 65,
       fixed: "left",
     },
@@ -1252,6 +1253,17 @@ const ManagementUsers = () => {
   const totalStudents = users.length;
   const totalLecturers = lecturers.length;
 
+  // Handle page size change
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    // Reset to first page when page size changes
+    if (activeTab === "user") {
+      setUserCurrentPage(1);
+    } else {
+      setLecturerCurrentPage(1);
+    }
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
@@ -1326,6 +1338,7 @@ const ManagementUsers = () => {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
+
                   className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                   onClick={() => setShowFilter(!showFilter)}
                 >
@@ -1415,7 +1428,6 @@ const ManagementUsers = () => {
                           </div>
                         </div>
 
-                        {/* Chỉ hiển thị bộ lọc chức danh và chức vụ khi đang ở tab giảng viên */}
                         {activeTab === "lecturer" && (
                           <>
                             <div className="mb-3">
@@ -1846,12 +1858,30 @@ const ManagementUsers = () => {
                       activeTab === "user"
                         ? userCurrentPage
                         : lecturerCurrentPage,
-                    pageSize: itemsPerPage,
+                    pageSize: pageSize,
                     total: filteredUsers.length,
                     onChange: (page) =>
                       activeTab === "user"
                         ? setUserCurrentPage(page)
                         : setLecturerCurrentPage(page),
+                    showSizeChanger: false,
+                    showTotal: (total, range) => (
+                      <div className="flex items-center">
+                        <Select
+                          value={pageSize}
+                          onChange={handlePageSizeChange}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 30, label: "30 / trang" },
+                            { value: 50, label: "50 / trang" },
+                            { value: 100, label: "100 / trang" },
+                          ]}
+                        />
+                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                      </div>
+                    ),
                   }}
                   rowKey={(record) =>
                     record._id || record.student_id || record.lecturer_id

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Table, Checkbox, Modal, Spin } from "antd";
+import { Input, Table, Checkbox, Modal, Spin, Select } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
@@ -30,7 +30,7 @@ const ManagementPointDepartmentPage = () => {
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("Tất cả");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10);
 
   const getAcademicYears = async () => {
     try {
@@ -179,6 +179,11 @@ const ManagementPointDepartmentPage = () => {
     setCurrentPage(pagination.current);
   };
 
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedAuthor, setSelectedAuthor] = useState(null);
   const [authorPapers, setAuthorPapers] = useState([]);
@@ -285,8 +290,7 @@ const ManagementPointDepartmentPage = () => {
       title: "STT",
       dataIndex: "id",
       key: "id",
-      render: (text, record, index) =>
-        (currentPage - 1) * itemsPerPage + index + 1,
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1,
       sorter: (a, b) => a.id - b.id,
       sortOrder: sortedInfo.columnKey === "id" ? sortedInfo.order : null,
       width: 65,
@@ -414,7 +418,7 @@ const ManagementPointDepartmentPage = () => {
     filteredPapers.forEach((paper, index) => {
       const rowData = visibleColumnsList.map((column) => {
         if (column.dataIndex === "id") {
-          return (currentPage - 1) * itemsPerPage + index + 1;
+          return (currentPage - 1) * pageSize + index + 1;
         }
         return paper[column.dataIndex] || "";
       });
@@ -455,7 +459,7 @@ const ManagementPointDepartmentPage = () => {
         if (columnName === "id") {
           maxLength = Math.max(
             maxLength,
-            String((currentPage - 1) * itemsPerPage + rowIndex + 1).length
+            String((currentPage - 1) * pageSize + rowIndex + 1).length
           );
         } else if (columnName) {
           const value = paper[columnName];
@@ -492,7 +496,7 @@ const ManagementPointDepartmentPage = () => {
           .map((col) => {
             if (col.dataIndex === "id") {
               return `<td style="border: 1px solid #ddd; padding: 8px;">${
-                (currentPage - 1) * itemsPerPage + index + 1
+                (currentPage - 1) * pageSize + index + 1
               }</td>`;
             }
             return `<td style="border: 1px solid #ddd; padding: 8px;">${
@@ -1051,13 +1055,34 @@ const ManagementPointDepartmentPage = () => {
                   dataSource={filteredPapers}
                   pagination={{
                     current: currentPage,
-                    pageSize: itemsPerPage,
+                    pageSize: pageSize,
                     total: filteredPapers.length,
                     onChange: (page) => setCurrentPage(page),
+                    showSizeChanger: false,
+                    showTotal: (total, range) => (
+                      <div className="flex items-center">
+                        <Select
+                          value={pageSize}
+                          onChange={handlePageSizeChange}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 30, label: "30 / trang" },
+                            { value: 50, label: "50 / trang" },
+                            { value: 100, label: "100 / trang" },
+                          ]}
+                        />
+                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                      </div>
+                    ),
                   }}
                   rowKey="id"
                   className="text-sm"
                   onChange={handleChange}
+                  onRow={(record) => ({
+                    onClick: () => handleViewDetails(record),
+                  })}
                   scroll={{
                     x: columns.reduce(
                       (total, col) => total + (col.width || 0),

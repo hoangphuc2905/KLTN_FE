@@ -33,6 +33,8 @@ const ManagementTable = () => {
   const [roles, setRoles] = useState([]);
   const [institutions, setInstitutions] = useState([]);
   const [showPaperTypeFilter, setShowPaperTypeFilter] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10); // New state for page size
 
   const roleMapping = {
     MainAuthor: "Chính",
@@ -46,8 +48,7 @@ const ManagementTable = () => {
       title: "STT",
       dataIndex: "id",
       key: "id",
-      render: (text, record, index) =>
-        (currentPage - 1) * itemsPerPage + index + 1,
+      render: (text, record, index) => (currentPage - 1) * pageSize + index + 1, // Updated to use pageSize
       width: 75,
       sorter: (a, b) => a.id - b.id,
     },
@@ -202,10 +203,8 @@ const ManagementTable = () => {
   const [showRoleFilter, setShowRoleFilter] = useState(false);
   const [filterInstitution, setFilterInstitution] = useState(["Tất cả"]);
   const [showInstitutionFilter, setShowInstitutionFilter] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
-  const itemsPerPage = 10;
 
   const [showColumnFilter, setShowColumnFilter] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(
@@ -348,6 +347,12 @@ const ManagementTable = () => {
     if (!isNaN(value) && value >= 0) {
       setToAuthorCount(value);
     }
+  };
+
+  // Handle page size change
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // Reset to first page when page size changes
   };
 
   const downloadExcel = async () => {
@@ -691,6 +696,7 @@ const ManagementTable = () => {
                   <Filter className="w-4 h-4" />
                   <span className="text-xs">Chọn cột</span>
                 </button>
+
               </div>
               {loading ? (
                 <div className="flex justify-center items-center h-64">
@@ -699,12 +705,14 @@ const ManagementTable = () => {
                   </Spin>
                 </div>
               ) : (
+
                 <div className="overflow-x-auto">
                   <Table
                     columns={filteredColumns}
                     dataSource={filteredPapers}
                     pagination={{
                       current: currentPage,
+
                       pageSize: itemsPerPage,
                       total: filteredPapers.length,
                       onChange: (page) => setCurrentPage(page),
@@ -721,6 +729,7 @@ const ManagementTable = () => {
                       ),
                     }}
                   />
+
                 </div>
               )}
             </div>

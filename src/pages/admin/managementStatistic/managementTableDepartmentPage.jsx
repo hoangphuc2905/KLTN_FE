@@ -12,6 +12,7 @@ import {
   Checkbox,
   Divider,
   Spin,
+  Select,
 } from "antd";
 import { saveAs } from "file-saver";
 import ExcelJS from "exceljs";
@@ -204,6 +205,12 @@ const ManagementTableDepartmentPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
+  const [pageSize, setPageSize] = useState(10);
+
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
   const itemsPerPage = 10;
 
   const [showColumnFilter, setShowColumnFilter] = useState(false);
@@ -1082,9 +1089,27 @@ const ManagementTableDepartmentPage = () => {
                   dataSource={filteredPapers}
                   pagination={{
                     current: currentPage,
-                    pageSize: itemsPerPage,
+                    pageSize: pageSize,
                     total: filteredPapers.length,
                     onChange: (page) => setCurrentPage(page),
+                    showSizeChanger: false,
+                    showTotal: (total, range) => (
+                      <div className="flex items-center">
+                        <Select
+                          value={pageSize}
+                          onChange={handlePageSizeChange}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 30, label: "30 / trang" },
+                            { value: 50, label: "50 / trang" },
+                            { value: 100, label: "100 / trang" },
+                          ]}
+                        />
+                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                      </div>
+                    ),
                   }}
                   rowKey="id"
                   className="text-sm"

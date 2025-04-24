@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { Filter } from "lucide-react";
-import { Input, Table, Checkbox, Modal, Spin, Divider } from "antd";
+import { Input, Table, Checkbox, Modal, Spin, Divider, Select } from "antd";
 import { useNavigate, useLocation } from "react-router-dom";
 import { saveAs } from "file-saver";
 import * as ExcelJS from "exceljs";
@@ -161,8 +161,13 @@ const ManagementPointDetailPage = () => {
   const [filterTotalPointsFrom, setFilterTotalPointsFrom] = useState("");
   const [filterTotalPointsTo, setFilterTotalPointsTo] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [sortedInfo, setSortedInfo] = useState({});
-  const itemsPerPage = 10;
+
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
 
   const handleChange = (pagination, filters, sorter) => {
     setSortedInfo(sorter);
@@ -920,9 +925,27 @@ const ManagementPointDetailPage = () => {
                   dataSource={filteredPapers}
                   pagination={{
                     current: currentPage,
-                    pageSize: itemsPerPage,
+                    pageSize: pageSize,
                     total: filteredPapers.length,
                     onChange: (page) => setCurrentPage(page),
+                    showSizeChanger: false,
+                    showTotal: (total, range) => (
+                      <div className="flex items-center">
+                        <Select
+                          value={pageSize}
+                          onChange={handlePageSizeChange}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 30, label: "30 / trang" },
+                            { value: 50, label: "50 / trang" },
+                            { value: 100, label: "100 / trang" },
+                          ]}
+                        />
+                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                      </div>
+                    ),
                   }}
                   rowKey={(record) => record.id}
                   className="text-sm"
@@ -1005,7 +1028,11 @@ const ManagementPointDetailPage = () => {
               <Table
                 columns={paperColumns}
                 dataSource={authorPapers}
-                pagination={{ pageSize: 5 }}
+                pagination={{
+                  pageSize: 5,
+                  showTotal: (total, range) =>
+                    `${range[0]}-${range[1]} của ${total} mục`,
+                }}
                 rowKey={(record) => record.id}
                 scroll={{ y: 400 }}
                 size="small"

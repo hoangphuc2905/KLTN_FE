@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
+import { Filter } from "lucide-react";
+import { Input, Table, Checkbox, Spin, Divider, Select } from "antd";
 import { useNavigate } from "react-router-dom";
 import { Filter, ChevronDown } from "lucide-react";
 import {
@@ -31,6 +33,7 @@ const ManagementPoint = () => {
     "totalPoints",
     "action",
   ]);
+  const [pageSize, setPageSize] = useState(10);
 
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("Tất cả");
@@ -408,6 +411,11 @@ const ManagementPoint = () => {
     printWindow.print();
   };
 
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-lg:max-w-full max-lg:px-4">
@@ -694,12 +702,34 @@ const ManagementPoint = () => {
                   dataSource={filteredPapers}
                   pagination={{
                     current: currentPage,
-                    pageSize: itemsPerPage,
+                    pageSize: pageSize,
                     total: filteredPapers.length,
                     onChange: (page) => setCurrentPage(page),
+                    showSizeChanger: false,
+                    showTotal: (total, range) => (
+                      <div className="flex items-center">
+                        <Select
+                          value={pageSize}
+                          onChange={handlePageSizeChange}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 30, label: "30 / trang" },
+                            { value: 50, label: "50 / trang" },
+                            { value: 100, label: "100 / trang" },
+                          ]}
+                        />
+                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                      </div>
+                    ),
                   }}
                   rowKey="id"
                   className="text-sm"
+                  onRow={(record) => ({
+                    onClick: () =>
+                      handleViewDetails(record.id, record.department),
+                  })}
                   scroll={{
                     x: columns.reduce(
                       (total, col) => total + (col.width || 100),

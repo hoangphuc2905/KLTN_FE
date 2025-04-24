@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { useNavigate } from "react-router-dom";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Table, Tooltip, Modal, Space, Checkbox } from "antd";
+import { Input, Table, Tooltip, Modal, Space, Checkbox, Select } from "antd";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
@@ -15,6 +15,7 @@ const StatisticsTablePage = () => {
   const [fromAuthorCount, setFromAuthorCount] = useState("");
   const [toAuthorCount, setToAuthorCount] = useState("");
   const navigate = useNavigate();
+  const [pageSize, setPageSize] = useState(10);
 
   const [showFilter, setShowFilter] = useState(false);
   const uniqueGroups = [
@@ -600,6 +601,11 @@ const StatisticsTablePage = () => {
     showPaperTypeFilter,
   ]);
 
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
@@ -695,6 +701,7 @@ const StatisticsTablePage = () => {
                   <span className="text-xs">Chọn cột</span>
                 </button>
               </div>
+
               <div className="overflow-x-auto">
                 <Table
                   columns={filteredColumns}
