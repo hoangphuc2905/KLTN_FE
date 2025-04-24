@@ -259,25 +259,14 @@ const ManagementUsers = () => {
     {
       title: "CHỈNH SỬA",
       key: "edit",
-      width: 130,
+      width: 80,
       fixed: "right",
       render: (text, record) => (
         <button
           className="text-blue-500"
           onClick={() => handleEditClick(record)}
         >
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 20 20"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-              fill="currentColor"
-            />
-          </svg>
+          <EditOutlined />
         </button>
       ),
       align: "center",
@@ -477,7 +466,7 @@ const ManagementUsers = () => {
     {
       title: "CHỈNH SỬA",
       key: "edit",
-      width: 130,
+      width: 80,
       fixed: "right",
       render: (text, record) => {
         const isHeadOfDepartment = record.roles?.some(
@@ -500,18 +489,7 @@ const ManagementUsers = () => {
             className="text-blue-500"
             onClick={() => handleEditClick(record)}
           >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 20 20"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                fill="currentColor"
-              />
-            </svg>
+            <EditOutlined />
           </button>
         );
       },
@@ -1275,13 +1253,13 @@ const ManagementUsers = () => {
   const totalLecturers = lecturers.length;
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -1299,12 +1277,9 @@ const ManagementUsers = () => {
             </span>
           </div>
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div
-            className="flex justify-between items-center border-b"
-            style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
-          >
-            <div className="flex gap-2">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex justify-between items-center max-lg:flex-wrap">
+            <div className="flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
               <button
                 className={`px-4 py-2 text-center text-xs ${
                   activeTab === "user"
@@ -1326,7 +1301,7 @@ const ManagementUsers = () => {
                 Giảng viên ({totalLecturers})
               </button>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 mt-2 max-lg:mt-4">
               {userRole !== "admin" && (
                 <Dropdown
                   menu={{
@@ -1346,13 +1321,12 @@ const ManagementUsers = () => {
             </div>
           </div>
         </div>
-
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-md:max-w-full">
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative">
+              <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs mr-2"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                   onClick={() => setShowFilter(!showFilter)}
                 >
                   <Filter className="w-4 h-4" />
@@ -1371,7 +1345,7 @@ const ManagementUsers = () => {
                 {showFilter && (
                   <div
                     ref={filterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg"
+                    className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
                   >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 rounded-lg border border-gray-200">
                       <div className="max-h-[400px] overflow-y-auto pr-1">
@@ -1831,7 +1805,7 @@ const ManagementUsers = () => {
                 {showColumnFilter && (
                   <div
                     ref={columnFilterRef}
-                    className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
                   >
                     <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <Checkbox
@@ -1911,115 +1885,6 @@ const ManagementUsers = () => {
           </div>
         </div>
       </div>
-
-      <input
-        type="file"
-        id="studentExcelInput"
-        accept=".xlsx, .xls"
-        style={{ display: "none" }}
-        onChange={handleExcelUpload}
-      />
-      <input
-        type="file"
-        id="lecturerExcelInput"
-        accept=".xlsx, .xls"
-        style={{ display: "none" }}
-        onChange={handleExcelUpload}
-      />
-
-      <Modal
-        title={`Cập nhật trạng thái - ${
-          selectedUser?.full_name || "Người dùng"
-        }`}
-        visible={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      >
-        <div className="mb-3">
-          <label className="block text-gray-700 text-sm">Trạng thái:</label>
-          <Radio.Group
-            value={newStatus}
-            onChange={(e) => setNewStatus(e.target.value)}
-            className="w-full"
-          >
-            <Radio value="Hoạt động">Hoạt động</Radio>
-            <Radio value="Không hoạt động">Không hoạt động</Radio>
-          </Radio.Group>
-        </div>
-        {activeTab === "lecturer" && (
-          <div className="mb-3">
-            <label className="block text-gray-700 text-sm">Chức vụ:</label>
-            <Checkbox.Group
-              options={[
-                { label: "Giảng viên", value: "lecturer", disabled: true },
-                ...roleOptions.filter((role) => role.value !== "lecturer"),
-              ]}
-              value={newRole}
-              onChange={handleRoleChange}
-              className="flex flex-col gap-2"
-            />
-            <div className="mt-3">
-              <label className="block text-gray-700 text-sm">
-                Danh sách quyền:
-              </label>
-              <div className="flex flex-col gap-2">{renderRoleList()}</div>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      <Modal
-        title="Thêm sinh viên"
-        visible={isStudentModalVisible}
-        onCancel={handleStudentModalCancel}
-        footer={null}
-      >
-        <AddStudentModal onClose={handleStudentModalCancel} studentData={{}} />
-      </Modal>
-
-      <Modal
-        title="Thêm giảng viên"
-        visible={isLecturerModalVisible}
-        onCancel={handleLecturerModalCancel}
-        footer={null}
-      >
-        <AddLecturerModal
-          onClose={handleLecturerModalCancel}
-          lecturerData={{}}
-        />
-      </Modal>
-
-      <Modal
-        title="Xem và chỉnh sửa dữ liệu Excel"
-        visible={isExcelModalVisible}
-        onOk={handleExcelSave}
-        onCancel={handleExcelCancel}
-        width={800}
-      >
-        <Table
-          dataSource={excelData}
-          columns={
-            excelData.length > 0
-              ? Object.keys(excelData[0]).map((key) => ({
-                  title: key,
-                  dataIndex: key,
-                  key,
-                  render: (text, record, index) => (
-                    <Input
-                      value={text}
-                      onChange={(e) =>
-                        handleExcelCellChange(index, key, e.target.value)
-                      }
-                    />
-                  ),
-                }))
-              : []
-          }
-          rowKey={(record, index) => index}
-          pagination={false}
-          scroll={{ x: true }}
-        />
-      </Modal>
       <Footer />
     </div>
   );

@@ -612,12 +612,12 @@ const ScientificPaperPage = () => {
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
       <div className="flex-grow">
-        <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+        <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-lg:max-w-full max-lg:px-4">
           <div className="w-full bg-white">
             <Header />
           </div>
-          <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4 max-sm:px-2">
-            <div className="flex items-center gap-2 text-gray-600">
+          <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4 max-sm:px-2">
+            <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
                 alt="Home Icon"
@@ -636,23 +636,15 @@ const ScientificPaperPage = () => {
             </div>
           </div>
 
-          <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-md:px-4 max-sm:px-2">
-            <div className="flex justify-between items-center">
-              <div
-                className="flex border-b"
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "12px",
-                  flexWrap: "wrap",
-                }}
-              >
+          <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4 max-sm:px-2">
+            <div className="flex justify-between items-center max-lg:flex-wrap">
+              <div className="flex border-b gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
                 <button
                   className={`px-4 py-2 text-center text-xs ${
                     activeTab === "all"
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
-                  } rounded-lg max-sm:px-3 max-sm:py-1`}
+                  } rounded-lg`}
                   onClick={() => setActiveTab("all")}
                 >
                   Tất cả ({papers.length})
@@ -662,7 +654,7 @@ const ScientificPaperPage = () => {
                     activeTab === "Đã duyệt"
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
-                  } rounded-lg max-sm:px-3 max-sm:py-1`}
+                  } rounded-lg`}
                   onClick={() => setActiveTab("Đã duyệt")}
                 >
                   Đã duyệt (
@@ -674,7 +666,7 @@ const ScientificPaperPage = () => {
                     activeTab === "Đang chờ"
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
-                  } rounded-lg max-sm:px-3 max-sm:py-1`}
+                  } rounded-lg`}
                   onClick={() => setActiveTab("Đang chờ")}
                 >
                   Chờ duyệt (
@@ -685,7 +677,7 @@ const ScientificPaperPage = () => {
                     activeTab === "Chờ chỉnh sửa"
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
-                  } rounded-lg max-sm:px-3 max-sm:py-1`}
+                  } rounded-lg`}
                   onClick={() => setActiveTab("Chờ chỉnh sửa")}
                 >
                   Chờ chỉnh sửa (
@@ -697,16 +689,16 @@ const ScientificPaperPage = () => {
                     activeTab === "Từ chối"
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
-                  } rounded-lg max-sm:px-3 max-sm:py-1`}
+                  } rounded-lg`}
                   onClick={() => setActiveTab("Từ chối")}
                 >
                   Từ chối (
                   {papers.filter((paper) => paper.status === "refused").length})
                 </button>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center mt-2 max-lg:mt-4">
                 <select
-                  className="p-2 border rounded-lg bg-[#00A3FF] text-white h-[40px] text-sm w-[110px]"
+                  className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
                   value={selectedYear}
                   onChange={(e) => setSelectedYear(e.target.value)}
                 >
@@ -720,10 +712,10 @@ const ScientificPaperPage = () => {
             </div>
           </div>
 
-          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:px-4 max-sm:px-2 overflow-x-auto">
+          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-sm:px-2 overflow-x-auto">
             <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
               <div className="bg-white rounded-xl shadow-sm p-4 max-sm:p-3">
-                <div className="flex justify-end mb-4 relative gap-2 max-sm:gap-1">
+                <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                   <button
                     className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5"
                     onClick={() => {
@@ -1209,7 +1201,6 @@ const ScientificPaperPage = () => {
                         ...paper,
                         key: paper.id || paper._id || index,
                       }))}
-                      onChange={handleChange}
                       pagination={{
                         current: currentPage,
                         pageSize: itemsPerPage,
