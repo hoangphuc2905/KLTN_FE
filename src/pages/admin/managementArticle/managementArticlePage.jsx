@@ -1603,19 +1603,84 @@ const ManagementAriticle = () => {
                       position: ["bottomRight"],
                       showTotal: (total, range) => (
                         <div className="flex items-center">
-                          <Select
-                            value={pageSize}
-                            onChange={handlePageSizeChange}
-                            style={{ width: 120, marginRight: 16 }}
-                            options={[
-                              { value: 10, label: "10 / trang" },
-                              { value: 20, label: "20 / trang" },
-                              { value: 30, label: "30 / trang" },
-                              { value: 50, label: "50 / trang" },
-                              { value: 100, label: "100 / trang" },
-                            ]}
-                          />
-                          <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                          <div className="flex items-center">
+                            <Select
+                              value={pageSize}
+                              onChange={handlePageSizeChange}
+                              style={{ width: 120, marginRight: 8 }}
+                              dropdownRender={(menu) => (
+                                <div>
+                                  {menu}
+                                  <Divider style={{ margin: "4px 0" }} />
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      flexWrap: "nowrap",
+                                      padding: "8px",
+                                    }}
+                                  >
+                                    <Input
+                                      size="small"
+                                      type="number"
+                                      min={1}
+                                      placeholder="Số tùy chọn"
+                                      onChange={(e) => {
+                                        const value = parseInt(
+                                          e.target.value,
+                                          10
+                                        );
+                                        if (!isNaN(value) && value > 0) {
+                                          setPageSize(value);
+                                          setCurrentPages((prev) => ({
+                                            ...prev,
+                                            [activeTab]: 1,
+                                          }));
+                                        }
+                                      }}
+                                      onPressEnter={(e) => {
+                                        const value = parseInt(
+                                          e.target.value,
+                                          10
+                                        );
+                                        if (!isNaN(value) && value > 0) {
+                                          setPageSize(value);
+                                          setCurrentPages((prev) => ({
+                                            ...prev,
+                                            [activeTab]: 1,
+                                          }));
+                                          // Đóng dropdown sau khi đã nhập giá trị
+                                          const selectElement =
+                                            document.querySelector(
+                                              ".ant-select-dropdown-hidden"
+                                            );
+                                          if (selectElement) {
+                                            selectElement.click(); // Giả lập việc click bên ngoài để đóng dropdown
+                                          }
+                                        }
+                                      }}
+                                      style={{ flex: 1 }}
+                                    />
+                                  </div>
+                                </div>
+                              )}
+                              options={[
+                                { value: 10, label: "10 / trang" },
+                                { value: 20, label: "20 / trang" },
+                                { value: 30, label: "30 / trang" },
+                                { value: 50, label: "50 / trang" },
+                                { value: 100, label: "100 / trang" },
+                                ...(![10, 20, 30, 50, 100].includes(pageSize)
+                                  ? [
+                                      {
+                                        value: pageSize,
+                                        label: `${pageSize} / trang`,
+                                      },
+                                    ]
+                                  : []),
+                              ]}
+                            />
+                            <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                          </div>
                         </div>
                       ),
                     }}
