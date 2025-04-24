@@ -1601,21 +1601,21 @@ const ManagementAriticle = () => {
                       },
                       showSizeChanger: false,
                       position: ["bottomRight"],
-                      showTotal: (total) => (
-                        <div className="flex items-center gap-2">
-                          <span>Hiển thị</span>
+                      showTotal: (total, range) => (
+                        <div className="flex items-center">
                           <Select
                             value={pageSize}
                             onChange={handlePageSizeChange}
-                            style={{ width: 80 }}
+                            style={{ width: 120, marginRight: 16 }}
                             options={[
-                              { value: 10, label: "10" },
-                              { value: 20, label: "20" },
-                              { value: 30, label: "30" },
-                              { value: 50, label: "50" },
+                              { value: 10, label: "10 / trang" },
+                              { value: 20, label: "20 / trang" },
+                              { value: 30, label: "30 / trang" },
+                              { value: 50, label: "50 / trang" },
+                              { value: 100, label: "100 / trang" },
                             ]}
                           />
-                          <span>của {total} bản ghi</span>
+                          <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
                         </div>
                       ),
                     }}
