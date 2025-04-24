@@ -194,10 +194,16 @@ const ManagementTable = () => {
   const navigate = useNavigate();
 
   const [showFilter, setShowFilter] = useState(false);
+  const [showColumnFilter, setShowColumnFilter] = useState(false);
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((col) => col.key)
+  );
   const [filterPaperType, setFilterPaperType] = useState(["Tất cả"]);
   const [filterGroup, setFilterGroup] = useState(["Tất cả"]);
   const [filterPaperTitle, setFilterPaperTitle] = useState("");
   const [filterAuthorName, setFilterAuthorName] = useState("");
+  const [filterAuthorCountFrom, setFilterAuthorCountFrom] = useState("");
+  const [filterAuthorCountTo, setFilterAuthorCountTo] = useState("");
   const [filterRole, setFilterRole] = useState(["Tất cả"]);
   const [showRoleFilter, setShowRoleFilter] = useState(false);
   const [filterInstitution, setFilterInstitution] = useState(["Tất cả"]);
@@ -207,23 +213,45 @@ const ManagementTable = () => {
   const [modalContent, setModalContent] = useState({});
   const itemsPerPage = 10;
 
-  const [showColumnFilter, setShowColumnFilter] = useState(false);
-  const [visibleColumns, setVisibleColumns] = useState(
-    columns.map((col) => col.key)
-  );
-
   const columnOptions = columns.map((col) => ({
     label: col.title,
     value: col.key,
   }));
 
+  const handleColumnVisibilityChange = (selectedColumns) => {
+    setVisibleColumns(selectedColumns);
+  };
+
   const filteredColumns = columns.filter((col) =>
     visibleColumns.includes(col.key)
   );
 
-  const handleColumnVisibilityChange = (selectedColumns) => {
-    setVisibleColumns(selectedColumns);
-  };
+  const filteredPapers = papers.filter((paper) => {
+    const authorCount = parseInt(paper.author_count) || 0;
+
+    return (
+      (filterPaperType.includes("Tất cả") ||
+        filterPaperType.includes(paper.articleType)) &&
+      (filterGroup.includes("Tất cả") ||
+        filterGroup.includes(paper.groupName)) &&
+      (filterPaperTitle === "" ||
+        paper.title_vn
+          ?.toLowerCase()
+          .includes(filterPaperTitle.toLowerCase())) &&
+      (filterAuthorName === "" ||
+        paper.authors.toLowerCase().includes(filterAuthorName.toLowerCase())) &&
+      (filterAuthorCountFrom === "" ||
+        authorCount >= parseInt(filterAuthorCountFrom)) &&
+      (filterAuthorCountTo === "" ||
+        authorCount <= parseInt(filterAuthorCountTo)) &&
+      (filterRole.includes("Tất cả") ||
+        paper.roles.split(", ").some((role) => filterRole.includes(role))) &&
+      (filterInstitution.includes("Tất cả") ||
+        paper.institutions
+          .split(", ")
+          .some((inst) => filterInstitution.includes(inst)))
+    );
+  });
 
   const [academicYears, setAcademicYears] = useState([]);
   const [selectedYear, setSelectedYear] = useState("");
@@ -305,33 +333,6 @@ const ManagementTable = () => {
     setRoles(uniqueRoles);
     setInstitutions(uniqueInstitutions);
   }, [papers]);
-
-  const filteredPapers = papers.filter((paper) => {
-    const authorCount = paper.author_count
-      ? parseInt(paper.author_count.match(/\d+/)?.[0] || 0)
-      : 0;
-
-    return (
-      (filterPaperType.includes("Tất cả") ||
-        filterPaperType.includes(paper.articleType)) &&
-      (filterGroup.includes("Tất cả") ||
-        filterGroup.includes(paper.groupName)) &&
-      (filterPaperTitle === "" ||
-        paper.title_vn
-          ?.toLowerCase()
-          .includes(filterPaperTitle.toLowerCase())) &&
-      (filterAuthorName === "" ||
-        paper.authors.toLowerCase().includes(filterAuthorName.toLowerCase())) &&
-      (fromAuthorCount === "" || authorCount >= parseInt(fromAuthorCount)) &&
-      (toAuthorCount === "" || authorCount <= parseInt(toAuthorCount)) &&
-      (filterRole.includes("Tất cả") ||
-        paper.roles.split(", ").some((role) => filterRole.includes(role))) &&
-      (filterInstitution.includes("Tất cả") ||
-        paper.institutions
-          .split(", ")
-          .some((inst) => filterInstitution.includes(inst)))
-    );
-  });
 
   const handleRowClick = (record) => {
     setModalContent(record);
@@ -691,6 +692,85 @@ const ManagementTable = () => {
                   <Filter className="w-4 h-4" />
                   <span className="text-xs">Chọn cột</span>
                 </button>
+                {showColumnFilter && (
+                  <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
+                    <div className="px-4 py-5 w-full max-w-[350px]">
+                      <Checkbox.Group
+                        options={columnOptions}
+                        value={visibleColumns}
+                        onChange={handleColumnVisibilityChange}
+                        className="flex flex-col gap-2"
+                      />
+                    </div>
+                  </div>
+                )}
+                {showFilter && (
+                  <div className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200">
+                    <form className="px-4 py-5 w-full max-w-[400px]">
+                      <div className="mb-3">
+                        <label className="block text-gray-700 text-xs">
+                          Tên bài báo:
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="Nhập tên bài báo"
+                          value={filterPaperTitle}
+                          onChange={(e) => setFilterPaperTitle(e.target.value)}
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-full text-xs"
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="block text-gray-700 text-xs">
+                          Tên tác giả:
+                        </label>
+                        <Input
+                          type="text"
+                          placeholder="Nhập tên tác giả"
+                          value={filterAuthorName}
+                          onChange={(e) => setFilterAuthorName(e.target.value)}
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-full text-xs"
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <label className="block text-gray-700 text-xs">
+                          Số tác giả:
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="number"
+                            placeholder="Từ"
+                            value={filterAuthorCountFrom}
+                            onChange={(e) =>
+                              setFilterAuthorCountFrom(e.target.value)
+                            }
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] text-xs"
+                          />
+                          <Input
+                            type="number"
+                            placeholder="Đến"
+                            value={filterAuthorCountTo}
+                            onChange={(e) =>
+                              setFilterAuthorCountTo(e.target.value)
+                            }
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] text-xs"
+                          />
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterPaperTitle("");
+                          setFilterAuthorName("");
+                          setFilterAuthorCountFrom("");
+                          setFilterAuthorCountTo("");
+                        }}
+                        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
+                      >
+                        Bỏ lọc tất cả
+                      </button>
+                    </form>
+                  </div>
+                )}
               </div>
               {loading ? (
                 <div className="flex justify-center items-center h-64">
@@ -712,7 +792,10 @@ const ManagementTable = () => {
                     rowKey="id"
                     className="text-sm"
                     onRow={(record) => ({
-                      onClick: () => handleRowClick(record),
+                      onClick: (event) => {
+                        event.stopPropagation(); // Prevent event propagation issues
+                        handleRowClick(record); // Open the modal with the record's details
+                      },
                     })}
                     scroll={{
                       x: filteredColumns.reduce(
