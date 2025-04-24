@@ -801,12 +801,12 @@ const ManagementPointDepartmentPage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -832,12 +832,12 @@ const ManagementPointDepartmentPage = () => {
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
-          <div className="flex justify-end gap-4 mb-4">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-md:max-w-full">
+          <div className="flex justify-end gap-4 mb-4 items-center max-sm:flex-wrap">
             <select
               value={selectedYear}
               onChange={(e) => handleYearChange(e.target.value)}
-              className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[115px]"
+              className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[115px] max-sm:w-auto"
             >
               {academicYears.map((year) => (
                 <option key={year} value={year}>
@@ -847,7 +847,7 @@ const ManagementPointDepartmentPage = () => {
             </select>
             <button
               onClick={downloadExcel}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg max-sm:w-auto"
             >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
@@ -858,7 +858,7 @@ const ManagementPointDepartmentPage = () => {
             </button>
             <button
               onClick={printData}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg max-sm:w-auto"
             >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
@@ -870,9 +870,9 @@ const ManagementPointDepartmentPage = () => {
           </div>
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative gap-2">
+              <div className="flex justify-end mb-4 relative gap-2 flex-wrap">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowFilter(!showFilter);
                     setShowColumnFilter(false);
@@ -882,7 +882,7 @@ const ManagementPointDepartmentPage = () => {
                   <span className="text-xs">Bộ lọc</span>
                 </button>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowColumnFilter(!showColumnFilter);
                     setShowFilter(false);

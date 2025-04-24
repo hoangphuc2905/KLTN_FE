@@ -1,10 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
-import { Filter } from "lucide-react";
-import { Input, Table, Checkbox, Spin, Divider } from "antd";
 import { useNavigate } from "react-router-dom";
+import { Filter, ChevronDown } from "lucide-react";
+import {
+  Input,
+  Select,
+  Table,
+  Tooltip,
+  Modal,
+  Space,
+  Checkbox,
+  Divider,
+  Spin,
+} from "antd";
 import { saveAs } from "file-saver";
-import * as ExcelJS from "exceljs";
+import ExcelJS from "exceljs";
 import userApi from "../../../api/api";
 import Footer from "../../../components/Footer";
 
@@ -400,12 +410,12 @@ const ManagementPoint = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -431,8 +441,8 @@ const ManagementPoint = () => {
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
-          <div className="flex justify-end gap-4 mb-4">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-md:max-w-full">
+          <div className="flex justify-end gap-2 mb-4 flex-wrap items-center">
             <select
               value={selectedYear}
               onChange={(e) => setSelectedYear(e.target.value)}
@@ -446,7 +456,7 @@ const ManagementPoint = () => {
             </select>
             <button
               onClick={downloadExcel}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg h-[35px] text-base"
             >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
@@ -457,7 +467,7 @@ const ManagementPoint = () => {
             </button>
             <button
               onClick={printData}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg h-[35px] text-base"
             >
               <img
                 src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
@@ -469,9 +479,9 @@ const ManagementPoint = () => {
           </div>
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative gap-2">
+              <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowFilter(!showFilter);
                     setShowColumnFilter(false);
@@ -481,7 +491,7 @@ const ManagementPoint = () => {
                   <span className="text-xs">Bộ lọc</span>
                 </button>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowColumnFilter(!showColumnFilter);
                     setShowFilter(false);
@@ -493,7 +503,7 @@ const ManagementPoint = () => {
                 {showColumnFilter && (
                   <div
                     ref={columnFilterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
                   >
                     <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <Checkbox
@@ -517,7 +527,7 @@ const ManagementPoint = () => {
                 {showFilter && (
                   <div
                     ref={filterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg"
+                    className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
                   >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 rounded-lg border border-gray-200">
                       <div className="max-h-[500px] overflow-y-auto pr-1">

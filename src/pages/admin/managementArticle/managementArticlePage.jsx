@@ -1372,12 +1372,12 @@ const ManagementAriticle = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -1396,12 +1396,9 @@ const ManagementAriticle = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex justify-between items-center">
-            <div
-              className="flex border-b"
-              style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
-            >
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex justify-between items-center max-lg:flex-wrap">
+            <div className="flex border-b gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
               <button
                 className={`px-4 py-2 text-center text-xs ${
                   activeTab === "all"
@@ -1463,7 +1460,7 @@ const ManagementAriticle = () => {
                 {filteredCounts ? filteredCounts.refused : paperCounts.refused})
               </button>
             </div>
-            <div className="flex items-center">
+            <div className="flex items-center mt-2 max-lg:mt-4">
               <select
                 className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
                 value={selectedYear}
@@ -1479,10 +1476,10 @@ const ManagementAriticle = () => {
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-md:max-w-full">
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative gap-2">
+              <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
                   className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                   onClick={() => {
@@ -1496,7 +1493,7 @@ const ManagementAriticle = () => {
                 {showFilter && (
                   <div
                     ref={filterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg"
+                    className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
                   >
                     <FilterPanel
                       uniquePaperTypes={uniquePaperTypes}
@@ -1517,7 +1514,6 @@ const ManagementAriticle = () => {
                         setFilterStatus(filterConfig.status);
                       }}
                       onClearAllFilters={() => {
-                        // Reset all filters to default values
                         setFilterPaperType(["Tất cả"]);
                         setFilterGroup(["Tất cả"]);
                         setFilterPaperTitle("");
@@ -1527,8 +1523,6 @@ const ManagementAriticle = () => {
                         setFilterRole(["Tất cả"]);
                         setFilterInstitution(["Tất cả"]);
                         setFilterStatus(["Tất cả"]);
-
-                        // Reset filtered counts to original counts
                         setFilteredCounts(null);
                       }}
                     />
@@ -1547,7 +1541,7 @@ const ManagementAriticle = () => {
                 {showColumnFilter && (
                   <div
                     ref={columnFilterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
                   >
                     <div className="px-4 py-5 w-full max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 max-h-[400px] overflow-y-auto">
                       <Checkbox
@@ -1597,18 +1591,16 @@ const ManagementAriticle = () => {
                     dataSource={newColumns.length > 0 ? filteredPapers : []}
                     pagination={{
                       current: currentPages[activeTab],
-                      pageSize: pageSize, // Sử dụng pageSize động
+                      pageSize: pageSize,
                       total: filteredPapers.length,
                       onChange: (page) => {
-                        // Cập nhật trang hiện tại cho tab đang active
                         setCurrentPages((prev) => ({
                           ...prev,
                           [activeTab]: page,
                         }));
                       },
-                      showSizeChanger: false, // Tắt showSizeChanger mặc định của Ant Design
+                      showSizeChanger: false,
                       position: ["bottomRight"],
-                      // Thêm bộ chọn pageSize tùy chỉnh
                       showTotal: (total) => (
                         <div className="flex items-center gap-2">
                           <span>Hiển thị</span>

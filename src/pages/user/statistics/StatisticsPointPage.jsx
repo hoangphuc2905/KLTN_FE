@@ -651,12 +651,12 @@ const StatisticsPointPage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] mx-auto px-4 max-w-full lg:max-w-[calc(100%-220px)]">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full mt-4">
+          <div className="flex items-center gap-2 text-gray-600 flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -682,45 +682,47 @@ const StatisticsPointPage = () => {
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
-          <div className="flex justify-end gap-4 mb-4">
-            <select
-              value={selectedYear}
-              onChange={(e) => setSelectedYear(e.target.value)}
-              className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
-            >
-              {academicYears.map((year) => (
-                <option key={year} value={year}>
-                  {year}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={downloadExcel}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
-            >
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
-                alt="Download Icon"
-                className="w-4 h-4 invert"
-              />
-              Download
-            </button>
-            <button
-              onClick={printTable}
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
-            >
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
-                alt="Print Icon"
-                className="w-4 h-4 invert"
-              />
-              Print
-            </button>
-          </div>
-          <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
+        <div className="self-center mt-6 w-full">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap justify-between gap-4">
+              <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
+              >
+                {academicYears.map((year) => (
+                  <option key={year} value={year}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={downloadExcel}
+                  className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+                >
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
+                    alt="Download Icon"
+                    className="w-4 h-4 invert"
+                  />
+                  Download
+                </button>
+                <button
+                  onClick={printTable}
+                  className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+                >
+                  <img
+                    src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
+                    alt="Print Icon"
+                    className="w-4 h-4 invert"
+                  />
+                  Print
+                </button>
+              </div>
+            </div>
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative gap-2">
+              <div className="flex flex-wrap justify-end gap-2 mb-4 relative">
                 <button
                   className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                   onClick={() => {
