@@ -608,12 +608,12 @@ const StatisticsTablePage = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -639,8 +639,8 @@ const StatisticsTablePage = () => {
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
-          <div className="flex justify-end gap-4 mb-4">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-md:max-w-full">
+          <div className="flex justify-end gap-4 mb-4 flex-wrap">
             <select
               className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
               value={selectedYear}
@@ -652,34 +652,36 @@ const StatisticsTablePage = () => {
                 </option>
               ))}
             </select>
-            <button
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
-              onClick={downloadExcel}
-            >
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
-                alt="Download Icon"
-                className="w-4 h-4 invert"
-              />
-              Download
-            </button>
-            <button
-              className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
-              onClick={printTable}
-            >
-              <img
-                src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
-                alt="Print Icon"
-                className="w-4 h-4 invert"
-              />
-              Print
-            </button>
+            <div className="flex gap-2">
+              <button
+                className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg max-sm:w-full max-sm:text-xs"
+                onClick={downloadExcel}
+              >
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
+                  alt="Download Icon"
+                  className="w-4 h-4 invert max-sm:w-3 max-sm:h-3"
+                />
+                Download
+              </button>
+              <button
+                className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg max-sm:w-full max-sm:text-xs"
+                onClick={printTable}
+              >
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
+                  alt="Print Icon"
+                  className="w-4 h-4 invert max-sm:w-3 max-sm:h-3"
+                />
+                Print
+              </button>
+            </div>
           </div>
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative gap-2">
+              <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowFilter(!showFilter);
                     setShowColumnFilter(false);
@@ -689,7 +691,7 @@ const StatisticsTablePage = () => {
                   <span className="text-xs">Bộ lọc</span>
                 </button>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowColumnFilter(!showColumnFilter);
                     setShowFilter(false);
@@ -698,430 +700,31 @@ const StatisticsTablePage = () => {
                   <Filter className="w-4 h-4" />
                   <span className="text-xs">Chọn cột</span>
                 </button>
-                {showFilter && (
-                  <div
-                    ref={filterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg"
-                  >
-                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 rounded-lg border border-gray-200">
-                      <div className="max-h-[400px] overflow-y-auto pr-1">
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            Loại bài báo:
-                          </label>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowPaperTypeFilter(!showPaperTypeFilter);
-                              }}
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
-                            >
-                              <span className="truncate">
-                                {filterPaperType.includes("Tất cả")
-                                  ? "Tất cả"
-                                  : filterPaperType.join(", ")}
-                              </span>
-                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                            </button>
-                            {showPaperTypeFilter && (
-                              <div
-                                ref={paperTypeFilterRef}
-                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
-                              >
-                                <div className="max-h-[100px] overflow-y-auto pr-1">
-                                  <Checkbox
-                                    checked={filterPaperType.includes("Tất cả")}
-                                    onChange={(e) => {
-                                      setFilterPaperType(
-                                        e.target.checked ? ["Tất cả"] : []
-                                      );
-                                    }}
-                                  >
-                                    Tất cả
-                                  </Checkbox>
-                                  <Checkbox.Group
-                                    options={uniquePaperTypes
-                                      .filter((type) => type !== "Tất cả")
-                                      .map((type) => ({
-                                        label: type,
-                                        value: type,
-                                      }))}
-                                    value={filterPaperType.filter(
-                                      (type) => type !== "Tất cả"
-                                    )}
-                                    onChange={(checkedValues) => {
-                                      if (
-                                        checkedValues.length ===
-                                        uniquePaperTypes.length - 1
-                                      ) {
-                                        setFilterPaperType(["Tất cả"]);
-                                      } else {
-                                        setFilterPaperType(checkedValues);
-                                      }
-                                    }}
-                                    className="flex flex-col gap-2 mt-2"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            Thuộc nhóm:
-                          </label>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowGroupFilter(!showGroupFilter);
-                              }}
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
-                            >
-                              <span className="truncate">
-                                {filterGroup.includes("Tất cả")
-                                  ? "Tất cả"
-                                  : filterGroup.join(", ")}
-                              </span>
-                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                            </button>
-                            {showGroupFilter && (
-                              <div
-                                ref={groupFilterRef}
-                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
-                              >
-                                <div className="max-h-[100px] overflow-y-auto pr-1">
-                                  <Checkbox
-                                    checked={filterGroup.includes("Tất cả")}
-                                    onChange={(e) => {
-                                      setFilterGroup(
-                                        e.target.checked ? ["Tất cả"] : []
-                                      );
-                                    }}
-                                  >
-                                    Tất cả
-                                  </Checkbox>
-                                  <Checkbox.Group
-                                    options={uniqueGroups
-                                      .filter((group) => group !== "Tất cả")
-                                      .map((group) => ({
-                                        label: group,
-                                        value: group,
-                                      }))}
-                                    value={filterGroup.filter(
-                                      (group) => group !== "Tất cả"
-                                    )}
-                                    onChange={(checkedValues) => {
-                                      if (
-                                        checkedValues.length ===
-                                        uniqueGroups.length - 1
-                                      ) {
-                                        setFilterGroup(["Tất cả"]);
-                                      } else {
-                                        setFilterGroup(checkedValues);
-                                      }
-                                    }}
-                                    className="flex flex-col gap-2 mt-2"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            Vai trò:
-                          </label>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowRoleFilter(!showRoleFilter);
-                              }}
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
-                            >
-                              <span className="truncate">
-                                {filterRole.includes("Tất cả")
-                                  ? "Tất cả"
-                                  : filterRole.join(", ")}
-                              </span>
-                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                            </button>
-                            {showRoleFilter && (
-                              <div
-                                ref={roleFilterRef}
-                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
-                              >
-                                <div className="max-h-[100px] overflow-y-auto pr-1">
-                                  <Checkbox
-                                    checked={filterRole.includes("Tất cả")}
-                                    onChange={(e) => {
-                                      setFilterRole(
-                                        e.target.checked ? ["Tất cả"] : []
-                                      );
-                                    }}
-                                  >
-                                    Tất cả
-                                  </Checkbox>
-                                  <Checkbox.Group
-                                    options={uniqueRoles
-                                      .filter((role) => role !== "Tất cả")
-                                      .map((role) => ({
-                                        label: role,
-                                        value: role,
-                                      }))}
-                                    value={filterRole.filter(
-                                      (role) => role !== "Tất cả"
-                                    )}
-                                    onChange={(checkedValues) => {
-                                      if (
-                                        checkedValues.length ===
-                                        uniqueRoles.length - 1
-                                      ) {
-                                        setFilterRole(["Tất cả"]);
-                                      } else {
-                                        setFilterRole(checkedValues);
-                                      }
-                                    }}
-                                    className="flex flex-col gap-2 mt-2"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            CQ đứng tên:
-                          </label>
-                          <div className="relative">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setShowInstitutionFilter(
-                                  !showInstitutionFilter
-                                );
-                              }}
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
-                            >
-                              <span className="truncate">
-                                {filterInstitution.includes("Tất cả")
-                                  ? "Tất cả"
-                                  : filterInstitution.join(", ")}
-                              </span>
-                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
-                            </button>
-                            {showInstitutionFilter && (
-                              <div
-                                ref={institutionFilterRef}
-                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
-                              >
-                                <div className="max-h-[100px] overflow-y-auto pr-1">
-                                  <Checkbox
-                                    checked={filterInstitution.includes(
-                                      "Tất cả"
-                                    )}
-                                    onChange={(e) => {
-                                      setFilterInstitution(
-                                        e.target.checked ? ["Tất cả"] : []
-                                      );
-                                    }}
-                                  >
-                                    Tất cả
-                                  </Checkbox>
-                                  <Checkbox.Group
-                                    options={uniqueInstitutions
-                                      .filter((inst) => inst !== "Tất cả")
-                                      .map((inst) => ({
-                                        label: inst,
-                                        value: inst,
-                                      }))}
-                                    value={filterInstitution.filter(
-                                      (inst) => inst !== "Tất cả"
-                                    )}
-                                    onChange={(checkedValues) => {
-                                      if (
-                                        checkedValues.length ===
-                                        uniqueInstitutions.length - 1
-                                      ) {
-                                        setFilterInstitution(["Tất cả"]);
-                                      } else {
-                                        setFilterInstitution(checkedValues);
-                                      }
-                                    }}
-                                    className="flex flex-col gap-2 mt-2"
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            Tên bài báo:
-                          </label>
-                          <Input
-                            type="text"
-                            value={filterPaperTitle}
-                            onChange={(e) =>
-                              setFilterPaperTitle(e.target.value)
-                            }
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                          />
-                        </div>
-
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            Tên tác giả:
-                          </label>
-                          <Input
-                            type="text"
-                            value={filterAuthorName}
-                            onChange={(e) =>
-                              setFilterAuthorName(e.target.value)
-                            }
-                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
-                          />
-                        </div>
-
-                        <div className="mb-3">
-                          <label className="block text-gray-700 text-xs">
-                            Số tác giả:
-                          </label>
-                          <div className="flex gap-2">
-                            <Input
-                              type="number"
-                              value={fromAuthorCount}
-                              onChange={(e) =>
-                                handleFromAuthorCountChange(e.target.value)
-                              }
-                              placeholder="Từ"
-                              min={0}
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                            />
-                            <Input
-                              type="number"
-                              value={toAuthorCount}
-                              onChange={(e) =>
-                                handleToAuthorCountChange(e.target.value)
-                              }
-                              placeholder="Đến"
-                              min={0}
-                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[145px] max-md:w-full max-md:max-w-[145px] max-sm:w-full text-xs"
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFilterPaperType(["Tất cả"]);
-                          setFilterGroup(["Tất cả"]);
-                          setFilterPaperTitle("");
-                          setFilterAuthorName("");
-                          setFromAuthorCount("");
-                          setToAuthorCount("");
-                          setFilterRole(["Tất cả"]);
-                          setFilterInstitution(["Tất cả"]);
-                        }}
-                        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
-                      >
-                        Bỏ lọc tất cả
-                      </button>
-                    </form>
-                  </div>
-                )}
-                {showColumnFilter && (
-                  <div
-                    ref={columnFilterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                  >
-                    <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
-                      <Checkbox
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setVisibleColumns(columns.map((col) => col.key));
-                          } else {
-                            setVisibleColumns([]);
-                          }
-                        }}
-                        checked={visibleColumns.length === columns.length}
-                      >
-                        Chọn tất cả
-                      </Checkbox>
-                      <div className="max-h-[300px] overflow-y-auto pr-1 mt-2">
-                        <Checkbox.Group
-                          options={columnOptions}
-                          value={visibleColumns}
-                          onChange={handleColumnVisibilityChange}
-                          className="flex flex-col gap-2"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
-              <div className="flex justify-end mb-4">
-                <Select
-                  value={pageSize}
-                  onChange={handlePageSizeChange}
-                  className="w-[100px]"
-                >
-                  <Select.Option value={10}>10</Select.Option>
-                  <Select.Option value={20}>20</Select.Option>
-                  <Select.Option value={50}>50</Select.Option>
-                  <Select.Option value={100}>100</Select.Option>
-                </Select>
+
+              <div className="overflow-x-auto">
+                <Table
+                  columns={filteredColumns}
+                  dataSource={filteredPapers}
+                  pagination={{
+                    current: currentPage,
+                    pageSize: itemsPerPage,
+                    total: filteredPapers.length,
+                    onChange: (page) => setCurrentPage(page),
+                  }}
+                  rowKey={(record) => record.id || record.key}
+                  className="text-sm"
+                  onRow={(record) => ({
+                    onClick: () => handleRowClick(record),
+                  })}
+                  scroll={{
+                    x: filteredColumns.reduce(
+                      (total, col) => total + (col.width || 0),
+                      0
+                    ),
+                  }}
+                />
               </div>
-              <Table
-                columns={filteredColumns}
-                dataSource={filteredPapers}
-                pagination={{
-                  current: currentPage,
-                  pageSize: pageSize,
-                  total: filteredPapers.length,
-                  onChange: (page) => setCurrentPage(page),
-                  showSizeChanger: false,
-                  showTotal: (total, range) => (
-                    <div className="flex items-center">
-                      <Select
-                        value={pageSize}
-                        onChange={handlePageSizeChange}
-                        style={{ width: 120, marginRight: 16 }}
-                        options={[
-                          { value: 10, label: "10 / trang" },
-                          { value: 20, label: "20 / trang" },
-                          { value: 30, label: "30 / trang" },
-                          { value: 50, label: "50 / trang" },
-                          { value: 100, label: "100 / trang" },
-                        ]}
-                      />
-                      <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
-                    </div>
-                  ),
-                }}
-                rowKey="id"
-                className="text-sm"
-                onRow={(record) => ({
-                  onClick: () => handleRowClick(record),
-                })}
-                scroll={{
-                  x: filteredColumns.reduce(
-                    (total, col) => total + (col.width || 0),
-                    0
-                  ),
-                }}
-              />
             </div>
           </div>
         </div>

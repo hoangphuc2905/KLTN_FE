@@ -682,13 +682,13 @@ const ManagementPointDetailPage = () => {
   }, [showFilter, showColumnFilter]);
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -700,21 +700,21 @@ const ManagementPointDetailPage = () => {
             >
               Trang chủ
             </span>
-            <span className="text-gray-400">&gt;</span>
+            <span className="text-gray-400"> &gt; </span>
             <span
               onClick={() => navigate("/admin/management/chart")}
               className="cursor-pointer hover:text-blue-500"
             >
               Thống kê
             </span>
-            <span className="text-gray-400">&gt;</span>
+            <span className="text-gray-400"> &gt; </span>
             <span
               onClick={() => navigate("/admin/management/point")}
               className="cursor-pointer hover:text-blue-500"
             >
               Điểm đóng góp
             </span>
-            <span className="text-gray-400">&gt;</span>
+            <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sm text-sky-900">
               Chi tiết điểm đóng góp
             </span>
@@ -722,7 +722,7 @@ const ManagementPointDetailPage = () => {
         </div>
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
-          <div className="flex justify-end gap-4 mb-4">
+          <div className="flex justify-end items-center gap-4 mb-4">
             <button
               onClick={downloadExcel}
               className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
@@ -748,9 +748,9 @@ const ManagementPointDetailPage = () => {
           </div>
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative gap-2">
+              <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowFilter(!showFilter);
                     setShowColumnFilter(false);
@@ -760,7 +760,7 @@ const ManagementPointDetailPage = () => {
                   <span className="text-xs">Bộ lọc</span>
                 </button>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:w-full"
                   onClick={() => {
                     setShowColumnFilter(!showColumnFilter);
                     setShowFilter(false);
@@ -772,7 +772,7 @@ const ManagementPointDetailPage = () => {
                 {showColumnFilter && (
                   <div
                     ref={columnFilterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
                   >
                     <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <Checkbox
@@ -796,7 +796,7 @@ const ManagementPointDetailPage = () => {
                 {showFilter && (
                   <div
                     ref={filterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg"
+                    className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
                   >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 rounded-lg border border-gray-200">
                       <div className="max-h-[500px] overflow-y-auto pr-1">
@@ -814,7 +814,6 @@ const ManagementPointDetailPage = () => {
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                           />
                         </div>
-
                         <div className="mb-3">
                           <label className="block text-gray-700 text-xs">
                             Mã tác giả:
@@ -827,7 +826,6 @@ const ManagementPointDetailPage = () => {
                             className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                           />
                         </div>
-
                         <div className="mb-3">
                           <label className="block text-gray-700 text-xs">
                             Tổng bài:
@@ -861,7 +859,6 @@ const ManagementPointDetailPage = () => {
                             />
                           </div>
                         </div>
-
                         <div className="mb-3">
                           <label className="block text-gray-700 text-xs">
                             Tổng điểm:
@@ -897,7 +894,6 @@ const ManagementPointDetailPage = () => {
                             />
                           </div>
                         </div>
-
                         <button
                           type="button"
                           onClick={() => {
@@ -917,7 +913,6 @@ const ManagementPointDetailPage = () => {
                   </div>
                 )}
               </div>
-
               {loading ? (
                 <div className="flex justify-center items-center h-64">
                   <Spin size="large">
@@ -992,7 +987,7 @@ const ManagementPointDetailPage = () => {
             </div>
           ) : (
             <>
-              <div className="flex justify-end gap-4 mb-4">
+              <div className="flex justify-end items-center gap-4 mb-4">
                 <button
                   onClick={downloadAuthorPapersExcel}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"

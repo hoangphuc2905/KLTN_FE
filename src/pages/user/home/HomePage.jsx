@@ -1041,7 +1041,6 @@ const HomePage = () => {
                                   alt={paper.title}
                                 />
                               </Link>
-                              10
                             </div>
                             <div className="flex flex-col text-sm tracking-tight leading-none text-slate-400 w-fit max-md:text-xs">
                               <Link to={`/scientific-paper/${paper.id}`}>
