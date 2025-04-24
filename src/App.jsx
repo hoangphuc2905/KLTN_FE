@@ -27,6 +27,8 @@ import ErrorPage from "./components/ErrorPage";
 import DetailArticlePage from "./pages/admin/managementArticle/detailArticlePage";
 import StorageScientificPage from "./pages/user/storage/StorageScientificPage";
 import EditScientificPaperPage from "./pages/user/scientificPaper/EditScientificPaperPage";
+import UserApprovalPage from "./pages/admin/managementAccount/UserApprovalPage";
+import RegisterPage from "./app/auth/register/RegisterPage";
 import ManagementDepartmentChart from "./pages/admin/managementStatistic/managementDepartmentChartPage";
 import ManagementPointDepartmentPage from "./pages/admin/managementStatistic/managementPointDepartmentPage";
 import ManagementPointDetailPage from "./pages/admin/managementStatistic/managementPointDetailPage";
@@ -86,6 +88,7 @@ const App = () => {
   return (
     <div>
       {window.location.pathname !== "/role-selection" &&
+        window.location.pathname !== "/register" &&
         (userRoles.some((role) =>
           [
             "admin",
@@ -103,6 +106,7 @@ const App = () => {
           <>
             <Route path="/" element={<LoginPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="/register" element={<RegisterPage />} />
           </>
         ) : (
           <>
@@ -235,6 +239,17 @@ const App = () => {
                   path="/admin/management/account"
                 >
                   <ManagementAccount />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/user-approval"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/user-approval"
+                >
+                  <UserApprovalPage />
                 </ProtectedRoute>
               }
             />

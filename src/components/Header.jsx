@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import Logo from "../assets/logoLogin.png";
+import Logo from "../assets/logo.png";
 import userApi from "../api/api";
 import { FaChevronDown } from "react-icons/fa";
 import ChangePasswordPopup from "../pages/user/profile/ChangePasswordPopup";
@@ -207,6 +207,14 @@ const Header = () => {
                         🔑 Đổi mật khẩu
                       </button>
                     </>
+                  )}
+                  {user?.roles?.length > 1 && (
+                    <button
+                      className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
+                      onClick={() => (window.location.href = "/role-selection")}
+                    >
+                      🔄 Chuyển quyền
+                    </button>
                   )}
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-red-100 text-xs sm:text-sm text-red-500"

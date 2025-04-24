@@ -107,6 +107,7 @@ const permissions = {
     "/update-profile",
     "/notifications",
     "/management/table",
+    "/admin/management/user-approval",
   ],
 };
 

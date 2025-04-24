@@ -17,16 +17,15 @@ const Footer = () => {
                 />
               </a>
               <p className="mt-4 text-sm px-2 sm:px-0">
-                Chào mừng các bạn đến với Hệ thống quản lý bài nghiên cứu khoa
-                học của trường Đại học Công nghiệp TP.HCM, hệ thống thông tin
-                cung cấp các bài nghiên cứu của sinh viên và giảng viên đã được
-                kiểm duyệt và đăng lên hệ thống.
+                Chào mừng đến với hệ thống bài nghiên cứu khoa học của Đại học
+                Công nghiệp TP.HCM, nơi lưu trữ các bài nghiên cứu đã kiểm
+                duyệt.
               </p>
             </div>
 
             {/* Links */}
-            <div className="w-full md:w-1/3 px-4 text-center md:text-left md:pl-12">
-              <h3 className="font-bold text-red-600 text-sm pb-3">Liên kết</h3>
+            <div className="w-full md:w-1/3 px-4 text-center md:text-left md:pl-28">
+              <h3 className="font-bold text-red-600 text-sm pb-2">Liên kết</h3>
               <ul className="space-y-2 text-sm">
                 <li>
                   <a
@@ -74,24 +73,27 @@ const Footer = () => {
             {/* Contact Information */}
             <div className="w-full md:w-1/3 px-4 text-center md:text-left">
               <h3 className="font-bold text-red-600 text-sm pb-2">Liên hệ</h3>
-              <p className="text-sm">
-                Trung tâm Quản trị Hệ thống - Trường Đại học Công nghiệp TP.HCM
+              <p className="text-sm pb-1">
+                Địa chỉ: 12 Nguyễn Văn Bảo, Q. Gò Vấp, TP. Hồ Chí Minh Khoa Công
+                nghệ Thông tin - Lầu 1 - Nhà H
+              </p>
+              <p className="text-sm pb-1">
+                <i className="fa fa-phone-square"></i>Phone: 0868434509 (Thanh)
+                - 0368564833 (Phúc)
               </p>
               <p className="text-sm">
-                <i className="fa fa-phone-square mr-1"></i> Phone: 0283.8940 390
-                - ext 838
-              </p>
-              <p className="text-sm">
-                <i className="fa fa-envelope mr-1"></i> E-mail:{" "}
+                <i className="fa fa-envelope"></i>E-mail:{" "}
                 <a
                   href="mailto:csm@iuh.edu.vn"
                   className="text-blue-600 hover:underline"
                 >
-                  csm@iuh.edu.vn
+                  hethongnckhiuh@gmail.com
                 </a>
               </p>
-              <div className="mt-4">
-                <h6 className="text-sm">Follow us</h6>
+              <div className="mt-1">
+                <h6 className="text-sm">
+                  © 2024 Khoa Công nghệ thông tin - Kỹ thuật phần mềm
+                </h6>
                 <ul className="flex justify-center md:justify-start space-x-4 mt-2">
                   <li>
                     <a

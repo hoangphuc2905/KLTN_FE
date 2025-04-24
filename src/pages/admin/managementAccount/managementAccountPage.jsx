@@ -2,7 +2,6 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Modal,
   Input,
-  Select,
   Table,
   message,
   Radio,
@@ -10,7 +9,7 @@ import {
   Tooltip,
   Dropdown,
   Divider,
-  Spin,
+  Select,
 } from "antd";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
@@ -18,31 +17,36 @@ import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 import AddStudentModal from "./AddStudentModal";
 import AddLecturerModal from "./AddLecturerModal";
+import { Filter, ChevronDown } from "lucide-react";
 import {
   DownOutlined,
   FileExcelOutlined,
   EditOutlined,
 } from "@ant-design/icons";
 import * as XLSX from "xlsx";
-import { Filter, ChevronDown } from "lucide-react";
 
 const ManagementUsers = () => {
   const [userRole] = useState(localStorage.getItem("current_role") || "");
   const [users, setUsers] = useState([]);
   const [lecturers, setLecturers] = useState([]);
   const [activeTab, setActiveTab] = useState("user");
-  const [showFilter, setShowFilter] = useState(false);
   const [filterName, setFilterName] = useState("");
   const [filterId, setFilterId] = useState("");
   const [filterDepartment, setFilterDepartment] = useState(["Tất cả"]);
-  const [filterPosition, setFilterPosition] = useState("Tất cả");
+  const [filterPosition, setFilterPosition] = useState(["Tất cả"]);
   const [filterStatus, setFilterStatus] = useState(["Tất cả"]);
+  const [filterEmail, setFilterEmail] = useState("");
+  const [filterPhone, setFilterPhone] = useState("");
+  const [filterGender, setFilterGender] = useState(["Tất cả"]);
+  const [filterDateOfBirth, setFilterDateOfBirth] = useState("");
+  const [filterCccd, setFilterCccd] = useState("");
+  const [filterAddress, setFilterAddress] = useState("");
+  const [filterRole, setFilterRole] = useState(["Tất cả"]);
   const [sortKey, setSortKey] = useState(null);
   const [sortOrder, setSortOrder] = useState(null);
   const [userCurrentPage, setUserCurrentPage] = useState(1);
   const [lecturerCurrentPage, setLecturerCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const itemsPerPage = 10;
+  const [pageSize, setPageSize] = useState(10); // New state for page size
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -50,11 +54,6 @@ const ManagementUsers = () => {
   const [newRole, setNewRole] = useState([]);
   const departmentId = localStorage.getItem("department");
 
-  const filterRef = useRef(null);
-  const departmentFilterRef = useRef(null);
-  const statusFilterRef = useRef(null);
-  const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
-  const [showStatusFilter, setShowStatusFilter] = useState(false);
   const navigate = useNavigate();
 
   const [roleOptions, setRoleOptions] = useState([]);
@@ -62,6 +61,463 @@ const ManagementUsers = () => {
   const [isLecturerModalVisible, setIsLecturerModalVisible] = useState(false);
   const [excelData, setExcelData] = useState([]);
   const [isExcelModalVisible, setIsExcelModalVisible] = useState(false);
+
+  // Filter dropdown states
+  const [showFilter, setShowFilter] = useState(false);
+  const [showDepartmentFilter, setShowDepartmentFilter] = useState(false);
+  const [showPositionFilter, setShowPositionFilter] = useState(false);
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
+  const [showGenderFilter, setShowGenderFilter] = useState(false);
+  const [showRoleFilter, setShowRoleFilter] = useState(false);
+  const [showColumnFilter, setShowColumnFilter] = useState(false);
+
+  const filterRef = useRef(null);
+  const departmentFilterRef = useRef(null);
+  const positionFilterRef = useRef(null);
+  const statusFilterRef = useRef(null);
+  const genderFilterRef = useRef(null);
+  const roleFilterRef = useRef(null);
+  const columnFilterRef = useRef(null);
+
+  const roleMapping = {
+    admin: "Quản trị viên",
+    lecturer: "Giảng viên",
+    head_of_department: "Trưởng khoa",
+    deputy_head_of_department: "Phó khoa",
+    department_in_charge: "Cán bộ phụ trách khoa",
+  };
+
+  const degreeMapping = {
+    Bachelor: "Cử nhân",
+    Master: "Thạc sĩ",
+    Doctor: "Tiến sĩ",
+    Egineer: "Kỹ sư",
+    Professor: "Giáo sư",
+    Ossociate_Professor: "Phó giáo sư",
+  };
+
+  const degreePriority = {
+    Professor: 1,
+    Ossociate_Professor: 2,
+    Doctor: 3,
+    Master: 4,
+    Bachelor: 5,
+    Egineer: 6,
+  };
+
+  // Định nghĩa columns trước khi sử dụng
+  const getUserColumns = () => [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+      render: (text, record, index) =>
+        (userCurrentPage - 1) * pageSize + index + 1,
+      width: 65,
+      fixed: "left",
+    },
+    {
+      title: "MSSV",
+      dataIndex: "student_id",
+      key: "student_id",
+      width: 120,
+      ellipsis: { showTitle: false },
+      render: (student_id) => (
+        <Tooltip placement="topLeft" title={student_id}>
+          {student_id}
+        </Tooltip>
+      ),
+      sorter: (a, b) => a.student_id?.localeCompare(b.student_id || ""),
+    },
+    {
+      title: "HỌ VÀ TÊN",
+      dataIndex: "full_name",
+      key: "full_name",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (full_name) => (
+        <Tooltip placement="topLeft" title={full_name}>
+          {full_name}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "EMAIL",
+      dataIndex: "email",
+      key: "email",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (email) => (
+        <Tooltip placement="topLeft" title={email}>
+          {email}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "SỐ ĐIỆN THOẠI",
+      dataIndex: "phone",
+      key: "phone",
+      width: 150,
+      ellipsis: { showTitle: false },
+      render: (phone) => (
+        <Tooltip placement="topLeft" title={phone}>
+          {phone}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "GIỚI TÍNH",
+      dataIndex: "gender",
+      key: "gender",
+      width: 130,
+      render: (gender) => (
+        <span>
+          {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : "Khác"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "NGÀY SINH",
+      dataIndex: "date_of_birth",
+      key: "date_of_birth",
+      width: 140,
+      ellipsis: { showTitle: false },
+      render: (date) => (
+        <Tooltip
+          placement="topLeft"
+          title={date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        >
+          {date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CCCD",
+      dataIndex: "cccd",
+      key: "cccd",
+      width: 130,
+      ellipsis: { showTitle: false },
+      render: (cccd) => (
+        <Tooltip placement="topLeft" title={cccd}>
+          {cccd}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "ĐỊA CHỈ",
+      dataIndex: "address",
+      key: "address",
+      width: 200,
+      ellipsis: { showTitle: false },
+      render: (address) => (
+        <Tooltip placement="topLeft" title={address}>
+          {address}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "KHOA",
+      dataIndex: "department",
+      key: "department",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (department) => {
+        const deptName =
+          typeof department === "object" && department.department_name
+            ? department.department_name
+            : department || "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={deptName}>
+            {deptName}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "TRẠNG THÁI",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 140,
+      render: (isActive) => (
+        <span
+          className={`px-2/additional py-1 rounded text-sm ${
+            isActive ? "text-green-700" : "text-red-700"
+          }`}
+        >
+          {isActive ? "Hoạt động" : "Không hoạt động"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CHỈNH SỬA",
+      key: "edit",
+      width: 80,
+      fixed: "right",
+      render: (text, record) => (
+        <button
+          className="text-blue-500"
+          onClick={() => handleEditClick(record)}
+        >
+          <EditOutlined />
+        </button>
+      ),
+      align: "center",
+    },
+  ];
+
+  const getLecturerColumns = () => [
+    {
+      title: "STT",
+      dataIndex: "id",
+      key: "id",
+      render: (text, record, index) =>
+        (lecturerCurrentPage - 1) * pageSize + index + 1,
+      width: 65,
+      fixed: "left",
+    },
+    {
+      title: "MSGV",
+      dataIndex: "lecturer_id",
+      key: "lecturer_id",
+      width: 120,
+      ellipsis: { showTitle: false },
+      render: (lecturer_id) => (
+        <Tooltip placement="topLeft" title={lecturer_id}>
+          {lecturer_id}
+        </Tooltip>
+      ),
+      sorter: (a, b) => a.lecturer_id?.localeCompare(b.lecturer_id || ""),
+    },
+    {
+      title: "HỌ VÀ TÊN",
+      dataIndex: "full_name",
+      key: "full_name",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (full_name) => (
+        <Tooltip placement="topLeft" title={full_name}>
+          {full_name}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "EMAIL",
+      dataIndex: "email",
+      key: "email",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (email) => (
+        <Tooltip placement="topLeft" title={email}>
+          {email}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "SỐ ĐIỆN THOẠI",
+      dataIndex: "phone",
+      key: "phone",
+      width: 150,
+      ellipsis: { showTitle: false },
+      render: (phone) => (
+        <Tooltip placement="topLeft" title={phone}>
+          {phone}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "GIỚI TÍNH",
+      dataIndex: "gender",
+      key: "gender",
+      width: 130,
+      render: (gender) => (
+        <span>
+          {gender === "male" ? "Nam" : gender === "female" ? "Nữ" : "Khác"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "NGÀY SINH",
+      dataIndex: "date_of_birth",
+      key: "date_of_birth",
+      width: 140,
+      ellipsis: { showTitle: false },
+      render: (date) => (
+        <Tooltip
+          placement="topLeft"
+          title={date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        >
+          {date ? new Date(date).toLocaleDateString("vi-VN") : ""}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CCCD",
+      dataIndex: "cccd",
+      key: "cccd",
+      width: 130,
+      ellipsis: { showTitle: false },
+      render: (cccd) => (
+        <Tooltip placement="topLeft" title={cccd}>
+          {cccd}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "ĐỊA CHỈ",
+      dataIndex: "address",
+      key: "address",
+      width: 200,
+      ellipsis: { showTitle: false },
+      render: (address) => (
+        <Tooltip placement="topLeft" title={address}>
+          {address}
+        </Tooltip>
+      ),
+      sorter: true,
+    },
+    {
+      title: "KHOA",
+      dataIndex: "department",
+      key: "department",
+      width: 180,
+      ellipsis: { showTitle: false },
+      render: (department) => {
+        const deptName =
+          typeof department === "object" && department.department_name
+            ? department.department_name
+            : department || "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={deptName}>
+            {deptName}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "CHỨC VỤ",
+      dataIndex: "roles",
+      key: "roles",
+      width: 120,
+      ellipsis: { showTitle: false },
+      render: (roles) => {
+        const roleText = Array.isArray(roles)
+          ? roles
+              .filter(
+                (role) => !(roles.length > 1 && role.role_name === "lecturer")
+              )
+              .map((role) => roleMapping[role.role_name] || role.role_name)
+              .join(", ")
+          : "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={roleText}>
+            {roleText}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "CHỨC DANH",
+      dataIndex: "degree",
+      key: "degree",
+      width: 140,
+      ellipsis: { showTitle: false },
+      render: (degree) => {
+        const degreeText = degreeMapping[degree] || "Không xác định";
+        return (
+          <Tooltip placement="topLeft" title={degreeText}>
+            {degreeText}
+          </Tooltip>
+        );
+      },
+      sorter: true,
+    },
+    {
+      title: "TRẠNG THÁI",
+      dataIndex: "isActive",
+      key: "isActive",
+      width: 140,
+      render: (isActive) => (
+        <span
+          className={`px-2 py-1 rounded text-sm ${
+            isActive ? "text-green-700" : "text-red-700"
+          }`}
+        >
+          {isActive ? "Hoạt động" : "Không hoạt động"}
+        </span>
+      ),
+      sorter: true,
+    },
+    {
+      title: "CHỈNH SỬA",
+      key: "edit",
+      width: 80,
+      fixed: "right",
+      render: (text, record) => {
+        const isHeadOfDepartment = record.roles?.some(
+          (role) => role.role_name === "head_of_department"
+        );
+        const isDeputyHeadOfDepartment = record.roles?.some(
+          (role) => role.role_name === "deputy_head_of_department"
+        );
+
+        if (
+          (userRole === "deputy_head_of_department" && isHeadOfDepartment) ||
+          (userRole === "department_in_charge" &&
+            (isHeadOfDepartment || isDeputyHeadOfDepartment))
+        ) {
+          return null;
+        }
+
+        return (
+          <button
+            className="text-blue-500"
+            onClick={() => handleEditClick(record)}
+          >
+            <EditOutlined />
+          </button>
+        );
+      },
+      align: "center",
+    },
+  ];
+
+  const columns =
+    activeTab === "user" ? getUserColumns() : getLecturerColumns();
+
+  const [visibleColumns, setVisibleColumns] = useState(
+    columns.map((col) => col.key)
+  );
+
+  // Các hàm xử lý khác
+  const handleColumnVisibilityChange = (selectedColumns) => {
+    setVisibleColumns(selectedColumns);
+  };
+
+  const filteredColumns = columns.filter((col) =>
+    visibleColumns.includes(col.key)
+  );
+
+  const columnOptions = columns.map((col) => ({
+    label: col.title,
+    value: col.key,
+  }));
 
   const reloadData = async () => {
     try {
@@ -119,6 +575,72 @@ const ManagementUsers = () => {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData =
+      activeTab === "user"
+        ? [
+            [
+              "student_id",
+              "full_name",
+              "email",
+              "phone",
+              "gender",
+              "date_of_birth",
+              "cccd",
+              "address",
+              "start_date",
+            ],
+            [
+              "2100001",
+              "Nguyễn Văn A",
+              "nguyenvana@example.com",
+              "0123456789",
+              "male",
+              "01/01/2000",
+              "123456789",
+              "123 Lê Văn Sỹ, Quận 3, TP.HCM",
+              "01/09/2020",
+            ],
+          ]
+        : [
+            [
+              "lecturer_id",
+              "full_name",
+              "email",
+              "phone",
+              "gender",
+              "date_of_birth",
+              "cccd",
+              "address",
+              "start_date",
+            ],
+            [
+              "0147895",
+              "Trần Thị B",
+              "tranthib@example.com",
+              "0987654321",
+              "female",
+              "15/05/1985",
+              "987654321",
+              "456 Nguyễn Thị Minh Khai, Quận 1, TP.HCM",
+              "01/09/2015",
+            ],
+          ];
+
+    const worksheet = XLSX.utils.aoa_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      workbook,
+      worksheet,
+      activeTab === "user" ? "Student Template" : "Lecturer Template"
+    );
+
+    XLSX.writeFile(
+      workbook,
+      activeTab === "user" ? "Student_Template.xlsx" : "Lecturer_Template.xlsx"
+    );
+  };
+
   const handleExcelSave = async () => {
     try {
       const fileInput =
@@ -172,7 +694,6 @@ const ManagementUsers = () => {
               },
             });
 
-      console.log("API Response:", response.data);
       message.success("Dữ liệu đã được lưu thành công!");
       setIsExcelModalVisible(false);
       fileInput.value = "";
@@ -215,12 +736,17 @@ const ManagementUsers = () => {
         <span
           onClick={() => document.getElementById("studentExcelInput").click()}
         >
-          Từ Excel
+          Nhập từ Excel
         </span>
       ),
     },
     {
       key: "2",
+      icon: <FileExcelOutlined />,
+      label: <span onClick={handleDownloadTemplate}>Tải file excel mẫu</span>,
+    },
+    {
+      key: "3",
       icon: <EditOutlined />,
       label: <span onClick={handleAddStudent}>Thủ công</span>,
     },
@@ -234,42 +760,21 @@ const ManagementUsers = () => {
         <span
           onClick={() => document.getElementById("lecturerExcelInput").click()}
         >
-          Từ Excel
+          Nhập từ Excel
         </span>
       ),
     },
     {
       key: "2",
+      icon: <FileExcelOutlined />,
+      label: <span onClick={handleDownloadTemplate}>Tải file excel mẫu</span>,
+    },
+    {
+      key: "3",
       icon: <EditOutlined />,
       label: <span onClick={handleAddLecturer}>Thủ công</span>,
     },
   ];
-
-  const roleMapping = {
-    admin: "Quản trị viên",
-    lecturer: "Giảng viên",
-    head_of_department: "Trưởng khoa",
-    deputy_head_of_department: "Phó khoa",
-    department_in_charge: "Cán bộ phụ trách khoa",
-  };
-
-  const degreeMapping = {
-    Bachelor: "Cử nhân",
-    Master: "Thạc sĩ",
-    Doctor: "Tiến sĩ",
-    Egineer: "Kỹ sư",
-    Professor: "Giáo sư",
-    Ossociate_Professor: "Phó giáo sư",
-  };
-
-  const degreePriority = {
-    Professor: 1,
-    Ossociate_Professor: 2,
-    Doctor: 3,
-    Master: 4,
-    Bachelor: 5,
-    Egineer: 6,
-  };
 
   useEffect(() => {
     const fetchRoles = async () => {
@@ -296,43 +801,11 @@ const ManagementUsers = () => {
   }, [isModalVisible]);
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        showFilter &&
-        filterRef.current &&
-        !filterRef.current.contains(event.target)
-      ) {
-        setShowFilter(false);
-      }
-      if (
-        showDepartmentFilter &&
-        departmentFilterRef.current &&
-        !departmentFilterRef.current.contains(event.target)
-      ) {
-        setShowDepartmentFilter(false);
-      }
-      if (
-        showStatusFilter &&
-        statusFilterRef.current &&
-        !statusFilterRef.current.contains(event.target)
-      ) {
-        setShowStatusFilter(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showFilter, showDepartmentFilter, showStatusFilter]);
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         if (userRole === "admin") {
           const lecturersData = await userApi.getAllLecturers();
           const students = await userApi.getAllStudents();
-          console.log("Fetched data (admin):", { students, lecturersData });
           setUsers(students);
           setLecturers(lecturersData);
         } else if (
@@ -349,19 +822,87 @@ const ManagementUsers = () => {
           const data = await userApi.getLecturerAndStudentByDepartment(
             departmentId
           );
-          console.log("Fetched data (department):", data);
           setUsers(data.students || []);
           setLecturers(data.lecturers || []);
         }
       } catch (error) {
         console.error("Error fetching data:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchData();
   }, [userRole, departmentId]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showFilter &&
+        filterRef.current &&
+        !filterRef.current.contains(event.target)
+      ) {
+        setShowFilter(false);
+      }
+      if (
+        showDepartmentFilter &&
+        departmentFilterRef.current &&
+        !departmentFilterRef.current.contains(event.target)
+      ) {
+        setShowDepartmentFilter(false);
+      }
+      if (
+        showPositionFilter &&
+        positionFilterRef.current &&
+        !positionFilterRef.current.contains(event.target)
+      ) {
+        setShowPositionFilter(false);
+      }
+      if (
+        showStatusFilter &&
+        statusFilterRef.current &&
+        !statusFilterRef.current.contains(event.target)
+      ) {
+        setShowStatusFilter(false);
+      }
+      if (
+        showGenderFilter &&
+        genderFilterRef.current &&
+        !genderFilterRef.current.contains(event.target)
+      ) {
+        setShowGenderFilter(false);
+      }
+      if (
+        showRoleFilter &&
+        roleFilterRef.current &&
+        !roleFilterRef.current.contains(event.target)
+      ) {
+        setShowRoleFilter(false);
+      }
+      if (
+        showColumnFilter &&
+        columnFilterRef.current &&
+        !columnFilterRef.current.contains(event.target)
+      ) {
+        setShowColumnFilter(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [
+    showFilter,
+    showDepartmentFilter,
+    showPositionFilter,
+    showStatusFilter,
+    showGenderFilter,
+    showRoleFilter,
+    showColumnFilter,
+  ]);
+
+  useEffect(() => {
+    setVisibleColumns(columns.map((col) => col.key));
+  }, [activeTab]);
 
   const handleEditClick = (user) => {
     setSelectedUser(user);
@@ -452,18 +993,6 @@ const ManagementUsers = () => {
     setIsModalVisible(false);
   };
 
-  const handleSearchByName = (e) => {
-    setFilterName(e.target.value);
-    setUserCurrentPage(1);
-    setLecturerCurrentPage(1);
-  };
-
-  const handleSearchById = (e) => {
-    setFilterId(e.target.value);
-    setUserCurrentPage(1);
-    setLecturerCurrentPage(1);
-  };
-
   const handleRoleChange = (checkedValues) => {
     const filteredRoles = checkedValues.filter((role) => role !== "lecturer");
     const allowedRoles = [
@@ -496,12 +1025,6 @@ const ManagementUsers = () => {
         message.error("Không tìm thấy quyền cần xóa!");
         return;
       }
-
-      console.log("Deleting role with parameters:", {
-        adminId,
-        lecturerId,
-        roleId: roleObject._id,
-      });
 
       if (!adminId || !lecturerId || !roleObject._id) {
         throw new Error("Thiếu thông tin người dùng, quản trị viên hoặc quyền");
@@ -567,29 +1090,57 @@ const ManagementUsers = () => {
     () => [
       "Tất cả",
       ...new Set(
-        displayedUsers.map((user) => user.position || "Không xác định")
+        lecturers
+          .filter((lecturer) => lecturer.degree)
+          .map((lecturer) => degreeMapping[lecturer.degree] || "Không xác định")
+      ),
+    ],
+    [lecturers]
+  );
+
+  const uniqueStatuses = ["Tất cả", "Hoạt động", "Không hoạt động"];
+
+  const uniqueGenders = useMemo(
+    () => [
+      "Tất cả",
+      ...new Set(displayedUsers.map((user) => user.gender || "Khác")),
+    ],
+    [displayedUsers]
+  );
+
+  const uniqueRoles = useMemo(
+    () => [
+      "Tất cả",
+      ...new Set(
+        displayedUsers.flatMap((user) =>
+          user.roles
+            ? user.roles.map(
+                (role) => roleMapping[role.role_name] || role.role_name
+              )
+            : []
+        )
       ),
     ],
     [displayedUsers]
   );
 
-  const uniqueStatuses = ["Tất cả", "Hoạt động", "Không hoạt động"];
-
   const filteredUsers = useMemo(() => {
-    console.log("Filtering users:", {
-      filterName,
-      filterId,
-      filterDepartment,
-      filterPosition,
-      filterStatus,
-    });
-
     return displayedUsers
       .filter((user) => {
         const userDepartmentName =
           typeof user.department === "object" && user.department.department_name
             ? user.department.department_name
             : user.department || "Không xác định";
+
+        const userRoles = user.roles
+          ? user.roles.map(
+              (role) => roleMapping[role.role_name] || role.role_name
+            )
+          : [];
+
+        const userDegree = user.degree
+          ? degreeMapping[user.degree] || "Không xác định"
+          : "Không xác định";
 
         return (
           (!filterName ||
@@ -598,15 +1149,39 @@ const ManagementUsers = () => {
             (activeTab === "user" && user.student_id.includes(filterId)) ||
             (activeTab === "lecturer" &&
               user.lecturer_id.includes(filterId))) &&
-          (filterDepartment.length === 0 ||
-            filterDepartment.includes("Tất cả") ||
+          (filterDepartment.includes("Tất cả") ||
             filterDepartment.includes(userDepartmentName)) &&
-          (filterPosition === "Tất cả" || user.position === filterPosition) &&
-          (filterStatus.length === 0 ||
-            filterStatus.includes("Tất cả") ||
+          (filterPosition.includes("Tất cả") ||
+            filterPosition.includes(userDegree)) &&
+          (filterStatus.includes("Tất cả") ||
             filterStatus.includes(
               user.isActive ? "Hoạt động" : "Không hoạt động"
-            ))
+            )) &&
+          (!filterEmail ||
+            (user.email || "")
+              .toLowerCase()
+              .includes(filterEmail.toLowerCase())) &&
+          (!filterPhone ||
+            (user.phone || "")
+              .toLowerCase()
+              .includes(filterPhone.toLowerCase())) &&
+          (filterGender.includes("Tất cả") ||
+            filterGender.includes(user.gender || "Khác")) &&
+          (!filterDateOfBirth ||
+            (user.date_of_birth &&
+              new Date(user.date_of_birth)
+                .toLocaleDateString("vi-VN")
+                .includes(filterDateOfBirth))) &&
+          (!filterCccd ||
+            (user.cccd || "")
+              .toLowerCase()
+              .includes(filterCccd.toLowerCase())) &&
+          (!filterAddress ||
+            (user.address || "")
+              .toLowerCase()
+              .includes(filterAddress.toLowerCase())) &&
+          (filterRole.includes("Tất cả") ||
+            filterRole.some((role) => userRoles.includes(role)))
         );
       })
       .sort((a, b) => {
@@ -634,6 +1209,16 @@ const ManagementUsers = () => {
           if (key === "isActive") {
             return user.isActive ? 0 : 1;
           }
+          if (key === "email") return (user.email || "").toLowerCase();
+          if (key === "phone") return (user.phone || "").toLowerCase();
+          if (key === "gender") return (user.gender || "").toLowerCase();
+          if (key === "date_of_birth")
+            return user.date_of_birth
+              ? new Date(user.date_of_birth)
+              : new Date(0);
+          if (key === "cccd") return (user.cccd || "").toLowerCase();
+          if (key === "address") return (user.address || "").toLowerCase();
+
           return "";
         };
 
@@ -654,464 +1239,39 @@ const ManagementUsers = () => {
     filterDepartment,
     filterPosition,
     filterStatus,
+    filterEmail,
+    filterPhone,
+    filterGender,
+    filterDateOfBirth,
+    filterCccd,
+    filterAddress,
     sortKey,
     sortOrder,
+    filterRole,
   ]);
-
-  const columns =
-    activeTab === "user"
-      ? [
-          {
-            title: "STT",
-            dataIndex: "id",
-            key: "id",
-            render: (text, record, index) =>
-              (userCurrentPage - 1) * itemsPerPage + index + 1,
-            width: 65,
-            fixed: "left",
-          },
-          {
-            title: "MSSV",
-            dataIndex: "student_id",
-            key: "id",
-            width: 150,
-            ellipsis: { showTitle: false },
-            render: (student_id) => (
-              <Tooltip placement="topLeft" title={student_id}>
-                {student_id}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "HỌ VÀ TÊN",
-            dataIndex: "full_name",
-            key: "full_name",
-            width: 200,
-            ellipsis: { showTitle: false },
-            render: (full_name) => (
-              <Tooltip placement="topLeft" title={full_name}>
-                {full_name}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "KHOA",
-            dataIndex: "department",
-            key: "department",
-            width: 200,
-            ellipsis: { showTitle: false },
-            render: (department) => {
-              const deptName =
-                typeof department === "object" && department.department_name
-                  ? department.department_name
-                  : department || "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={deptName}>
-                  {deptName}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "TRẠNG THÁI",
-            dataIndex: "isActive",
-            key: "isActive",
-            width: 150,
-            render: (isActive) => (
-              <span
-                className={`px-2 py-1 rounded text-sm ${
-                  isActive ? "text-green-700" : "text-red-700"
-                }`}
-              >
-                {isActive ? "Hoạt động" : "Không hoạt động"}
-              </span>
-            ),
-            sorter: true,
-          },
-          {
-            title: "CHỈNH SỬA",
-            key: "edit",
-            width: 100,
-            fixed: "right",
-            render: (text, record) => (
-              <button
-                className="text-blue-500"
-                onClick={() => handleEditClick(record)}
-              >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 20 20"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                    fill="currentColor"
-                  />
-                </svg>
-              </button>
-            ),
-            align: "center",
-          },
-        ]
-      : [
-          {
-            title: "STT",
-            dataIndex: "id",
-            key: "id",
-            render: (text, record, index) =>
-              (lecturerCurrentPage - 1) * itemsPerPage + index + 1,
-            width: 65,
-            fixed: "left",
-          },
-          {
-            title: "MSGV",
-            dataIndex: "lecturer_id",
-            key: "id",
-            width: 150,
-            ellipsis: { showTitle: false },
-            render: (lecturer_id) => (
-              <Tooltip placement="topLeft" title={lecturer_id}>
-                {lecturer_id}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "HỌ VÀ TÊN",
-            dataIndex: "full_name",
-            key: "full_name",
-            width: 200,
-            ellipsis: { showTitle: false },
-            render: (full_name) => (
-              <Tooltip placement="topLeft" title={full_name}>
-                {full_name}
-              </Tooltip>
-            ),
-            sorter: true,
-          },
-          {
-            title: "KHOA",
-            dataIndex: "department",
-            key: "department",
-            width: 200,
-            ellipsis: { showTitle: false },
-            render: (department) => {
-              const deptName =
-                typeof department === "object" && department.department_name
-                  ? department.department_name
-                  : department || "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={deptName}>
-                  {deptName}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "CHỨC VỤ",
-            dataIndex: "roles",
-            key: "roles",
-            width: 120,
-            ellipsis: { showTitle: false },
-            render: (roles) => {
-              const roleText = Array.isArray(roles)
-                ? roles
-                    .filter(
-                      (role) =>
-                        !(roles.length > 1 && role.role_name === "lecturer")
-                    )
-                    .map(
-                      (role) => roleMapping[role.role_name] || role.role_name
-                    )
-                    .join(", ")
-                : "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={roleText}>
-                  {roleText}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "CHỨC DANH",
-            dataIndex: "degree",
-            key: "degree",
-            width: 120,
-            ellipsis: { showTitle: false },
-            render: (degree) => {
-              const degreeText = degreeMapping[degree] || "Không xác định";
-              return (
-                <Tooltip placement="topLeft" title={degreeText}>
-                  {degreeText}
-                </Tooltip>
-              );
-            },
-            sorter: true,
-          },
-          {
-            title: "TRẠNG THÁI",
-            dataIndex: "isActive",
-            key: "isActive",
-            width: 120,
-            render: (isActive) => (
-              <span
-                className={`px-2 py-1 rounded text-sm ${
-                  isActive ? "text-green-700" : "text-red-700"
-                }`}
-              >
-                {isActive ? "Hoạt động" : "Không hoạt động"}
-              </span>
-            ),
-            sorter: true,
-          },
-          {
-            title: "CHỈNH SỬA",
-            key: "edit",
-            width: 140,
-            fixed: "right",
-            render: (text, record) => {
-              const isHeadOfDepartment = record.roles?.some(
-                (role) => role.role_name === "head_of_department"
-              );
-              const isDeputyHeadOfDepartment = record.roles?.some(
-                (role) => role.role_name === "deputy_head_of_department"
-              );
-
-              if (
-                (userRole === "deputy_head_of_department" &&
-                  isHeadOfDepartment) ||
-                (userRole === "department_in_charge" &&
-                  (isHeadOfDepartment || isDeputyHeadOfDepartment))
-              ) {
-                return null;
-              }
-
-              return (
-                <button
-                  className="text-blue-500"
-                  onClick={() => handleEditClick(record)}
-                >
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 20 20"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path
-                      d="M11.7167 7.51667L12.4833 8.28333L4.93333 15.8333H4.16667V15.0667L11.7167 7.51667ZM14.7167 2.5C14.5083 2.5 14.2917 2.58333 14.1333 2.74167L12.6083 4.26667L15.7333 7.39167L17.2583 5.86667C17.5833 5.54167 17.5833 5.01667 17.2583 4.69167L15.3083 2.74167C15.1417 2.575 14.9333 2.5 14.7167 2.5ZM11.7167 5.15833L2.5 14.375V17.5H5.625L14.8417 8.28333L11.7167 5.15833Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </button>
-              );
-            },
-            align: "center",
-          },
-        ];
-
-  const filterForm = (
-    <form
-      ref={filterRef}
-      className="relative px-4 py-5 w-[300px] bg-white rounded-lg border border-gray-200 shadow-lg max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3"
-    >
-      <div className="max-h-[300px] overflow-y-auto pr-1">
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm mb-1">Họ và tên:</label>
-          <Input
-            value={filterName}
-            onChange={handleSearchByName}
-            placeholder="Nhập họ và tên"
-            className="w-full h-[32px] text-sm"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm mb-1">
-            {activeTab === "user" ? "MSSV" : "MSGV"}:
-          </label>
-          <Input
-            value={filterId}
-            onChange={handleSearchById}
-            placeholder={`Nhập ${activeTab === "user" ? "MSSV" : "MSGV"}`}
-            className="w-full h-[32px] text-sm"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm mb-1">Khoa:</label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowDepartmentFilter(!showDepartmentFilter)}
-              className="w-full h-[32px] bg-white rounded-md border border-gray-300 text-sm text-left px-3 flex items-center justify-between"
-            >
-              <span className="truncate max-w-[380px]">
-                {filterDepartment.length === 0
-                  ? "Chọn khoa"
-                  : filterDepartment.length === uniqueDepartments.length
-                  ? "Tất cả"
-                  : filterDepartment.join(", ")}
-              </span>
-              <DownOutlined className="text-xs" />
-            </button>
-            {showDepartmentFilter && (
-              <div
-                ref={departmentFilterRef}
-                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-3 w-full shadow-md max-h-[250px] overflow-y-auto"
-              >
-                <Checkbox
-                  indeterminate={
-                    filterDepartment.length > 0 &&
-                    filterDepartment.length < uniqueDepartments.length
-                  }
-                  onChange={(e) => {
-                    setFilterDepartment(
-                      e.target.checked ? uniqueDepartments : []
-                    );
-                    setUserCurrentPage(1);
-                    setLecturerCurrentPage(1);
-                  }}
-                  checked={filterDepartment.length === uniqueDepartments.length}
-                >
-                  Tất cả
-                </Checkbox>
-                <Checkbox.Group
-                  options={uniqueDepartments.map((department) => ({
-                    label: department,
-                    value: department,
-                  }))}
-                  value={filterDepartment}
-                  onChange={(checkedValues) => {
-                    setFilterDepartment(checkedValues);
-                    setUserCurrentPage(1);
-                    setLecturerCurrentPage(1);
-                  }}
-                  className="flex flex-col gap-2 mt-2"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {activeTab === "lecturer" && (
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm mb-1">Chức vụ:</label>
-            <Select
-              value={filterPosition}
-              onChange={(value) => {
-                setFilterPosition(value);
-                setUserCurrentPage(1);
-                setLecturerCurrentPage(1);
-              }}
-              className="w-full h-[32px] text-sm"
-            >
-              {uniquePositions.map((position) => (
-                <Select.Option key={position} value={position}>
-                  {position}
-                </Select.Option>
-              ))}
-            </Select>
-          </div>
-        )}
-
-        <div className="mb-4">
-          <label className="block text-gray-700 text-sm mb-1">
-            Trạng thái:
-          </label>
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setShowStatusFilter(!showStatusFilter)}
-              className="w-full h-[32px] bg-white rounded-md border border-gray-300 text-sm text-left px-3 flex items-center justify-between"
-            >
-              <span className="truncate max-w-[380px]">
-                {filterStatus.length === 0
-                  ? "Chọn trạng thái"
-                  : filterStatus.length === uniqueStatuses.length
-                  ? "Tất cả"
-                  : filterStatus.join(", ")}
-              </span>
-              <DownOutlined className="text-xs" />
-            </button>
-            {showStatusFilter && (
-              <div
-                ref={statusFilterRef}
-                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-3 w-full shadow-md"
-              >
-                <Checkbox
-                  indeterminate={
-                    filterStatus.length > 0 &&
-                    filterStatus.length < uniqueStatuses.length
-                  }
-                  onChange={(e) => {
-                    setFilterStatus(e.target.checked ? uniqueStatuses : []);
-                    setUserCurrentPage(1);
-                    setLecturerCurrentPage(1);
-                  }}
-                  checked={filterStatus.length === uniqueStatuses.length}
-                >
-                  Tất cả
-                </Checkbox>
-                <Checkbox.Group
-                  options={uniqueStatuses
-                    .filter((status) => status !== "Tất cả")
-                    .map((status) => ({
-                      label: status,
-                      value: status,
-                    }))}
-                  value={filterStatus}
-                  onChange={(checkedValues) => {
-                    setFilterStatus(checkedValues);
-                    setUserCurrentPage(1);
-                    setLecturerCurrentPage(1);
-                  }}
-                  className="flex flex-col gap-2 mt-2"
-                />
-              </div>
-            )}
-          </div>
-        </div>
-
-        <Divider className="my-4" />
-        <button
-          type="button"
-          onClick={() => {
-            setFilterName("");
-            setFilterId("");
-            setFilterDepartment([]);
-            setFilterPosition("Tất cả");
-            setFilterStatus([]);
-            setShowFilter(false);
-            setUserCurrentPage(1);
-            setLecturerCurrentPage(1);
-          }}
-          className="w-full bg-blue-500 text-white py-2 rounded-md text-sm hover:bg-blue-600 transition-colors"
-        >
-          Bỏ lọc tất cả
-        </button>
-      </div>
-    </form>
-  );
 
   const totalStudents = users.length;
   const totalLecturers = lecturers.length;
 
+  // Handle page size change
+  const handlePageSizeChange = (value) => {
+    setPageSize(value);
+    // Reset to first page when page size changes
+    if (activeTab === "user") {
+      setUserCurrentPage(1);
+    } else {
+      setLecturerCurrentPage(1);
+    }
+  };
+
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -1129,12 +1289,9 @@ const ManagementUsers = () => {
             </span>
           </div>
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div
-            className="flex justify-between items-center border-b"
-            style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
-          >
-            <div className="flex gap-2">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex justify-between items-center max-lg:flex-wrap">
+            <div className="flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
               <button
                 className={`px-4 py-2 text-center text-xs ${
                   activeTab === "user"
@@ -1156,64 +1313,575 @@ const ManagementUsers = () => {
                 Giảng viên ({totalLecturers})
               </button>
             </div>
-            <div>
-              {userRole !== "admin" &&
-                (activeTab === "user" ? (
-                  <Dropdown
-                    menu={{ items: studentMenuItems }}
-                    trigger={["click"]}
-                  >
-                    <button className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs flex items-center gap-2">
-                      Thêm sinh viên <DownOutlined />
-                    </button>
-                  </Dropdown>
-                ) : (
-                  <Dropdown
-                    menu={{ items: lecturerMenuItems }}
-                    trigger={["click"]}
-                  >
-                    <button className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs flex items-center gap-2">
-                      Thêm giảng viên <DownOutlined />
-                    </button>
-                  </Dropdown>
-                ))}
+            <div className="flex gap-2 mt-2 max-lg:mt-4">
+              {userRole !== "admin" && (
+                <Dropdown
+                  menu={{
+                    items:
+                      activeTab === "user"
+                        ? studentMenuItems
+                        : lecturerMenuItems,
+                  }}
+                  trigger={["click"]}
+                >
+                  <button className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-xs flex items-center gap-2">
+                    Thêm {activeTab === "user" ? "sinh viên" : "giảng viên"}{" "}
+                    <DownOutlined />
+                  </button>
+                </Dropdown>
+              )}
             </div>
           </div>
         </div>
-
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-md:max-w-full">
           <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
             <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="flex justify-end mb-4 relative">
+              <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
+
                   className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                   onClick={() => setShowFilter(!showFilter)}
                 >
                   <Filter className="w-4 h-4" />
                   <span className="text-xs">Bộ lọc</span>
                 </button>
+                <button
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  onClick={() => {
+                    setShowColumnFilter(!showColumnFilter);
+                    setShowFilter(false);
+                  }}
+                >
+                  <Filter className="w-4 h-4" />
+                  <span className="text-xs">Chọn cột</span>
+                </button>
                 {showFilter && (
-                  <div className="absolute top-full mt-2 z-50 right-0 shadow-lg">
-                    {filterForm}
+                  <div
+                    ref={filterRef}
+                    className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
+                  >
+                    <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 rounded-lg border border-gray-200">
+                      <div className="max-h-[400px] overflow-y-auto pr-1">
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Khoa:
+                          </label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowDepartmentFilter(!showDepartmentFilter);
+                              }}
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                            >
+                              <span className="truncate">
+                                {filterDepartment.includes("Tất cả")
+                                  ? "Tất cả"
+                                  : filterDepartment.join(", ")}
+                              </span>
+                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                            </button>
+                            {showDepartmentFilter && (
+                              <div
+                                ref={departmentFilterRef}
+                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
+                              >
+                                <div className="max-h-[100px] overflow-y-auto pr-1">
+                                  <Checkbox
+                                    checked={filterDepartment.includes(
+                                      "Tất cả"
+                                    )}
+                                    onChange={(e) => {
+                                      setFilterDepartment(
+                                        e.target.checked ? ["Tất cả"] : []
+                                      );
+                                    }}
+                                  >
+                                    Tất cả
+                                  </Checkbox>
+                                  <Checkbox.Group
+                                    options={uniqueDepartments
+                                      .filter((dept) => dept !== "Tất cả")
+                                      .map((dept) => ({
+                                        label: dept,
+                                        value: dept,
+                                      }))}
+                                    value={filterDepartment.filter(
+                                      (dept) => dept !== "Tất cả"
+                                    )}
+                                    onChange={(checkedValues) => {
+                                      if (
+                                        checkedValues.length ===
+                                        uniqueDepartments.length - 1
+                                      ) {
+                                        setFilterDepartment(["Tất cả"]);
+                                      } else {
+                                        setFilterDepartment(checkedValues);
+                                      }
+                                    }}
+                                    className="flex flex-col gap-2 mt-2"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {activeTab === "lecturer" && (
+                          <>
+                            <div className="mb-3">
+                              <label className="block text-gray-700 text-xs">
+                                Chức danh:
+                              </label>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowPositionFilter(!showPositionFilter);
+                                  }}
+                                  className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                                >
+                                  <span className="truncate">
+                                    {filterPosition.includes("Tất cả")
+                                      ? "Tất cả"
+                                      : filterPosition.join(", ")}
+                                  </span>
+                                  <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                                </button>
+                                {showPositionFilter && (
+                                  <div
+                                    ref={positionFilterRef}
+                                    className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
+                                  >
+                                    <div className="max-h-[100px] overflow-y-auto pr-1">
+                                      <Checkbox
+                                        checked={filterPosition.includes(
+                                          "Tất cả"
+                                        )}
+                                        onChange={(e) => {
+                                          setFilterPosition(
+                                            e.target.checked ? ["Tất cả"] : []
+                                          );
+                                        }}
+                                      >
+                                        Tất cả
+                                      </Checkbox>
+                                      <Checkbox.Group
+                                        options={uniquePositions
+                                          .filter((pos) => pos !== "Tất cả")
+                                          .map((pos) => ({
+                                            label: pos,
+                                            value: pos,
+                                          }))}
+                                        value={filterPosition.filter(
+                                          (pos) => pos !== "Tất cả"
+                                        )}
+                                        onChange={(checkedValues) => {
+                                          if (
+                                            checkedValues.length ===
+                                            uniquePositions.length - 1
+                                          ) {
+                                            setFilterPosition(["Tất cả"]);
+                                          } else {
+                                            setFilterPosition(checkedValues);
+                                          }
+                                        }}
+                                        className="flex flex-col gap-2 mt-2"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="mb-3">
+                              <label className="block text-gray-700 text-xs">
+                                Chức vụ:
+                              </label>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShowRoleFilter(!showRoleFilter);
+                                  }}
+                                  className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                                >
+                                  <span className="truncate">
+                                    {filterRole.includes("Tất cả")
+                                      ? "Tất cả"
+                                      : filterRole.join(", ")}
+                                  </span>
+                                  <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                                </button>
+                                {showRoleFilter && (
+                                  <div
+                                    ref={roleFilterRef}
+                                    className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
+                                  >
+                                    <div className="max-h-[100px] overflow-y-auto pr-1">
+                                      <Checkbox
+                                        checked={filterRole.includes("Tất cả")}
+                                        onChange={(e) => {
+                                          setFilterRole(
+                                            e.target.checked ? ["Tất cả"] : []
+                                          );
+                                        }}
+                                      >
+                                        Tất cả
+                                      </Checkbox>
+                                      <Checkbox.Group
+                                        options={uniqueRoles
+                                          .filter((role) => role !== "Tất cả")
+                                          .map((role) => ({
+                                            label: role,
+                                            value: role,
+                                          }))}
+                                        value={filterRole.filter(
+                                          (role) => role !== "Tất cả"
+                                        )}
+                                        onChange={(checkedValues) => {
+                                          if (
+                                            checkedValues.length ===
+                                            uniqueRoles.length - 1
+                                          ) {
+                                            setFilterRole(["Tất cả"]);
+                                          } else {
+                                            setFilterRole(checkedValues);
+                                          }
+                                        }}
+                                        className="flex flex-col gap-2 mt-2"
+                                      />
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </>
+                        )}
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Trạng thái:
+                          </label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowStatusFilter(!showStatusFilter);
+                              }}
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                            >
+                              <span className="truncate">
+                                {filterStatus.includes("Tất cả")
+                                  ? "Tất cả"
+                                  : filterStatus.join(", ")}
+                              </span>
+                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                            </button>
+                            {showStatusFilter && (
+                              <div
+                                ref={statusFilterRef}
+                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
+                              >
+                                <div className="max-h-[100px] overflow-y-auto pr-1">
+                                  <Checkbox
+                                    checked={filterStatus.includes("Tất cả")}
+                                    onChange={(e) => {
+                                      setFilterStatus(
+                                        e.target.checked ? ["Tất cả"] : []
+                                      );
+                                    }}
+                                  >
+                                    Tất cả
+                                  </Checkbox>
+                                  <Checkbox.Group
+                                    options={uniqueStatuses
+                                      .filter((status) => status !== "Tất cả")
+                                      .map((status) => ({
+                                        label: status,
+                                        value: status,
+                                      }))}
+                                    value={filterStatus.filter(
+                                      (status) => status !== "Tất cả"
+                                    )}
+                                    onChange={(checkedValues) => {
+                                      if (
+                                        checkedValues.length ===
+                                        uniqueStatuses.length - 1
+                                      ) {
+                                        setFilterStatus(["Tất cả"]);
+                                      } else {
+                                        setFilterStatus(checkedValues);
+                                      }
+                                    }}
+                                    className="flex flex-col gap-2 mt-2"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Giới tính:
+                          </label>
+                          <div className="relative">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setShowGenderFilter(!showGenderFilter);
+                              }}
+                              className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs text-left flex justify-between items-center"
+                            >
+                              <span className="truncate">
+                                {filterGender.includes("Tất cả")
+                                  ? "Tất cả"
+                                  : filterGender
+                                      .map((g) =>
+                                        g === "male"
+                                          ? "Nam"
+                                          : g === "female"
+                                          ? "Nữ"
+                                          : "Khác"
+                                      )
+                                      .join(", ")}
+                              </span>
+                              <ChevronDown className="w-3 h-3 ml-1 flex-shrink-0" />
+                            </button>
+                            {showGenderFilter && (
+                              <div
+                                ref={genderFilterRef}
+                                className="absolute z-10 bg-white border border-gray-300 rounded-md mt-1 p-2 max-w-[250px]"
+                              >
+                                <div className="max-h-[100px] overflow-y-auto pr-1">
+                                  <Checkbox
+                                    checked={filterGender.includes("Tất cả")}
+                                    onChange={(e) => {
+                                      setFilterGender(
+                                        e.target.checked ? ["Tất cả"] : []
+                                      );
+                                    }}
+                                  >
+                                    Tất cả
+                                  </Checkbox>
+                                  <Checkbox.Group
+                                    options={uniqueGenders
+                                      .filter((gender) => gender !== "Tất cả")
+                                      .map((gender) => ({
+                                        label:
+                                          gender === "male"
+                                            ? "Nam"
+                                            : gender === "female"
+                                            ? "Nữ"
+                                            : "Khác",
+                                        value: gender,
+                                      }))}
+                                    value={filterGender.filter(
+                                      (gender) => gender !== "Tất cả"
+                                    )}
+                                    onChange={(checkedValues) => {
+                                      if (
+                                        checkedValues.length ===
+                                        uniqueGenders.length - 1
+                                      ) {
+                                        setFilterGender(["Tất cả"]);
+                                      } else {
+                                        setFilterGender(checkedValues);
+                                      }
+                                    }}
+                                    className="flex flex-col gap-2 mt-2"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Họ và tên:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterName}
+                            onChange={(e) => setFilterName(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            {activeTab === "user" ? "MSSV" : "MSGV"}:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterId}
+                            onChange={(e) => setFilterId(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Email:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterEmail}
+                            onChange={(e) => setFilterEmail(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Số điện thoại:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterPhone}
+                            onChange={(e) => setFilterPhone(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Ngày sinh:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterDateOfBirth}
+                            onChange={(e) =>
+                              setFilterDateOfBirth(e.target.value)
+                            }
+                            placeholder="dd/mm/yyyy"
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            CCCD:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterCccd}
+                            onChange={(e) => setFilterCccd(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+
+                        <div className="mb-3">
+                          <label className="block text-gray-700 text-xs">
+                            Địa chỉ:
+                          </label>
+                          <Input
+                            type="text"
+                            value={filterAddress}
+                            onChange={(e) => setFilterAddress(e.target.value)}
+                            className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          />
+                        </div>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterName("");
+                          setFilterId("");
+                          setFilterDepartment(["Tất cả"]);
+                          setFilterPosition(["Tất cả"]);
+                          setFilterStatus(["Tất cả"]);
+                          setFilterEmail("");
+                          setFilterPhone("");
+                          setFilterGender(["Tất cả"]);
+                          setFilterDateOfBirth("");
+                          setFilterCccd("");
+                          setFilterAddress("");
+                          setFilterRole(["Tất cả"]);
+                        }}
+                        className="w-full mt-4 bg-blue-500 text-white py-1 rounded-md text-xs"
+                      >
+                        Bỏ lọc tất cả
+                      </button>
+                    </form>
+                  </div>
+                )}
+                {showColumnFilter && (
+                  <div
+                    ref={columnFilterRef}
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
+                  >
+                    <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                      <Checkbox
+                        indeterminate={
+                          visibleColumns.length > 0 &&
+                          visibleColumns.length < columns.length
+                        }
+                        onChange={(e) => {
+                          setVisibleColumns(
+                            e.target.checked
+                              ? columns.map((col) => col.key)
+                              : []
+                          );
+                        }}
+                        checked={visibleColumns.length === columns.length}
+                      >
+                        Chọn tất cả
+                      </Checkbox>
+                      <div className="max-h-[300px] overflow-y-auto pr-1 mt-2">
+                        <Checkbox.Group
+                          options={columnOptions}
+                          value={visibleColumns}
+                          onChange={handleColumnVisibilityChange}
+                          className="flex flex-col gap-2"
+                        />
+                      </div>
+                      <Divider className="mt-4" />
+                    </div>
                   </div>
                 )}
               </div>
-
               <div className="overflow-x-auto">
                 <Table
-                  columns={columns}
+                  columns={filteredColumns}
                   dataSource={filteredUsers}
                   pagination={{
                     current:
                       activeTab === "user"
                         ? userCurrentPage
                         : lecturerCurrentPage,
-                    pageSize: itemsPerPage,
+                    pageSize: pageSize,
                     total: filteredUsers.length,
                     onChange: (page) =>
                       activeTab === "user"
                         ? setUserCurrentPage(page)
                         : setLecturerCurrentPage(page),
+                    showSizeChanger: false,
+                    showTotal: (total, range) => (
+                      <div className="flex items-center">
+                        <Select
+                          value={pageSize}
+                          onChange={handlePageSizeChange}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 30, label: "30 / trang" },
+                            { value: 50, label: "50 / trang" },
+                            { value: 100, label: "100 / trang" },
+                          ]}
+                        />
+                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                      </div>
+                    ),
                   }}
                   rowKey={(record) =>
                     record._id || record.student_id || record.lecturer_id
@@ -1228,7 +1896,7 @@ const ManagementUsers = () => {
                   locale={{
                     emptyText: (
                       <div className="text-center py-8 text-gray-500">
-                        Không có người dùng phù hợp với bộ lọc
+                        Không có người dùng phù hợp
                       </div>
                     ),
                   }}
@@ -1247,115 +1915,6 @@ const ManagementUsers = () => {
           </div>
         </div>
       </div>
-
-      <input
-        type="file"
-        id="studentExcelInput"
-        accept=".xlsx, .xls"
-        style={{ display: "none" }}
-        onChange={handleExcelUpload}
-      />
-      <input
-        type="file"
-        id="lecturerExcelInput"
-        accept=".xlsx, .xls"
-        style={{ display: "none" }}
-        onChange={handleExcelUpload}
-      />
-
-      <Modal
-        title={`Cập nhật trạng thái - ${
-          selectedUser?.full_name || "Người dùng"
-        }`}
-        visible={isModalVisible}
-        onOk={handleOk}
-        onCancel={handleCancel}
-      >
-        <div className="mb-3">
-          <label className="block text-gray-700 text-sm">Trạng thái:</label>
-          <Radio.Group
-            value={newStatus}
-            onChange={(e) => setNewStatus(e.target.value)}
-            className="w-full"
-          >
-            <Radio value="Hoạt động">Hoạt động</Radio>
-            <Radio value="Không hoạt động">Không hoạt động</Radio>
-          </Radio.Group>
-        </div>
-        {activeTab === "lecturer" && (
-          <div className="mb-3">
-            <label className="block text-gray-700 text-sm">Chức vụ:</label>
-            <Checkbox.Group
-              options={[
-                { label: "Giảng viên", value: "lecturer", disabled: true },
-                ...roleOptions.filter((role) => role.value !== "lecturer"),
-              ]}
-              value={newRole}
-              onChange={handleRoleChange}
-              className="flex flex-col gap-2"
-            />
-            <div className="mt-3">
-              <label className="block text-gray-700 text-sm">
-                Danh sách quyền:
-              </label>
-              <div className="flex flex-col gap-2">{renderRoleList()}</div>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      <Modal
-        title="Thêm sinh viên"
-        visible={isStudentModalVisible}
-        onCancel={handleStudentModalCancel}
-        footer={null}
-      >
-        <AddStudentModal onClose={handleStudentModalCancel} studentData={{}} />
-      </Modal>
-
-      <Modal
-        title="Thêm giảng viên"
-        visible={isLecturerModalVisible}
-        onCancel={handleLecturerModalCancel}
-        footer={null}
-      >
-        <AddLecturerModal
-          onClose={handleLecturerModalCancel}
-          lecturerData={{}}
-        />
-      </Modal>
-
-      <Modal
-        title="Xem và chỉnh sửa dữ liệu Excel"
-        visible={isExcelModalVisible}
-        onOk={handleExcelSave}
-        onCancel={handleExcelCancel}
-        width={800}
-      >
-        <Table
-          dataSource={excelData}
-          columns={
-            excelData.length > 0
-              ? Object.keys(excelData[0]).map((key) => ({
-                  title: key,
-                  dataIndex: key,
-                  key,
-                  render: (text, record, index) => (
-                    <Input
-                      value={text}
-                      onChange={(e) =>
-                        handleExcelCellChange(index, key, e.target.value)
-                      }
-                    />
-                  ),
-                }))
-              : []
-          }
-          rowKey={(record, index) => index}
-          pagination={false}
-          scroll={{ x: true }}
-        />
-      </Modal>
       <Footer />
     </div>
   );

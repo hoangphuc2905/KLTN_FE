@@ -1366,6 +1366,19 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  getInactiveStudentsByDepartment: async (departmentId) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/students/inactive/${departmentId}`
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching inactive students:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;

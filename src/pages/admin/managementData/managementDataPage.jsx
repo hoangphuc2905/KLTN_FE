@@ -247,12 +247,12 @@ const ManagementData = () => {
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -271,11 +271,8 @@ const ManagementData = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div
-            className="flex border-b"
-            style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}
-          >
+        <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+          <div className="flex border-b max-sm:flex-wrap max-sm:gap-2">
             <button
               className={`px-4 py-2 text-center text-xs ${
                 activeTab === "type"
@@ -299,11 +296,9 @@ const ManagementData = () => {
           </div>
         </div>
 
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-lg:px-4 max-md:max-w-full">
           <div className="bg-white rounded-xl shadow-sm">
-            <div className="flex justify-end gap-4 mb-4 p-4 relative">
-              {" "}
-              {/* Add relative class */}
+            <div className="flex justify-end gap-4 mb-4 p-4 relative max-sm:flex-wrap">
               <Button
                 className="bg-blue-500 text-white hover:bg-blue-600 text-xs"
                 onClick={handleAdd}
@@ -320,11 +315,9 @@ const ManagementData = () => {
               {showFilter && (
                 <div
                   ref={filterRef}
-                  className="absolute top-full mt-2 z-50 shadow-lg"
+                  className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
                 >
-                  {" "}
-                  {/* Adjust position */}
-                  <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                  <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 rounded-lg border border-gray-200">
                     {activeTab === "type" ? (
                       <div className="mb-3">
                         <label className="block text-gray-700 text-xs">
@@ -334,7 +327,7 @@ const ManagementData = () => {
                           type="text"
                           value={filterPaperType}
                           onChange={(e) => setFilterPaperType(e.target.value)}
-                          className="px-2 py-1  bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
                     ) : (
@@ -346,11 +339,10 @@ const ManagementData = () => {
                           type="text"
                           value={filterGroup}
                           onChange={(e) => setFilterGroup(e.target.value)}
-                          className="px-2 py-1  bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
+                          className="px-2 py-1 bg-white rounded-md border border-solid border-zinc-300 h-[25px] w-[300px] max-md:w-full max-md:max-w-[300px] max-sm:w-full text-xs"
                         />
                       </div>
                     )}
-
                     <button
                       type="button"
                       onClick={() => {
@@ -381,12 +373,13 @@ const ManagementData = () => {
                     ),
                   }}
                   locale={{
-                    emptyText: <div style={{ height: "35px" }}></div>,
+                    emptyText: (
+                      <div className="text-center py-8 text-gray-500">
+                        Không có dữ liệu
+                      </div>
+                    ),
                   }}
-                  style={{
-                    height: "525px",
-                    minHeight: "525px",
-                  }}
+                  className="text-sm"
                 />
               ) : (
                 <Table
@@ -402,12 +395,13 @@ const ManagementData = () => {
                     ),
                   }}
                   locale={{
-                    emptyText: <div style={{ height: "35px" }}></div>,
+                    emptyText: (
+                      <div className="text-center py-8 text-gray-500">
+                        Không có dữ liệu
+                      </div>
+                    ),
                   }}
-                  style={{
-                    height: "525px",
-                    minHeight: "525px",
-                  }}
+                  className="text-sm"
                 />
               )}
             </div>

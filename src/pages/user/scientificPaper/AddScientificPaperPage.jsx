@@ -31,6 +31,7 @@ const AddScientificPaperPage = () => {
     { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
   ]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [originalFileName, setOriginalFileName] = useState(""); // State to store the original file name
   const [coverImage, setCoverImage] = useState(null);
   const [paperTypes, setPaperTypes] = useState([]);
   const [paperGroups, setPaperGroups] = useState([]);
@@ -57,6 +58,9 @@ const AddScientificPaperPage = () => {
   const [summary, setSummary] = useState(""); // State for summary
   const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
   const [doi, setDoi] = useState(""); // State for DOI
+  const [coverImageError, setCoverImageError] = useState("");
+  const [coverImageTouched, setCoverImageTouched] = useState(false);
+  // Removed duplicate declarations of fileError and fileTouched
   const navigate = useNavigate();
 
   // State để lưu điểm
@@ -127,6 +131,16 @@ const AddScientificPaperPage = () => {
     return true;
   };
 
+  // Validation function for paper img
+  const validateCoverImage = () => {
+    if (!coverImage) {
+      setCoverImageError("Vui lòng tải lên ảnh bìa");
+      return false;
+    }
+    setCoverImageError("");
+    return true;
+  };
+
   // Validation functions for other required fields
   const validatePaperGroup = () => {
     if (!selectedPaperGroup) {
@@ -157,9 +171,20 @@ const AddScientificPaperPage = () => {
 
   const validatePublishDate = () => {
     if (!publishDate) {
-      setPublishDateError("Vui lòng chọn");
+      setPublishDateError("Chọn ngày");
       return false;
     }
+
+    // Check if publish date is in the future
+    const selectedDate = new Date(publishDate);
+    const currentDate = new Date();
+    currentDate.setHours(0, 0, 0, 0); // Reset time to start of day
+
+    if (selectedDate > currentDate) {
+      setPublishDateError("< ngày hiện tại");
+      return false;
+    }
+
     setPublishDateError("");
     return true;
   };
@@ -263,7 +288,7 @@ const AddScientificPaperPage = () => {
 
   const validateFile = () => {
     if (!selectedFile) {
-      setFileError("Vui lòng tải lên file");
+      setFileError("error"); // Chỉ đặt trạng thái để hiển thị viền đỏ
       return false;
     }
     setFileError("");
@@ -360,8 +385,9 @@ const AddScientificPaperPage = () => {
     const file = e.target.files[0];
     if (file) {
       try {
-        const response = await userApi.uploadImage(file); // Call uploadImage function
-        setCoverImage(response.url); // Use the uploaded image's URL
+        const response = await userApi.uploadImage(file);
+        setCoverImage(response.url);
+        setCoverImageError(""); // Clear error when image is selected
         message.success("Ảnh bìa đã được tải lên thành công!");
         console.log("Uploaded image response:", response);
       } catch (error) {
@@ -381,10 +407,19 @@ const AddScientificPaperPage = () => {
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
+        // Check file size (limit to 3.5MB)
+        const maxSize = 3.5 * 1024 * 1024; // 3.5MB in bytes
+        if (file.size > maxSize) {
+          message.error("Kích thước tệp vượt quá giới hạn 3.5MB.");
+          return;
+        }
+
         try {
-          const response = await userApi.uploadFile(file); // Call uploadFile function
-          setSelectedFile(response.url); // Use the uploaded file's URL
-          setFileError(""); // Clear error when file is selected
+          setOriginalFileName(file.name); // Save the original file name for display
+          const response = await userApi.uploadFile(file);
+          setSelectedFile(response.url); // Save the Cloudinary URL for backend
+          setFileError(""); // Clear error when file is uploaded
+          setFileTouched(true);
           message.success("File đã được tải lên thành công!");
           console.log("Uploaded file response:", response);
         } catch (error) {
@@ -393,17 +428,23 @@ const AddScientificPaperPage = () => {
             error.response?.data || error.message
           );
           message.error("Không thể tải file lên. Vui lòng thử lại.");
+          setOriginalFileName(""); // Reset original file name on error
+          setSelectedFile(null); // Reset Cloudinary URL on error
         }
+      } else {
+        setFileTouched(true);
+        validateFile();
       }
-      // Removed validation that showed error when no file was selected
     };
-
-    // Show file selector dialog
     input.click();
   };
 
   const handleRemoveFile = () => {
-    setSelectedFile(null);
+    setOriginalFileName(""); // Clear the original file name
+    setSelectedFile(null); // Clear the Cloudinary URL
+    if (fileTouched) {
+      setFileError("Vui lòng tải lên file");
+    }
   };
 
   const handleAddAuthor = () => {
@@ -458,6 +499,12 @@ const AddScientificPaperPage = () => {
           updatedAuthors[index].full_name =
             userData.full_name || userData.name || "";
 
+          // Xóa lỗi cho full_name khi có dữ liệu
+          const newErrors = [...authorErrors];
+          if (!newErrors[index]) newErrors[index] = {};
+          newErrors[index].full_name = "";
+          setAuthorErrors(newErrors);
+
           try {
             // Fetch user workplaces
             const institutionsResponse = await userApi.getUserWorksByUserId(
@@ -502,6 +549,12 @@ const AddScientificPaperPage = () => {
               // If user has institutions, set the first one as default
               if (institutions.length > 0) {
                 updatedAuthors[index].institution = institutions[0]._id;
+
+                // Clear institution error when data is loaded from API
+                const newErrors = [...authorErrors];
+                if (!newErrors[index]) newErrors[index] = {};
+                newErrors[index].institution = "";
+                setAuthorErrors(newErrors);
               }
 
               console.log("Fetched institutions:", institutions);
@@ -617,6 +670,7 @@ const AddScientificPaperPage = () => {
       { id: 2, mssvMsgv: "", full_name: "", role: "", institution: "" },
     ]);
     setSelectedFile(null);
+    setOriginalFileName(""); // Clear the original file name
     setCoverImage(null);
     message.info("Đã xóa trắng thông tin.");
   };
@@ -637,8 +691,8 @@ const AddScientificPaperPage = () => {
       const isLinkValid = validateLink();
       const areAuthorsValid = validateAuthors();
       const isFileValid = validateFile();
+      const isCoverImageValid = validateCoverImage();
 
-      // Check if all validations passed
       if (
         !isPaperTypeValid ||
         !isPaperGroupValid ||
@@ -652,55 +706,94 @@ const AddScientificPaperPage = () => {
         !isSummaryValid ||
         !isLinkValid ||
         !areAuthorsValid ||
-        !isFileValid
+        !isFileValid ||
+        !isCoverImageValid
       ) {
         message.error("Vui lòng điền đầy đủ thông tin bắt buộc");
         return;
       }
 
-      // Compute author_count using the same logic as displayed in the UI
+      const randomUUID = () => {
+        return "xxxxxxxxxxxx".replace(/[x]/g, function () {
+          return (Math.random() * 16) | 0;
+        });
+      };
+
+      // Handle custom institutions
+      const updatedAuthors = await Promise.all(
+        authors.map(async (author) => {
+          if (
+            !/^[a-f\d]{24}$/i.test(author.institution) &&
+            author.institution
+          ) {
+            // Save custom institution to the database
+            try {
+              const response = await userApi.createWorkUnit({
+                work_unit_id: randomUUID(),
+                name_vi: author.institution,
+                name_en: author.institution, // Assuming the same name for English
+                address_vi: "Unknown Address", // Default value
+                address_en: "Unknown Address", // Default value
+              });
+              return {
+                ...author,
+                institution: response._id, // Use the returned ObjectId
+              };
+            } catch (error) {
+              console.error("Error saving custom institution:", error);
+              message.error(
+                `Không thể lưu cơ quan công tác: ${author.institution}`
+              );
+              throw error;
+            }
+          }
+          return author;
+        })
+      );
+
+      // Compute author_count
       const counts = {
         primary: 0,
         corresponding: 0,
         primaryCorresponding: 0,
         contributor: 0,
       };
-      authors.forEach((author) => {
+      updatedAuthors.forEach((author) => {
         if (author.role === "MainAuthor") counts.primary++;
         if (author.role === "CorrespondingAuthor") counts.corresponding++;
         if (author.role === "MainAndCorrespondingAuthor")
           counts.primaryCorresponding++;
         if (author.role === "Participant") counts.contributor++;
       });
-      const authorCount = `${authors.length}(${counts.primary},${counts.corresponding},${counts.primaryCorresponding},${counts.contributor})`;
+      const authorCount = `${updatedAuthors.length}(${counts.primary},${counts.corresponding},${counts.primaryCorresponding},${counts.contributor})`;
 
       // Prepare JSON payload
       const payload = {
         article_type: selectedPaperType || "",
         article_group:
           paperGroups.find((group) => group.group_name === selectedPaperGroup)
-            ?._id || "", // Lưu ObjectId xuống DB
+            ?._id || "",
         title_vn: titleVn || "",
-        title_en: titleEn || "",
-        author_count: authorCount, // Use the computed author_count
-        author: authors.map((author, index) => ({
+        ...(titleEn && { title_en: titleEn }),
+        author_count: authorCount,
+        author: updatedAuthors.map((author, index) => ({
           user_id: author.mssvMsgv || "",
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
-          work_unit_id: author.institution || null, // Ensure this is the ObjectId (_id)
+          work_unit_id: author.institution, // Ensure this is a valid ObjectId
           degree: "Bachelor",
           point: parseFloat(scores.perAuthor[`author_${index + 1}`]) || 0,
         })),
         publish_date: publishDate || "",
         magazine_vi: magazineVi || "",
-        magazine_en: magazineEn || "",
-        magazine_type: magazineType || "",
+        ...(magazineEn && { magazine_en: magazineEn }),
+        ...(magazineType && { magazine_type: magazineType }),
         page: pageCount || 0,
         issn_isbn: issnIsbn || "",
         file: selectedFile || "",
         link: link || "",
-        doi: doi || "",
+        ...(doi && { doi: doi }),
         status: "pending",
         order_no: orderNo,
         featured: featured,
@@ -712,17 +805,6 @@ const AddScientificPaperPage = () => {
 
       // Debugging: Log payload
       console.log("Payload:", payload);
-
-      // Validate ObjectId format for work_unit_id
-      const invalidAuthors = payload.author.filter(
-        (author) =>
-          !author.work_unit_id || !/^[a-f\d]{24}$/i.test(author.work_unit_id)
-      );
-
-      if (invalidAuthors.length > 0) {
-        message.error("Một hoặc nhiều tác giả có work_unit_id không hợp lệ.");
-        return;
-      }
 
       // Send data to the backend
       const response = await userApi.createScientificPaper(payload);
@@ -740,10 +822,6 @@ const AddScientificPaperPage = () => {
         message.error("Không thể lưu bài báo. Vui lòng thử lại.");
       }
     }
-  };
-
-  const showIconModal = () => {
-    setIsIconModalVisible(true);
   };
 
   const handleIconModalOk = () => {
@@ -817,13 +895,17 @@ const AddScientificPaperPage = () => {
                   <div className="flex flex-col w-[260px] justify-center">
                     <label
                       htmlFor="cover-upload"
-                      className="cursor-pointer relative"
+                      className={`cursor-pointer relative ${
+                        coverImageError
+                          ? "border-2 border-red-500 rounded-lg"
+                          : ""
+                      }`}
                       aria-label="Upload cover image"
                     >
                       <img
                         src={
                           coverImage ||
-                          "https://via.placeholder.com/180x200?text=Bìa+Bài+Báo"
+                          "https://cdn-icons-png.flaticon.com/128/4904/4904233.png"
                         }
                         alt="Bìa bài báo"
                         className="w-[210px] h-[315px] object-contain border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
@@ -831,6 +913,11 @@ const AddScientificPaperPage = () => {
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 text-white font-semibold text-sm rounded-lg transition duration-300">
                         Chọn ảnh
                       </div>
+                      {coverImageError && (
+                        <div className="absolute top-0 right-0 bg-red-100 text-red-500 text-xs px-2 py-1 rounded-sm border border-red-200 shadow-sm">
+                          {coverImageError}
+                        </div>
+                      )}
                     </label>
                     <input
                       id="cover-upload"
@@ -840,6 +927,11 @@ const AddScientificPaperPage = () => {
                       className="hidden"
                       aria-hidden="true"
                     />
+                    {coverImageError && (
+                      <div className="text-red-500 text-xs mt-1">
+                        {coverImageError}
+                      </div>
+                    )}
                   </div>
                   {/* Các input bên cạnh ảnh */}
                   <div className="w-full grid grid-cols-1 pl-4">
@@ -1015,7 +1107,7 @@ const AddScientificPaperPage = () => {
                 <div className="flex gap-4 mt-4">
                   {/* Bên dưới ảnh: 4 input xếp dọc (bằng ảnh) */}
                   <div className="flex flex-col w-[260px] gap-4">
-                    {/* Ngày cô bố */}
+                    {/* Ngày công bố */}
                     <div className="">
                       <label
                         htmlFor="publishDate"
@@ -1030,18 +1122,35 @@ const AddScientificPaperPage = () => {
                             publishDateError ? "border-red-500" : ""
                           }`}
                           placeholder="Ngày công bố"
-                          status={publishDateError ? "error" : ""}
                           onChange={(date, dateString) => {
                             setPublishDate(dateString);
-                            setPublishDateError("");
+                            setPublishDateTouched(true);
+
+                            // Perform validation
+                            if (date) {
+                              const selectedDate = new Date(date);
+                              const currentDate = new Date();
+                              currentDate.setHours(0, 0, 0, 0);
+
+                              if (selectedDate > currentDate) {
+                                // Future date - show error
+                                setPublishDateError("< ngày hiện tại");
+                              } else {
+                                // Valid date - clear error
+                                setPublishDateError("");
+                              }
+                            } else {
+                              // No date - show error
+                              setPublishDateError("Vui lòng chọn ngày công bố");
+                            }
                           }}
                           onBlur={() => {
-                            setPublishDateTouched(true);
-                            validatePublishDate();
-                          }}
-                          onClick={() => {
                             if (!publishDateTouched) {
                               setPublishDateTouched(true);
+                            }
+                            // Keep existing error or validate if no date is selected
+                            if (!publishDate && !publishDateError) {
+                              setPublishDateError("Chọn ngày");
                             }
                           }}
                         />
@@ -1054,6 +1163,7 @@ const AddScientificPaperPage = () => {
                         )}
                       </div>
                     </div>
+
                     {/* Số trang */}
                     <div className="">
                       <label
@@ -1516,21 +1626,17 @@ const AddScientificPaperPage = () => {
                               status={
                                 authorErrors[index]?.full_name ? "error" : ""
                               }
-                              className={`${
-                                authorErrors[index]?.full_name
-                                  ? "border-red-500"
-                                  : ""
-                              }`}
                               onChange={(e) => {
                                 handleAuthorChange(
                                   index,
                                   "full_name",
                                   e.target.value
                                 );
-                                // Clear error when value is entered
                                 const newErrors = [...authorErrors];
                                 if (!newErrors[index]) newErrors[index] = {};
-                                newErrors[index].full_name = "";
+                                newErrors[index].full_name = e.target.value
+                                  ? ""
+                                  : "error";
                                 setAuthorErrors(newErrors);
                               }}
                               onBlur={() => {
@@ -1538,15 +1644,11 @@ const AddScientificPaperPage = () => {
                                 if (!newTouched[index]) newTouched[index] = {};
                                 newTouched[index].full_name = true;
                                 setAuthorTouched(newTouched);
-
-                                // Validate on blur - set error to trigger red styling only
                                 const newErrors = [...authorErrors];
                                 if (!newErrors[index]) newErrors[index] = {};
-                                if (!author.full_name) {
-                                  newErrors[index].full_name = "error";
-                                } else {
-                                  newErrors[index].full_name = "";
-                                }
+                                newErrors[index].full_name = author.full_name
+                                  ? ""
+                                  : "error";
                                 setAuthorErrors(newErrors);
                               }}
                               onClick={() => {
@@ -1718,6 +1820,62 @@ const AddScientificPaperPage = () => {
                                 setAuthorTouched(newTouched);
                               }}
                               required
+                              dropdownRender={(menu) => (
+                                <>
+                                  {menu}
+                                  <div className="p-2 flex items-center gap-2">
+                                    <Input
+                                      placeholder="Nhập cơ quan công tác"
+                                      value={
+                                        authors[index].institutionInput || ""
+                                      }
+                                      onChange={(e) => {
+                                        handleAuthorChange(
+                                          index,
+                                          "institutionInput",
+                                          e.target.value
+                                        );
+                                        const newErrors = [...authorErrors];
+                                        if (!newErrors[index])
+                                          newErrors[index] = {};
+                                        newErrors[index].institution = "";
+                                        setAuthorErrors(newErrors);
+                                      }}
+                                    />
+                                    <Button
+                                      type="primary"
+                                      size="small"
+                                      onClick={() => {
+                                        const value =
+                                          authors[
+                                            index
+                                          ].institutionInput?.trim();
+                                        if (value) {
+                                          handleAuthorChange(
+                                            index,
+                                            "institution",
+                                            value
+                                          );
+                                          const newErrors = [...authorErrors];
+                                          if (!newErrors[index])
+                                            newErrors[index] = {};
+                                          newErrors[index].institution = "";
+                                          setAuthorErrors(newErrors);
+                                          message.success(
+                                            "Cơ quan công tác đã được thêm vào"
+                                          );
+                                        } else {
+                                          message.error(
+                                            "Vui lòng nhập cơ quan công tác!"
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      Thêm
+                                    </Button>
+                                  </div>
+                                </>
+                              )}
                             >
                               {author.institutions?.map((institution) => (
                                 <Option
@@ -1786,8 +1944,9 @@ const AddScientificPaperPage = () => {
                       <Input
                         id="file-upload"
                         placeholder="Upload file..."
-                        value={selectedFile || ""}
+                        value={originalFileName || ""} // Display the original file name
                         readOnly
+                        status={fileError ? "error" : ""}
                       />
                       <Button type="primary" onClick={handleFileChange}>
                         Choose
