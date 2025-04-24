@@ -149,13 +149,16 @@ const LoginPage = () => {
                 {loading ? "Đang đăng nhập..." : "Đăng nhập"}
               </button>
 
-              <button
-                type="button"
-                className="self-end px-3 py-2 mt-2 text-sm font-bold text-green-500 bg-white border border-green-500 rounded-lg hover:bg-green-100"
-                onClick={() => (window.location.href = "/register")}
-              >
-                Đăng ký
-              </button>
+              <p className="self-end mt-4 text-xl text-zinc-800">
+                Chưa có tài khoản?{" "}
+                <button
+                  type="button"
+                  className="font-bold text-green-500 hover:underline"
+                  onClick={() => (window.location.href = "/register")}
+                >
+                  Đăng ký
+                </button>
+              </p>
             </form>
           </section>
         </div>
