@@ -211,6 +211,7 @@ const StatisticsChartPage = () => {
   const [showPointDownloadFilter, setShowPointDownloadFilter] = useState(false);
   const [pointChartData, setPointChartData] = useState({
     labels: [],
+    originalLabels: [],
     datasets: [
       {
         data: [],
@@ -234,6 +235,7 @@ const StatisticsChartPage = () => {
   const [showDonutDownloadFilter, setShowDonutDownloadFilter] = useState(false);
   const [donutChartData, setDonutChartData] = useState({
     labels: [],
+    originalLabels: [],
     datasets: [
       {
         data: [],
@@ -405,41 +407,51 @@ const StatisticsChartPage = () => {
             });
             setSelectedPointFilters(["All", ...labels]);
           } else {
+            // Handle empty data
             setPointChartData({
-              labels: ["No data"],
+              labels: [],
+              originalLabels: [],
               datasets: [
                 {
-                  data: [0],
-                  backgroundColor: ["#E0E0E0"],
+                  data: [],
+                  backgroundColor: [],
+                  borderWidth: 0,
+                  borderRadius: 6,
                 },
               ],
             });
-            setSelectedPointFilters([]);
+            setSelectedPointFilters(["All"]);
           }
         } else {
           setPointChartData({
-            labels: ["No data"],
+            labels: [],
+            originalLabels: [],
             datasets: [
               {
-                data: [0],
-                backgroundColor: ["#E0E0E0"],
+                data: [],
+                backgroundColor: [],
+                borderWidth: 0,
+                borderRadius: 6,
               },
             ],
           });
-          setSelectedPointFilters([]);
+          setSelectedPointFilters(["All"]);
         }
       } catch (error) {
         console.error("Error fetching top 5 papers by points:", error);
         setPointChartData({
-          labels: ["No data"],
+          labels: [],
+          originalLabels: [],
           datasets: [
             {
-              data: [0],
-              backgroundColor: ["#E0E0E0"],
+              data: [],
+              backgroundColor: [],
+              borderWidth: 0,
+              borderRadius: 6,
             },
           ],
         });
-        setSelectedPointFilters([]);
+        setSelectedPointFilters(["All"]);
       }
     };
 
@@ -483,41 +495,48 @@ const StatisticsChartPage = () => {
             });
             setSelectedDonutFilters(["All", ...labels]);
           } else {
+            // Handle empty data
             setDonutChartData({
-              labels: ["No data"],
+              labels: [],
+              originalLabels: [],
               datasets: [
                 {
-                  data: [0],
-                  backgroundColor: ["#E0E0E0"],
+                  data: [],
+                  backgroundColor: [],
+                  borderWidth: 0,
                 },
               ],
             });
-            setSelectedDonutFilters([]);
+            setSelectedDonutFilters(["All"]);
           }
         } else {
           setDonutChartData({
-            labels: ["No data"],
+            labels: [],
+            originalLabels: [],
             datasets: [
               {
-                data: [0],
-                backgroundColor: ["#E0E0E0"],
+                data: [],
+                backgroundColor: [],
+                borderWidth: 0,
               },
             ],
           });
-          setSelectedDonutFilters([]);
+          setSelectedDonutFilters(["All"]);
         }
       } catch (error) {
         console.error("Error fetching top 5 paper types:", error);
         setDonutChartData({
-          labels: ["No data"],
+          labels: [],
+          originalLabels: [],
           datasets: [
             {
-              data: [0],
-              backgroundColor: ["#E0E0E0"],
+              data: [],
+              backgroundColor: [],
+              borderWidth: 0,
             },
           ],
         });
-        setSelectedDonutFilters([]);
+        setSelectedDonutFilters(["All"]);
       }
     };
 
@@ -529,16 +548,27 @@ const StatisticsChartPage = () => {
   useEffect(() => {
     const fetchTypeStatistics = async () => {
       try {
-        const response = await userApi.getPaperGroupsByUser(
-          userId,
-          selectedYear === "Tất cả" ? null : selectedYear
-        );
-        if (response && response.data) {
-          setTypeCounts(response.data);
-          setSelectedTypeFilters(["All", ...Object.keys(response.data)]);
+        if (userId) {
+          const response = await userApi.getPaperGroupsByUser(
+            userId,
+            selectedYear === "Tất cả" ? null : selectedYear
+          );
+          if (response && response.data) {
+            setTypeCounts(response.data);
+            setSelectedTypeFilters(["All", ...Object.keys(response.data)]);
+          } else {
+            // Handle empty data
+            setTypeCounts({});
+            setSelectedTypeFilters(["All"]);
+          }
+        } else {
+          setTypeCounts({});
+          setSelectedTypeFilters(["All"]);
         }
       } catch (error) {
         console.error("Error fetching type statistics:", error);
+        setTypeCounts({});
+        setSelectedTypeFilters(["All"]);
       }
     };
 
@@ -642,7 +672,12 @@ const StatisticsChartPage = () => {
       if (selectedPointFilters.includes("All")) {
         setSelectedPointFilters([]);
       } else {
-        setSelectedPointFilters(["All", ...pointChartData.labels]);
+        // Make sure we don't crash if labels are empty
+        setSelectedPointFilters(
+          pointChartData.labels?.length > 0
+            ? ["All", ...pointChartData.labels]
+            : ["All"]
+        );
       }
     } else {
       if (selectedPointFilters.includes(value)) {
@@ -655,7 +690,11 @@ const StatisticsChartPage = () => {
           ...selectedPointFilters.filter((item) => item !== "All"),
           value,
         ];
-        if (newSelected.length === pointChartData.labels.length) {
+        // Make sure we don't crash if labels are empty
+        if (
+          pointChartData.labels?.length > 0 &&
+          newSelected.length === pointChartData.labels.length
+        ) {
           newSelected.push("All");
         }
         setSelectedPointFilters(newSelected);
@@ -669,7 +708,12 @@ const StatisticsChartPage = () => {
       if (selectedDonutFilters.includes("All")) {
         setSelectedDonutFilters([]);
       } else {
-        setSelectedDonutFilters(["All", ...donutChartData.labels]);
+        // Make sure we don't crash if labels are empty
+        setSelectedDonutFilters(
+          donutChartData.labels?.length > 0
+            ? ["All", ...donutChartData.labels]
+            : ["All"]
+        );
       }
     } else {
       if (selectedDonutFilters.includes(value)) {
@@ -682,7 +726,11 @@ const StatisticsChartPage = () => {
           ...selectedDonutFilters.filter((item) => item !== "All"),
           value,
         ];
-        if (newSelected.length === donutChartData.labels.length) {
+        // Make sure we don't crash if labels are empty
+        if (
+          donutChartData.labels?.length > 0 &&
+          newSelected.length === donutChartData.labels.length
+        ) {
           newSelected.push("All");
         }
         setSelectedDonutFilters(newSelected);
@@ -709,42 +757,53 @@ const StatisticsChartPage = () => {
   };
 
   const filteredTypeChartData = {
-    labels: selectedTypeFilters.includes("All")
-      ? Object.keys(typeCounts).filter((label) => typeCounts[label] > 0)
-      : Object.keys(typeCounts).filter(
-          (label) =>
-            selectedTypeFilters.includes(label) && typeCounts[label] > 0
-        ),
+    labels:
+      Object.keys(typeCounts).length > 0
+        ? selectedTypeFilters.includes("All")
+          ? Object.keys(typeCounts).filter((label) => typeCounts[label] > 0)
+          : Object.keys(typeCounts).filter(
+              (label) =>
+                selectedTypeFilters.includes(label) && typeCounts[label] > 0
+            )
+        : [],
     datasets: [
       {
-        data: selectedTypeFilters.includes("All")
-          ? Object.values(typeCounts).filter((value) => value > 0)
-          : Object.keys(typeCounts)
-              .filter(
-                (label) =>
-                  selectedTypeFilters.includes(label) && typeCounts[label] > 0
-              )
-              .map((label) => typeCounts[label]),
-        backgroundColor: selectedTypeFilters.includes("All")
-          ? Object.values(typeCounts)
-              .map(
-                (_, index) =>
-                  ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
-                    index % 5
-                  ]
-              )
-              .filter((_, index) => Object.values(typeCounts)[index] > 0)
-          : Object.keys(typeCounts)
-              .filter(
-                (label) =>
-                  selectedTypeFilters.includes(label) && typeCounts[label] > 0
-              )
-              .map(
-                (_, index) =>
-                  ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
-                    index % 5
-                  ]
-              ),
+        data:
+          Object.keys(typeCounts).length > 0
+            ? selectedTypeFilters.includes("All")
+              ? Object.values(typeCounts).filter((value) => value > 0)
+              : Object.keys(typeCounts)
+                  .filter(
+                    (label) =>
+                      selectedTypeFilters.includes(label) &&
+                      typeCounts[label] > 0
+                  )
+                  .map((label) => typeCounts[label])
+            : [],
+        backgroundColor:
+          Object.keys(typeCounts).length > 0
+            ? selectedTypeFilters.includes("All")
+              ? Object.values(typeCounts)
+                  .map(
+                    (_, index) =>
+                      ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
+                        index % 5
+                      ]
+                  )
+                  .filter((_, index) => Object.values(typeCounts)[index] > 0)
+              : Object.keys(typeCounts)
+                  .filter(
+                    (label) =>
+                      selectedTypeFilters.includes(label) &&
+                      typeCounts[label] > 0
+                  )
+                  .map(
+                    (_, index) =>
+                      ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
+                        index % 5
+                      ]
+                  )
+            : [],
         borderWidth: 0,
         borderRadius: 6,
       },
@@ -752,72 +811,100 @@ const StatisticsChartPage = () => {
   };
 
   const filteredPointChartData = {
-    labels: selectedPointFilters.includes("All")
-      ? pointChartData.labels
-      : pointChartData.labels.filter((label) =>
-          selectedPointFilters.includes(label)
-        ),
+    labels:
+      pointChartData.labels?.length > 0
+        ? selectedPointFilters.includes("All")
+          ? pointChartData.labels
+          : pointChartData.labels.filter((label) =>
+              selectedPointFilters.includes(label)
+            )
+        : [],
     datasets: [
       {
-        data: selectedPointFilters.includes("All")
-          ? pointChartData.datasets[0].data
-          : pointChartData.datasets[0].data.filter((_, index) =>
-              selectedPointFilters.includes(pointChartData.labels[index])
-            ),
-        backgroundColor: selectedPointFilters.includes("All")
-          ? pointChartData.datasets[0].backgroundColor
-          : pointChartData.datasets[0].backgroundColor.filter((_, index) =>
-              selectedPointFilters.includes(pointChartData.labels[index])
-            ),
+        data:
+          pointChartData.labels?.length > 0 &&
+          pointChartData.datasets[0]?.data?.length > 0
+            ? selectedPointFilters.includes("All")
+              ? pointChartData.datasets[0].data
+              : pointChartData.datasets[0].data.filter((_, index) =>
+                  selectedPointFilters.includes(pointChartData.labels[index])
+                )
+            : [],
+        backgroundColor:
+          pointChartData.labels?.length > 0 &&
+          pointChartData.datasets[0]?.backgroundColor?.length > 0
+            ? selectedPointFilters.includes("All")
+              ? pointChartData.datasets[0].backgroundColor
+              : pointChartData.datasets[0].backgroundColor.filter((_, index) =>
+                  selectedPointFilters.includes(pointChartData.labels[index])
+                )
+            : [],
         borderWidth: 0,
         borderRadius: 6,
       },
     ],
-    originalLabels: selectedPointFilters.includes("All")
-      ? pointChartData.originalLabels
-      : pointChartData.originalLabels.filter((_, index) =>
-          selectedPointFilters.includes(pointChartData.labels[index])
-        ),
+    originalLabels:
+      pointChartData.originalLabels?.length > 0
+        ? selectedPointFilters.includes("All")
+          ? pointChartData.originalLabels
+          : pointChartData.originalLabels.filter((_, index) =>
+              selectedPointFilters.includes(pointChartData.labels[index])
+            )
+        : [],
   };
 
   const filteredDonutChartData = {
-    labels: selectedDonutFilters.includes("All")
-      ? donutChartData.labels
-      : donutChartData.labels.filter((label) =>
-          selectedDonutFilters.includes(label)
-        ),
+    labels:
+      donutChartData.labels?.length > 0
+        ? selectedDonutFilters.includes("All")
+          ? donutChartData.labels
+          : donutChartData.labels.filter((label) =>
+              selectedDonutFilters.includes(label)
+            )
+        : [],
     datasets: [
       {
-        data: selectedDonutFilters.includes("All")
-          ? donutChartData.datasets[0].data
-          : donutChartData.datasets[0].data.filter((_, index) =>
-              selectedDonutFilters.includes(donutChartData.labels[index])
-            ),
-        backgroundColor: selectedDonutFilters.includes("All")
-          ? donutChartData.datasets[0].backgroundColor
-          : donutChartData.datasets[0].backgroundColor.filter((_, index) =>
-              selectedDonutFilters.includes(donutChartData.labels[index])
-            ),
+        data:
+          donutChartData.labels?.length > 0 &&
+          donutChartData.datasets[0]?.data?.length > 0
+            ? selectedDonutFilters.includes("All")
+              ? donutChartData.datasets[0].data
+              : donutChartData.datasets[0].data.filter((_, index) =>
+                  selectedDonutFilters.includes(donutChartData.labels[index])
+                )
+            : [],
+        backgroundColor:
+          donutChartData.labels?.length > 0 &&
+          donutChartData.datasets[0]?.backgroundColor?.length > 0
+            ? selectedDonutFilters.includes("All")
+              ? donutChartData.datasets[0].backgroundColor
+              : donutChartData.datasets[0].backgroundColor.filter((_, index) =>
+                  selectedDonutFilters.includes(donutChartData.labels[index])
+                )
+            : [],
         borderWidth: 0,
       },
     ],
-    originalLabels: selectedDonutFilters.includes("All")
-      ? donutChartData.originalLabels
-      : donutChartData.originalLabels.filter((_, index) =>
-          selectedDonutFilters.includes(donutChartData.labels[index])
-        ),
+    originalLabels:
+      donutChartData.originalLabels?.length > 0
+        ? selectedDonutFilters.includes("All")
+          ? donutChartData.originalLabels
+          : donutChartData.originalLabels.filter((_, index) =>
+              selectedDonutFilters.includes(donutChartData.labels[index])
+            )
+        : [],
   };
 
   const hasTypeChartData =
-    selectedTypeFilters.length > 0 &&
+    filteredTypeChartData.datasets[0]?.data?.length > 0 &&
     filteredTypeChartData.datasets[0].data.some((value) => value > 0);
 
   const hasPointChartData =
-    selectedPointFilters.length > 0 &&
+    filteredPointChartData.datasets[0]?.data?.length > 0 &&
     filteredPointChartData.datasets[0].data.some((value) => value > 0);
 
   const hasDonutChartData =
-    selectedDonutFilters.length > 0 &&
+    filteredDonutChartData.datasets[0]?.data?.length > 0 &&
     filteredDonutChartData.datasets[0].data.some((value) => value > 0);
 
   const getTypeChartTitle = () => {
