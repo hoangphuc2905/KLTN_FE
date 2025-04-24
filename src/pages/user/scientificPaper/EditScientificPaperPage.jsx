@@ -36,6 +36,7 @@ const EditScientificPaperPage = () => {
       role: "",
       institution: "",
       institutions: [],
+      customInstitution: "",
     },
     {
       id: 2,
@@ -45,6 +46,7 @@ const EditScientificPaperPage = () => {
       role: "",
       institution: "",
       institutions: [],
+      customInstitution: "",
     },
   ]);
   const [selectedFile, setSelectedFile] = useState(null);
@@ -76,8 +78,13 @@ const EditScientificPaperPage = () => {
     total: 0,
     perAuthor: {},
   });
+  const [originalFileName, setOriginalFileName] = useState(""); // State for original file name
+  const [fileError, setFileError] = useState(""); // State for file error
+  const [fileTouched, setFileTouched] = useState(false); // State for file touched
   const navigate = useNavigate();
-  const { id } = useParams(); // Get the paper ID from the URL
+  const { id } = useParams();
+  const [authorErrors, setAuthorErrors] = useState([]);
+  // Get the paper ID from the URL
 
   useEffect(() => {
     const fetchData = async () => {
@@ -205,6 +212,7 @@ const EditScientificPaperPage = () => {
               institution: author.work_unit_id?._id || "",
               institutions: institutions,
               point: author.point || 0,
+              customInstitution: "",
             };
           })
         );
@@ -263,9 +271,19 @@ const EditScientificPaperPage = () => {
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
+        // Check file size (limit to 3.5MB)
+        const maxSize = 3.5 * 1024 * 1024; // 3.5MB in bytes
+        if (file.size > maxSize) {
+          message.error("Kích thước tệp vượt quá giới hạn 3.5MB.");
+          return;
+        }
+
         try {
-          const response = await userApi.uploadFile(file); // Call uploadFile function
-          setSelectedFile(response.url); // Use the uploaded file's URL
+          const response = await userApi.uploadFile(file);
+          setSelectedFile(response.url); // Save the Cloudinary URL for backend
+          setOriginalFileName(file.name); // Use the uploaded file's name
+          setFileError(""); // Clear error when file is uploaded
+          setFileTouched(true);
           message.success("File đã được tải lên thành công!");
           console.log("Uploaded file response:", response);
         } catch (error) {
@@ -274,14 +292,23 @@ const EditScientificPaperPage = () => {
             error.response?.data || error.message
           );
           message.error("Không thể tải file lên. Vui lòng thử lại.");
+          setOriginalFileName(""); // Reset original file name on error
+          setSelectedFile(null); // Reset Cloudinary URL on error
         }
+      } else {
+        setFileTouched(true);
+        validateFile();
       }
     };
     input.click();
   };
 
   const handleRemoveFile = () => {
-    setSelectedFile(null);
+    setOriginalFileName(""); // Clear the original file name
+    setSelectedFile(null); // Clear the Cloudinary URL
+    if (fileTouched) {
+      setFileError("Vui lòng tải lên file");
+    }
   };
 
   const handleAddAuthor = () => {
@@ -295,6 +322,7 @@ const EditScientificPaperPage = () => {
         role: "",
         institution: "",
         institutions: [],
+        customInstitution: "",
       },
     ]);
   };
@@ -308,12 +336,11 @@ const EditScientificPaperPage = () => {
     const updatedAuthors = [...authors];
 
     if (field === "institution") {
-      updatedAuthors[index][field] = value; // Đảm bảo đây là ObjectId (_id)
+      updatedAuthors[index][field] = value; // Ensure this is ObjectId (_id)
     } else {
       updatedAuthors[index][field] = value;
     }
 
-    // Nếu thay đổi vai trò, cập nhật lại điểm
     if (field === "role") {
       handleFieldChange({
         authors: updatedAuthors.map((author, i) => ({
@@ -328,31 +355,27 @@ const EditScientificPaperPage = () => {
 
     if (field === "mssvMsgv" && value.trim() !== "") {
       try {
-        // Gọi cả hai hàm để lấy dữ liệu từ giảng viên và sinh viên
         const lecturerData = await userApi
           .getLecturerById(value)
           .catch((error) => {
             console.log("Error fetching lecturer:", error.message);
-            return null; // Trả về null nếu không tìm thấy giảng viên
+            return null;
           });
 
         const studentData = await userApi
           .getStudentById(value)
           .catch((error) => {
             console.log("Error fetching student:", error.message);
-            return null; // Trả về null nếu không tìm thấy sinh viên
+            return null;
           });
 
-        // Ưu tiên dữ liệu từ giảng viên nếu có, nếu không thì lấy từ sinh viên
         const userData = lecturerData || studentData;
 
         if (userData) {
-          // Set name information if user data was found
           updatedAuthors[index].full_name =
             userData.full_name || userData.name || "";
 
           try {
-            // Fetch user workplaces
             const institutionsResponse = await userApi.getUserWorksByUserId(
               value
             );
@@ -363,7 +386,6 @@ const EditScientificPaperPage = () => {
               Array.isArray(institutionsResponse) &&
               institutionsResponse.length > 0
             ) {
-              // Map the institution IDs to fetch their details
               const institutions = await Promise.all(
                 institutionsResponse.map(async (item) => {
                   try {
@@ -392,7 +414,6 @@ const EditScientificPaperPage = () => {
 
               updatedAuthors[index].institutions = institutions;
 
-              // If user has institutions, set the first one as default
               if (institutions.length > 0) {
                 updatedAuthors[index].institution = institutions[0]._id;
               }
@@ -402,7 +423,6 @@ const EditScientificPaperPage = () => {
               console.log(
                 "No institutions found, fetching all work units as fallback"
               );
-              // Fallback: if no specific institutions, fetch all work units
               const allWorkUnits = await userApi.getAllWorkUnits();
 
               if (allWorkUnits && Array.isArray(allWorkUnits)) {
@@ -420,7 +440,6 @@ const EditScientificPaperPage = () => {
           } catch (institutionsError) {
             console.error("Error fetching institutions:", institutionsError);
 
-            // Fallback: fetch all work units if specific user institutions failed
             try {
               const allWorkUnits = await userApi.getAllWorkUnits();
               if (allWorkUnits && Array.isArray(allWorkUnits)) {
@@ -439,13 +458,12 @@ const EditScientificPaperPage = () => {
             }
           }
 
-          // Generate English name from Vietnamese name
           if (updatedAuthors[index].full_name) {
             const nameParts = updatedAuthors[index].full_name
               .normalize("NFD")
-              .replace(/[\u0300-\u036f]/g, "") // Remove diacritics
+              .replace(/[\u0300-\u036f]/g, "")
               .split(" ");
-            const firstName = nameParts.shift(); // Remove the first word
+            const firstName = nameParts.shift();
             updatedAuthors[index].full_name_eng = [...nameParts, firstName]
               .map(
                 (word) =>
@@ -454,11 +472,9 @@ const EditScientificPaperPage = () => {
               .join(" ");
           }
         } else {
-          // No user found - clear fields
           updatedAuthors[index].full_name = "";
           updatedAuthors[index].full_name_eng = "";
 
-          // Still try to fetch all work units
           try {
             const allWorkUnits = await userApi.getAllWorkUnits();
             if (allWorkUnits && Array.isArray(allWorkUnits)) {
@@ -476,7 +492,6 @@ const EditScientificPaperPage = () => {
         }
       } catch (error) {
         console.error("Error in handleAuthorChange:", error);
-        // On any error, clear author name and try to fetch all work units
         updatedAuthors[index].full_name = "";
         updatedAuthors[index].full_name_eng = "";
 
@@ -500,9 +515,36 @@ const EditScientificPaperPage = () => {
     setAuthors(updatedAuthors);
   };
 
+  const handleAddCustomInstitution = async (index) => {
+    const customInstitution = authors[index].customInstitution?.trim();
+    if (customInstitution) {
+      try {
+        const response = await userApi.createWorkUnit({
+          name_vi: customInstitution,
+          name_en: customInstitution,
+          address_vi: "Unknown Address",
+          address_en: "Unknown Address",
+        });
+        const updatedAuthors = [...authors];
+        updatedAuthors[index].institution = response._id;
+        updatedAuthors[index].institutions.push({
+          _id: response._id,
+          name: customInstitution,
+        });
+        updatedAuthors[index].customInstitution = "";
+        setAuthors(updatedAuthors);
+        message.success("Cơ quan công tác đã được thêm thành công!");
+      } catch (error) {
+        console.error("Error saving custom institution:", error);
+        message.error("Không thể thêm cơ quan công tác. Vui lòng thử lại.");
+      }
+    } else {
+      message.error("Vui lòng nhập tên cơ quan công tác!");
+    }
+  };
+
   const calculateAndSetScore = async (inputData) => {
     try {
-      // Chuẩn hóa dữ liệu gửi lên API
       const payload = {
         createdAt: new Date().toISOString(),
         doi: inputData.doi || false,
@@ -558,6 +600,7 @@ const EditScientificPaperPage = () => {
         role: "",
         institution: "",
         institutions: [],
+        customInstitution: "",
       },
       {
         id: 2,
@@ -567,6 +610,7 @@ const EditScientificPaperPage = () => {
         role: "",
         institution: "",
         institutions: [],
+        customInstitution: "",
       },
     ]);
     setSelectedFile(null);
@@ -576,7 +620,6 @@ const EditScientificPaperPage = () => {
 
   const handleSave = async () => {
     try {
-      // Validate required fields
       if (!titleVn) {
         message.error("Vui lòng nhập tên bài báo (Tiếng Việt)");
         return;
@@ -592,7 +635,6 @@ const EditScientificPaperPage = () => {
         return;
       }
 
-      // Kiểm tra tác giả
       if (
         authors.some(
           (author) =>
@@ -606,49 +648,81 @@ const EditScientificPaperPage = () => {
         return;
       }
 
-      // Format author_count
-      const roleCounts = {
-        MainAuthor: 0,
-        CorrespondingAuthor: 0,
-        MainAndCorrespondingAuthor: 0,
-        Participant: 0,
+      const randomUUID = () => {
+        return "xxxxxxxxxxxx".replace(/[x]/g, function () {
+          return (Math.random() * 16) | 0;
+        });
       };
 
-      authors.forEach((author) => {
-        if (author.role) {
-          roleCounts[author.role]++;
-        }
+      const updatedAuthors = await Promise.all(
+        authors.map(async (author) => {
+          if (
+            !/^[a-f\d]{24}$/i.test(author.institution) &&
+            author.institution
+          ) {
+            try {
+              const response = await userApi.createWorkUnit({
+                work_unit_id: randomUUID(),
+                name_vi: author.institution,
+                name_en: author.institution,
+                address_vi: "Unknown Address",
+                address_en: "Unknown Address",
+              });
+              return {
+                ...author,
+                institution: response._id,
+              };
+            } catch (error) {
+              console.error("Error saving custom institution:", error);
+              message.error(
+                `Không thể lưu cơ quan công tác: ${author.institution}`
+              );
+              throw error;
+            }
+          }
+          return author;
+        })
+      );
+
+      const counts = {
+        primary: 0,
+        corresponding: 0,
+        primaryCorresponding: 0,
+        contributor: 0,
+      };
+      updatedAuthors.forEach((author) => {
+        if (author.role === "MainAuthor") counts.primary++;
+        if (author.role === "CorrespondingAuthor") counts.corresponding++;
+        if (author.role === "MainAndCorrespondingAuthor")
+          counts.primaryCorresponding++;
+        if (author.role === "Participant") counts.contributor++;
       });
+      const authorCount = `${updatedAuthors.length}(${counts.primary},${counts.corresponding},${counts.primaryCorresponding},${counts.contributor})`;
 
-      const authorCount = `${authors.length}(${roleCounts.MainAuthor},${roleCounts.CorrespondingAuthor},${roleCounts.MainAndCorrespondingAuthor},${roleCounts.Participant})`;
-
-      // Prepare JSON payload
       const payload = {
         article_type: selectedPaperType || "",
         article_group: selectedPaperGroup || "",
         title_vn: titleVn || "",
-        title_en: titleEn || "",
+        ...(titleEn && { title_en: titleEn }),
         author_count: authorCount,
-        author: authors.map((author, index) => ({
+        author: updatedAuthors.map((author, index) => ({
           user_id: author.mssvMsgv || "",
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
-          work_unit_id: author.institution || "",
+          work_unit_id: author.institution,
           degree: "Bachelor",
-          point: scores.perAuthor[`author_${index + 1}`] || 0,
+          point: parseFloat(scores.perAuthor[`author_${index + 1}`]) || 0,
         })),
-        publish_date: publishDate
-          ? moment(publishDate).format("YYYY-MM-DD")
-          : "",
+        publish_date: publishDate || "",
         magazine_vi: magazineVi || "",
-        magazine_en: magazineEn || "",
-        magazine_type: magazineType || "",
+        ...(magazineEn && { magazine_en: magazineEn }),
+        ...(magazineType && { magazine_type: magazineType }),
         page: pageCount || 0,
         issn_isbn: issnIsbn || "",
         file: selectedFile || "",
         link: link || "",
-        doi: doi || "",
+        ...(doi && { doi: doi }),
         status: "pending",
         order_no: orderNo,
         featured: featured,
@@ -658,10 +732,8 @@ const EditScientificPaperPage = () => {
         cover_image: coverImage || "",
       };
 
-      // Debugging: Log payload
       console.log("Payload:", payload);
 
-      // Send data to the backend
       const response = await userApi.updateScientificPaperById(id, payload);
       message.success("Bài báo đã được cập nhật thành công!");
       navigate("/scientific-paper");
@@ -677,10 +749,6 @@ const EditScientificPaperPage = () => {
         message.error("Không thể cập nhật bài báo. Vui lòng thử lại.");
       }
     }
-  };
-
-  const showIconModal = () => {
-    setIsIconModalVisible(true);
   };
 
   const handleIconModalOk = () => {
@@ -743,13 +811,11 @@ const EditScientificPaperPage = () => {
         <div className="self-center w-full max-w-[1563px] px-4 mt-4">
           <div className="flex flex-col gap-4">
             <div className="w-full relative">
-              {/* Khối "Nhập thông tin" */}
               <section className="flex flex-col bg-white rounded-lg p-6 mb-3">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin
                 </h2>
                 <div className="flex gap-4">
-                  {/*Ảnh img bài báo */}
                   <div className="flex justify-center">
                     <label
                       htmlFor="cover-upload"
@@ -775,9 +841,7 @@ const EditScientificPaperPage = () => {
                       className="hidden"
                     />
                   </div>
-                  {/* Các input bên cạnh ảnh */}
                   <div className="w-full grid grid-cols-1 pl-4">
-                    {/* Loại bài báo */}
                     <div className="mb-2">
                       <label
                         htmlFor="paperType"
@@ -807,7 +871,6 @@ const EditScientificPaperPage = () => {
                         ))}
                       </Select>
                     </div>
-                    {/* Nhóm bài báo */}
                     <div className="mb-2">
                       <label
                         htmlFor="paperGroup"
@@ -837,7 +900,6 @@ const EditScientificPaperPage = () => {
                         ))}
                       </Select>
                     </div>
-                    {/* Tên(Vn) bài báo */}
                     <div className="mb-2">
                       <label
                         htmlFor="titleVn"
@@ -856,7 +918,6 @@ const EditScientificPaperPage = () => {
                         value={titleVn}
                       />
                     </div>
-                    {/* Tên(En) bài báo */}
                     <div className="mb-2">
                       <label
                         htmlFor="titleEn"
@@ -868,7 +929,7 @@ const EditScientificPaperPage = () => {
                         id="titleEn"
                         className="w-full"
                         placeholder="Tên bài báo (Tiếng Anh)"
-                        rows={2} // Adjust the number of rows as needed
+                        rows={2}
                         onChange={(e) => setTitleEn(e.target.value)}
                         value={titleEn}
                       />
@@ -877,9 +938,7 @@ const EditScientificPaperPage = () => {
                 </div>
 
                 <div className="flex gap-4 mt-4">
-                  {/* Bên dưới ảnh: 4 input xếp dọc (bằng ảnh) */}
                   <div className="flex flex-col w-[260px] gap-4">
-                    {/* Ngày cô bố */}
                     <div className="">
                       <label
                         htmlFor="publishDate"
@@ -897,7 +956,6 @@ const EditScientificPaperPage = () => {
                         }
                       />
                     </div>
-                    {/* Số trang */}
                     <div className="">
                       <label
                         htmlFor="pageCount"
@@ -914,7 +972,6 @@ const EditScientificPaperPage = () => {
                         onChange={(value) => setPageCount(value)}
                       />
                     </div>
-                    {/* Thứ tự */}
                     <div className="pb-7">
                       <label
                         htmlFor="orderNo"
@@ -931,7 +988,6 @@ const EditScientificPaperPage = () => {
                         onChange={(value) => setOrderNo(value)}
                       />
                     </div>
-                    {/* Bài tiêu biểu */}
                     <div className="pb-4">
                       <div className="flex items-center">
                         <label
@@ -950,7 +1006,6 @@ const EditScientificPaperPage = () => {
                         />
                       </div>
                     </div>
-                    {/* Số ISSN / ISBN */}
                     <div className="">
                       <label
                         htmlFor="issnIsbn"
@@ -968,9 +1023,7 @@ const EditScientificPaperPage = () => {
                     </div>
                   </div>
 
-                  {/* Bên phải ảnh: 4 input xếp dọc (bằng ID ở trên) */}
                   <div className="flex flex-col gap-4 w-full pl-4">
-                    {/* Tên tạp chí / kỷ yếu (Vn) */}
                     <div className="">
                       <label
                         htmlFor="magazineVi"
@@ -987,7 +1040,6 @@ const EditScientificPaperPage = () => {
                         value={magazineVi}
                       />
                     </div>
-                    {/* Tên tạp chí / kỷ yếu (En) */}
                     <div className="">
                       <label
                         htmlFor="magazineEn"
@@ -1003,7 +1055,6 @@ const EditScientificPaperPage = () => {
                         value={magazineEn}
                       />
                     </div>
-                    {/* Tập / quyển */}
                     <div className="">
                       <label
                         htmlFor="magazineType"
@@ -1019,7 +1070,6 @@ const EditScientificPaperPage = () => {
                         value={magazineType}
                       />
                     </div>
-                    {/* Khoa / viện */}
                     <div className="">
                       <label
                         htmlFor="department"
@@ -1049,7 +1099,6 @@ const EditScientificPaperPage = () => {
                         ))}
                       </Select>
                     </div>
-                    {/* Từ khóa */}
                     <div className="pb-2">
                       <label
                         htmlFor="keywords"
@@ -1068,7 +1117,6 @@ const EditScientificPaperPage = () => {
                   </div>
                 </div>
 
-                {/* Lưu ý */}
                 <div className="mt-2 text-xs text-gray-700 italic">
                   (<span className="font-bold">LƯU Ý</span>: KHÔNG CẦN đánh chữ
                   <span className="font-bold"> ISSN </span> vào. Với các
@@ -1098,7 +1146,6 @@ const EditScientificPaperPage = () => {
             </div>
 
             <div className="w-full">
-              {/* Khối "Nhập thông tin tác giả" */}
               <section className="flex flex-col bg-white rounded-lg p-6 mb-3">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin TÁC GIẢ
@@ -1135,9 +1182,7 @@ const EditScientificPaperPage = () => {
                       key={author.id || index}
                       className="grid grid-cols-6 gap-4 col-span-2"
                     >
-                      {/* Row 1 */}
                       <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
-                        {/* Mã số SV /GV */}
                         <div className="col-span-3">
                           <label
                             htmlFor={`mssvMsgv-${index}`}
@@ -1159,7 +1204,6 @@ const EditScientificPaperPage = () => {
                             required
                           />
                         </div>
-                        {/* Tên SV /GV Vn */}
                         <div className="col-span-4">
                           <label
                             htmlFor={`fullName-${index}`}
@@ -1175,7 +1219,6 @@ const EditScientificPaperPage = () => {
                             readOnly
                           />
                         </div>
-                        {/* Tên SV /GV En */}
                         <div className="col-span-4">
                           <label
                             htmlFor={`fullNameEng-${index}`}
@@ -1196,7 +1239,6 @@ const EditScientificPaperPage = () => {
                             }
                           />
                         </div>
-                        {/* Button xóa */}
                         <div className="col-span-1 flex items-center justify-end pt-5">
                           <Button
                             icon={<MinusOutlined />}
@@ -1205,9 +1247,7 @@ const EditScientificPaperPage = () => {
                           />
                         </div>
                       </div>
-                      {/* Row 2 */}
                       <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
-                        {/* Vai trò */}
                         <div className="col-span-3">
                           <label
                             htmlFor={`role-${index}`}
@@ -1233,7 +1273,6 @@ const EditScientificPaperPage = () => {
                             <Option value="Participant">Tham gia</Option>
                           </Select>
                         </div>
-                        {/* CQ công tác */}
                         <div className="col-span-4">
                           <label
                             htmlFor={`institution-${index}`}
@@ -1250,6 +1289,60 @@ const EditScientificPaperPage = () => {
                               handleAuthorChange(index, "institution", value)
                             }
                             required
+                            dropdownRender={(menu) => (
+                              <>
+                                {menu}
+                                <div className="p-2 flex items-center gap-2">
+                                  <Input
+                                    placeholder="Nhập cơ quan công tác"
+                                    value={
+                                      authors[index].institutionInput || ""
+                                    }
+                                    onChange={(e) => {
+                                      handleAuthorChange(
+                                        index,
+                                        "institutionInput",
+                                        e.target.value
+                                      );
+                                      const newErrors = [...authorErrors];
+                                      if (!newErrors[index])
+                                        newErrors[index] = {};
+                                      newErrors[index].institution = "";
+                                      setAuthorErrors(newErrors);
+                                    }}
+                                  />
+                                  <Button
+                                    type="primary"
+                                    size="small"
+                                    onClick={() => {
+                                      const value =
+                                        authors[index].institutionInput?.trim();
+                                      if (value) {
+                                        handleAuthorChange(
+                                          index,
+                                          "institution",
+                                          value
+                                        );
+                                        const newErrors = [...authorErrors];
+                                        if (!newErrors[index])
+                                          newErrors[index] = {};
+                                        newErrors[index].institution = "";
+                                        setAuthorErrors(newErrors);
+                                        message.success(
+                                          "Cơ quan công tác đã được thêm vào"
+                                        );
+                                      } else {
+                                        message.error(
+                                          "Vui lòng nhập cơ quan công tác!"
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    Thêm
+                                  </Button>
+                                </div>
+                              </>
+                            )}
                           >
                             {author.institutions?.map((institution) => (
                               <Option
@@ -1261,7 +1354,6 @@ const EditScientificPaperPage = () => {
                             ))}
                           </Select>
                         </div>
-                        {/* Điểm đóng góp */}
                         <div className="col-span-3">
                           <label
                             htmlFor={`contribution-${index}`}
@@ -1292,12 +1384,10 @@ const EditScientificPaperPage = () => {
                 </div>
               </section>
 
-              {/* Khối "Nhập thông tin minh chứng" */}
               <section className="flex flex-col bg-white rounded-lg p-6 mb-4">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin Minh chứng
                 </h2>
-                {/*File*/}
                 <div className="mb-4">
                   <label
                     htmlFor="file-upload"
@@ -1309,7 +1399,7 @@ const EditScientificPaperPage = () => {
                     <Input
                       id="file-upload"
                       placeholder="Upload file..."
-                      value={selectedFile || ""}
+                      value={originalFileName || ""} // Display the original file name
                       readOnly
                     />
                     <Button type="primary" onClick={handleFileChange}>
@@ -1324,9 +1414,7 @@ const EditScientificPaperPage = () => {
                     )}
                   </div>
                 </div>
-                {/* Link và DOI */}
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Link công bố bài báo */}
                   <div>
                     <label
                       htmlFor="link"
@@ -1343,7 +1431,6 @@ const EditScientificPaperPage = () => {
                       value={link}
                     />
                   </div>
-                  {/* Số DOI */}
                   <div>
                     <label
                       htmlFor="doi"
@@ -1366,7 +1453,6 @@ const EditScientificPaperPage = () => {
                   file Rar trước khi upload.
                 </p>
                 <div className="flex justify-end space-x-4 mt-6">
-                  {/*Button xóa trắng*/}
                   <Button type="default" onClick={handleClear}>
                     Xóa trắng
                   </Button>
@@ -1381,7 +1467,6 @@ const EditScientificPaperPage = () => {
       </div>
       <Footer />
 
-      {/* Modal for icon click */}
       <Modal
         title="Sử dụng AI để nhận diện thông tin"
         visible={isIconModalVisible}
@@ -1406,7 +1491,7 @@ const EditScientificPaperPage = () => {
                     setUploadedImage(event.target.result);
                   };
                   reader.readAsDataURL(file);
-                  return false; // Prevent upload
+                  return false;
                 }}
               >
                 <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
@@ -1457,7 +1542,6 @@ const EditScientificPaperPage = () => {
       >
         <p>Đây là hướng dẫn sử dụng hệ thống.</p>
         <p>Vui lòng làm theo các bước sau để hoàn thành việc nhập thông tin.</p>
-        {/* Add more instructions as needed */}
       </Modal>
     </div>
   );
