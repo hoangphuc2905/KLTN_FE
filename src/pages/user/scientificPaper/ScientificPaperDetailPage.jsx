@@ -1,51 +1,39 @@
 import Header from "../../../components/Header";
 import { Download } from "lucide-react";
-import { useEffect, useState, useRef } from "react"; // Import useRef for tracking scroll
+import { useEffect, useState, useRef } from "react";
 import userApi from "../../../api/api";
-import { useParams, useLocation } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { useParams, useLocation, useNavigate } from "react-router-dom";
 import { message } from "antd";
 import { QRCodeSVG } from "qrcode.react";
-import PDFViewer from "../../../components/PDFViewer"; // Import your PDFViewer component
+import PDFViewer from "../../../components/PDFViewer";
 import { throttle } from "lodash";
-import { Modal, Spin } from "antd"; // Import Modal and Spin from Ant Design
+import { Modal, Spin } from "antd";
 
 const ScientificPaperDetailPage = () => {
-  const { id } = useParams(); // Extract the _id from the URL
+  const { id } = useParams();
   const [paper, setPaper] = useState(null);
-  const [citation, setCitation] = useState(null); // State for citation
-  const [selectedFormat, setSelectedFormat] = useState("APA"); // State to track selected format
-  const [copySuccess, setCopySuccess] = useState(false); // State to track copy success
-  const [relatedPapers, setRelatedPapers] = useState([]); // Replace static relatedPapers with state
-  const [isModalVisible, setIsModalVisible] = useState(false); // State to control modal visibility
+  const [citation, setCitation] = useState(null);
+  const [selectedFormat, setSelectedFormat] = useState("APA");
+  const [copySuccess, setCopySuccess] = useState(false);
+  const [relatedPapers, setRelatedPapers] = useState([]);
+  const [isModalVisible, setIsModalVisible] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const user_id = localStorage.getItem("user_id");
   const user_type = localStorage.getItem("user_type");
-  const paperRef = useRef(null); //
+  const paperRef = useRef(null);
   const modalContentRef = useRef(null);
   const hasTrackedView = useRef(false);
   const hasScrolledRef = useRef(false);
-
   const [scrollPercent, setScrollPercent] = useState(0);
-
   const currentUrl = window.location.origin + location.pathname;
 
-  // Cuộn lên đầu trang với hiệu ứng mượt khi id thay đổi
   useEffect(() => {
     if (paperRef.current) {
-      paperRef.current.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
+      paperRef.current.scrollTo({ top: 0, behavior: "smooth" });
     }
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-
-    hasTrackedView.current = false; // Reset tracking state khi thay đổi bài báo
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    hasTrackedView.current = false;
   }, [id]);
 
   const fetchDownloadCount = async (paperId) => {
@@ -57,7 +45,7 @@ const ScientificPaperDetailPage = () => {
         `Error fetching download count for paper ${paperId}:`,
         error
       );
-      return 0; // Fallback to 0 in case of an error
+      return 0;
     }
   };
 
@@ -67,22 +55,19 @@ const ScientificPaperDetailPage = () => {
       return response.viewCount || 0;
     } catch (error) {
       console.error(`Error fetching view count for paper ${paperId}:`, error);
-      return 0; // Fallback to 0 in case of an error
+      return 0;
     }
   };
 
   const getRecommendations = async (paperId) => {
     try {
       const response = await userApi.getRecommendations(paperId);
-      console.log("API Response:", response.data);
-
       const transformedRecommendations = await Promise.all(
         response.data.map(async (item) => {
           let departmentName = "Không có dữ liệu";
           let views = 0;
           let downloads = 0;
 
-          // Fetch department name
           if (item.department) {
             try {
               const departmentData = await userApi.getDepartmentById(
@@ -98,7 +83,6 @@ const ScientificPaperDetailPage = () => {
             }
           }
 
-          // Fetch view count
           try {
             const viewData = await userApi.getViewCountByPaperId(item._id);
             views = viewData.viewCount || 0;
@@ -109,7 +93,6 @@ const ScientificPaperDetailPage = () => {
             );
           }
 
-          // Fetch download count
           try {
             const downloadData = await userApi.getDownloadCountByPaperId(
               item._id
@@ -137,7 +120,6 @@ const ScientificPaperDetailPage = () => {
           };
         })
       );
-
       return transformedRecommendations;
     } catch (error) {
       console.error("Error fetching recommendations:", error);
@@ -148,8 +130,7 @@ const ScientificPaperDetailPage = () => {
   useEffect(() => {
     const fetchPaper = async () => {
       try {
-        const data = await userApi.getScientificPaperById(id); // Fetch data from API
-
+        const data = await userApi.getScientificPaperById(id);
         let departmentName = "Đang load dữ liệu...";
         if (data.department) {
           try {
@@ -163,8 +144,8 @@ const ScientificPaperDetailPage = () => {
           }
         }
 
-        const downloadCount = await fetchDownloadCount(id); // Fetch download count
-        const viewCount = await fetchViewCount(id); // Fetch view count
+        const downloadCount = await fetchDownloadCount(id);
+        const viewCount = await fetchViewCount(id);
 
         const transformedPaper = {
           title: data.title_vn || "Không có tiêu đề",
@@ -178,8 +159,8 @@ const ScientificPaperDetailPage = () => {
           keywords: data.keywords?.split(",").map((k) => k.trim()) || [],
           researchArea: data.department || "Không có dữ liệu",
           thumbnail: data.cover_image || "/placeholder.svg",
-          views: viewCount, // Use dynamically fetched view count
-          downloads: downloadCount, // Use dynamically fetched download count
+          views: viewCount,
+          downloads: downloadCount,
           cover_image: data.cover_image || "/placeholder.svg",
           department: departmentName,
           magazine_vi: data.magazine_vi || "Không có dữ liệu",
@@ -192,12 +173,10 @@ const ScientificPaperDetailPage = () => {
 
         setPaper(transformedPaper);
 
-        // Fetch citation for the default format (APA) if DOI exists
         if (data.doi) {
           fetchCitationByFormat(data.doi, "apa");
         }
 
-        // Fetch related papers dynamically
         const recommendations = await getRecommendations(id);
         setRelatedPapers(recommendations);
       } catch (error) {
@@ -211,23 +190,12 @@ const ScientificPaperDetailPage = () => {
   useEffect(() => {
     const handleScroll = () => {
       if (paper && paper.pageCount) {
-        const currentPage = Math.ceil(window.scrollY / window.innerHeight) + 1; // Calculate current page based on viewport height
+        const currentPage = Math.ceil(window.scrollY / window.innerHeight) + 1;
         const totalPages = paper.pageCount;
         const scrolledPercentage = (currentPage / totalPages) * 100;
-
-        setScrollPercent(scrolledPercentage); // ✅ Update scroll percentage
-
-        console.log(
-          `📜 User scrolled: ${scrolledPercentage.toFixed(2)}% of the paper.`
-        );
+        setScrollPercent(scrolledPercentage);
 
         if (scrolledPercentage >= 50 && !hasTrackedView.current) {
-          console.log("📤 Sending view to API", {
-            paper_id: id,
-            user_id: localStorage.getItem("user_id"),
-            user_type: localStorage.getItem("user_type"),
-          });
-
           userApi
             .createPaperView({
               paper_id: id,
@@ -235,11 +203,10 @@ const ScientificPaperDetailPage = () => {
               user_type: localStorage.getItem("user_type"),
             })
             .then(() => {
-              console.log("✅ View saved successfully");
-              hasTrackedView.current = true; // ✅ Mark as tracked
+              hasTrackedView.current = true;
             })
             .catch((err) => {
-              console.error("❌ Error saving view:", err);
+              console.error("Error saving view:", err);
             });
         }
       }
@@ -255,9 +222,8 @@ const ScientificPaperDetailPage = () => {
         const { scrollTop, scrollHeight, clientHeight } = paperRef.current;
         const scrolledPercentage =
           (scrollTop / (scrollHeight - clientHeight)) * 100;
-
         if (scrolledPercentage >= 50) {
-          hasScrolledRef.current = true; // ✅ Đánh dấu đã lướt trên 50%
+          hasScrolledRef.current = true;
         }
       }
     };
@@ -275,34 +241,19 @@ const ScientificPaperDetailPage = () => {
   }, []);
 
   const handleModalScroll = () => {
-    if (!modalContentRef.current) {
-      console.log("❌ modalContentRef is not attached.");
-      return;
-    }
-
+    if (!modalContentRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = modalContentRef.current;
     const scrolledPercentage =
       (scrollTop / (scrollHeight - clientHeight)) * 100;
-
-    console.log(`📜 Modal scrolled: ${scrolledPercentage.toFixed(2)}%`);
-
     if (scrolledPercentage >= 50) {
-      console.log("✅ User has scrolled more than 50% in the modal.");
-      modalContentRef.current.hasScrolled50Percent = true; // Đánh dấu đã lướt trên 50%
+      modalContentRef.current.hasScrolled50Percent = true;
     }
   };
 
   const startModalTimer = () => {
     if (modalContentRef.current?.timer) return;
-
     modalContentRef.current.timer = setTimeout(() => {
       if (modalContentRef.current?.hasScrolled50Percent) {
-        console.log("📤 Sending modal view to API", {
-          paper_id: id,
-          user_id: localStorage.getItem("user_id"),
-          user_type: localStorage.getItem("user_type"),
-        });
-
         userApi
           .createPaperView({
             paper_id: id,
@@ -310,14 +261,12 @@ const ScientificPaperDetailPage = () => {
             user_type: localStorage.getItem("user_type"),
             view_time: new Date(),
           })
-          .then(() => {
-            console.log("✅ Modal view saved successfully");
-          })
+          .then(() => {})
           .catch((err) => {
-            console.error("❌ Error saving modal view:", err);
+            console.error("Error saving modal view:", err);
           });
       }
-    }, 30000); // 30 giây
+    }, 30000);
   };
 
   const resetModalTimer = () => {
@@ -329,15 +278,12 @@ const ScientificPaperDetailPage = () => {
 
   useEffect(() => {
     const modalElement = modalContentRef.current;
-
-    const options = { passive: true }; // Tăng hiệu suất bằng cách thêm tùy chọn passive
-
+    const options = { passive: true };
     if (isModalVisible && modalElement) {
       modalElement.addEventListener("scroll", handleModalScroll);
       modalElement.addEventListener("mousemove", startModalTimer);
-      modalElement.addEventListener("touchmove", startModalTimer, options); // Đánh dấu passive
+      modalElement.addEventListener("touchmove", startModalTimer, options);
     }
-
     return () => {
       if (modalElement) {
         modalElement.removeEventListener("scroll", handleModalScroll);
@@ -353,41 +299,23 @@ const ScientificPaperDetailPage = () => {
       alert("Vui lòng nhập DOI!");
       return;
     }
-
-    const headers = {
-      Accept: `text/x-bibliography; style=${format}`,
-    };
-
+    const headers = { Accept: `text/x-bibliography; style=${format}` };
     try {
       const response = await fetch(`https://doi.org/${doi}`, { headers });
       if (!response.ok) throw new Error("Không tìm thấy DOI");
-
       let text = await response.text();
       if (format.toLowerCase() === "mla") {
-        text = text.replace(/Crossref,/g, ""); // Remove "Crossref" for MLA format
+        text = text.replace(/Crossref,/g, "");
       }
-
-      setCitation((prev) => ({
-        ...prev,
-        [format]: text,
-      }));
+      setCitation((prev) => ({ ...prev, [format]: text }));
     } catch (error) {
-      setCitation((prev) => ({
-        ...prev,
-        [format]: "Lỗi khi lấy trích dẫn!",
-      }));
+      setCitation((prev) => ({ ...prev, [format]: "Lỗi khi lấy trích dẫn!" }));
     }
   };
 
   const handlePreview = () => {
-    console.log("📤 User clicked the 'Preview' button for paper:", {
-      paper_id: id,
-      user_id: localStorage.getItem("user_id"),
-      user_type: localStorage.getItem("user_type"),
-    });
-
     if (paper.fileUrl) {
-      setIsModalVisible(true); // Show the modal
+      setIsModalVisible(true);
     } else {
       message.error(
         "Không có file để xem trước! Vui lòng liên hệ với quản trị viên."
@@ -395,22 +323,11 @@ const ScientificPaperDetailPage = () => {
     }
   };
 
-  // Trong ScientificPaperDetailPage.jsx
   const handleModalClose = () => {
-    console.log("🔄 Resetting hasTrackedView, isModalVisible:", isModalVisible);
     setIsModalVisible(false);
     hasTrackedView.current = false;
     resetModalTimer();
   };
-
-  useEffect(() => {
-    if (isModalVisible) {
-      console.log(
-        "🔍 hasTrackedView when modal opens:",
-        hasTrackedView.current
-      );
-    }
-  }, [isModalVisible]);
 
   if (!paper) {
     return (
@@ -422,13 +339,14 @@ const ScientificPaperDetailPage = () => {
 
   return (
     <div
-      ref={paperRef} // ✅ Đảm bảo ref đúng vùng scroll
-      className="overflow-y-auto max-h-[600px] px-4 py-2 bg-[#E7ECF0] min-h-screen"
+      ref={paperRef}
+      className="overflow-y-auto px-4 py-2 bg-[#E7ECF0] min-h-screen"
     >
       <Header />
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
-        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
-          <div className="flex items-center gap-2 text-gray-600 flex-wrap">
+      <div className="flex flex-col pt-[80px] pb-7 mx-auto w-full max-w-[1563px] px-4 md:px-8 lg:px-24">
+        {/* Breadcrumb */}
+        <div className="px-4 mt-4">
+          <div className="flex items-center gap-2 text-gray-600 flex-wrap text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -447,319 +365,291 @@ const ScientificPaperDetailPage = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Main Content */}
-            <div className="col-span-1 lg:col-span-3">
-              <div className="bg-white rounded-xl p-4">
-                <div className="flex flex-col lg:flex-row gap-6">
-                  <div className="flex flex-col items-center gap-4">
-                    <img
-                      src={paper.cover_image}
-                      alt="Form illustration"
-                      className="w-[160px] h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
+        {/* Main Content */}
+        <div className="px-4 mt-4">
+          <div className="flex flex-col gap-6">
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Left Section: Image, QR Code, Buttons */}
+                <div className="flex flex-col items-center gap-4 w-full md:w-auto">
+                  <img
+                    src={paper.cover_image}
+                    alt="Form illustration"
+                    className="hidden sm:block w-[120px] h-[150px] sm:w-[160px] sm:h-[200px] max-w-[180px] max-h-[250px] rounded-lg object-cover"
+                  />
+                  <div className="flex flex-col items-center mt-2 mb-2">
+                    <QRCodeSVG
+                      value={currentUrl}
+                      size={100}
+                      className="sm:size-140"
                     />
-
-                    {/* QR Code for current page */}
-                    <div className="flex flex-col items-center mt-2 mb-2">
-                      <QRCodeSVG value={currentUrl} size={140} />
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                      <button
-                        className="flex items-center gap-2 bg-[#00A3FF] text-white text-xs px-2 py-1 rounded-lg w-[70px] h-[30px] justify-center"
-                        onClick={async () => {
-                          if (paper.fileUrl) {
-                            const link = document.createElement("a");
-                            link.href = paper.fileUrl;
-                            link.download = paper.title
-                              ? `${paper.title.replace(
-                                  /[^a-zA-Z0-9]/g,
-                                  "_"
-                                )}.pdf`
-                              : "scientific_paper.pdf";
-                            link.target = "_blank";
-                            document.body.appendChild(link);
-                            link.click();
-                            document.body.removeChild(link);
-
-                            try {
-                              await userApi.createPaperDownload({
-                                paper_id: id,
-                                user_id: user_id,
-                                user_type: user_type,
-                                download_time: new Date().toISOString(),
-                              });
-                              message.success("Tải file thành công!");
-                            } catch (error) {
-                              console.error("Error logging download:", error);
-                            }
-                          } else {
-                            message.error(
-                              "Không có file để tải về! Vui lòng liên hệ với quản trị viên."
-                            );
-                          }
-                        }}
-                      >
-                        <Download className="w-4 h-4" />
-                        Tải
-                      </button>
-                      <button
-                        className="flex items-center gap-2 bg-[#FFA500] text-white text-xs px-2 py-1 rounded-lg w-[70px] h-[30px] justify-center"
-                        onClick={handlePreview}
-                      >
-                        <img
-                          src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
-                          alt="Preview Icon"
-                          className="w-4 h-4"
-                        />
-                        Xem
-                      </button>
-                    </div>
                   </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="flex items-center gap-2 bg-[#00A3FF] text-white text-xs sm:text-sm px-2 py-1 rounded-lg w-[70px] sm:w-[80px] h-[30px] justify-center"
+                      onClick={async () => {
+                        if (paper.fileUrl) {
+                          const link = document.createElement("a");
+                          link.href = paper.fileUrl;
+                          link.download = paper.title
+                            ? `${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
+                            : "scientific_paper.pdf";
+                          link.target = "_blank";
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                          try {
+                            await userApi.createPaperDownload({
+                              paper_id: id,
+                              user_id: user_id,
+                              user_type: user_type,
+                              download_time: new Date().toISOString(),
+                            });
+                            message.success("Tải file thành công!");
+                          } catch (error) {
+                            console.error("Error logging download:", error);
+                          }
+                        } else {
+                          message.error("Không có file để tải về!");
+                        }
+                      }}
+                    >
+                      <Download className="w-4 h-4" />
+                      Tải
+                    </button>
+                    <button
+                      className="flex items-center gap-2 bg-[#FFA500] text-white text-xs sm:text-sm px-2 py-1 rounded-lg w-[70px] sm:w-[80px] h-[30px] justify-center"
+                      onClick={handlePreview}
+                    >
+                      <img
+                        src="https://cdn-icons-png.flaticon.com/512/709/709612.png"
+                        alt="Preview Icon"
+                        className="w-4 h-4"
+                      />
+                      Xem
+                    </button>
+                  </div>
+                </div>
 
-                  <div className="flex-1">
-                    <div className="flex flex-col lg:flex-row justify-between items-start">
-                      <div>
-                        <h1 className="text-xl font-bold text-sky-900 mb-4">
-                          {paper.title || "Không có tiêu đề"}
-                        </h1>
-                        <p className="text-gray-600 mb-4 text-sm w-full lg:w-[96%] text-justify">
-                          {paper.description || "Không có mô tả"}
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Loại bài báo:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.type || "Không có dữ liệu"}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500 flex-shrink-0">
-                              Thuộc nhóm:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371] truncate overflow-hidden whitespace-nowrap">
-                              {paper.group || "Không có dữ liệu"}
-                            </p>
-                          </div>
-                          <div className="flex items-start">
-                            <p className="text-sm text-gray-500 flex-shrink-0 mt-[2px]">
-                              Tên tác giả:
-                            </p>
-                            <div className="ml-2 text-sm font-medium text-[#174371] flex flex-wrap">
-                              {paper.authors?.length > 0
-                                ? paper.authors.map((author, index) => (
-                                    <span key={index} className="mr-1">
-                                      {author}
-                                      {index < paper.authors.length - 1
-                                        ? ","
-                                        : ""}
-                                    </span>
-                                  ))
-                                : "Không có dữ liệu"}
-                            </div>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Số tác giả:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.authorCount}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Ngày công bố:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.publishDate}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Số trang:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.pageCount}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Khoa:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.department}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Tạp chí:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.magazine_vi}
-                            </p>
+                {/* Right Section: Paper Details & Citation */}
+                <div className="flex-1 flex flex-col gap-6">
+                  <div className="flex flex-col lg:flex-row justify-between gap-6">
+                    {/* Paper Details */}
+                    <div className="flex-1">
+                      <h1 className="text-lg sm:text-xl font-bold text-sky-900 mb-4 break-words">
+                        {paper.title || "Không có tiêu đề"}
+                      </h1>
+                      <p className="text-gray-600 mb-4 text-sm sm:text-base text-justify">
+                        {paper.description || "Không có mô tả"}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="flex items-center">
+                          <p className="text-sm text-gray-500">Loại bài báo:</p>
+                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                            {paper.type || "Không có dữ liệu"}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="text-sm text-gray-500">Thuộc nhóm:</p>
+                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                            {paper.group || "Không có dữ liệu"}
+                          </p>
+                        </div>
+                        <div className="flex items-start">
+                          <p className="text-sm text-gray-500 flex-shrink-0 mt-[2px]">
+                            Tên tác giả:
+                          </p>
+                          <div className="ml-2 text-sm font-medium text-[#174371] flex flex-wrap">
+                            {paper.authors?.length > 0
+                              ? paper.authors.map((author, index) => (
+                                  <span key={index} className="mr-1">
+                                    {author}
+                                    {index < paper.authors.length - 1
+                                      ? ","
+                                      : ""}
+                                  </span>
+                                ))
+                              : "Không có dữ liệu"}
                           </div>
                         </div>
-
-                        <div className="flex mt-4 items-start">
-                          <p className="text-sm text-gray-500 flex-shrink-0 mr-2">
-                            Từ khóa:
+                        <div className="flex items-center">
+                          <p className="text-sm text-gray-500">Số tác giả:</p>
+                          <p className="text-sm ml-2 font-medium text-[#174371]">
+                            {paper.authorCount}
                           </p>
-                          <p className="text-sm font-medium text-[#174371] break-words">
-                            {paper.keywords?.join(", ") || "Không có dữ liệu"}
+                        </div>
+                        <div className="flex items-center">
+                          <p className="text-sm text-gray-500">Ngày công bố:</p>
+                          <p className="text-sm ml-2 font-medium text-[#174371]">
+                            {paper.publishDate}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="text-sm text-gray-500">Số trang:</p>
+                          <p className="text-sm ml-2 font-medium text-[#174371]">
+                            {paper.pageCount}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="text-sm text-gray-500">Khoa:</p>
+                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                            {paper.department}
+                          </p>
+                        </div>
+                        <div className="flex items-center">
+                          <p className="text-sm text-gray-500">Tạp chí:</p>
+                          <p className="text-sm ml-2 font-medium text-[#174371] truncate">
+                            {paper.magazine_vi}
                           </p>
                         </div>
                       </div>
+                      <div className="flex mt-4 items-start">
+                        <p className="text-sm text-gray-500 flex-shrink-0 mr-2">
+                          Từ khóa:
+                        </p>
+                        <p className="text-sm font-medium text-[#174371] break-words">
+                          {paper.keywords?.join(", ") || "Không có dữ liệu"}
+                        </p>
+                      </div>
+                    </div>
 
-                      <div className="bg-[#F4F7FE] rounded-lg p-4 w-full lg:w-[350px] flex flex-col relative mt-4 lg:mt-0">
-                        {/* Nút copy */}
-                        <button
-                          className="absolute top-2 right-2 bg-white p-1 rounded-full shadow hover:bg-gray-100"
-                          onClick={() => {
-                            const textToCopy =
-                              citation?.[selectedFormat.toLowerCase()] ||
-                              "Không có dữ liệu để sao chép!";
-                            navigator.clipboard
-                              .writeText(textToCopy)
-                              .then(() => {
-                                setCopySuccess(true); // Show success message
-                                setTimeout(() => setCopySuccess(false), 300); // Hide after 1.5 seconds
-                              });
-                          }}
+                    {/* Citation Box */}
+                    <div className="bg-[#F4F7FE] rounded-lg p-4 w-full lg:w-[300px] flex flex-col relative">
+                      <button
+                        className="absolute top-2 right-2 bg-white p-1 rounded-full shadow hover:bg-gray-100"
+                        onClick={() => {
+                          const textToCopy =
+                            citation?.[selectedFormat.toLowerCase()] ||
+                            "Không có dữ liệu để sao chép!";
+                          navigator.clipboard.writeText(textToCopy).then(() => {
+                            setCopySuccess(true);
+                            setTimeout(() => setCopySuccess(false), 300);
+                          });
+                        }}
+                      >
+                        <img
+                          src="https://cdn-icons-png.flaticon.com/512/10146/10146565.png"
+                          alt="Copy Icon"
+                          className="w-4 h-4"
+                        />
+                      </button>
+                      {copySuccess && (
+                        <span
+                          className="absolute top-2 right-12 text-xs text-white bg-green-500 px-2 py-1 rounded shadow-md transition-opacity duration-500"
+                          style={{ opacity: copySuccess ? 1 : 0 }}
                         >
-                          <img
-                            src="https://cdn-icons-png.flaticon.com/512/10146/10146565.png"
-                            alt="Copy Icon"
-                            className="w-4 h-4"
+                          Copy thành công
+                        </span>
+                      )}
+                      <div className="text-center font-bold text-[#00A3FF]">
+                        Trích dẫn
+                      </div>
+                      <div
+                        className="text-sm mt-2 break-words leading-relaxed overflow-y-auto"
+                        style={{ maxHeight: "250px", width: "100%" }}
+                      >
+                        {citation?.[selectedFormat.toLowerCase()] ? (
+                          <div
+                            className="gs_citr"
+                            dangerouslySetInnerHTML={{
+                              __html: citation[selectedFormat.toLowerCase()],
+                            }}
                           />
-                        </button>
-                        {copySuccess && (
-                          <span
-                            className="absolute top-2 right-12 text-xs text-white bg-green-500 px-2 py-1 rounded shadow-md transition-opacity duration-500 ease-in-out"
-                            style={{ opacity: copySuccess ? 1 : 0 }}
-                          >
-                            Copy thành công
-                          </span>
-                        )}
-
-                        {/* Tiêu đề */}
-                        <div className="text-center font-bold text-[#00A3FF]">
-                          Trích dẫn
-                        </div>
-                        {/* Nội dung trích dẫn */}
-                        <div
-                          className="text-sm mt-2 break-words leading-relaxed"
-                          style={{
-                            height: "300px",
-                            overflow: "hidden",
-                            width: "250px",
-                          }}
-                        >
-                          {citation?.[selectedFormat.toLowerCase()] ? (
-                            <div
-                              className="gs_citr"
-                              dangerouslySetInnerHTML={{
-                                __html: citation[selectedFormat.toLowerCase()],
-                              }}
-                            />
-                          ) : (
-                            <div className="flex items-center justify-center h-full">
-                              <Spin size="small" />
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Các định dạng trích dẫn */}
-                        <div className="mt-auto">
-                          <div className="border-t mt-2 pt-2">
-                            <label className="text-xs font-medium block mb-1">
-                              Chọn định dạng trích dẫn:
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <select
-                                className="text-sm border rounded p-1 w-1/2"
-                                onChange={(e) => {
-                                  const format = e.target.value;
-                                  setSelectedFormat(format);
-                                  fetchCitationByFormat(paper.doi, format); // Fetch citation for the selected format
-                                }}
-                              >
-                                <option value="apa">APA</option>
-                                <option value="ieee">IEEE</option>
-                                <option value="mla">MLA</option>
-                              </select>
-                              <button
-                                className="text-sm bg-[#00A3FF] text-white px-3 py-1 rounded w-1/2"
-                                onClick={() => {
-                                  const citationText =
-                                    citation?.[selectedFormat.toLowerCase()];
-                                  if (citationText) {
-                                    const blob = new Blob([citationText], {
-                                      type: "application/x-research-info-systems",
-                                    });
-                                    const link = document.createElement("a");
-                                    const sanitizedTitle = paper.title.replace(
-                                      /[^a-zA-Z0-9]/g,
-                                      "_"
-                                    ); // Sanitize title for file name
-                                    link.href = URL.createObjectURL(blob);
-                                    link.download = `${sanitizedTitle}.${selectedFormat.toLowerCase()}.ris`;
-                                    link.click();
-                                  } else {
-                                    alert("Không có dữ liệu để tải!");
-                                  }
-                                }}
-                              >
-                                Tải về trích dẫn
-                              </button>
-                            </div>
+                        ) : (
+                          <div className="flex items-center justify-center h-full">
+                            <Spin size="small" />
                           </div>
+                        )}
+                      </div>
+                      <div className="mt-auto border-t pt-2">
+                        <label className="text-xs font-medium block mb-1">
+                          Chọn định dạng trích dẫn:
+                        </label>
+                        <div className="flex flex-col sm:flex-row items-center gap-2">
+                          <select
+                            className="text-sm border rounded p-1 w-full sm:w-1/2"
+                            onChange={(e) => {
+                              const format = e.target.value;
+                              setSelectedFormat(format);
+                              fetchCitationByFormat(paper.doi, format);
+                            }}
+                          >
+                            <option value="apa">APA</option>
+                            <option value="ieee">IEEE</option>
+                            <option value="mla">MLA</option>
+                          </select>
+                          <button
+                            className="text-sm bg-[#00A3FF] text-white px-3 py-1 rounded w-full sm:w-1/2"
+                            onClick={() => {
+                              const citationText =
+                                citation?.[selectedFormat.toLowerCase()];
+                              if (citationText) {
+                                const blob = new Blob([citationText], {
+                                  type: "application/x-research-info-systems",
+                                });
+                                const link = document.createElement("a");
+                                const sanitizedTitle = paper.title.replace(
+                                  /[^a-zA-Z0-9]/g,
+                                  "_"
+                                );
+                                link.href = URL.createObjectURL(blob);
+                                link.download = `${sanitizedTitle}.${selectedFormat.toLowerCase()}.ris`;
+                                link.click();
+                              } else {
+                                alert("Không có dữ liệu để tải!");
+                              }
+                            }}
+                          >
+                            Tải về trích dẫn
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="bg-white rounded-xl p-4 mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pl-72">
-                  {/* Cột trái */}
-                  <div>
-                    <p>
-                      Người đăng tải:{" "}
+            {/* Paper Stats */}
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <p>
+                    Người đăng tải:{" "}
+                    <span className="text-[#174371] font-bold">
+                      {paper.submitter}
+                    </span>
+                  </p>
+                  <p className="mt-2 flex items-center">
+                    Đánh giá:{" "}
+                    <span className="text-[#174371] font-bold ml-2 flex items-center">
+                      {[...Array(5)].map((_, index) => (
+                        <img
+                          key={index}
+                          src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
+                          alt="Star"
+                          className="w-4 h-4"
+                        />
+                      ))}
+                    </span>
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Tổng số lượt xem:{" "}
                       <span className="text-[#174371] font-bold">
-                        {paper.submitter}
+                        {paper.views}
                       </span>
-                    </p>
-                    <p className="mt-2 flex items-center">
-                      Đánh giá:{" "}
-                      <span className="text-[#174371] font-bold ml-2 flex items-center">
-                        {[...Array(5)].map((_, index) => (
-                          <img
-                            key={index}
-                            src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
-                            alt="Star"
-                            className="w-4 h-4"
-                          />
-                        ))}
-                      </span>
-                    </p>
+                    </span>
                   </div>
-
-                  {/* Cột phải */}
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center gap-2">
-                      <span>
-                        Tổng số lượt xem:{" "}
-                        <span className="text-[#174371] font-bold">
-                          {paper.views}
-                        </span>
+                  <div className="flex items-center gap-2">
+                    <span>
+                      Tổng số lượt tải về:{" "}
+                      <span className="text-[#174371] font-bold">
+                        {paper.downloads}
                       </span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span>
-                        Tổng số lượt tải về:{" "}
-                        <span className="text-[#174371] font-bold">
-                          {paper.downloads}
-                        </span>
-                      </span>
-                    </div>
+                    </span>
                   </div>
                 </div>
               </div>
@@ -768,7 +658,7 @@ const ScientificPaperDetailPage = () => {
         </div>
 
         {/* Related Papers */}
-        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
+        <div className="px-4 mt-4">
           <h2 className="text-lg font-semibold text-sky-900 mb-4">
             Các bài nghiên cứu liên quan
           </h2>
@@ -778,22 +668,22 @@ const ScientificPaperDetailPage = () => {
                 <div
                   key={paper.id || index}
                   className="bg-white rounded-xl p-4 cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => navigate(`/scientific-paper/${paper.id}`)} // Navigate to the detail page
+                  onClick={() => navigate(`/scientific-paper/${paper.id}`)}
                 >
                   <div className="flex flex-col sm:flex-row gap-4">
                     <img
                       src={paper.thumbnail}
                       alt="Form illustration"
-                      className="w-[100px] h-[150px] object-cover rounded-lg"
+                      className="hidden sm:block w-[80px] h-[120px] sm:w-[100px] sm:h-[150px] object-cover rounded-lg"
                     />
                     <div className="flex-1">
-                      <h2 className="pb-2 text-sm font-bold break-words max-w-[1200px] line-clamp-2 max-md:max-w-full max-md:text-[16px] max-md:w-full">
+                      <h2 className="pb-1 text-sm sm:text-base font-bold break-words line-clamp-2 max-h-[40px] sm:max-h-[48px] overflow-hidden">
                         {paper.title || paper.title_en || "No Title"}
                       </h2>
-                      <p className="pb-1 text-sm text-gray-600 mb-2">
+                      <p className="pb-1 text-sm text-gray-600">
                         {paper.author}
                       </p>
-                      <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[14px] max-w-[1200px]">
+                      <p className="text-sm text-neutral-800 break-words line-clamp-2">
                         {paper.description}
                       </p>
                       <p className="pt-2 text-sm text-sky-900">
@@ -829,59 +719,45 @@ const ScientificPaperDetailPage = () => {
             )}
           </div>
         </div>
+
+        {/* Modal for Preview */}
+        {isModalVisible && (
+          <Modal
+            title="Xem trước bài báo"
+            open={isModalVisible}
+            onCancel={handleModalClose}
+            footer={null}
+            centered
+            width="100%"
+            styles={{ body: { height: "80vh", padding: 0 } }}
+            className="max-w-[90vw] sm:max-w-[80vw] md:max-w-[70vw]"
+            destroyOnClose
+          >
+            <div ref={modalContentRef} className="h-full overflow-y-auto">
+              <PDFViewer
+                fileUrl={paper.fileUrl?.replace(/^http:/, "https:")}
+                isModalVisible={isModalVisible}
+                onScroll={(percentage) => {
+                  if (percentage >= 50 && !hasTrackedView.current) {
+                    userApi
+                      .createPaperView({
+                        paper_id: id,
+                        user_id: localStorage.getItem("user_id"),
+                        user_type: localStorage.getItem("user_type"),
+                      })
+                      .then(() => {
+                        hasTrackedView.current = true;
+                      })
+                      .catch((err) => {
+                        console.error("Error saving PDF view:", err);
+                      });
+                  }
+                }}
+              />
+            </div>
+          </Modal>
+        )}
       </div>
-      {/* Modal for preview */}
-      {isModalVisible && (
-        <Modal
-          title="Xem trước bài báo"
-          open={isModalVisible}
-          onCancel={handleModalClose}
-          footer={null}
-          centered
-          width="90%"
-          styles={{ body: { height: "90vh", padding: 0 } }}
-          afterClose={() => console.log("🔄 Modal closed and unmounted")}
-          destroyOnClose
-        >
-          <PDFViewer
-            fileUrl={paper.fileUrl?.replace(/^http:/, "https:")}
-            isModalVisible={isModalVisible}
-            onScroll={(percentage) => {
-              console.log(
-                "🔍 Kiểm tra hasTrackedView:",
-                hasTrackedView.current,
-                "Percentage:",
-                percentage
-              );
-              if (percentage >= 50 && !hasTrackedView.current) {
-                console.log("📤 Gửi lượt xem PDF đến API", {
-                  paper_id: id,
-                  user_id: localStorage.getItem("user_id"),
-                  user_type: localStorage.getItem("user_type"),
-                });
-                userApi
-                  .createPaperView({
-                    paper_id: id,
-                    user_id: localStorage.getItem("user_id"),
-                    user_type: localStorage.getItem("user_type"),
-                  })
-                  .then(() => {
-                    console.log("✅ Lưu lượt xem PDF thành công");
-                    hasTrackedView.current = true;
-                  })
-                  .catch((err) => {
-                    console.error("❌ Lỗi khi lưu lượt xem PDF:", err);
-                  });
-              } else {
-                console.log("🚫 API không gọi:", {
-                  percentage,
-                  hasTrackedView: hasTrackedView.current,
-                });
-              }
-            }}
-          />
-        </Modal>
-      )}
     </div>
   );
 };
