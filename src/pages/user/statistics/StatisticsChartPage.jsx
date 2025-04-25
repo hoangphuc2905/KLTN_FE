@@ -19,6 +19,7 @@ import CountUp from "react-countup";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
+import Footer from "../../../components/Footer";
 
 ChartJS.register(
   CategoryScale,
@@ -1643,6 +1644,7 @@ const StatisticsChartPage = () => {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };
