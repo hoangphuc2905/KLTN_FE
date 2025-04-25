@@ -6,6 +6,7 @@ import { saveAs } from "file-saver";
 import ExcelJS from "exceljs";
 import { useNavigate } from "react-router-dom";
 import userApi from "../../../api/api";
+import Footer from "../../../components/Footer";
 
 const StatisticsPointPage = () => {
   const [papers, setPapers] = useState([]);
@@ -688,7 +689,7 @@ const StatisticsPointPage = () => {
 
         <div className="self-center mt-6 w-full">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap justify-between gap-4">
+            <div className="flex flex-wrap justify-end gap-2">
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
@@ -700,30 +701,28 @@ const StatisticsPointPage = () => {
                   </option>
                 ))}
               </select>
-              <div className="flex gap-2">
-                <button
-                  onClick={downloadExcel}
-                  className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
-                >
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
-                    alt="Download Icon"
-                    className="w-4 h-4 invert"
-                  />
-                  Download
-                </button>
-                <button
-                  onClick={printTable}
-                  className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
-                >
-                  <img
-                    src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
-                    alt="Print Icon"
-                    className="w-4 h-4 invert"
-                  />
-                  Print
-                </button>
-              </div>
+              <button
+                onClick={downloadExcel}
+                className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              >
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/724/724933.png"
+                  alt="Download Icon"
+                  className="w-4 h-4 invert"
+                />
+                Download
+              </button>
+              <button
+                onClick={printTable}
+                className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
+              >
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/2358/2358854.png"
+                  alt="Print Icon"
+                  className="w-4 h-4 invert"
+                />
+                Print
+              </button>
             </div>
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex flex-wrap justify-end gap-2 mb-4 relative">
@@ -1276,6 +1275,7 @@ const StatisticsPointPage = () => {
           bordered
         />
       </Modal>
+      <Footer />
     </div>
   );
 };

@@ -192,13 +192,13 @@ const Header = () => {
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
                         onClick={openUpdateProfile}
                       >
-                        👤 Cập nhật thông tin cá nhân
+                        📝 Cập nhật thông tin cá nhân
                       </button>
                       <button
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
                         onClick={openWorkHistory}
                       >
-                        👤 Quá trình công tác
+                        📜 Quá trình công tác
                       </button>
                       <button
                         className="block w-full text-left px-4 py-2 hover:bg-gray-100 text-xs sm:text-sm text-gray-700"
