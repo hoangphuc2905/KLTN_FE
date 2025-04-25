@@ -8,7 +8,7 @@ import React, {
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { Link } from "react-router-dom";
-import { Modal, Button, Input, message, Spin } from "antd";
+import { Modal, Button, Input, message, Spin, Select } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
@@ -942,18 +942,29 @@ const HomePage = () => {
                     </FixedSizeList>
                   )}
                   <div className="flex justify-center items-center mt-6 gap-2 max-md:mt-3 max-md:flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <select
-                        className="p-1 border rounded-md text-sm max-md:text-xs max-md:p-0.5"
+                    <div className="flex items-center">
+                      <Select
                         value={papersPerPage}
-                        onChange={handlePapersPerPageChange}
-                      >
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={30}>30</option>
-                      </select>
-                      <span className="text-sm max-md:text-xs">bài/trang</span>
+                        onChange={(value) => {
+                          setPapersPerPage(value);
+                          setCurrentPage(1);
+                        }}
+                        style={{ width: 120, marginRight: 16 }}
+                        options={[
+                          { value: 10, label: "10 / trang" },
+                          { value: 20, label: "20 / trang" },
+                          { value: 30, label: "30 / trang" },
+                          { value: 50, label: "50 / trang" },
+                        ]}
+                      />
+                      <span>{`${
+                        (currentPage - 1) * papersPerPage + 1
+                      }-${Math.min(
+                        currentPage * papersPerPage,
+                        filteredPapers.length
+                      )} của ${filteredPapers.length} mục`}</span>
                     </div>
+
                     <button
                       className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
                       disabled={currentPage === 1}

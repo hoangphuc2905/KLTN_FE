@@ -1160,18 +1160,34 @@ const StatisticsPointPage = () => {
 
               <Table
                 columns={columns}
-                dataSource={filteredPapers}
+                dataSource={filteredPapers.map((paper, index) => ({
+                  ...paper,
+                  key: paper.id || index,
+                }))}
                 pagination={{
                   current: currentPage,
                   pageSize: pageSize,
                   total: filteredPapers.length,
                   onChange: (page) => setCurrentPage(page),
-                  showSizeChanger: true,
-                  pageSizeOptions: ["10", "20", "50", "100"],
-                  onShowSizeChange: (current, size) =>
-                    handlePageSizeChange(size),
+                  showSizeChanger: false,
+                  showTotal: (total, range) => (
+                    <div className="flex items-center">
+                      <Select
+                        value={pageSize}
+                        onChange={handlePageSizeChange}
+                        style={{ width: 120, marginRight: 16 }}
+                        options={[
+                          { value: 10, label: "10 / trang" },
+                          { value: 20, label: "20 / trang" },
+                          { value: 50, label: "50 / trang" },
+                          { value: 100, label: "100 / trang" },
+                        ]}
+                      />
+                      <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                    </div>
+                  ),
                 }}
-                rowKey="id"
+                rowKey="key"
                 className="text-sm"
                 onChange={handleChange}
                 onRow={(record) => ({
@@ -1182,6 +1198,12 @@ const StatisticsPointPage = () => {
                     (total, col) => total + (col.width || 0),
                     0
                   ),
+                }}
+                locale={{
+                  emptyText: <div style={{ height: "35px" }}></div>,
+                }}
+                style={{
+                  minHeight: "525px",
                 }}
               />
             </div>
