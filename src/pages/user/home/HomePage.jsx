@@ -62,6 +62,8 @@ const HomePage = () => {
   const userType = localStorage.getItem("user_type");
   const [currentPage, setCurrentPage] = useState(1);
   const [papersPerPage, setPapersPerPage] = useState(10); // New state for papers per page
+  const [isRemoveModalVisible, setIsRemoveModalVisible] = useState(false);
+  const [paperToRemove, setPaperToRemove] = useState(null);
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -537,6 +539,11 @@ const HomePage = () => {
       return;
     }
 
+    if (categories.includes(newCategory.trim())) {
+      message.error("Tên danh mục đã tồn tại. Vui lòng chọn tên khác.");
+      return;
+    }
+
     try {
       if (!userId || !userType) {
         throw new Error(
@@ -788,7 +795,7 @@ const HomePage = () => {
                       className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-4 max-md:h-4"
                       onClick={(e) => {
                         e.preventDefault();
-                        showModal(paper);
+                        confirmRemovePaper(paper);
                       }}
                     />
                   ) : (
@@ -807,6 +814,19 @@ const HomePage = () => {
         </Link>
       </div>
     );
+  };
+
+  const confirmRemovePaper = (paper) => {
+    setPaperToRemove(paper);
+    setIsRemoveModalVisible(true);
+  };
+
+  const handleRemovePaper = async () => {
+    if (paperToRemove) {
+      await removePaperFromCollection(paperToRemove.id);
+    }
+    setIsRemoveModalVisible(false);
+    setPaperToRemove(null);
   };
 
   return (
@@ -1146,6 +1166,32 @@ const HomePage = () => {
               </Button>
             )}
           </div>
+        </Modal>
+        <Modal
+          title="Xác nhận xóa"
+          open={isRemoveModalVisible}
+          onOk={handleRemovePaper}
+          onCancel={() => setIsRemoveModalVisible(false)}
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => setIsRemoveModalVisible(false)}
+              className="h-[40px] max-md:h-[32px] max-md:text-xs"
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="confirm"
+              type="primary"
+              danger
+              onClick={handleRemovePaper}
+              className="h-[40px] max-md:h-[32px] max-md:text-xs"
+            >
+              Xóa
+            </Button>,
+          ]}
+        >
+          <p>Bạn có chắc chắn muốn xóa bài nghiên cứu này khỏi bộ sưu tập?</p>
         </Modal>
       </div>
     </ErrorBoundary>
