@@ -3,7 +3,7 @@ import Logo from "../assets/logo.png";
 import userApi from "../api/api";
 import { FaChevronDown } from "react-icons/fa";
 import ChangePasswordPopup from "../pages/user/profile/ChangePasswordPopup";
-import { message } from "antd";
+import { message, Modal } from "antd";
 
 const Header = () => {
   const [user, setUser] = useState(null);
@@ -11,6 +11,7 @@ const Header = () => {
   const [currentRole, setCurrentRole] = useState("");
   const [showChangePasswordPopup, setShowChangePasswordPopup] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const menuRef = useRef(null);
 
   const roleMapping = {
@@ -111,6 +112,14 @@ const Header = () => {
     localStorage.clear();
     message.success("Bạn đã đăng xuất thành công.");
     window.location.href = "/";
+  };
+
+  const showLogoutModal = () => {
+    setIsLogoutModalVisible(true);
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalVisible(false);
   };
 
   const openProfile = () => {
@@ -218,7 +227,7 @@ const Header = () => {
                   )}
                   <button
                     className="block w-full text-left px-4 py-2 hover:bg-red-100 text-xs sm:text-sm text-red-500"
-                    onClick={handleLogout}
+                    onClick={showLogoutModal}
                   >
                     🚪 Đăng xuất
                   </button>
@@ -237,6 +246,16 @@ const Header = () => {
           onClose={() => setShowChangePasswordPopup(false)}
         />
       )}
+      <Modal
+        title="Xác nhận đăng xuất"
+        visible={isLogoutModalVisible}
+        onOk={handleLogout}
+        onCancel={handleCancelLogout}
+        okText="Đăng xuất"
+        cancelText="Hủy"
+      >
+        <p>Bạn có chắc chắn muốn đăng xuất không?</p>
+      </Modal>
     </header>
   );
 };

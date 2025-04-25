@@ -11,34 +11,32 @@ const WorkProcessPage = () => {
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
   const navigate = useNavigate();
 
+  const fetchWorkProcesses = async () => {
+    const user_id = localStorage.getItem("user_id");
+    if (!user_id) {
+      console.error("Thiếu user_id");
+      return;
+    }
+
+    try {
+      const userWorks = await userApi.getWorkProcesses(user_id);
+      const workProcessesWithDetails = await Promise.all(
+        userWorks.map(async (userWork) => {
+          const workUnit = await userApi.getWorkUnitById(userWork.work_unit_id);
+          return {
+            ...userWork,
+            name_vi: workUnit.name_vi,
+            address_vi: workUnit.address_vi,
+          };
+        })
+      );
+      setWorkProcesses(workProcessesWithDetails);
+    } catch (error) {
+      console.error("Lỗi khi lấy thông tin quá trình công tác:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchWorkProcesses = async () => {
-      const user_id = localStorage.getItem("user_id");
-      if (!user_id) {
-        console.error("Thiếu user_id");
-        return;
-      }
-
-      try {
-        const userWorks = await userApi.getWorkProcesses(user_id);
-        const workProcessesWithDetails = await Promise.all(
-          userWorks.map(async (userWork) => {
-            const workUnit = await userApi.getWorkUnitById(
-              userWork.work_unit_id
-            );
-            return {
-              ...userWork,
-              name_vi: workUnit.name_vi,
-              address_vi: workUnit.address_vi,
-            };
-          })
-        );
-        setWorkProcesses(workProcessesWithDetails);
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin quá trình công tác:", error);
-      }
-    };
-
     fetchWorkProcesses();
   }, []);
 
@@ -85,7 +83,7 @@ const WorkProcessPage = () => {
             >
               Trang chủ
             </span>
-            <span className="text-gray-400"> &gt; </span>
+            <span className="text-gray-400"> > </span>
             <span className="font-semibold text-sky-900">
               Quá trình công tác
             </span>
@@ -108,13 +106,16 @@ const WorkProcessPage = () => {
               columns={columns}
               pagination={false}
               bordered={false}
-              scroll={{ x: 320 }} // Enable horizontal scrolling for small screens
+              scroll={{ x: 320 }}
             />
           </div>
         </div>
       </div>
       {showAddWorkProcessPopup && (
-        <AddWorkProcessPage onClose={() => setShowAddWorkProcessPopup(false)} />
+        <AddWorkProcessPage
+          onClose={() => setShowAddWorkProcessPopup(false)}
+          refreshData={fetchWorkProcesses} // Pass the refresh function
+        />
       )}
       <Footer />
     </div>
