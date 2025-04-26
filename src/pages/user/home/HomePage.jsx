@@ -722,34 +722,40 @@ const HomePage = () => {
               />
             </div>
             <div className="grid grid-cols-1 gap-2 w-full max-md:gap-1 max-md:overflow-hidden relative">
-              <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-xs max-md:w-full">
-                {paper.title || paper.title_en || "No Title"}
-              </h2>
-              <div className="absolute top-0 right-0 flex flex-col items-end text-xs text-neutral-500 max-md:text-[10px] max-md:hidden">
-                <div className="flex items-center gap-2 max-md:gap-1">
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                    className="object-contain w-4 aspect-square max-md:w-2"
-                    alt="Views icon"
-                  />
-                  <div className="text-orange-500">
-                    {typeof paper.views === "number" ? paper.views : 0}
+              <div className="flex justify-between items-start">
+                <h2 className="text-sm font-bold break-words max-w-[70%] line-clamp-2 max-md:max-w-full max-md:text-xs max-md:w-full">
+                  {paper.title || paper.title_en || "No Title"}
+                </h2>
+
+                <div className="flex flex-col items-end text-xs text-neutral-500 max-md:text-[10px] max-md:hidden ml-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 max-md:gap-1">
+                    <img
+                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                      className="object-contain w-4 aspect-square max-md:w-2"
+                      alt="Views icon"
+                    />
+                    <div className="text-orange-500">
+                      {typeof paper.views === "number" ? paper.views : 0}
+                    </div>
+                    <img
+                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                      className="object-contain w-4 aspect-[1.2] max-md:w-2"
+                      alt="Downloads icon"
+                    />
+                    <div>
+                      {typeof paper.downloads === "number"
+                        ? paper.downloads
+                        : 0}
+                    </div>
                   </div>
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                    className="object-contain w-4 aspect-[1.2] max-md:w-2"
-                    alt="Downloads icon"
-                  />
                   <div>
-                    {typeof paper.downloads === "number" ? paper.downloads : 0}
+                    {paper.publish_date
+                      ? new Date(paper.publish_date).toLocaleDateString()
+                      : "No Date"}
                   </div>
-                </div>
-                <div>
-                  {paper.publish_date
-                    ? new Date(paper.publish_date).toLocaleDateString()
-                    : "No Date"}
                 </div>
               </div>
+
               <div className="text-sm text-sky-900 max-md:text-[10px]">
                 {paper.author || "Unknown Author"}
               </div>
@@ -854,11 +860,11 @@ const HomePage = () => {
             }
           `}
         </style>
-        <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
+        <div className="flex flex-col pb-7 mx-auto w-full max-w-[1563px] px-4 md:px-8 lg:px-24">
           <div className="w-full bg-white">
             <Header />
           </div>
-          <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20 max-md:static max-md:pt-[60px]">
+          <div className="self-center w-full max-w-[1563px] pt-[80px] sticky top-0 bg-[#E7ECF0] z-20 max-md:static max-md:pt-[60px]">
             <div className="flex items-center gap-2 text-gray-600 text-sm max-md:text-xs">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -941,7 +947,7 @@ const HomePage = () => {
               </button>
             </div>
           </div>
-          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
+          <div className="self-center mt-6 w-full max-w-[1563px] max-md:max-w-full">
             <div className="flex gap-5 max-md:flex-col">
               <section className="w-[71%] max-md:w-full" ref={papersListRef}>
                 <div className="flex flex-col w-full max-md:mt-2 max-md:max-w-full">

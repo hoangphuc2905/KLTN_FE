@@ -83,7 +83,7 @@ const WorkProcessPage = () => {
             >
               Trang chủ
             </span>
-            <span className="text-gray-400"> > </span>
+            <span className="text-gray-400"> &gt; </span>
             <span className="font-semibold text-sky-900">
               Quá trình công tác
             </span>
