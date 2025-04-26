@@ -21,6 +21,11 @@ const UpdateProfilePage = () => {
   });
   const [initialUser, setInitialUser] = useState(null);
   const [departmentName, setDepartmentName] = useState("");
+  const [errors, setErrors] = useState({
+    phone: false,
+    email: false,
+    address: false,
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -82,7 +87,36 @@ const UpdateProfilePage = () => {
     }));
   };
 
+  const validateInputs = () => {
+    const phoneRegex = /^[0-9]{10,11}$/;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    const newErrors = {
+      phone: !phoneRegex.test(user.phone),
+      email: !emailRegex.test(user.email),
+      address: !user.address.trim(),
+    };
+
+    setErrors(newErrors);
+
+    if (newErrors.phone) {
+      message.error("Số điện thoại không hợp lệ. Vui lòng nhập 10-11 chữ số.");
+    }
+    if (newErrors.email) {
+      message.error("Email không hợp lệ. Vui lòng nhập đúng định dạng email.");
+    }
+    if (newErrors.address) {
+      message.error("Địa chỉ không được để trống.");
+    }
+
+    return !newErrors.phone && !newErrors.email && !newErrors.address;
+  };
+
   const handleSave = async () => {
+    if (!validateInputs()) {
+      return;
+    }
+
     const data = {
       address: user.address,
       phone: user.phone,
@@ -225,7 +259,9 @@ const UpdateProfilePage = () => {
                     name="phone"
                     value={user?.phone}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs"
+                    className={`border rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs ${
+                      errors.phone ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
                 </div>
 
@@ -239,7 +275,9 @@ const UpdateProfilePage = () => {
                     name="address"
                     value={user?.address}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs"
+                    className={`border rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs ${
+                      errors.address ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
 
                   {/* Email */}
@@ -251,7 +289,9 @@ const UpdateProfilePage = () => {
                     name="email"
                     value={user?.email}
                     onChange={handleChange}
-                    className="border border-gray-300 rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs"
+                    className={`border rounded-md p-3 h-[20px] col-span-1 bg-white outline-none text-sm max-md:text-xs ${
+                      errors.email ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
                 </div>
 

@@ -8,7 +8,7 @@ import React, {
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { Link } from "react-router-dom";
-import { Modal, Button, Input, message, Spin } from "antd";
+import { Modal, Button, Input, message, Spin, Select } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
@@ -62,6 +62,8 @@ const HomePage = () => {
   const userType = localStorage.getItem("user_type");
   const [currentPage, setCurrentPage] = useState(1);
   const [papersPerPage, setPapersPerPage] = useState(10); // New state for papers per page
+  const [isRemoveModalVisible, setIsRemoveModalVisible] = useState(false);
+  const [paperToRemove, setPaperToRemove] = useState(null);
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -537,6 +539,11 @@ const HomePage = () => {
       return;
     }
 
+    if (categories.includes(newCategory.trim())) {
+      message.error("Tên danh mục đã tồn tại. Vui lòng chọn tên khác.");
+      return;
+    }
+
     try {
       if (!userId || !userType) {
         throw new Error(
@@ -715,34 +722,40 @@ const HomePage = () => {
               />
             </div>
             <div className="grid grid-cols-1 gap-2 w-full max-md:gap-1 max-md:overflow-hidden relative">
-              <h2 className="text-sm font-bold break-words max-w-[500px] line-clamp-2 max-md:max-w-full max-md:text-xs max-md:w-full">
-                {paper.title || paper.title_en || "No Title"}
-              </h2>
-              <div className="absolute top-0 right-0 flex flex-col items-end text-xs text-neutral-500 max-md:text-[10px] max-md:hidden">
-                <div className="flex items-center gap-2 max-md:gap-1">
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                    className="object-contain w-4 aspect-square max-md:w-2"
-                    alt="Views icon"
-                  />
-                  <div className="text-orange-500">
-                    {typeof paper.views === "number" ? paper.views : 0}
+              <div className="flex justify-between items-start">
+                <h2 className="text-sm font-bold break-words max-w-[70%] line-clamp-2 max-md:max-w-full max-md:text-xs max-md:w-full">
+                  {paper.title || paper.title_en || "No Title"}
+                </h2>
+
+                <div className="flex flex-col items-end text-xs text-neutral-500 max-md:text-[10px] max-md:hidden ml-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 max-md:gap-1">
+                    <img
+                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
+                      className="object-contain w-4 aspect-square max-md:w-2"
+                      alt="Views icon"
+                    />
+                    <div className="text-orange-500">
+                      {typeof paper.views === "number" ? paper.views : 0}
+                    </div>
+                    <img
+                      src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
+                      className="object-contain w-4 aspect-[1.2] max-md:w-2"
+                      alt="Downloads icon"
+                    />
+                    <div>
+                      {typeof paper.downloads === "number"
+                        ? paper.downloads
+                        : 0}
+                    </div>
                   </div>
-                  <img
-                    src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                    className="object-contain w-4 aspect-[1.2] max-md:w-2"
-                    alt="Downloads icon"
-                  />
                   <div>
-                    {typeof paper.downloads === "number" ? paper.downloads : 0}
+                    {paper.publish_date
+                      ? new Date(paper.publish_date).toLocaleDateString()
+                      : "No Date"}
                   </div>
-                </div>
-                <div>
-                  {paper.publish_date
-                    ? new Date(paper.publish_date).toLocaleDateString()
-                    : "No Date"}
                 </div>
               </div>
+
               <div className="text-sm text-sky-900 max-md:text-[10px]">
                 {paper.author || "Unknown Author"}
               </div>
@@ -788,7 +801,7 @@ const HomePage = () => {
                       className="w-5 h-5 cursor-pointer text-yellow-500 max-md:w-4 max-md:h-4"
                       onClick={(e) => {
                         e.preventDefault();
-                        showModal(paper);
+                        confirmRemovePaper(paper);
                       }}
                     />
                   ) : (
@@ -807,6 +820,19 @@ const HomePage = () => {
         </Link>
       </div>
     );
+  };
+
+  const confirmRemovePaper = (paper) => {
+    setPaperToRemove(paper);
+    setIsRemoveModalVisible(true);
+  };
+
+  const handleRemovePaper = async () => {
+    if (paperToRemove) {
+      await removePaperFromCollection(paperToRemove.id);
+    }
+    setIsRemoveModalVisible(false);
+    setPaperToRemove(null);
   };
 
   return (
@@ -834,11 +860,11 @@ const HomePage = () => {
             }
           `}
         </style>
-        <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
+        <div className="flex flex-col pb-7 mx-auto w-full max-w-[1563px] px-4 md:px-8 lg:px-24">
           <div className="w-full bg-white">
             <Header />
           </div>
-          <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] sticky top-0 bg-[#E7ECF0] z-20 max-md:static max-md:pt-[60px]">
+          <div className="self-center w-full max-w-[1563px] pt-[80px] sticky top-0 bg-[#E7ECF0] z-20 max-md:static max-md:pt-[60px]">
             <div className="flex items-center gap-2 text-gray-600 text-sm max-md:text-xs">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
@@ -921,7 +947,7 @@ const HomePage = () => {
               </button>
             </div>
           </div>
-          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
+          <div className="self-center mt-6 w-full max-w-[1563px] max-md:max-w-full">
             <div className="flex gap-5 max-md:flex-col">
               <section className="w-[71%] max-md:w-full" ref={papersListRef}>
                 <div className="flex flex-col w-full max-md:mt-2 max-md:max-w-full">
@@ -942,18 +968,29 @@ const HomePage = () => {
                     </FixedSizeList>
                   )}
                   <div className="flex justify-center items-center mt-6 gap-2 max-md:mt-3 max-md:flex-wrap">
-                    <div className="flex items-center gap-2">
-                      <select
-                        className="p-1 border rounded-md text-sm max-md:text-xs max-md:p-0.5"
+                    <div className="flex items-center">
+                      <Select
                         value={papersPerPage}
-                        onChange={handlePapersPerPageChange}
-                      >
-                        <option value={10}>10</option>
-                        <option value={20}>20</option>
-                        <option value={30}>30</option>
-                      </select>
-                      <span className="text-sm max-md:text-xs">bài/trang</span>
+                        onChange={(value) => {
+                          setPapersPerPage(value);
+                          setCurrentPage(1);
+                        }}
+                        style={{ width: 120, marginRight: 16 }}
+                        options={[
+                          { value: 10, label: "10 / trang" },
+                          { value: 20, label: "20 / trang" },
+                          { value: 30, label: "30 / trang" },
+                          { value: 50, label: "50 / trang" },
+                        ]}
+                      />
+                      <span>{`${
+                        (currentPage - 1) * papersPerPage + 1
+                      }-${Math.min(
+                        currentPage * papersPerPage,
+                        filteredPapers.length
+                      )} của ${filteredPapers.length} mục`}</span>
                     </div>
+
                     <button
                       className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
                       disabled={currentPage === 1}
@@ -1135,6 +1172,32 @@ const HomePage = () => {
               </Button>
             )}
           </div>
+        </Modal>
+        <Modal
+          title="Xác nhận xóa"
+          open={isRemoveModalVisible}
+          onOk={handleRemovePaper}
+          onCancel={() => setIsRemoveModalVisible(false)}
+          footer={[
+            <Button
+              key="cancel"
+              onClick={() => setIsRemoveModalVisible(false)}
+              className="h-[40px] max-md:h-[32px] max-md:text-xs"
+            >
+              Hủy
+            </Button>,
+            <Button
+              key="confirm"
+              type="primary"
+              danger
+              onClick={handleRemovePaper}
+              className="h-[40px] max-md:h-[32px] max-md:text-xs"
+            >
+              Xóa
+            </Button>,
+          ]}
+        >
+          <p>Bạn có chắc chắn muốn xóa bài nghiên cứu này khỏi bộ sưu tập?</p>
         </Modal>
       </div>
     </ErrorBoundary>

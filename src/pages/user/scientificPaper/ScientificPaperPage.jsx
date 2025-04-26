@@ -1212,10 +1212,23 @@ const ScientificPaperPage = () => {
                         pageSize: itemsPerPage,
                         total: filteredPapers.length,
                         onChange: (page) => setCurrentPage(page),
-                        showSizeChanger: true,
-                        pageSizeOptions: ["10", "20", "50", "100"],
-                        onShowSizeChange: (_, size) =>
-                          handlePageSizeChange(size),
+                        showSizeChanger: false,
+                        showTotal: (total, range) => (
+                          <div className="flex items-center">
+                            <Select
+                              value={pageSize}
+                              onChange={handlePageSizeChange}
+                              style={{ width: 120, marginRight: 16 }}
+                              options={[
+                                { value: 10, label: "10 / trang" },
+                                { value: 20, label: "20 / trang" },
+                                { value: 50, label: "50 / trang" },
+                                { value: 100, label: "100 / trang" },
+                              ]}
+                            />
+                            <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                          </div>
+                        ),
                       }}
                       rowKey="key"
                       className="text-sm max-sm:text-xs"

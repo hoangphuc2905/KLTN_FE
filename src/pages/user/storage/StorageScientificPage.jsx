@@ -47,34 +47,40 @@ const StorageScientificPage = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [newCategoryError, setNewCategoryError] = useState(false); // Add error state
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editCategoryName, setEditCategoryName] = useState("");
   const [editCategoryId, setEditCategoryId] = useState(null);
+  const [editCategoryError, setEditCategoryError] = useState(false); // Add error state
 
   const showModal = () => {
     setIsModalVisible(true);
   };
 
   const handleOk = async () => {
-    if (newCategory.trim()) {
-      try {
-        const response = await userApi.createCollection({
-          name: newCategory.trim(),
-          user_id: user_id,
-          user_type: user_type,
-        });
-        setCategories((prevCategories) => [
-          ...prevCategories,
-          { id: response._id, name: response.name },
-        ]);
-        setNewCategory("");
-        setIsModalVisible(false);
-        message.success("Tạo danh mục thành công!");
-      } catch (error) {
-        console.error("Failed to create collection:", error);
-        message.error("Tạo danh mục thất bại!");
-      }
+    if (!newCategory.trim()) {
+      setNewCategoryError(true); // Show error if input is empty
+      return;
+    }
+    if (categories.some((category) => category.name === newCategory.trim())) {
+      message.error("Tên danh mục đã tồn tại!"); // Show error if name is duplicate
+      return;
+    }
+    try {
+      await userApi.createCollection({
+        name: newCategory.trim(),
+        user_id: user_id,
+        user_type: user_type,
+      });
+      await reloadPageData(); // Reload categories and papers
+      setNewCategory("");
+      setNewCategoryError(false); // Reset error state
+      setIsModalVisible(false);
+      message.success("Tạo danh mục thành công!");
+    } catch (error) {
+      console.error("Failed to create collection:", error);
+      message.error("Tạo danh mục thất bại!");
     }
   };
 
@@ -124,18 +130,31 @@ const StorageScientificPage = () => {
   };
 
   const handleEditOk = async () => {
-    if (editCategoryName.trim()) {
-      try {
-        await userApi.updateCollection(editCategoryId, {
-          name: editCategoryName.trim(),
-        });
-        message.success("Cập nhật danh mục thành công!");
-        setIsEditModalVisible(false);
-        await reloadPageData(); // Reload data after update
-      } catch (error) {
-        console.error("Error updating collection:", error);
-        message.error(error || "Cập nhật danh mục thất bại!");
-      }
+    if (!editCategoryName.trim()) {
+      setEditCategoryError(true); // Show error if input is empty
+      return;
+    }
+    if (
+      categories.some(
+        (category) =>
+          category.name === editCategoryName.trim() &&
+          category.id !== editCategoryId
+      )
+    ) {
+      message.error("Tên danh mục đã tồn tại!"); // Show error if name is duplicate
+      return;
+    }
+    try {
+      await userApi.updateCollection(editCategoryId, {
+        name: editCategoryName.trim(),
+      });
+      message.success("Cập nhật danh mục thành công!");
+      setIsEditModalVisible(false);
+      setEditCategoryError(false); // Reset error state
+      await reloadPageData(); // Reload data after update
+    } catch (error) {
+      console.error("Error updating collection:", error);
+      message.error(error || "Cập nhật danh mục thất bại!");
     }
   };
 
@@ -145,39 +164,54 @@ const StorageScientificPage = () => {
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    try {
-      await userApi.deleteCollection(categoryId);
-      message.success("Xóa danh mục thành công!");
-      await reloadPageData(); // Reload data after deletion
-    } catch (error) {
-      console.error("Error deleting collection:", error);
-      message.error(error || "Xóa danh mục thất bại!");
-    }
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn xóa danh mục này?",
+      okText: "Xóa",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          await userApi.deleteCollection(categoryId);
+          message.success("Xóa danh mục thành công!");
+          await reloadPageData(); // Reload data after deletion
+        } catch (error) {
+          console.error("Error deleting collection:", error);
+          message.error(error || "Xóa danh mục thất bại!");
+        }
+      },
+    });
   };
 
   const handleDelete = async (paperId, collectionId) => {
-    try {
-      console.log(
-        "Attempting to remove paper with ID:",
-        paperId,
-        "from collection ID:",
-        collectionId
-      ); // Debug log
-      await userApi.removePaperFromCollection({
-        collection_id: collectionId,
-        paper_id: paperId,
-      });
-      message.success("Hủy lưu thành công!");
-      await reloadPageData(); // Reload data after paper removal
-    } catch (error) {
-      console.error(
-        "Failed to remove paper from collection:",
-        error.response?.data || error
-      );
-      message.error(
-        error.response?.data?.message || "Hủy lưu thất bại! Vui lòng thử lại."
-      );
-    }
+    Modal.confirm({
+      title: "Bạn có chắc chắn muốn hủy lưu bài viết này?",
+      okText: "Hủy lưu",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          console.log(
+            "Attempting to remove paper with ID:",
+            paperId,
+            "from collection ID:",
+            collectionId
+          ); // Debug log
+          await userApi.removePaperFromCollection({
+            collection_id: collectionId,
+            paper_id: paperId,
+          });
+          message.success("Hủy lưu thành công!");
+          await reloadPageData(); // Reload data after paper removal
+        } catch (error) {
+          console.error(
+            "Failed to remove paper from collection:",
+            error.response?.data || error
+          );
+          message.error(
+            error.response?.data?.message ||
+              "Hủy lưu thất bại! Vui lòng thử lại."
+          );
+        }
+      },
+    });
   };
 
   const handleMenuClick = (e, paperId, collectionId) => {
@@ -522,8 +556,16 @@ const StorageScientificPage = () => {
         <Input
           placeholder="Nhập tên danh mục"
           value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
+          onChange={(e) => {
+            setNewCategory(e.target.value);
+            setNewCategoryError(false); // Reset error state on input change
+          }}
         />
+        {newCategoryError && (
+          <div style={{ color: "red", marginTop: "8px" }}>
+            Vui lòng nhập tên danh mục!
+          </div>
+        )}
       </Modal>
       <Modal
         title="Đổi tên danh mục"
@@ -542,8 +584,16 @@ const StorageScientificPage = () => {
         <Input
           placeholder="Nhập tên danh mục mới"
           value={editCategoryName}
-          onChange={(e) => setEditCategoryName(e.target.value)}
+          onChange={(e) => {
+            setEditCategoryName(e.target.value);
+            setEditCategoryError(false); // Reset error state on input change
+          }}
         />
+        {editCategoryError && (
+          <div style={{ color: "red", marginTop: "8px" }}>
+            Vui lòng nhập tên danh mục mới!
+          </div>
+        )}
       </Modal>
     </div>
   );

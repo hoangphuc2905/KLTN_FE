@@ -3,24 +3,54 @@ import userApi from "../../../api/api";
 import { message } from "antd";
 
 // eslint-disable-next-line react/prop-types
-const AddWorkProcessPage = ({ onClose }) => {
+const AddWorkProcessPage = ({ onClose, refreshData }) => {
   const [formData, setFormData] = useState({
     fromDate: "",
     toDate: "",
-    workplaceVi: "",
-    workplaceEn: "",
-    addressVi: "",
-    addressEn: "",
+    workplaceVi: "IUH",
+    workplaceEn: "Industrial University of Ho Chi Minh City",
+    addressVi: "12 Nguyễn Văn Bảo, Q. Gò Vấp, TP. Hồ Chí Minh",
+    addressEn: "12 Nguyen Van Bao, Go Vap District, Ho Chi Minh City",
     roleVi: "",
     roleEn: "",
   });
 
+  const [errors, setErrors] = useState({});
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.fromDate) newErrors.fromDate = true;
+    if (!formData.workplaceVi) newErrors.workplaceVi = true;
+    if (!formData.workplaceEn) newErrors.workplaceEn = true;
+    if (!formData.addressVi) newErrors.addressVi = true;
+    if (!formData.addressEn) newErrors.addressEn = true;
+    if (!formData.roleVi) newErrors.roleVi = true;
+    if (!formData.roleEn) newErrors.roleEn = true;
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === "roleVi") {
+      const roleEn =
+        value === "Giảng viên"
+          ? "Lecturer"
+          : value === "Sinh viên"
+          ? "Student"
+          : "";
+      setFormData({ ...formData, roleVi: value, roleEn });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!validateForm()) {
+      message.error("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
 
     try {
       const workUnitId = Date.now();
@@ -36,15 +66,15 @@ const AddWorkProcessPage = ({ onClose }) => {
       await userApi.createUserWork({
         work_unit_id: workUnitResponse.work_unit_id,
         user_id: localStorage.getItem("user_id"),
-        start_date: formData.fromDate,
+        start_date: formData.fromDate || "",
         end_date: formData.toDate,
         role_vi: formData.roleVi,
         role_en: formData.roleEn,
-        department: formData.roleEn, 
+        department: formData.roleEn,
       });
 
-      console.log("Submitted Data:", formData);
       message.success("Thêm quá trình công tác thành công!");
+      refreshData(); // Call the refresh function to reload the table
       onClose();
     } catch (error) {
       console.error("Error submitting data:", error);
@@ -70,14 +100,18 @@ const AddWorkProcessPage = ({ onClose }) => {
                 name="fromDate"
                 value={formData.fromDate}
                 onChange={handleChange}
-                className="w-1/2 p-1 border rounded-md text-sm"
+                className={`w-1/2 p-1 border rounded-md text-sm ${
+                  errors.fromDate ? "border-red-500" : ""
+                }`}
               />
               <input
                 type="date"
                 name="toDate"
                 value={formData.toDate}
                 onChange={handleChange}
-                className="w-1/2 p-1 border rounded-md text-sm"
+                className={`w-1/2 p-1 border rounded-md text-sm ${
+                  errors.toDate ? "border-red-500" : ""
+                }`}
               />
             </div>
           </div>
@@ -101,22 +135,55 @@ const AddWorkProcessPage = ({ onClose }) => {
                 {label} <span className="text-red-500">(*)</span>
               </label>
               <div className="w-2/3">
-                <input
-                  type="text"
-                  name={nameVi}
-                  value={formData[nameVi]}
-                  onChange={handleChange}
-                  placeholder={`${label} (Tiếng Việt)`}
-                  className="w-full p-1 border rounded-md text-sm mb-1"
-                />
-                <input
-                  type="text"
-                  name={nameEn}
-                  value={formData[nameEn]}
-                  onChange={handleChange}
-                  placeholder={`${label} (Tiếng Anh)`}
-                  className="w-full p-1 border rounded-md text-sm"
-                />
+                {nameVi === "roleVi" ? (
+                  <>
+                    <select
+                      name="roleVi"
+                      value={formData.roleVi}
+                      onChange={handleChange}
+                      className={`w-full p-1 border rounded-md text-sm mb-1 ${
+                        errors.roleVi ? "border-red-500" : ""
+                      }`}
+                    >
+                      <option value="">Chọn vai trò</option>
+                      <option value="Giảng viên">Giảng viên</option>
+                      <option value="Sinh viên">Sinh viên</option>
+                    </select>
+                    <input
+                      type="text"
+                      name="roleEn"
+                      value={formData.roleEn}
+                      readOnly
+                      placeholder="Role (English)"
+                      className={`w-full p-1 border rounded-md text-sm ${
+                        errors.roleEn ? "border-red-500" : ""
+                      }`}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <input
+                      type="text"
+                      name={nameVi}
+                      value={formData[nameVi]}
+                      onChange={handleChange}
+                      placeholder={`${label} (Tiếng Việt)`}
+                      className={`w-full p-1 border rounded-md text-sm mb-1 ${
+                        errors[nameVi] ? "border-red-500" : ""
+                      }`}
+                    />
+                    <input
+                      type="text"
+                      name={nameEn}
+                      value={formData[nameEn]}
+                      onChange={handleChange}
+                      placeholder={`${label} (Tiếng Anh)`}
+                      className={`w-full p-1 border rounded-md text-sm ${
+                        errors[nameEn] ? "border-red-500" : ""
+                      }`}
+                    />
+                  </>
+                )}
               </div>
             </div>
           ))}
