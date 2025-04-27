@@ -574,19 +574,20 @@ const ManagementFormulas = () => {
   return (
     <DndProvider backend={HTML5Backend}>
       <MathJaxContext>
-        <div className="bg-[#E7ECF0] min-h-screen">
-          <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
-            <div className="w-full bg-white shadow-md">
+        <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+          <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
+            <div className="w-full bg-white">
               <Header />
             </div>
 
-            <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-              <div className="flex items-center gap-2 text-gray-600">
+            <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+              <div className="flex items-center gap-2 text-gray-600 max-sm:flex-wrap">
                 <img
                   src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
                   alt="Home Icon"
                   className="w-5 h-5"
                 />
+                
                 <span
                   onClick={() => navigate("/home")}
                   className="cursor-pointer hover:text-blue-500"
@@ -594,22 +595,22 @@ const ManagementFormulas = () => {
                   Trang chủ
                 </span>
                 <span className="text-gray-400"> &gt; </span>
-                <span className="font-semibold text-sky-900">
+                <span className="font-semibold text-sm text-sky-900">
                   Quản lý công thức điểm
                 </span>
               </div>
             </div>
 
-            <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-              <div className="grid grid-cols-3 gap-6">
+            <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Attributes Section */}
                 <div className="bg-white rounded-xl p-6 shadow-md">
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="font-semibold text-gray-700">
+                    <h2 className="font-semibold text-gray-700 text-sm md:text-base">
                       CÁC THUỘC TÍNH TÍNH ĐIỂM ĐÓNG GÓP
                     </h2>
                     <Button
-                      className="bg-blue-500 text-white hover:bg-blue-600"
+                      className="bg-blue-500 text-white hover:bg-blue-600 text-xs md:text-sm"
                       onClick={() => setAddAttributeModalVisible(true)}
                     >
                       Thêm
@@ -630,48 +631,48 @@ const ManagementFormulas = () => {
                 </div>
 
                 {/* Formula Section */}
-                <div className="col-span-2 space-y-6">
+                <div className="col-span-1 lg:col-span-2 space-y-6">
                   <div className="bg-white rounded-xl p-6 shadow-md">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="font-semibold text-gray-700">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                      <h2 className="font-semibold text-gray-700 text-sm md:text-base">
                         CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP
                         {startDate && (
-                          <span className="text-sm text-gray-500 ml-2">
+                          <span className="text-xs md:text-sm text-gray-500 ml-2">
                             ({formatDate(startDate)} đến{" "}
                             {formatDate(endDate || new Date())})
                           </span>
                         )}
                       </h2>
                       <Button
-                        className="bg-blue-500 text-white hover:bg-blue-600"
+                        className="bg-blue-500 text-white hover:bg-blue-600 text-xs md:text-sm mt-2 md:mt-0"
                         onClick={isEditing ? handleSaveFormula : toggleEditMode}
                       >
                         {isEditing ? "Lưu" : "Chỉnh sửa"}
                       </Button>
                     </div>
                     {isEditing && (
-                      <div className="flex gap-4 mb-4">
+                      <div className="flex flex-col md:flex-row gap-4 mb-4">
                         <div>
-                          <label className="block text-gray-700 text-sm mb-1">
+                          <label className="block text-gray-700 text-xs md:text-sm mb-1">
                             Ngày bắt đầu:
                           </label>
                           <DatePicker
-                            value={startDate ? dayjs(startDate) : null} // Use dayjs object directly
+                            value={startDate ? dayjs(startDate) : null}
                             onChange={(date) =>
                               setStartDate(date ? date.toISOString() : null)
-                            } // Convert back to ISO string
+                            }
                             className="w-full"
                           />
                         </div>
                         <div>
-                          <label className="block text-gray-700 text-sm mb-1">
+                          <label className="block text-gray-700 text-xs md:text-sm mb-1">
                             Ngày kết thúc:
                           </label>
                           <DatePicker
-                            value={endDate ? dayjs(endDate) : null} // Use dayjs object directly
+                            value={endDate ? dayjs(endDate) : null}
                             onChange={(date) =>
                               setEndDate(date ? date.toISOString() : null)
-                            } // Convert back to ISO string
+                            }
                             className="w-full"
                           />
                         </div>
@@ -685,22 +686,22 @@ const ManagementFormulas = () => {
                   </div>
 
                   <div className="bg-white rounded-xl p-6 shadow-md">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="font-semibold text-gray-700">
+                    <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                      <h2 className="font-semibold text-gray-700 text-sm md:text-base">
                         TẤT CẢ CÔNG THỨC TÍNH ĐIỂM ĐÓNG GÓP QUA CÁC KỲ
                       </h2>
-                      <div className="relative">
+                      <div className="relative mt-2 md:mt-0">
                         <button
-                          className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                          className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs md:text-sm"
                           onClick={() => setShowFilter(!showFilter)}
                         >
                           <Filter className="w-4 h-4" />
-                          <span className="text-xs">Bộ lọc</span>
+                          <span className="text-xs md:text-sm">Bộ lọc</span>
                         </button>
                         {showFilter && (
                           <div
                             ref={filterRef}
-                            className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg right-0"
+                            className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
                           >
                             <form className="relative px-4 py-5 bg-white w-[200px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                               <div className="mb-3">
@@ -766,8 +767,8 @@ const ManagementFormulas = () => {
                     <Table
                       columns={columns}
                       dataSource={filteredFormulas}
-                      scroll={{ x: "max-content" }} // Enable horizontal scrolling
-                      pagination={{ pageSize: 5 }} // Enable pagination with 5 rows per page
+                      scroll={{ x: "max-content" }}
+                      pagination={{ pageSize: 5 }}
                     />
                   </div>
                 </div>
@@ -775,6 +776,7 @@ const ManagementFormulas = () => {
             </div>
           </div>
 
+          {/* Keep modals intact */}
           <Modal
             title="Hiển thị công thức tính điểm"
             open={showAddFormulasPopup}
@@ -876,7 +878,6 @@ const ManagementFormulas = () => {
             )}
             <p>Bạn có chắc chắn muốn lưu công thức mới không?</p>
           </Modal>
-
           <Footer />
         </div>
       </MathJaxContext>
