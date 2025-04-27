@@ -54,7 +54,7 @@ const getChartOptions = (data, showDataLabels = false) => {
       : [];
 
   return {
-    responsive: false,
+    responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
@@ -105,7 +105,7 @@ const getChartOptions = (data, showDataLabels = false) => {
 };
 
 const donutOptions = {
-  responsive: false,
+  responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: {
@@ -115,12 +115,15 @@ const donutOptions = {
         usePointStyle: true,
         padding: 20,
         boxWidth: 10,
+        font: {
+          size: 10,
+        },
       },
     },
     datalabels: {
       color: "#000",
       font: {
-        size: 12,
+        size: 10,
         weight: "bold",
       },
       formatter: (value) => value,
@@ -828,14 +831,14 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+    <div className="bg-[#E7ECF0] min-h-screen overflow-x-hidden">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[100%] md:max-w-[calc(100%-120px)] lg:max-w-[calc(100%-220px)] mx-auto">
         <div className="w-full bg-white">
           <Header />
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-4">
+          <div className="flex items-center gap-2 text-gray-600 flex-wrap text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -856,40 +859,53 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-4 justify-center w-full">
+        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-4">
+          {/* Loại bỏ div thừa này */}
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div className="flex flex-row justify-center mx-auto flex-wrap gap-2 sm:gap-4 w-full lg:w-auto">
               <div
-                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
-                style={{ width: "200px", height: "55px" }}
+                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300 flex-1 min-w-[95px] sm:min-w-[130px]"
+                style={{
+                  height: "55px",
+                }}
               >
-                <div className="text-lg font-bold text-gray-700 pt-4">
+                <div className="text-base sm:text-lg font-bold text-gray-700 pt-2">
                   <CountUp end={stats.totalPapers} duration={2} />
                 </div>
-                <div className="text-gray-500 text-sm pb-4">Tổng bài báo</div>
+                <div className="text-gray-500 text-xs sm:text-sm pb-2">
+                  Tổng bài báo
+                </div>
               </div>
               <div
-                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
-                style={{ width: "200px", height: "55px" }}
+                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300 flex-1 min-w-[95px] sm:min-w-[130px]"
+                style={{
+                  height: "55px",
+                }}
               >
-                <div className="text-lg font-bold text-[#00A3FF] pt-4">
+                <div className="text-base sm:text-lg font-bold text-[#00A3FF] pt-2">
                   <CountUp end={stats.totalViews} duration={2} />
                 </div>
-                <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
+                <div className="text-gray-500 pb-2 text-xs sm:text-sm">
+                  Tổng lượt xem
+                </div>
               </div>
               <div
-                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
-                style={{ width: "200px", height: "55px" }}
+                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300 flex-1 min-w-[95px] sm:min-w-[130px]"
+                style={{
+                  height: "55px",
+                }}
               >
-                <div className="text-lg font-bold text-[#FFB700] pt-4">
+                <div className="text-base sm:text-lg font-bold text-[#FFB700] pt-2">
                   <CountUp end={stats.totalDownloads} duration={2} />
                 </div>
-                <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
+                <div className="text-gray-500 pb-2 text-xs sm:text-sm">
+                  Tổng lượt tải
+                </div>
               </div>
             </div>
-            <div className="ml-4">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
               <select
-                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px]"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -903,15 +919,15 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Statistics by Type */}
-            <div className="bg-white rounded-xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-semibold text-gray-700">
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   {getTypeChartTitle()}
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="relative" ref={typeChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
@@ -1048,27 +1064,32 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <div ref={typeChartRef}>
+              <div
+                ref={typeChartRef}
+                className="w-full h-[200px] sm:h-[250px] flex items-center justify-center"
+              >
                 {hasTypeChartData ? (
                   typeChartType === "bar" ? (
-                    <Bar
-                      data={filteredTypeChartData}
-                      options={getChartOptions(filteredTypeChartData, false)}
-                      height={200}
-                      width={500}
-                    />
+                    <div className="w-full h-full">
+                      <Bar
+                        data={filteredTypeChartData}
+                        options={getChartOptions(filteredTypeChartData, false)}
+                        height={null}
+                        width={null}
+                      />
+                    </div>
                   ) : (
-                    <div className="flex flex-col items-start">
+                    <div className="w-full h-full flex items-center justify-center">
                       <Doughnut
                         data={filteredTypeChartData}
                         options={donutOptions}
-                        height={200}
-                        width={500}
+                        height={null}
+                        width={null}
                       />
                     </div>
                   )
                 ) : (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                     Không có dữ liệu để hiển thị
                   </div>
                 )}
@@ -1076,12 +1097,12 @@ const Dashboard = () => {
             </div>
 
             {/* Top 5 Departments */}
-            <div className="bg-white rounded-xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-semibold text-gray-700">
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 khoa có nhiều bài nghiên cứu
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="relative" ref={departmentChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
@@ -1220,30 +1241,35 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <div ref={departmentChartRef}>
+              <div
+                ref={departmentChartRef}
+                className="w-full h-[200px] sm:h-[250px] flex items-center justify-center"
+              >
                 {hasDepartmentChartData ? (
                   departmentChartType === "bar" ? (
-                    <Bar
-                      data={filteredDepartmentChartData}
-                      options={getChartOptions(
-                        filteredDepartmentChartData,
-                        false
-                      )}
-                      height={200}
-                      width={540}
-                    />
+                    <div className="w-full h-full">
+                      <Bar
+                        data={filteredDepartmentChartData}
+                        options={getChartOptions(
+                          filteredDepartmentChartData,
+                          false
+                        )}
+                        height={null}
+                        width={null}
+                      />
+                    </div>
                   ) : (
-                    <div className="flex flex-col items-start">
+                    <div className="w-full h-full flex items-center justify-center">
                       <Doughnut
                         data={filteredDepartmentChartData}
                         options={donutOptions}
-                        height={200}
-                        width={500}
+                        height={null}
+                        width={null}
                       />
                     </div>
                   )
                 ) : (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                     Không có dữ liệu để hiển thị
                   </div>
                 )}
@@ -1251,12 +1277,12 @@ const Dashboard = () => {
             </div>
 
             {/* Top 5 Fields */}
-            <div className="bg-white rounded-xl p-6">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-semibold text-gray-700">
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 lĩnh vực có nhiều bài nghiên cứu
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <div className="relative" ref={fieldChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
@@ -1393,27 +1419,32 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              <div ref={fieldChartRef}>
+              <div
+                ref={fieldChartRef}
+                className="w-full h-[200px] sm:h-[250px] flex items-center justify-center"
+              >
                 {hasFieldChartData ? (
                   fieldChartType === "doughnut" ? (
-                    <div className="flex flex-col items-start">
+                    <div className="w-full h-full flex items-center justify-center">
                       <Doughnut
                         data={filteredDonutChartData}
                         options={donutOptions}
-                        height={200}
-                        width={500}
+                        height={null}
+                        width={null}
                       />
                     </div>
                   ) : (
-                    <Bar
-                      data={filteredDonutChartData}
-                      options={getChartOptions(filteredDonutChartData, false)}
-                      height={200}
-                      width={500}
-                    />
+                    <div className="w-full h-full">
+                      <Bar
+                        data={filteredDonutChartData}
+                        options={getChartOptions(filteredDonutChartData, false)}
+                        height={null}
+                        width={null}
+                      />
+                    </div>
                   )
                 ) : (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                     Không có dữ liệu để hiển thị
                   </div>
                 )}
@@ -1421,26 +1452,29 @@ const Dashboard = () => {
             </div>
 
             {/* Top 5 Papers Table */}
-            <div className="bg-white rounded-xl p-6 shadow-md">
-              <h2 className="font-semibold text-gray-700 mb-4">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md">
+              <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-4">
                 Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất
               </h2>
-              {topPapers.length > 0 ? (
-                <Table
-                  columns={columns}
-                  dataSource={topPapers}
-                  pagination={false}
-                  rowKey="_id"
-                  onRow={onRowClick}
-                  classClassName="papers-table"
-                  rowClassName="cursor-pointer"
-                  size="small"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-[200px] text-gray-500">
-                  Không có dữ liệu để hiển thị.
-                </div>
-              )}
+              <div className="overflow-x-auto">
+                {topPapers.length > 0 ? (
+                  <Table
+                    columns={columns}
+                    dataSource={topPapers}
+                    pagination={false}
+                    rowKey="_id"
+                    onRow={onRowClick}
+                    classClassName="papers-table"
+                    rowClassName="cursor-pointer"
+                    size="small"
+                    scroll={{ x: "max-content" }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-[200px] text-gray-500 text-sm">
+                    Không có dữ liệu để hiển thị.
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
