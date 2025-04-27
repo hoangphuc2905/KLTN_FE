@@ -927,7 +927,7 @@ const Dashboard = () => {
                 <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   {getTypeChartTitle()}
                 </h2>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 self-end">
                   <div className="relative" ref={typeChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
@@ -1102,7 +1102,7 @@ const Dashboard = () => {
                 <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 khoa có nhiều bài nghiên cứu
                 </h2>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 self-end">
                   <div className="relative" ref={departmentChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
@@ -1282,7 +1282,7 @@ const Dashboard = () => {
                 <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 lĩnh vực có nhiều bài nghiên cứu
                 </h2>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 self-end">
                   <div className="relative" ref={fieldChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
