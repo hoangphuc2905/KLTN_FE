@@ -45,6 +45,9 @@ const getChartOptions = (data, showDataLabels = false) => {
   const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
   const step = Math.min(Math.ceil(roundedMax / 5), Math.ceil(roundedMax / 10));
 
+  // Kiểm tra nếu đang ở màn hình lớn
+  const isLargeScreen = window.innerWidth >= 1024; // lg breakpoint
+
   // Lọc ra các indices của các giá trị data khác 0
   const nonZeroIndices =
     data && data.datasets && data.datasets[0] && data.datasets[0].data
@@ -91,11 +94,11 @@ const getChartOptions = (data, showDataLabels = false) => {
               ? this.getLabelForValue(value)
               : "";
           },
-          autoSkip: false, // Không bỏ qua nhãn
-          maxRotation: 45, // Xoay nhãn 45 độ
-          minRotation: 45, // Đảm bảo luôn xoay
+          autoSkip: false,
+          maxRotation: isLargeScreen ? 0 : 45, // Màn hình lớn: ngang, màn hình nhỏ: xoay 45 độ
+          minRotation: isLargeScreen ? 0 : 45, // Đảm bảo nhất quán
           font: {
-            size: 10, // Font nhỏ hơn
+            size: isLargeScreen ? 12 : 10, // Font lớn hơn trên màn hình lớn
           },
         },
       },
