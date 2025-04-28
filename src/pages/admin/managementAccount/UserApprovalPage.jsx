@@ -275,12 +275,12 @@ const UserApprovalPage = () => {
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
       <div className="flex-grow">
-        <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+        <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-lg:max-w-full max-lg:px-4">
           <div className="w-full bg-white">
             <Header />
           </div>
-          <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-            <div className="flex items-center gap-2 text-gray-600 text-sm">
+          <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+            <div className="flex items-center gap-2 text-gray-600 text-sm max-md:flex-wrap">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
                 alt="Home Icon"
@@ -298,15 +298,15 @@ const UserApprovalPage = () => {
               </span>
             </div>
           </div>
-          <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-            <div className="flex justify-between items-center border-b pb-3">
+          <div className="self-center w-full max-w-[1563px] px-6 mt-4 max-lg:px-4">
+            <div className="flex justify-between items-center border-b pb-3 max-md:flex-wrap">
               <h2 className="text-base font-medium text-gray-800">
                 Tài khoản cần duyệt:{" "}
                 <span className="text-blue-600">{users.length}</span>
               </h2>
             </div>
           </div>
-          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
+          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-lg:px-4">
             <div className="flex flex-col w-full max-md:mt-4 max-md:max-w-full">
               <div className="bg-white rounded-lg shadow-md p-4">
                 <div className="overflow-x-auto">
@@ -367,7 +367,7 @@ const UserApprovalPage = () => {
         ]}
       >
         {selectedUser && (
-          <div>
+          <div className="text-sm max-md:text-xs">
             <p>
               <strong>MSSV:</strong> {selectedUser.student_id}
             </p>
