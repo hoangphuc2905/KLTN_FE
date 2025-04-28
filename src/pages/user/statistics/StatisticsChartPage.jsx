@@ -289,6 +289,10 @@ const StatisticsChartPage = () => {
   const pointChartRef = useRef(null);
   const donutChartRef = useRef(null);
 
+  // Thêm state cho nút Tải tất cả
+  const [showExportAllFilter, setShowExportAllFilter] = useState(false);
+  const exportAllFilterRef = useRef(null);
+
   // Thêm state để kiểm soát dropdown xuất file bảng
   const [showTableExport, setShowTableExport] = useState(false);
   const tableExportRef = useRef(null);
@@ -692,6 +696,12 @@ const StatisticsChartPage = () => {
       ) {
         setShowTableExport(false);
       }
+      if (
+        exportAllFilterRef.current &&
+        !exportAllFilterRef.current.contains(event.target)
+      ) {
+        setShowExportAllFilter(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -1076,6 +1086,53 @@ const StatisticsChartPage = () => {
     }
   };
 
+  // Sửa lại hàm exportAllCharts để phù hợp với biến có trong file này
+  const exportAllCharts = async (format) => {
+    try {
+      if (format === "pdf") {
+        // Xuất tất cả dạng PDF
+        await Promise.all([
+          generatePDF(
+            typeChartRef,
+            "Biểu đồ Thống kê theo loại",
+            filteredTypeChartData
+          ),
+          generatePDF(
+            pointChartRef,
+            "Top 5 bài có điểm đóng góp cao nhất",
+            filteredPointChartData
+          ),
+          generatePDF(
+            donutChartRef,
+            "Top 5 bài báo theo lĩnh vực nghiên cứu",
+            filteredDonutChartData
+          ),
+        ]);
+
+        // Xuất bảng dữ liệu
+        exportTableToPDF(top5Papers, "Top 5 bài báo nổi bật");
+      } else if (format === "excel") {
+        // Xuất tất cả dạng Excel
+        generateExcel(filteredTypeChartData, "Biểu đồ Thống kê theo loại");
+        generateExcel(
+          filteredPointChartData,
+          "Top 5 bài có điểm đóng góp cao nhất"
+        );
+        generateExcel(
+          filteredDonutChartData,
+          "Top 5 bài báo theo lĩnh vực nghiên cứu"
+        );
+
+        // Xuất bảng dữ liệu
+        exportTableToExcel(top5Papers, "Top 5 bài báo nổi bật");
+      }
+
+      setShowExportAllFilter(false);
+    } catch (error) {
+      console.error("Error exporting all charts:", error);
+    }
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen overflow-x-hidden">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[100%] md:max-w-[calc(100%-120px)] lg:max-w-[calc(100%-220px)] mx-auto">
@@ -1153,7 +1210,37 @@ const StatisticsChartPage = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+              {/* Thêm nút Tải tất cả */}
+              <div className="relative" ref={exportAllFilterRef}>
+                <button
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  onClick={() => setShowExportAllFilter(!showExportAllFilter)}
+                >
+                  <span className="text-sm">Tải tất cả</span>
+                </button>
+                {showExportAllFilter && (
+                  <div
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    style={{ width: "150px", right: "0" }}
+                  >
+                    <div className="px-4 py-3 w-full">
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("pdf")}
+                      >
+                        PDF
+                      </div>
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("excel")}
+                      >
+                        Excel
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <select
                 className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
                 value={selectedYear}

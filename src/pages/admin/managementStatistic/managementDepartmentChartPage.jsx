@@ -227,6 +227,10 @@ const ManagementDepartmentChart = () => {
   const [showTableExport, setShowTableExport] = useState(false);
   const tableExportRef = useRef(null);
 
+  // Thêm state và ref cho nút Tải tất cả
+  const [showExportAllFilter, setShowExportAllFilter] = useState(false);
+  const exportAllFilterRef = useRef(null);
+
   // Thêm các hàm xuất file
   const exportTableToExcel = (data, title) => {
     try {
@@ -774,6 +778,12 @@ const ManagementDepartmentChart = () => {
     ) {
       setShowTableExport(false);
     }
+    if (
+      exportAllFilterRef.current &&
+      !exportAllFilterRef.current.contains(event.target)
+    ) {
+      setShowExportAllFilter(false);
+    }
   };
 
   useEffect(() => {
@@ -899,6 +909,53 @@ const ManagementDepartmentChart = () => {
       setShowAuthorDownloadFilter(false);
     } else if (chartSection === "field") {
       setShowFieldDownloadFilter(false);
+    }
+  };
+
+  // Thêm hàm xuất tất cả biểu đồ
+  const exportAllCharts = async (format) => {
+    try {
+      if (format === "pdf") {
+        // Xuất tất cả dạng PDF
+        await Promise.all([
+          generatePDF(
+            typeChartRef,
+            "Biểu đồ Thống kê theo loại",
+            filteredTypeChartData
+          ),
+          generatePDF(
+            authorChartRef,
+            "Top 5 tác giả có điểm đóng góp",
+            filteredContributorsChartData
+          ),
+          generatePDF(
+            fieldChartRef,
+            "Top 5 lĩnh vực có nhiều bài nghiên cứu",
+            filteredFieldsChartData
+          ),
+        ]);
+
+        // Xuất bảng dữ liệu
+        exportTableToPDF(topPapers, "Top 5 bài nghiên cứu được nổi bật");
+      } else if (format === "excel") {
+        // Xuất tất cả dạng Excel
+        generateExcel(filteredTypeChartData, "Biểu đồ Thống kê theo loại");
+        generateExcel(
+          filteredContributorsChartData,
+          "Top 5 tác giả có điểm đóng góp"
+        );
+        generateExcel(
+          filteredFieldsChartData,
+          "Top 5 lĩnh vực có nhiều bài nghiên cứu"
+        );
+
+        // Xuất bảng dữ liệu
+        exportTableToExcel(topPapers, "Top 5 bài nghiên cứu được nổi bật");
+      }
+
+      setShowExportAllFilter(false);
+    } catch (error) {
+      console.error("Error exporting all charts:", error);
     }
   };
 
@@ -1045,7 +1102,37 @@ const ManagementDepartmentChart = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+              {/* Thêm nút Tải tất cả */}
+              <div className="relative" ref={exportAllFilterRef}>
+                <button
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  onClick={() => setShowExportAllFilter(!showExportAllFilter)}
+                >
+                  <span className="text-sm">Tải tất cả</span>
+                </button>
+                {showExportAllFilter && (
+                  <div
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    style={{ width: "150px", right: "0" }}
+                  >
+                    <div className="px-4 py-3 w-full">
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("pdf")}
+                      >
+                        PDF
+                      </div>
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("excel")}
+                      >
+                        Excel
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <select
                 className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
                 value={selectedYear}
