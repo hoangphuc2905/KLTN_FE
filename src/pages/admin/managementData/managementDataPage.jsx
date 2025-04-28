@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { Filter } from "lucide-react";
-import { Button, Table, Input, Form, Modal, message } from "antd";
+import { Button, Table, Input, Form, Modal, message, Spin } from "antd";
 import userApi from "../../../api/api";
 import { useNavigate } from "react-router-dom";
 
@@ -375,7 +375,9 @@ const ManagementData = () => {
                   locale={{
                     emptyText: (
                       <div className="text-center py-8 text-gray-500">
-                        Không có dữ liệu
+                        <div className="flex justify-center items-center">
+                          <Spin tip="Đang tải dữ liệu..." />
+                        </div>
                       </div>
                     ),
                   }}
@@ -397,7 +399,9 @@ const ManagementData = () => {
                   locale={{
                     emptyText: (
                       <div className="text-center py-8 text-gray-500">
-                        Không có dữ liệu
+                        <div className="flex justify-center items-center">
+                          <Spin tip="Đang tải dữ liệu..." />
+                        </div>
                       </div>
                     ),
                   }}
