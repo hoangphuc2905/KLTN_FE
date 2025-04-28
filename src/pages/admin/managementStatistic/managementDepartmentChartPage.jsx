@@ -223,6 +223,49 @@ const ManagementDepartmentChart = () => {
   const navigate = useNavigate();
   const departmentId = localStorage.getItem("department");
 
+  // Thêm biến state để kiểm soát dropdown xuất file
+  const [showTableExport, setShowTableExport] = useState(false);
+  const tableExportRef = useRef(null);
+
+  // Thêm các hàm xuất file
+  const exportTableToExcel = (data, title) => {
+    try {
+      const worksheetData = data.map((item, index) => ({
+        STT: index + 1,
+        "Tên bài nghiên cứu": item.title,
+        "Lượt xem": item.views,
+        "Lượt tải": item.downloads,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+    }
+  };
+
+  const exportTableToPDF = (data, title) => {
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      pdf.text(title, 10, 10);
+      let y = 20;
+
+      data.forEach((item, index) => {
+        pdf.text(`STT: ${index + 1}`, 10, y);
+        pdf.text(`Tên bài nghiên cứu: ${item.title}`, 10, y + 10);
+        pdf.text(`Lượt xem: ${item.views}`, 10, y + 20);
+        pdf.text(`Lượt tải: ${item.downloads}`, 10, y + 30);
+        y += 40;
+      });
+
+      pdf.save(`${title}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
   const getAcademicYears = async () => {
     try {
       const response = await userApi.getAcademicYears();
@@ -724,6 +767,12 @@ const ManagementDepartmentChart = () => {
       !fieldDownloadFilterRef.current.contains(event.target)
     ) {
       setShowFieldDownloadFilter(false);
+    }
+    if (
+      tableExportRef.current &&
+      !tableExportRef.current.contains(event.target)
+    ) {
+      setShowTableExport(false);
     }
   };
 
@@ -1554,9 +1603,50 @@ const ManagementDepartmentChart = () => {
 
             {/* Top 5 Papers */}
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <h2 className="font-semibold text-gray-700 mb-4">
-                Top 5 bài nghiên cứu được nổi bật
-              </h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-gray-700">
+                  Top 5 bài nghiên cứu được nổi bật
+                </h2>
+                <div className="relative" ref={tableExportRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    onClick={() => setShowTableExport(!showTableExport)}
+                  >
+                    <span className="text-xs">Xuất file</span>
+                  </button>
+                  {showTableExport && (
+                    <div
+                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "150px", right: "0" }}
+                    >
+                      <div className="px-4 py-3 w-full">
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToPDF(
+                              topPapers,
+                              "Top 5 bài nghiên cứu được nổi bật"
+                            )
+                          }
+                        >
+                          PDF
+                        </div>
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToExcel(
+                              topPapers,
+                              "Top 5 bài nghiên cứu được nổi bật"
+                            )
+                          }
+                        >
+                          Excel
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 {hasTopPapersData ? (
                   <Table

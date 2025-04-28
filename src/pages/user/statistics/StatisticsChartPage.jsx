@@ -289,6 +289,51 @@ const StatisticsChartPage = () => {
   const pointChartRef = useRef(null);
   const donutChartRef = useRef(null);
 
+  // Thêm state để kiểm soát dropdown xuất file bảng
+  const [showTableExport, setShowTableExport] = useState(false);
+  const tableExportRef = useRef(null);
+
+  // Thêm các hàm xuất file bảng
+  const exportTableToExcel = (data, title) => {
+    try {
+      const worksheetData = data.map((item, index) => ({
+        STT: index + 1,
+        "Tên bài nghiên cứu": item.title,
+        "Lượt xem": item.views,
+        "Lượt tải": item.downloads,
+        "Điểm đóng góp": item.contributions,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+    }
+  };
+
+  const exportTableToPDF = (data, title) => {
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      pdf.text(title, 10, 10);
+      let y = 20;
+
+      data.forEach((item, index) => {
+        pdf.text(`STT: ${index + 1}`, 10, y);
+        pdf.text(`Tên bài nghiên cứu: ${item.title}`, 10, y + 5);
+        pdf.text(`Lượt xem: ${item.views}`, 10, y + 10);
+        pdf.text(`Lượt tải: ${item.downloads}`, 10, y + 15);
+        pdf.text(`Điểm đóng góp: ${item.contributions}`, 10, y + 20);
+        y += 30;
+      });
+
+      pdf.save(`${title}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
   const getAcademicYears = async () => {
     try {
       const response = await userApi.getAcademicYears();
@@ -640,6 +685,12 @@ const StatisticsChartPage = () => {
         !donutDownloadFilterRef.current.contains(event.target)
       ) {
         setShowDonutDownloadFilter(false);
+      }
+      if (
+        tableExportRef.current &&
+        !tableExportRef.current.contains(event.target)
+      ) {
+        setShowTableExport(false);
       }
     };
 
@@ -1647,6 +1698,45 @@ const StatisticsChartPage = () => {
                 <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 bài báo nổi bật
                 </h2>
+                <div className="relative" ref={tableExportRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    onClick={() => setShowTableExport(!showTableExport)}
+                  >
+                    <span className="text-xs">Xuất file</span>
+                  </button>
+                  {showTableExport && (
+                    <div
+                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "150px", right: "0" }}
+                    >
+                      <div className="px-4 py-3 w-full">
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToPDF(
+                              top5Papers,
+                              "Top 5 bài báo nổi bật"
+                            )
+                          }
+                        >
+                          PDF
+                        </div>
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToExcel(
+                              top5Papers,
+                              "Top 5 bài báo nổi bật"
+                            )
+                          }
+                        >
+                          Excel
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               <div className="overflow-x-auto">
                 {top5Papers && top5Papers.length > 0 ? (
