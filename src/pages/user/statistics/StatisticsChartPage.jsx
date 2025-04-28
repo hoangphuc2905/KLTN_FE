@@ -44,6 +44,9 @@ const getChartOptions = (data, showDataLabels = false) => {
   const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
   const step = Math.min(Math.ceil(roundedMax / 5), Math.ceil(roundedMax / 10));
 
+  // Kiểm tra nếu đang ở màn hình lớn
+  const isLargeScreen = window.innerWidth >= 1024; // lg breakpoint
+
   // Lọc ra các indices của các giá trị data khác 0
   const nonZeroIndices =
     data && data.datasets && data.datasets[0] && data.datasets[0].data
@@ -54,7 +57,7 @@ const getChartOptions = (data, showDataLabels = false) => {
       : [];
 
   return {
-    responsive: false,
+    responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
@@ -89,6 +92,12 @@ const getChartOptions = (data, showDataLabels = false) => {
             return nonZeroIndices.includes(index)
               ? this.getLabelForValue(value)
               : "";
+          },
+          autoSkip: false, // Không bỏ qua nhãn
+          maxRotation: isLargeScreen ? 0 : 45, // Màn hình lớn: ngang, màn hình nhỏ: xoay 45 độ
+          minRotation: isLargeScreen ? 0 : 45, // Đảm bảo nhất quán
+          font: {
+            size: isLargeScreen ? 12 : 10, // Font lớn hơn trên màn hình lớn
           },
         },
       },
@@ -134,7 +143,7 @@ const columns = [
     dataIndex: "id",
     key: "id",
     render: (_, __, index) => index + 1,
-    width: 60,
+    width: 40,
   },
   {
     title: "Tên bài nghiên cứu",
@@ -149,7 +158,7 @@ const columns = [
           window.location.href = `/scientific-paper/${record._id}`;
         }}
         style={{
-          maxWidth: "300px",
+          maxWidth: "200px",
           whiteSpace: "nowrap",
           overflow: "hidden",
           textOverflow: "ellipsis",
@@ -159,20 +168,20 @@ const columns = [
         {text}
       </div>
     ),
-    width: 200,
+    width: 100,
   },
   {
     title: "Lượt xem",
     dataIndex: "views",
     key: "views",
-    width: 95,
+    width: 80,
     render: (text) => <span className="text-blue-500 font-medium">{text}</span>,
   },
   {
     title: "Lượt tải",
     dataIndex: "downloads",
     key: "downloads",
-    width: 95,
+    width: 70,
     render: (text) => (
       <span className="text-amber-500 font-medium">{text}</span>
     ),
@@ -181,7 +190,7 @@ const columns = [
     title: "Điểm đóng góp",
     dataIndex: "contributions",
     key: "contributions",
-    width: 135,
+    width: 120,
     render: (text) => (
       <span className="text-green-500 font-medium">{text}</span>
     ),
@@ -279,6 +288,55 @@ const StatisticsChartPage = () => {
   const typeChartRef = useRef(null);
   const pointChartRef = useRef(null);
   const donutChartRef = useRef(null);
+
+  // Thêm state cho nút Tải tất cả
+  const [showExportAllFilter, setShowExportAllFilter] = useState(false);
+  const exportAllFilterRef = useRef(null);
+
+  // Thêm state để kiểm soát dropdown xuất file bảng
+  const [showTableExport, setShowTableExport] = useState(false);
+  const tableExportRef = useRef(null);
+
+  // Thêm các hàm xuất file bảng
+  const exportTableToExcel = (data, title) => {
+    try {
+      const worksheetData = data.map((item, index) => ({
+        STT: index + 1,
+        "Tên bài nghiên cứu": item.title,
+        "Lượt xem": item.views,
+        "Lượt tải": item.downloads,
+        "Điểm đóng góp": item.contributions,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+    }
+  };
+
+  const exportTableToPDF = (data, title) => {
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      pdf.text(title, 10, 10);
+      let y = 20;
+
+      data.forEach((item, index) => {
+        pdf.text(`STT: ${index + 1}`, 10, y);
+        pdf.text(`Tên bài nghiên cứu: ${item.title}`, 10, y + 5);
+        pdf.text(`Lượt xem: ${item.views}`, 10, y + 10);
+        pdf.text(`Lượt tải: ${item.downloads}`, 10, y + 15);
+        pdf.text(`Điểm đóng góp: ${item.contributions}`, 10, y + 20);
+        y += 30;
+      });
+
+      pdf.save(`${title}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
 
   const getAcademicYears = async () => {
     try {
@@ -631,6 +689,18 @@ const StatisticsChartPage = () => {
         !donutDownloadFilterRef.current.contains(event.target)
       ) {
         setShowDonutDownloadFilter(false);
+      }
+      if (
+        tableExportRef.current &&
+        !tableExportRef.current.contains(event.target)
+      ) {
+        setShowTableExport(false);
+      }
+      if (
+        exportAllFilterRef.current &&
+        !exportAllFilterRef.current.contains(event.target)
+      ) {
+        setShowExportAllFilter(false);
       }
     };
 
@@ -1016,14 +1086,61 @@ const StatisticsChartPage = () => {
     }
   };
 
+  // Sửa lại hàm exportAllCharts để phù hợp với biến có trong file này
+  const exportAllCharts = async (format) => {
+    try {
+      if (format === "pdf") {
+        // Xuất tất cả dạng PDF
+        await Promise.all([
+          generatePDF(
+            typeChartRef,
+            "Biểu đồ Thống kê theo loại",
+            filteredTypeChartData
+          ),
+          generatePDF(
+            pointChartRef,
+            "Top 5 bài có điểm đóng góp cao nhất",
+            filteredPointChartData
+          ),
+          generatePDF(
+            donutChartRef,
+            "Top 5 bài báo theo lĩnh vực nghiên cứu",
+            filteredDonutChartData
+          ),
+        ]);
+
+        // Xuất bảng dữ liệu
+        exportTableToPDF(top5Papers, "Top 5 bài báo nổi bật");
+      } else if (format === "excel") {
+        // Xuất tất cả dạng Excel
+        generateExcel(filteredTypeChartData, "Biểu đồ Thống kê theo loại");
+        generateExcel(
+          filteredPointChartData,
+          "Top 5 bài có điểm đóng góp cao nhất"
+        );
+        generateExcel(
+          filteredDonutChartData,
+          "Top 5 bài báo theo lĩnh vực nghiên cứu"
+        );
+
+        // Xuất bảng dữ liệu
+        exportTableToExcel(top5Papers, "Top 5 bài báo nổi bật");
+      }
+
+      setShowExportAllFilter(false);
+    } catch (error) {
+      console.error("Error exporting all charts:", error);
+    }
+  };
+
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
+    <div className="bg-[#E7ECF0] min-h-screen overflow-x-hidden">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[100%] md:max-w-[calc(100%-120px)] lg:max-w-[calc(100%-220px)] mx-auto">
         <div className="w-full bg-white">
           <Header />
         </div>
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-4">
+          <div className="flex items-center gap-2 text-gray-600 flex-wrap text-xs sm:text-sm">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
@@ -1045,51 +1162,87 @@ const StatisticsChartPage = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-4 justify-center w-full">
+        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-4">
+          <div className="flex flex-col lg:flex-row justify-between items-center gap-4">
+            <div className="flex flex-row justify-center mx-auto flex-wrap gap-2 sm:gap-4 w-full lg:w-auto">
               <div
-                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
-                style={{ width: "200px", height: "55px" }}
+                className="bg-[#F1F5F9] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300 flex-1 min-w-[95px] sm:min-w-[150px] lg:min-w-[170px]"
+                style={{ height: "55px" }}
               >
-                <div className="text-lg font-bold text-gray-700 pt-4">
+                <div className="text-base sm:text-lg font-bold text-gray-700 pt-2">
                   <CountUp end={totalPapers} duration={2} />
                 </div>
-                <div className="text-gray-500 pb-4 text-sm">Tổng bài báo</div>
+                <div className="text-gray-500 text-xs sm:text-sm pb-2">
+                  Tổng bài báo
+                </div>
               </div>
               <div
-                className="bg-[#b0fccd] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
-                style={{ width: "200px", height: "55px" }}
+                className="bg-[#b0fccd] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300 flex-1 min-w-[95px] sm:min-w-[150px] lg:min-w-[170px]"
+                style={{ height: "55px" }}
               >
-                <div className="text-lg font-bold text-gray-700 pt-4">
+                <div className="text-base sm:text-lg font-bold text-gray-700 pt-2">
                   <CountUp end={totalPoints} duration={2} decimals={1} />
                 </div>
-                <div className="text-gray-500 pb-4 text-sm">
+                <div className="text-gray-500 text-xs sm:text-sm pb-2">
                   Tổng điểm đóng góp
                 </div>
               </div>
               <div
-                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
-                style={{ width: "200px", height: "55px" }}
+                className="bg-[#E8F7FF] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300 flex-1 min-w-[95px] sm:min-w-[150px] lg:min-w-[170px]"
+                style={{ height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#00A3FF] pt-4">
+                <div className="text-base sm:text-lg font-bold text-[#00A3FF] pt-2">
                   <CountUp end={totalViews} duration={2} />
                 </div>
-                <div className="text-gray-500 pb-4 text-sm">Tổng lượt xem</div>
+                <div className="text-gray-500 text-xs sm:text-sm pb-2">
+                  Tổng lượt xem
+                </div>
               </div>
               <div
-                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300"
-                style={{ width: "200px", height: "55px" }}
+                className="bg-[#FFF8E7] rounded-lg flex flex-col justify-center items-center shadow-sm hover:shadow-md cursor-pointer transform hover:scale-105 transition-transform duration-300 flex-1 min-w-[95px] sm:min-w-[150px] lg:min-w-[170px]"
+                style={{ height: "55px" }}
               >
-                <div className="text-lg font-bold text-[#FFB700] pt-4">
+                <div className="text-base sm:text-lg font-bold text-[#FFB700] pt-2">
                   <CountUp end={totalDownloads} duration={2} />
                 </div>
-                <div className="text-gray-500 pb-4 text-sm">Tổng lượt tải</div>
+                <div className="text-gray-500 text-xs sm:text-sm pb-2">
+                  Tổng lượt tải
+                </div>
               </div>
             </div>
-            <div className="ml-4">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+              {/* Thêm nút Tải tất cả */}
+              <div className="relative" ref={exportAllFilterRef}>
+                <button
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  onClick={() => setShowExportAllFilter(!showExportAllFilter)}
+                >
+                  <span className="text-sm">Tải tất cả</span>
+                </button>
+                {showExportAllFilter && (
+                  <div
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    style={{ width: "150px", right: "0" }}
+                  >
+                    <div className="px-4 py-3 w-full">
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("pdf")}
+                      >
+                        PDF
+                      </div>
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("excel")}
+                      >
+                        Excel
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <select
-                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-base w-[110px] cursor-pointer hover:bg-[#008AE0] transition-colors"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -1104,15 +1257,15 @@ const StatisticsChartPage = () => {
         </div>
 
         {/* Charts */}
-        <div className="self-center w-full max-w-[1563px] px-6 mt-6">
-          <div className="grid grid-cols-2 gap-6">
+        <div className="self-center w-full max-w-[1563px] px-4 sm:px-6 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
             {/* Type Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-semibold text-gray-700">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   {getTypeChartTitle()}
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 self-end">
                   <div className="relative" ref={typeChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
@@ -1249,27 +1402,32 @@ const StatisticsChartPage = () => {
                   </div>
                 </div>
               </div>
-              <div ref={typeChartRef}>
+              <div
+                ref={typeChartRef}
+                className="w-full h-[200px] sm:h-[250px] flex items-center justify-center"
+              >
                 {hasTypeChartData ? (
                   typeChartType === "bar" ? (
-                    <Bar
-                      data={filteredTypeChartData}
-                      options={getChartOptions(filteredTypeChartData, false)}
-                      height={200}
-                      width={500}
-                    />
+                    <div className="w-full h-full">
+                      <Bar
+                        data={filteredTypeChartData}
+                        options={getChartOptions(filteredTypeChartData, false)}
+                        height={null}
+                        width={null}
+                      />
+                    </div>
                   ) : (
-                    <div className="flex flex-col items-start">
+                    <div className="w-full h-full flex items-center justify-center">
                       <Doughnut
                         data={filteredTypeChartData}
                         options={donutOptions}
-                        height={200}
-                        width={500}
+                        height={null}
+                        width={null}
                       />
                     </div>
                   )
                 ) : (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                     Không có dữ liệu để hiển thị
                   </div>
                 )}
@@ -1277,12 +1435,12 @@ const StatisticsChartPage = () => {
             </div>
 
             {/* Point Chart */}
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="font-semibold text-gray-700">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 sm:mb-6">
+                <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 bài có điểm đóng góp cao nhất
                 </h2>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 self-end">
                   <div className="relative" ref={pointChartFilterRef}>
                     <button
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
@@ -1419,27 +1577,32 @@ const StatisticsChartPage = () => {
                   </div>
                 </div>
               </div>
-              <div ref={pointChartRef}>
+              <div
+                ref={pointChartRef}
+                className="w-full h-[200px] sm:h-[250px] flex items-center justify-center"
+              >
                 {hasPointChartData ? (
                   pointChartType === "bar" ? (
-                    <Bar
-                      data={filteredPointChartData}
-                      options={getChartOptions(filteredPointChartData, false)}
-                      height={200}
-                      width={540}
-                    />
+                    <div className="w-full h-full">
+                      <Bar
+                        data={filteredPointChartData}
+                        options={getChartOptions(filteredPointChartData, false)}
+                        height={null}
+                        width={null}
+                      />
+                    </div>
                   ) : (
-                    <div className="flex flex-col items-start">
+                    <div className="w-full h-full flex items-center justify-center">
                       <Doughnut
                         data={filteredPointChartData}
                         options={donutOptions}
-                        height={200}
-                        width={500}
+                        height={null}
+                        width={null}
                       />
                     </div>
                   )
                 ) : (
-                  <div className="flex items-center justify-center h-[200px] text-gray-500">
+                  <div className="flex items-center justify-center h-full text-gray-500 text-sm">
                     Không có dữ liệu để hiển thị
                   </div>
                 )}
@@ -1617,29 +1780,72 @@ const StatisticsChartPage = () => {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="font-semibold text-gray-700">
+            <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
+                <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 bài báo nổi bật
                 </h2>
-              </div>
-              {top5Papers && top5Papers.length > 0 ? (
-                <Table
-                  columns={columns.filter((col) =>
-                    visibleColumns.includes(col.key)
+                <div className="relative" ref={tableExportRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    onClick={() => setShowTableExport(!showTableExport)}
+                  >
+                    <span className="text-xs">Xuất file</span>
+                  </button>
+                  {showTableExport && (
+                    <div
+                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "150px", right: "0" }}
+                    >
+                      <div className="px-4 py-3 w-full">
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToPDF(
+                              top5Papers,
+                              "Top 5 bài báo nổi bật"
+                            )
+                          }
+                        >
+                          PDF
+                        </div>
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToExcel(
+                              top5Papers,
+                              "Top 5 bài báo nổi bật"
+                            )
+                          }
+                        >
+                          Excel
+                        </div>
+                      </div>
+                    </div>
                   )}
-                  dataSource={top5Papers}
-                  pagination={false}
-                  rowKey="id"
-                  onRow={onRowClick}
-                  className="papers-table"
-                  size="small"
-                />
-              ) : (
-                <div className="flex items-center justify-center h-[200px] text-gray-500">
-                  Không có dữ liệu để hiển thị
                 </div>
-              )}
+              </div>
+              <div className="overflow-x-auto">
+                {top5Papers && top5Papers.length > 0 ? (
+                  <Table
+                    columns={columns.filter((col) =>
+                      visibleColumns.includes(col.key)
+                    )}
+                    dataSource={top5Papers}
+                    pagination={false}
+                    rowKey="id"
+                    onRow={onRowClick}
+                    className="papers-table"
+                    rowClassName="cursor-pointer"
+                    size="small"
+                    scroll={{ x: "max-content" }}
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-[200px] text-gray-500 text-sm">
+                    Không có dữ liệu để hiển thị
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -45,6 +45,9 @@ const getChartOptions = (data, showDataLabels = false) => {
   const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
   const step = Math.min(Math.ceil(roundedMax / 5), Math.ceil(roundedMax / 10));
 
+  // Kiểm tra nếu đang ở màn hình lớn
+  const isLargeScreen = window.innerWidth >= 1024; // lg breakpoint
+
   // Lọc ra các indices của các giá trị data khác 0
   const nonZeroIndices =
     data && data.datasets && data.datasets[0] && data.datasets[0].data
@@ -91,11 +94,11 @@ const getChartOptions = (data, showDataLabels = false) => {
               ? this.getLabelForValue(value)
               : "";
           },
-          autoSkip: false, // Không bỏ qua nhãn
-          maxRotation: 45, // Xoay nhãn 45 độ
-          minRotation: 45, // Đảm bảo luôn xoay
+          autoSkip: false,
+          maxRotation: isLargeScreen ? 0 : 45, // Màn hình lớn: ngang, màn hình nhỏ: xoay 45 độ
+          minRotation: isLargeScreen ? 0 : 45, // Đảm bảo nhất quán
           font: {
-            size: 10, // Font nhỏ hơn
+            size: isLargeScreen ? 12 : 10, // Font lớn hơn trên màn hình lớn
           },
         },
       },
@@ -219,6 +222,53 @@ const ManagementDepartmentChart = () => {
   const fieldChartRef = useRef(null);
   const navigate = useNavigate();
   const departmentId = localStorage.getItem("department");
+
+  // Thêm biến state để kiểm soát dropdown xuất file
+  const [showTableExport, setShowTableExport] = useState(false);
+  const tableExportRef = useRef(null);
+
+  // Thêm state và ref cho nút Tải tất cả
+  const [showExportAllFilter, setShowExportAllFilter] = useState(false);
+  const exportAllFilterRef = useRef(null);
+
+  // Thêm các hàm xuất file
+  const exportTableToExcel = (data, title) => {
+    try {
+      const worksheetData = data.map((item, index) => ({
+        STT: index + 1,
+        "Tên bài nghiên cứu": item.title,
+        "Lượt xem": item.views,
+        "Lượt tải": item.downloads,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+    }
+  };
+
+  const exportTableToPDF = (data, title) => {
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      pdf.text(title, 10, 10);
+      let y = 20;
+
+      data.forEach((item, index) => {
+        pdf.text(`STT: ${index + 1}`, 10, y);
+        pdf.text(`Tên bài nghiên cứu: ${item.title}`, 10, y + 10);
+        pdf.text(`Lượt xem: ${item.views}`, 10, y + 20);
+        pdf.text(`Lượt tải: ${item.downloads}`, 10, y + 30);
+        y += 40;
+      });
+
+      pdf.save(`${title}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
 
   const getAcademicYears = async () => {
     try {
@@ -722,6 +772,18 @@ const ManagementDepartmentChart = () => {
     ) {
       setShowFieldDownloadFilter(false);
     }
+    if (
+      tableExportRef.current &&
+      !tableExportRef.current.contains(event.target)
+    ) {
+      setShowTableExport(false);
+    }
+    if (
+      exportAllFilterRef.current &&
+      !exportAllFilterRef.current.contains(event.target)
+    ) {
+      setShowExportAllFilter(false);
+    }
   };
 
   useEffect(() => {
@@ -847,6 +909,53 @@ const ManagementDepartmentChart = () => {
       setShowAuthorDownloadFilter(false);
     } else if (chartSection === "field") {
       setShowFieldDownloadFilter(false);
+    }
+  };
+
+  // Thêm hàm xuất tất cả biểu đồ
+  const exportAllCharts = async (format) => {
+    try {
+      if (format === "pdf") {
+        // Xuất tất cả dạng PDF
+        await Promise.all([
+          generatePDF(
+            typeChartRef,
+            "Biểu đồ Thống kê theo loại",
+            filteredTypeChartData
+          ),
+          generatePDF(
+            authorChartRef,
+            "Top 5 tác giả có điểm đóng góp",
+            filteredContributorsChartData
+          ),
+          generatePDF(
+            fieldChartRef,
+            "Top 5 lĩnh vực có nhiều bài nghiên cứu",
+            filteredFieldsChartData
+          ),
+        ]);
+
+        // Xuất bảng dữ liệu
+        exportTableToPDF(topPapers, "Top 5 bài nghiên cứu được nổi bật");
+      } else if (format === "excel") {
+        // Xuất tất cả dạng Excel
+        generateExcel(filteredTypeChartData, "Biểu đồ Thống kê theo loại");
+        generateExcel(
+          filteredContributorsChartData,
+          "Top 5 tác giả có điểm đóng góp"
+        );
+        generateExcel(
+          filteredFieldsChartData,
+          "Top 5 lĩnh vực có nhiều bài nghiên cứu"
+        );
+
+        // Xuất bảng dữ liệu
+        exportTableToExcel(topPapers, "Top 5 bài nghiên cứu được nổi bật");
+      }
+
+      setShowExportAllFilter(false);
+    } catch (error) {
+      console.error("Error exporting all charts:", error);
     }
   };
 
@@ -993,7 +1102,37 @@ const ManagementDepartmentChart = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+              {/* Thêm nút Tải tất cả */}
+              <div className="relative" ref={exportAllFilterRef}>
+                <button
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  onClick={() => setShowExportAllFilter(!showExportAllFilter)}
+                >
+                  <span className="text-sm">Tải tất cả</span>
+                </button>
+                {showExportAllFilter && (
+                  <div
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    style={{ width: "150px", right: "0" }}
+                  >
+                    <div className="px-4 py-3 w-full">
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("pdf")}
+                      >
+                        PDF
+                      </div>
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("excel")}
+                      >
+                        Excel
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <select
                 className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
                 value={selectedYear}
@@ -1551,9 +1690,50 @@ const ManagementDepartmentChart = () => {
 
             {/* Top 5 Papers */}
             <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-              <h2 className="font-semibold text-gray-700 mb-4">
-                Top 5 bài nghiên cứu được nổi bật
-              </h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-gray-700">
+                  Top 5 bài nghiên cứu được nổi bật
+                </h2>
+                <div className="relative" ref={tableExportRef}>
+                  <button
+                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                    onClick={() => setShowTableExport(!showTableExport)}
+                  >
+                    <span className="text-xs">Xuất file</span>
+                  </button>
+                  {showTableExport && (
+                    <div
+                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                      style={{ width: "150px", right: "0" }}
+                    >
+                      <div className="px-4 py-3 w-full">
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToPDF(
+                              topPapers,
+                              "Top 5 bài nghiên cứu được nổi bật"
+                            )
+                          }
+                        >
+                          PDF
+                        </div>
+                        <div
+                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                          onClick={() =>
+                            exportTableToExcel(
+                              topPapers,
+                              "Top 5 bài nghiên cứu được nổi bật"
+                            )
+                          }
+                        >
+                          Excel
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 {hasTopPapersData ? (
                   <Table

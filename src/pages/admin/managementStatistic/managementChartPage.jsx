@@ -41,8 +41,10 @@ const getChartOptions = (data, showDataLabels = false) => {
       : 0;
 
   const roundedMax = Math.ceil((maxValue + 10) / 10) * 10;
-
   const step = Math.min(Math.ceil(roundedMax / 5), Math.ceil(roundedMax / 10));
+
+  // Kiểm tra nếu đang ở màn hình lớn
+  const isLargeScreen = window.innerWidth >= 1024; // lg breakpoint
 
   // Lọc ra các indices của các giá trị data khác 0
   const nonZeroIndices =
@@ -90,6 +92,12 @@ const getChartOptions = (data, showDataLabels = false) => {
             return nonZeroIndices.includes(index)
               ? this.getLabelForValue(value)
               : "";
+          },
+          autoSkip: false,
+          maxRotation: isLargeScreen ? 0 : 45, // Màn hình lớn: ngang, màn hình nhỏ: xoay 45 độ
+          minRotation: isLargeScreen ? 0 : 45, // Đảm bảo nhất quán
+          font: {
+            size: isLargeScreen ? 12 : 10, // Font lớn hơn trên màn hình lớn
           },
         },
       },
@@ -152,6 +160,11 @@ const Dashboard = () => {
   const [showDepartmentDownloadFilter, setShowDepartmentDownloadFilter] =
     useState(false);
   const [showFieldDownloadFilter, setShowFieldDownloadFilter] = useState(false);
+  const [showTableExport, setShowTableExport] = useState(false);
+
+  // Thêm state cho nút tải tất cả
+  const [showExportAllFilter, setShowExportAllFilter] = useState(false);
+  const exportAllFilterRef = useRef(null);
 
   useEffect(() => {
     const fetchStatistics = async () => {
@@ -415,7 +428,7 @@ const Dashboard = () => {
       title: "Lượt xem",
       dataIndex: "viewCount",
       key: "viewCount",
-      width: 95,
+      width: 90,
       render: (text) => (
         <span className="text-blue-500 font-medium">{text}</span>
       ),
@@ -424,7 +437,7 @@ const Dashboard = () => {
       title: "Lượt tải",
       dataIndex: "downloadCount",
       key: "downloadCount",
-      width: 95,
+      width: 90,
       render: (text) => (
         <span className="text-amber-500 font-medium">{text}</span>
       ),
@@ -459,6 +472,7 @@ const Dashboard = () => {
   const typeChartRef = useRef(null);
   const departmentChartRef = useRef(null);
   const fieldChartRef = useRef(null);
+  const tableExportRef = useRef(null);
   const navigate = useNavigate();
   const [academicYears, setAcademicYears] = useState([]);
 
@@ -618,6 +632,18 @@ const Dashboard = () => {
       !fieldDownloadFilterRef.current.contains(event.target)
     ) {
       setShowFieldDownloadFilter(false);
+    }
+    if (
+      tableExportRef.current &&
+      !tableExportRef.current.contains(event.target)
+    ) {
+      setShowTableExport(false);
+    }
+    if (
+      exportAllFilterRef.current &&
+      !exportAllFilterRef.current.contains(event.target)
+    ) {
+      setShowExportAllFilter(false);
     }
   };
 
@@ -830,6 +856,91 @@ const Dashboard = () => {
     }
   };
 
+  const exportTableToExcel = (data, title) => {
+    try {
+      const worksheetData = data.map((item, index) => ({
+        STT: index + 1,
+        "Tên bài nghiên cứu": item.title_vn,
+        "Lượt xem": item.viewCount,
+        "Lượt tải": item.downloadCount,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+      XLSX.writeFile(workbook, `${title}.xlsx`);
+    } catch (error) {
+      console.error("Error generating Excel:", error);
+    }
+  };
+
+  const exportTableToPDF = (data, title) => {
+    try {
+      const pdf = new jsPDF("p", "mm", "a4");
+      pdf.text(title, 10, 10);
+      let y = 20;
+
+      data.forEach((item, index) => {
+        pdf.text(`STT: ${index + 1}`, 10, y);
+        pdf.text(`Tên bài nghiên cứu: ${item.title_vn}`, 10, y + 10);
+        pdf.text(`Lượt xem: ${item.viewCount}`, 10, y + 20);
+        pdf.text(`Lượt tải: ${item.downloadCount}`, 10, y + 30);
+        y += 40;
+      });
+
+      pdf.save(`${title}.pdf`);
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+    }
+  };
+
+  // Thêm hàm xuất tất cả các biểu đồ
+  const exportAllCharts = async (format) => {
+    try {
+      if (format === "pdf") {
+        // Xuất tất cả dạng PDF
+        await Promise.all([
+          generatePDF(
+            typeChartRef,
+            "Biểu đồ Thống kê theo loại",
+            filteredTypeChartData
+          ),
+          generatePDF(
+            departmentChartRef,
+            "Top 5 khoa có nhiều bài nghiên cứu",
+            filteredDepartmentChartData
+          ),
+          generatePDF(
+            fieldChartRef,
+            "Top 5 lĩnh vực có nhiều bài nghiên cứu",
+            filteredDonutChartData
+          ),
+        ]);
+
+        // Xuất bảng dữ liệu
+        exportTableToPDF(topPapers, "Top 5 bài nghiên cứu");
+      } else if (format === "excel") {
+        // Xuất tất cả dạng Excel
+        generateExcel(filteredTypeChartData, "Biểu đồ Thống kê theo loại");
+        generateExcel(
+          filteredDepartmentChartData,
+          "Top 5 khoa có nhiều bài nghiên cứu"
+        );
+        generateExcel(
+          filteredDonutChartData,
+          "Top 5 lĩnh vực có nhiều bài nghiên cứu"
+        );
+
+        // Xuất bảng dữ liệu
+        exportTableToExcel(topPapers, "Top_5_Papers");
+      }
+
+      setShowExportAllFilter(false);
+    } catch (error) {
+      console.error("Error exporting all charts:", error);
+    }
+  };
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen overflow-x-hidden">
       <div className="flex flex-col pb-7 pt-[80px] max-w-[100%] md:max-w-[calc(100%-120px)] lg:max-w-[calc(100%-220px)] mx-auto">
@@ -903,7 +1014,37 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full lg:w-auto flex justify-center lg:justify-end">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+              {/* Thêm nút Tải tất cả */}
+              <div className="relative" ref={exportAllFilterRef}>
+                <button
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  onClick={() => setShowExportAllFilter(!showExportAllFilter)}
+                >
+                  <span className="text-sm">Tải tất cả</span>
+                </button>
+                {showExportAllFilter && (
+                  <div
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                    style={{ width: "150px", right: "0" }}
+                  >
+                    <div className="px-4 py-3 w-full">
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("pdf")}
+                      >
+                        PDF
+                      </div>
+                      <div
+                        className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                        onClick={() => exportAllCharts("excel")}
+                      >
+                        Excel
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
               <select
                 className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
                 value={selectedYear}
@@ -1453,9 +1594,49 @@ const Dashboard = () => {
 
             {/* Top 5 Papers Table */}
             <div className="bg-white rounded-xl p-4 sm:p-6 shadow-md">
-              <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-4">
-                Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4">
+                <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
+                  Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất
+                </h2>
+                <div className="flex items-center gap-2 self-end">
+                  <div className="relative" ref={tableExportRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowTableExport(!showTableExport)}
+                    >
+                      <span className="text-xs">Xuất file</span>
+                    </button>
+                    {showTableExport && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              exportTableToExcel(topPapers, "Top_5_Papers")
+                            }
+                          >
+                            Excel
+                          </div>
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              exportTableToPDF(
+                                topPapers,
+                                "Top 5 bài nghiên cứu"
+                              )
+                            }
+                          >
+                            PDF
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
               <div className="overflow-x-auto">
                 {topPapers.length > 0 ? (
                   <Table
@@ -1464,7 +1645,7 @@ const Dashboard = () => {
                     pagination={false}
                     rowKey="_id"
                     onRow={onRowClick}
-                    classClassName="papers-table"
+                    className="papers-table"
                     rowClassName="cursor-pointer"
                     size="small"
                     scroll={{ x: "max-content" }}
