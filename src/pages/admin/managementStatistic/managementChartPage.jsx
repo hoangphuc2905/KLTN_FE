@@ -894,6 +894,82 @@ const Dashboard = () => {
     }
   };
 
+  // Thêm hàm in bảng thông qua trình duyệt
+  const printTopPapersTable = () => {
+    const printWindow = window.open("", "_blank");
+    const tableHtml = `
+      <html>
+        <head>
+          <title>Print Table</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+            }
+            h1 {
+              text-align: center;
+              margin-bottom: 20px;
+              font-size: 18px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th, td {
+              border: 1px solid black;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            .numeric {
+              text-align: right;
+            }
+            .date {
+              text-align: center;
+            }
+            .title-cell {
+              max-width: 300px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Top 5 bài nghiên cứu được xem nhiều nhất và tải nhiều nhất</h1>
+          <p>Năm học: ${selectedYear}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Tên bài nghiên cứu</th>
+                <th>Lượt xem</th>
+                <th>Lượt tải</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${topPapers
+                .map(
+                  (paper, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}</td>
+                  <td class="title-cell">${paper.title_vn || ""}</td>
+                  <td class="numeric">${paper.viewCount || "0"}</td>
+                  <td class="numeric">${paper.downloadCount || "0"}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(tableHtml);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
   // Thêm hàm xuất tất cả các biểu đồ
   const exportAllCharts = async (format) => {
     try {
@@ -1622,12 +1698,7 @@ const Dashboard = () => {
                           </div>
                           <div
                             className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
-                            onClick={() =>
-                              exportTableToPDF(
-                                topPapers,
-                                "Top 5 bài nghiên cứu"
-                              )
-                            }
+                            onClick={printTopPapersTable}
                           >
                             PDF
                           </div>
