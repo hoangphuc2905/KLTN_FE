@@ -123,7 +123,7 @@ const EditScientificPaperPage = () => {
         setPageCount(paperData.page || 0);
         setIssnIsbn(paperData.issn_isbn || "");
         setOrderNo(paperData.order_no || true);
-        setFeatured(paperData.featured || true);
+        setFeatured(paperData.featured || "");
         setKeywords(paperData.keywords || "");
         setSummary(paperData.summary || "");
         setSelectedDepartment(paperData.department || "");
@@ -972,7 +972,7 @@ const EditScientificPaperPage = () => {
                         onChange={(value) => setPageCount(value)}
                       />
                     </div>
-                    <div className="pb-7">
+                    {/* <div className="pb-7">
                       <label
                         htmlFor="orderNo"
                         className="block text-sm font-medium text-black pb-1"
@@ -987,7 +987,7 @@ const EditScientificPaperPage = () => {
                         value={orderNo}
                         onChange={(value) => setOrderNo(value)}
                       />
-                    </div>
+                    </div> */}
                     <div className="pb-4">
                       <div className="flex items-center">
                         <label
@@ -1000,9 +1000,8 @@ const EditScientificPaperPage = () => {
                           id="featured"
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          checked={featured}
+                          checked={!!featured} // Ensure it reflects the boolean value correctly
                           onChange={(e) => setFeatured(e.target.checked)}
-                          value={featured}
                         />
                       </div>
                     </div>
@@ -1216,7 +1215,14 @@ const EditScientificPaperPage = () => {
                             id={`fullName-${index}`}
                             placeholder="Tên sinh viên / giảng viên"
                             value={author.full_name}
-                            readOnly
+                            onChange={(e) =>
+                              handleAuthorChange(
+                                index,
+                                "full_name",
+                                e.target.value
+                              )
+                            }
+                            required
                           />
                         </div>
                         <div className="col-span-4">

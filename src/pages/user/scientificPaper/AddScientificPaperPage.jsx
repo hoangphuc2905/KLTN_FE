@@ -731,13 +731,13 @@ const AddScientificPaperPage = () => {
               const response = await userApi.createWorkUnit({
                 work_unit_id: randomUUID(),
                 name_vi: author.institution,
-                name_en: author.institution, // Assuming the same name for English
-                address_vi: "Unknown Address", // Default value
-                address_en: "Unknown Address", // Default value
+                name_en: author.institution, 
+                address_vi: "Không có địa chỉ",
+                address_en: "No address",
               });
               return {
                 ...author,
-                institution: response._id, // Use the returned ObjectId
+                institution: response._id, 
               };
             } catch (error) {
               console.error("Error saving custom institution:", error);
@@ -781,7 +781,7 @@ const AddScientificPaperPage = () => {
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
-          work_unit_id: author.institution, // Ensure this is a valid ObjectId
+          work_unit_id: author.institution, 
           degree: "Bachelor",
           point: parseFloat(scores.perAuthor[`author_${index + 1}`]) || 0,
         })),
@@ -1204,7 +1204,7 @@ const AddScientificPaperPage = () => {
                         )}
                       </div>
                     </div>
-                    {/* Thứ tự */}
+                    {/* Thứ tự
                     <div className="pb-7">
                       <label
                         htmlFor="orderNo"
@@ -1219,7 +1219,7 @@ const AddScientificPaperPage = () => {
                         min={1}
                         onChange={(value) => setOrderNo(value)}
                       />
-                    </div>
+                    </div> */}
                     {/* Bài tiêu biểu */}
                     <div className="pb-4">
                       <div className="flex items-center">
