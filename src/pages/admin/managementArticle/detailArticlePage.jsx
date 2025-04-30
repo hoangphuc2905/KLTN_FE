@@ -226,6 +226,7 @@ const DetailArticlePage = () => {
           doi: data.doi || "Không có dữ liệu",
           author_count: data.author_count || 0,
           status: data.status || "Không có dữ liệu",
+          featured: data.featured || false,
         };
 
         setPaper(transformedPaper);
@@ -400,6 +401,18 @@ const DetailArticlePage = () => {
                             <p className="text-sm text-gray-500">ISSN/ISBN:</p>
                             <p className="text-sm ml-2 font-medium text-[#174371]">
                               {paper.issn_isbn}
+                            </p>
+                          </div>
+                          <div className="flex items-center">
+                            <p className="text-sm text-gray-500">
+                              Bài báo tiêu biểu:
+                            </p>
+                            <p className="text-sm ml-2 font-medium text-[#174371]">
+                              {paper.featured ? (
+                                <span className=" font-semibold">Có</span>
+                              ) : (
+                                <span className="font-semibold">Không</span>
+                              )}
                             </p>
                           </div>
                           <div className="flex items-center">
