@@ -787,13 +787,13 @@ const EditScientificPaperPage = () => {
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <Header />
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+      <div className="flex flex-col pb-7 pt-[80px] w-full md:max-w-[95%] lg:max-w-[calc(100%-100px)] xl:max-w-[calc(100%-220px)] mx-auto">
+        <div className="self-center w-full max-w-[1563px] px-2 sm:px-4 md:px-6 mt-4">
+          <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5"
             />
             <span
               onClick={() => navigate("/home")}
@@ -808,15 +808,15 @@ const EditScientificPaperPage = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
+        <div className="self-center w-full max-w-[1563px] px-2 sm:px-4 mt-4">
           <div className="flex flex-col gap-4">
             <div className="w-full relative">
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-3">
+              <section className="flex flex-col bg-white rounded-lg p-3 sm:p-4 md:p-6 mb-3">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin
                 </h2>
-                <div className="flex gap-4">
-                  <div className="flex justify-center">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex flex-col w-full md:w-[260px] items-center md:items-start justify-center mb-4 md:mb-0">
                     <label
                       htmlFor="cover-upload"
                       className="cursor-pointer relative"
@@ -824,10 +824,10 @@ const EditScientificPaperPage = () => {
                       <img
                         src={
                           coverImage ||
-                          "https://via.placeholder.com/180x200?text=Bìa+Bài+Báo"
+                          "https://cdn-icons-png.flaticon.com/128/4904/4904233.png"
                         }
                         alt="Bìa bài báo"
-                        className="w-[260px] h-[315px] object-cover border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
+                        className="w-[180px] h-[270px] sm:w-[210px] sm:h-[315px] object-contain border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 text-white font-semibold text-sm rounded-lg transition duration-300">
                         Chọn ảnh
@@ -841,7 +841,7 @@ const EditScientificPaperPage = () => {
                       className="hidden"
                     />
                   </div>
-                  <div className="w-full grid grid-cols-1 pl-4">
+                  <div className="w-full grid grid-cols-1 md:pl-4">
                     <div className="mb-2">
                       <label
                         htmlFor="paperType"
@@ -937,8 +937,8 @@ const EditScientificPaperPage = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-4 mt-4">
-                  <div className="flex flex-col w-[260px] gap-4">
+                <div className="flex flex-col md:flex-row gap-4 mt-4">
+                  <div className="flex flex-col w-full md:w-[260px] gap-4">
                     <div className="">
                       <label
                         htmlFor="publishDate"
@@ -972,22 +972,6 @@ const EditScientificPaperPage = () => {
                         onChange={(value) => setPageCount(value)}
                       />
                     </div>
-                    {/* <div className="pb-7">
-                      <label
-                        htmlFor="orderNo"
-                        className="block text-sm font-medium text-black pb-1"
-                      >
-                        Thứ tự
-                      </label>
-                      <InputNumber
-                        id="orderNo"
-                        className="w-full h-10"
-                        placeholder="Thứ tự"
-                        min={1}
-                        value={orderNo}
-                        onChange={(value) => setOrderNo(value)}
-                      />
-                    </div> */}
                     <div className="pb-4">
                       <div className="flex items-center">
                         <label
@@ -1000,7 +984,7 @@ const EditScientificPaperPage = () => {
                           id="featured"
                           type="checkbox"
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                          checked={!!featured} // Ensure it reflects the boolean value correctly
+                          checked={!!featured}
                           onChange={(e) => setFeatured(e.target.checked)}
                         />
                       </div>
@@ -1022,7 +1006,7 @@ const EditScientificPaperPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-4 w-full pl-4">
+                  <div className="flex flex-col gap-4 w-full md:pl-4">
                     <div className="">
                       <label
                         htmlFor="magazineVi"
@@ -1145,12 +1129,12 @@ const EditScientificPaperPage = () => {
             </div>
 
             <div className="w-full">
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-3">
+              <section className="flex flex-col bg-white rounded-lg p-3 sm:p-4 md:p-6 mb-3">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin TÁC GIẢ
                 </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2 flex items-center">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="col-span-1 sm:col-span-2 flex items-center">
                     <Input
                       className="w-20 bg-gray-200 text-center"
                       value={(() => {
@@ -1179,10 +1163,10 @@ const EditScientificPaperPage = () => {
                   {authors.map((author, index) => (
                     <div
                       key={author.id || index}
-                      className="grid grid-cols-6 gap-4 col-span-2"
+                      className="grid grid-cols-1 sm:grid-cols-6 gap-4 col-span-1 sm:col-span-2"
                     >
-                      <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
-                        <div className="col-span-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 col-span-1 sm:col-span-12 items-center">
+                        <div className="col-span-1 sm:col-span-3">
                           <label
                             htmlFor={`mssvMsgv-${index}`}
                             className="block text-sm font-medium text-black pb-1"
@@ -1203,7 +1187,7 @@ const EditScientificPaperPage = () => {
                             required
                           />
                         </div>
-                        <div className="col-span-4">
+                        <div className="col-span-1 sm:col-span-4">
                           <label
                             htmlFor={`fullName-${index}`}
                             className="block text-sm font-medium text-black pb-1"
@@ -1225,7 +1209,7 @@ const EditScientificPaperPage = () => {
                             required
                           />
                         </div>
-                        <div className="col-span-4">
+                        <div className="col-span-1 sm:col-span-5">
                           <label
                             htmlFor={`fullNameEng-${index}`}
                             className="block text-sm font-medium text-black pb-1"
@@ -1245,16 +1229,9 @@ const EditScientificPaperPage = () => {
                             }
                           />
                         </div>
-                        <div className="col-span-1 flex items-center justify-end pt-5">
-                          <Button
-                            icon={<MinusOutlined />}
-                            onClick={() => handleRemoveAuthor(index)}
-                            size="small"
-                          />
-                        </div>
                       </div>
-                      <div className="grid grid-cols-12 gap-4 col-span-12 items-center">
-                        <div className="col-span-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 col-span-1 sm:col-span-12 items-center">
+                        <div className="col-span-1 sm:col-span-3">
                           <label
                             htmlFor={`role-${index}`}
                             className="block text-sm font-medium text-blackpb-1"
@@ -1279,7 +1256,7 @@ const EditScientificPaperPage = () => {
                             <Option value="Participant">Tham gia</Option>
                           </Select>
                         </div>
-                        <div className="col-span-4">
+                        <div className="col-span-1 sm:col-span-4">
                           <label
                             htmlFor={`institution-${index}`}
                             className="block text-sm font-medium text-black pb-1"
@@ -1360,28 +1337,39 @@ const EditScientificPaperPage = () => {
                             ))}
                           </Select>
                         </div>
-                        <div className="col-span-3">
+                        <div className="col-span-1 sm:col-span-5">
                           <label
                             htmlFor={`contribution-${index}`}
                             className="block text-sm font-medium text-black pb-1"
                           >
                             Điểm đóng góp:
                           </label>
-                          <div className="relative">
+                          <div className="flex flex-row items-center gap-2">
                             <Input
-                              className="w-1/2 text-center"
+                              className="w-full sm:w-1/2 text-center"
                               readOnly
                               id={`contribution-${index}`}
                               value={
                                 scores.perAuthor[`author_${index + 1}`] || 0
                               }
-                            ></Input>
+                            />
+                            <Button
+                              icon={<MinusOutlined />}
+                              onClick={() => handleRemoveAuthor(index)}
+                              size="small"
+                              danger
+                              className="w-full sm:w-auto mt-0"
+                            >
+                              <span className="hidden sm:inline ml-1">
+                                Xóa tác giả
+                              </span>
+                            </Button>
                           </div>
                         </div>
                       </div>
                     </div>
                   ))}
-                  <h2 className="col-span-2 text-xs text-red-700 italic">
+                  <h2 className="col-span-1 sm:col-span-2 text-xs text-red-700 italic">
                     (Nếu tác giả không có MSSV/MSGV, vui lòng điền CCCD)
                   </h2>
                   <Button icon={<PlusOutlined />} onClick={handleAddAuthor}>
@@ -1390,7 +1378,7 @@ const EditScientificPaperPage = () => {
                 </div>
               </section>
 
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-4">
+              <section className="flex flex-col bg-white rounded-lg p-3 sm:p-4 md:p-6 mb-4">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin Minh chứng
                 </h2>
@@ -1401,14 +1389,19 @@ const EditScientificPaperPage = () => {
                   >
                     Tải lên file <span style={{ color: "red" }}>*</span>
                   </label>
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 flex-wrap sm:flex-nowrap">
                     <Input
                       id="file-upload"
                       placeholder="Upload file..."
-                      value={originalFileName || ""} // Display the original file name
+                      value={originalFileName || ""}
                       readOnly
+                      className="w-full mb-2 sm:mb-0"
                     />
-                    <Button type="primary" onClick={handleFileChange}>
+                    <Button
+                      type="primary"
+                      onClick={handleFileChange}
+                      className="w-full sm:w-auto"
+                    >
                       Choose
                     </Button>
                     {selectedFile && (
@@ -1416,11 +1409,12 @@ const EditScientificPaperPage = () => {
                         icon={<CloseCircleOutlined />}
                         onClick={handleRemoveFile}
                         danger
+                        className="w-full sm:w-auto mt-2 sm:mt-0"
                       />
                     )}
                   </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label
                       htmlFor="link"
@@ -1458,11 +1452,19 @@ const EditScientificPaperPage = () => {
                   Trường hợp có nhiều hơn 1 file sử dụng nén thành file Zip hoặc
                   file Rar trước khi upload.
                 </p>
-                <div className="flex justify-end space-x-4 mt-6">
-                  <Button type="default" onClick={handleClear}>
+                <div className="flex justify-end space-x-4 mt-6 flex-wrap sm:flex-nowrap">
+                  <Button
+                    type="default"
+                    onClick={handleClear}
+                    className="w-full sm:w-auto mb-2 sm:mb-0"
+                  >
                     Xóa trắng
                   </Button>
-                  <Button type="primary" onClick={handleSave}>
+                  <Button
+                    type="primary"
+                    onClick={handleSave}
+                    className="w-full sm:w-auto"
+                  >
                     Cập nhật
                   </Button>
                 </div>
@@ -1474,19 +1476,33 @@ const EditScientificPaperPage = () => {
       <Footer />
 
       <Modal
-        title="Sử dụng AI để nhận diện thông tin"
+        title={
+          <span className="text-sm sm:text-base">
+            Sử dụng AI để nhận diện thông tin
+          </span>
+        }
         visible={isIconModalVisible}
         onOk={handleIconModalOk}
         onCancel={handleIconModalCancel}
         footer={[
-          <Button key="confirm" type="primary" onClick={handleIconModalOk}>
+          <Button
+            key="confirm"
+            type="primary"
+            onClick={handleIconModalOk}
+            size="middle"
+            className="text-xs sm:text-sm"
+          >
             Xác nhận
           </Button>,
         ]}
+        className="responsive-modal"
       >
         <div className="relative">
           <Tabs defaultActiveKey="1">
-            <TabPane tab="Upload hình ảnh" key="1">
+            <TabPane
+              tab={<span className="text-xs sm:text-sm">Upload hình ảnh</span>}
+              key="1"
+            >
               <Upload
                 name="image"
                 listType="picture"
@@ -1500,7 +1516,12 @@ const EditScientificPaperPage = () => {
                   return false;
                 }}
               >
-                <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
+                <Button
+                  icon={<UploadOutlined />}
+                  className="text-xs sm:text-sm"
+                >
+                  Tải ảnh lên
+                </Button>
               </Upload>
               {uploadedImage && (
                 <img
@@ -1514,11 +1535,15 @@ const EditScientificPaperPage = () => {
                 file hình ảnh có định dạng JPG, PNG và kích thước nhỏ hơn 5MB.
               </div>
             </TabPane>
-            <TabPane tab="Nhập link" key="2">
+            <TabPane
+              tab={<span className="text-xs sm:text-sm">Nhập link</span>}
+              key="2"
+            >
               <Input
                 placeholder="Nhập link"
                 value={link}
                 onChange={handleLinkChange}
+                className="text-xs sm:text-sm"
               />
               <div className="mt-4 text-xs text-red-700">
                 <span className="font-bold">LƯU Ý:</span> Hệ thống chỉ hỗ trợ
@@ -1529,25 +1554,36 @@ const EditScientificPaperPage = () => {
           <img
             src="https://cdn-icons-png.flaticon.com/512/3409/3409542.png"
             alt="Help Icon"
-            className="absolute top-0 right-0 w-6 h-6 m-2 cursor-pointer"
+            className="absolute top-0 right-0 w-4 h-4 sm:w-6 sm:h-6 m-2 cursor-pointer"
             onClick={showHelpModal}
           />
         </div>
       </Modal>
 
       <Modal
-        title="Hướng dẫn"
+        title={<span className="text-sm sm:text-base">Hướng dẫn</span>}
         visible={isHelpModalVisible}
         onOk={handleHelpModalOk}
         onCancel={handleHelpModalCancel}
         footer={[
-          <Button key="confirm" type="primary" onClick={handleHelpModalOk}>
+          <Button
+            key="confirm"
+            type="primary"
+            onClick={handleHelpModalOk}
+            size="middle"
+            className="text-xs sm:text-sm"
+          >
             Đóng
           </Button>,
         ]}
+        className="responsive-modal"
       >
-        <p>Đây là hướng dẫn sử dụng hệ thống.</p>
-        <p>Vui lòng làm theo các bước sau để hoàn thành việc nhập thông tin.</p>
+        <div className="text-xs sm:text-sm">
+          <p>Đây là hướng dẫn sử dụng hệ thống.</p>
+          <p>
+            Vui lòng làm theo các bước sau để hoàn thành việc nhập thông tin.
+          </p>
+        </div>
       </Modal>
     </div>
   );

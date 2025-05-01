@@ -1,11 +1,11 @@
 import Header from "../../../components/Header";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input, Table, Button, Modal, message } from "antd";
+import { Input, Table, Button, Modal, message, Spin } from "antd";
 import userApi from "../../../api/api";
 import { useParams } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
-import { FilePdfOutlined } from "@ant-design/icons"; // Import the Eye and PDF icons
+import { FilePdfOutlined } from "@ant-design/icons";
 
 const { TextArea } = Input;
 
@@ -239,7 +239,11 @@ const DetailArticlePage = () => {
   }, [id]); // Add id as a dependency
 
   if (!paper) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Spin size="large" />
+      </div>
+    );
   }
 
   const createMessage = async (author, paperId) => {
@@ -280,428 +284,411 @@ const DetailArticlePage = () => {
   };
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
+    <div className="bg-[#E7ECF0] min-h-screen overflow-y-auto">
       <Header />
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+      <div className="flex flex-col pt-[80px] pb-7 mx-auto w-full max-w-[1563px] px-4 md:px-8 lg:px-24">
+        {/* Breadcrumb */}
+        <div className="mt-4">
+          <div className="flex items-center gap-2 text-gray-600 overflow-x-auto whitespace-nowrap pb-2">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
-              className="w-5 h-5"
+              className="w-4 h-4 md:w-5 md:h-5"
             />
             <span
               onClick={() => navigate("/home")}
-              className="cursor-pointer hover:text-blue-500"
+              className="cursor-pointer hover:text-blue-500 text-sm md:text-base"
             >
               Trang chủ
             </span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900">Kiểm tra bài báo</span>
+            <span className="font-semibold text-sky-900 text-sm md:text-base">
+              Kiểm tra bài báo
+            </span>
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-6 mt-6">
-          <div className="grid grid-cols-1 gap-6">
-            <div className="col-span-1">
-              <div className="bg-white rounded-xl p-6">
-                <div className="flex gap-6">
-                  <div className="flex flex-col items-center gap-4">
-                    <img
-                      src={paper.cover_image}
-                      alt="Form illustration"
-                      className="w-[160px] h-[200px] max-w-[180px] max-h-[250px] rounded-lg"
-                    />
+        {/* Main Content */}
+        <div className="mt-4">
+          <div className="flex flex-col gap-6">
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <div className="flex flex-col md:flex-row gap-6">
+                {/* Left Section: Image */}
+                <div className="flex flex-col items-center gap-4 w-full md:w-auto">
+                  <img
+                    src={paper.cover_image}
+                    alt="Form illustration"
+                    className="w-[120px] h-[160px] md:w-[160px] md:h-[200px] max-w-[180px] max-h-[250px] rounded-lg object-cover"
+                  />
+                  <div className="flex items-center gap-2">
+                    {paper.file && (
+                      <Button
+                        type="primary"
+                        icon={<FilePdfOutlined />}
+                        onClick={() => window.open(paper.file, "_blank")}
+                        className="bg-[#00A3FF]"
+                      >
+                        Xem File
+                      </Button>
+                    )}
                   </div>
+                </div>
 
-                  <div className="flex-1 ml-4">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h1 className="text-xl font-bold text-sky-900 mb-4">
-                          Tên bài báo (Tiếng Việt) : {paper.title_vn}
-                        </h1>
-                        <h2 className="text-lg font-medium text-gray-600 mb-4">
-                          Tên bài báo (Tiếng Anh) : {paper.title_en}
-                        </h2>
-                        <p className="text-gray-600 mb-4 text-sm w-[96%] text-justify leading-6">
-                          <span className="font-semibold text-gray-800">
-                            Tóm tắt:
-                          </span>{" "}
-                          {paper.summary}
+                {/* Right Section: Paper Details */}
+                <div className="flex-1">
+                  <div className="w-full">
+                    <h1 className="text-lg md:text-xl font-bold text-sky-900 mb-2 md:mb-4 break-words">
+                      Tên bài báo (Tiếng Việt): {paper.title_vn}
+                    </h1>
+                    <h2 className="text-base md:text-lg font-medium text-gray-600 mb-2 md:mb-4 break-words">
+                      Tên bài báo (Tiếng Anh): {paper.title_en}
+                    </h2>
+                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                      <p className="text-gray-600 text-xs md:text-sm w-full text-justify leading-5 md:leading-6">
+                        <span className="font-semibold text-gray-800">
+                          Tóm tắt:
+                        </span>{" "}
+                        {paper.summary}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-4 mt-4">
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          ID bài báo:
                         </p>
-                        <div className="grid grid-cols-2 gap-4 mt-6">
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">ID bài báo:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.paper_id || "Không có dữ liệu"}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Loại bài báo:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.article_type}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Nhóm bài báo:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.article_group}
-                            </p>
-                          </div>
-
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Số trang:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.page}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Tạp chí (VN):
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.magazine_vi}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Tạp chí (EN):
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.magazine_en}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Ngày công bố:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.publish_date}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Khoa:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.department}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Loại tạp chí:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.magazine_type}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">ISSN/ISBN:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.issn_isbn}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">
-                              Bài báo tiêu biểu:
-                            </p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.featured ? (
-                                <span className=" font-semibold">Có</span>
-                              ) : (
-                                <span className="font-semibold">Không</span>
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex items-center">
-                            <p className="text-sm text-gray-500">Khoa:</p>
-                            <p className="text-sm ml-2 font-medium text-[#174371]">
-                              {paper.department}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex mt-4 items-start flex-nowrap">
-                          <p className="text-sm text-gray-500 flex-shrink-0">
-                            Từ khóa:
-                          </p>
-                          <p className="text-sm ml-2 font-medium text-[#174371] break-all">
-                            {paper.keywords?.join(", ") || "Không có dữ liệu"}
-                          </p>
-                        </div>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.paper_id || "Không có dữ liệu"}
+                        </p>
                       </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Loại bài báo:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.article_type}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Nhóm bài báo:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.article_group}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Số trang:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371]">
+                          {paper.page}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Tạp chí (VN):
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.magazine_vi}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Tạp chí (EN):
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.magazine_en}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Ngày công bố:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371]">
+                          {paper.publish_date}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Khoa:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.department}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Loại tạp chí:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.magazine_type}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          ISSN/ISBN:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] overflow-hidden text-ellipsis">
+                          {paper.issn_isbn}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <p className="text-xs md:text-sm text-gray-500">
+                          Bài báo tiêu biểu:
+                        </p>
+                        <p className="text-xs md:text-sm ml-2 font-medium text-[#174371]">
+                          {paper.featured ? (
+                            <span className="font-semibold">Có</span>
+                          ) : (
+                            <span className="font-semibold">Không</span>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex mt-4 items-start flex-wrap">
+                      <p className="text-xs md:text-sm text-gray-500 flex-shrink-0">
+                        Từ khóa:
+                      </p>
+                      <p className="text-xs md:text-sm ml-2 font-medium text-[#174371] break-all">
+                        {paper.keywords?.join(", ") || "Không có dữ liệu"}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
+            </div>
 
-              {/* Thông tin tác giả */}
-              <div className="bg-white rounded-xl p-4 mt-6">
-                <section className="flex flex-col bg-white rounded-lg p-6 mb-6">
-                  <h2 className="text-sm font-medium leading-none text-black uppercase mb-6">
-                    Thông tin tác giả
-                  </h2>
-                  <div className="mb-6">
-                    <Input
-                      value={`Số lượng tác giả: ${paper.author_count}`}
-                      readOnly
-                      className="w-[200px]"
-                    />
-                  </div>
-                  <Table
-                    columns={columns}
-                    dataSource={authors}
-                    pagination={false}
-                    rowKey="id"
-                  />
-                </section>
+            {/* Thông tin tác giả */}
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <h2 className="text-sm font-medium leading-none text-sky-900 uppercase mb-6">
+                Thông tin tác giả
+              </h2>
+              <div className="mb-6">
+                <Input
+                  value={`Số lượng tác giả: ${paper.author_count}`}
+                  readOnly
+                  className="w-[200px]"
+                />
               </div>
+              <div className="overflow-x-auto">
+                <Table
+                  columns={columns}
+                  dataSource={authors}
+                  pagination={false}
+                  rowKey="id"
+                  scroll={{ x: "max-content" }}
+                  className="w-full"
+                />
+              </div>
+            </div>
 
-              {/* Thông tin minh chứng + 3 button :yêu cầu chỉnh sửa, từ chối, duyệt bài */}
-              <div className="bg-white rounded-xl p-4 mt-6">
-                <section className="flex flex-col bg-white rounded-lg p-9 mb-6">
-                  <h2 className="text-sm font-medium leading-none text-black uppercase mb-6">
-                    Nhập thông tin Minh chứng
-                  </h2>
+            {/* Thông tin minh chứng */}
+            <div className="bg-white rounded-xl p-4 sm:p-6">
+              <h2 className="text-sm font-medium leading-none text-sky-900 uppercase mb-6">
+                Thông tin minh chứng
+              </h2>
 
-                  <div>
-                    <div className="flex items-center mb-4">
-                      <p className="text-sm text-gray-500">File:</p>
-                      {paper.file ? (
-                        <Button
-                          type="link"
-                          icon={
-                            <FilePdfOutlined
-                              style={{ fontSize: "18px", color: "#FF4D4F" }}
-                            />
-                          }
-                          onClick={() => window.open(paper.file, "_blank")}
-                          className="ml-2"
-                        >
-                          Xem File
-                        </Button>
-                      ) : (
-                        <p className="text-sm ml-2 font-medium text-gray-500">
-                          Không có dữ liệu
-                        </p>
-                      )}
-                    </div>
-                    <div className="flex items-center mb-4">
-                      <p className="text-sm text-gray-500 flex-shrink-0">
-                        Link công bố:
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center mb-2">
+                    <p className="text-sm text-gray-500 w-28">File:</p>
+                    {paper.file ? (
+                      <Button
+                        type="link"
+                        icon={
+                          <FilePdfOutlined
+                            style={{ fontSize: "18px", color: "#FF4D4F" }}
+                          />
+                        }
+                        onClick={() => window.open(paper.file, "_blank")}
+                      >
+                        Xem File
+                      </Button>
+                    ) : (
+                      <p className="text-sm ml-2 font-medium text-gray-500">
+                        Không có dữ liệu
                       </p>
-                      <div className="ml-2 break-all">
-                        <a
-                          href={paper.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-medium text-[#174371] hover:underline"
-                        >
-                          {paper.link || "Không có dữ liệu"}
-                        </a>
-                      </div>
-                    </div>
-                    <div className="flex items-center mb-4">
-                      <p className="text-sm text-gray-500">Số DOI:</p>
+                    )}
+                  </div>
+                  <div className="flex items-center mb-2">
+                    <p className="text-sm text-gray-500 flex-shrink-0 w-28">
+                      Link công bố:
+                    </p>
+                    <div className="break-all">
                       <a
-                        href={paper.doi}
+                        href={paper.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-sm ml-2 font-medium text-[#174371] hover:underline"
+                        className="text-sm font-medium text-[#174371] hover:underline"
                       >
-                        {paper.doi || "Không có dữ liệu"}
+                        {paper.link || "Không có dữ liệu"}
                       </a>
                     </div>
                   </div>
-
-                  <div className="relative">
-                    <div className="absolute right-1 flex justify-end space-x-4">
-                      {paper.status === "pending" && (
-                        <>
-                          <Button
-                            style={{
-                              backgroundColor: "#FFD700",
-                              color: "black",
-                            }}
-                            onClick={showEditModal}
-                          >
-                            Yêu cầu chỉnh sửa
-                          </Button>
-                          <Button
-                            style={{
-                              backgroundColor: "#FF0000",
-                              color: "white",
-                            }}
-                            onClick={showRejectModal}
-                          >
-                            Từ chối
-                          </Button>
-                          <Button
-                            style={{
-                              backgroundColor: "#008000",
-                              color: "white",
-                            }}
-                            onClick={() =>
-                              updateScientificPaperStatus("approved")
-                            } // Update status to approved
-                          >
-                            Duyệt bài
-                          </Button>
-                        </>
-                      )}
-                      {paper.status === "approved" && (
-                        <>
-                          <Button
-                            style={{
-                              backgroundColor: "#FFD700",
-                              color: "black",
-                            }}
-                            onClick={showEditModal}
-                          >
-                            Yêu cầu chỉnh sửa
-                          </Button>
-                          <Button
-                            style={{
-                              backgroundColor: "#FF0000",
-                              color: "white",
-                            }}
-                            onClick={showRejectModal}
-                          >
-                            Từ chối
-                          </Button>
-                        </>
-                      )}
-                      {paper.status === "refused" && (
-                        <>
-                          <Button
-                            style={{
-                              backgroundColor: "#FFD700",
-                              color: "black",
-                            }}
-                            onClick={showEditModal}
-                          >
-                            Yêu cầu chỉnh sửa
-                          </Button>
-                          <Button
-                            style={{
-                              backgroundColor: "#008000",
-                              color: "white",
-                            }}
-                            onClick={() =>
-                              updateScientificPaperStatus("approved")
-                            }
-                          >
-                            Duyệt bài
-                          </Button>
-                        </>
-                      )}
-                      {paper.status === "revision" && (
-                        <>
-                          <Button
-                            style={{
-                              backgroundColor: "#FFD700",
-                              color: "black",
-                            }}
-                            onClick={showEditModal}
-                          >
-                            Yêu cầu chỉnh sửa
-                          </Button>
-                          <Button
-                            style={{
-                              backgroundColor: "#FF0000",
-                              color: "white",
-                            }}
-                            onClick={showRejectModal}
-                          >
-                            Từ chối
-                          </Button>
-                          <Button
-                            style={{
-                              backgroundColor: "#008000",
-                              color: "white",
-                            }}
-                            onClick={() =>
-                              updateScientificPaperStatus("approved")
-                            }
-                          >
-                            Duyệt bài
-                          </Button>
-                        </>
-                      )}
-                    </div>
+                  <div className="flex items-center mb-2">
+                    <p className="text-sm text-gray-500 w-28">Số DOI:</p>
+                    <a
+                      href={paper.doi}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-[#174371] hover:underline"
+                    >
+                      {paper.doi || "Không có dữ liệu"}
+                    </a>
                   </div>
-                </section>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {/* Phần trạng thái đã được xóa */}
+                </div>
               </div>
 
-              <Modal
-                title={
-                  <div style={{ textAlign: "center" }}>Yêu cầu chỉnh sửa</div>
-                }
-                visible={isEditModalVisible}
-                onCancel={handleEditCancel}
-                // centered
-                footer={[
-                  <Button
-                    key="cancel"
-                    onClick={handleEditCancel}
-                    style={{ backgroundColor: "#FF0000", color: "white" }}
-                  >
-                    Hủy
-                  </Button>,
-                  <Button
-                    key="submit"
-                    type="primary"
-                    onClick={handleEditSend}
-                    style={{ backgroundColor: "#008000", color: "white" }}
-                  >
-                    Gửi
-                  </Button>,
-                ]}
-              >
-                <TextArea
-                  placeholder="Nội dung yêu cầu chỉnh sửa"
-                  rows={4}
-                  value={requestContent}
-                  onChange={(e) => setRequestContent(e.target.value)}
-                />
-              </Modal>
-
-              <Modal
-                title={
-                  <div style={{ textAlign: "center" }}>Yêu cầu từ chối</div>
-                }
-                visible={isRejectModalVisible}
-                onCancel={handleRejectCancel}
-                footer={[
-                  <Button
-                    key="cancel"
-                    onClick={handleRejectCancel}
-                    style={{ backgroundColor: "#FF0000", color: "white" }}
-                  >
-                    Hủy
-                  </Button>,
-                  <Button
-                    key="submit"
-                    type="primary"
-                    onClick={handleRejectSend}
-                    style={{ backgroundColor: "#008000", color: "white" }}
-                  >
-                    Gửi
-                  </Button>,
-                ]}
-              >
-                <TextArea
-                  placeholder="Lý do từ chối"
-                  rows={4}
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                />
-              </Modal>
+              {/* Action buttons */}
+              <div className="flex flex-wrap justify-end gap-4">
+                {paper.status === "pending" && (
+                  <>
+                    <Button
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
+                      onClick={showEditModal}
+                    >
+                      Yêu cầu chỉnh sửa
+                    </Button>
+                    <Button
+                      className="bg-red-500 text-white hover:bg-red-600"
+                      onClick={showRejectModal}
+                    >
+                      Từ chối
+                    </Button>
+                    <Button
+                      className="bg-green-500 text-white hover:bg-green-600"
+                      onClick={() => updateScientificPaperStatus("approved")}
+                    >
+                      Duyệt bài
+                    </Button>
+                  </>
+                )}
+                {paper.status === "approved" && (
+                  <>
+                    <Button
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
+                      onClick={showEditModal}
+                    >
+                      Yêu cầu chỉnh sửa
+                    </Button>
+                    <Button
+                      className="bg-red-500 text-white hover:bg-red-600"
+                      onClick={showRejectModal}
+                    >
+                      Từ chối
+                    </Button>
+                  </>
+                )}
+                {paper.status === "refused" && (
+                  <>
+                    <Button
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
+                      onClick={showEditModal}
+                    >
+                      Yêu cầu chỉnh sửa
+                    </Button>
+                    <Button
+                      className="bg-green-500 text-white hover:bg-green-600"
+                      onClick={() => updateScientificPaperStatus("approved")}
+                    >
+                      Duyệt bài
+                    </Button>
+                  </>
+                )}
+                {paper.status === "revision" && (
+                  <>
+                    <Button
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
+                      onClick={showEditModal}
+                    >
+                      Yêu cầu chỉnh sửa
+                    </Button>
+                    <Button
+                      className="bg-red-500 text-white hover:bg-red-600"
+                      onClick={showRejectModal}
+                    >
+                      Từ chối
+                    </Button>
+                    <Button
+                      className="bg-green-500 text-white hover:bg-green-600"
+                      onClick={() => updateScientificPaperStatus("approved")}
+                    >
+                      Duyệt bài
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Modal cho yêu cầu chỉnh sửa */}
+      <Modal
+        title={<div className="text-center">Yêu cầu chỉnh sửa</div>}
+        open={isEditModalVisible}
+        onCancel={handleEditCancel}
+        centered
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleEditCancel}
+            className="bg-red-500 text-white hover:bg-red-600"
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleEditSend}
+            className="bg-green-500 hover:bg-green-600"
+          >
+            Gửi
+          </Button>,
+        ]}
+      >
+        <TextArea
+          placeholder="Nội dung yêu cầu chỉnh sửa"
+          rows={4}
+          value={requestContent}
+          onChange={(e) => setRequestContent(e.target.value)}
+        />
+      </Modal>
+
+      {/* Modal cho từ chối */}
+      <Modal
+        title={<div className="text-center">Yêu cầu từ chối</div>}
+        open={isRejectModalVisible}
+        onCancel={handleRejectCancel}
+        centered
+        footer={[
+          <Button
+            key="cancel"
+            onClick={handleRejectCancel}
+            className="bg-red-500 text-white hover:bg-red-600"
+          >
+            Hủy
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            onClick={handleRejectSend}
+            className="bg-green-500 hover:bg-green-600"
+          >
+            Gửi
+          </Button>,
+        ]}
+      >
+        <TextArea
+          placeholder="Lý do từ chối"
+          rows={4}
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+        />
+      </Modal>
     </div>
   );
 };
