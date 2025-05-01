@@ -1,11 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; // Added import
+import { Spin } from "antd"; // Import Spin from Ant Design
 import userApi from "../api/api";
 import Header from "./Header";
 import Footer from "./Footer";
 
 const NotificationPage = () => {
   const [notifications, setNotifications] = useState([]);
+  const [showAll, setShowAll] = useState(false); // Add state to toggle view
+  const [activeTab, setActiveTab] = useState("all"); // Add state for active tab
+  const [loading, setLoading] = useState(true); // Add loading state
   const navigate = useNavigate(); // Initialize navigate
 
   const translateMessageType = (messageType) => {
@@ -25,10 +29,12 @@ const NotificationPage = () => {
 
   useEffect(() => {
     const fetchNotifications = async () => {
+      setLoading(true); // Set loading to true
       const user_id = localStorage.getItem("user_id");
       const user_role = localStorage.getItem("current_role");
       if (!user_id) {
         console.error("Thiếu user_id");
+        setLoading(false); // Stop loading
         return;
       }
 
@@ -73,6 +79,8 @@ const NotificationPage = () => {
         );
       } catch (error) {
         console.error("Lỗi khi lấy thông tin thông báo:", error);
+      } finally {
+        setLoading(false); // Stop loading
       }
     };
 
@@ -101,6 +109,13 @@ const NotificationPage = () => {
     }
   };
 
+  const filteredNotifications =
+    activeTab === "unread"
+      ? notifications.filter((notification) => !notification.isread)
+      : activeTab === "read"
+      ? notifications.filter((notification) => notification.isread)
+      : notifications;
+
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
       <div className="flex-grow">
@@ -109,9 +124,48 @@ const NotificationPage = () => {
           <h2 className="text-2xl font-semibold text-gray-800 mb-6">
             Thông báo
           </h2>
-          {notifications.length > 0 ? (
+          <div className="flex space-x-4 mb-6">
+            <button
+              className={`px-6 py-2 rounded-full transition-colors duration-300 ${
+                activeTab === "all"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+              }`}
+              onClick={() => setActiveTab("all")}
+            >
+              Tất cả
+            </button>
+            <button
+              className={`px-6 py-2 rounded-full transition-colors duration-300 ${
+                activeTab === "unread"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+              }`}
+              onClick={() => setActiveTab("unread")}
+            >
+              Chưa đọc
+            </button>
+            <button
+              className={`px-6 py-2 rounded-full transition-colors duration-300 ${
+                activeTab === "read"
+                  ? "bg-blue-500 text-white shadow-md"
+                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+              }`}
+              onClick={() => setActiveTab("read")}
+            >
+              Đã đọc
+            </button>
+          </div>
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <Spin size="large" />
+            </div>
+          ) : filteredNotifications.length > 0 ? (
             <div className="grid grid-cols-1 gap-6">
-              {notifications.map((notification, index) => (
+              {(showAll
+                ? filteredNotifications
+                : filteredNotifications.slice(0, 5)
+              ).map((notification, index) => (
                 <div
                   key={index}
                   className={`p-4 rounded-lg shadow-md cursor-pointer ${
@@ -130,6 +184,14 @@ const NotificationPage = () => {
                   </p>
                 </div>
               ))}
+              {!showAll && filteredNotifications.length > 5 && (
+                <button
+                  className="text-blue-500 mt-4"
+                  onClick={() => setShowAll(true)}
+                >
+                  Xem thêm
+                </button>
+              )}
             </div>
           ) : (
             <p className="text-gray-600">Không có thông báo nào.</p>
