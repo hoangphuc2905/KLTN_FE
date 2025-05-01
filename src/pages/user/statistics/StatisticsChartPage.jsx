@@ -22,6 +22,24 @@ import * as XLSX from "xlsx";
 import Footer from "../../../components/Footer";
 import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
+import pdfMake from "pdfmake/build/pdfmake";
+import pdfFonts from "pdfmake/build/vfs_fonts";
+
+if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
+  pdfMake.vfs = pdfFonts.pdfMake.vfs;
+} else {
+  pdfMake.vfs = pdfFonts;
+}
+
+// Định nghĩa font Roboto có hỗ trợ tiếng Việt
+pdfMake.fonts = {
+  Roboto: {
+    normal: "Roboto-Regular.ttf",
+    bold: "Roboto-Medium.ttf",
+    italics: "Roboto-Italic.ttf",
+    bolditalics: "Roboto-MediumItalic.ttf",
+  },
+};
 
 ChartJS.register(
   CategoryScale,
@@ -1263,41 +1281,73 @@ const StatisticsChartPage = () => {
   };
 
   const generatePDF = async (chartRef, title, data) => {
-    if (!chartRef.current) {
-      console.error("Chart reference is null");
-      return;
-    }
+    if (!chartRef.current) return;
+
     try {
       const canvas = await html2canvas(chartRef.current, { scale: 2 });
       const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 190;
-      const pageHeight = 295;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 20;
 
-      pdf.text(title, 10, 10);
-      pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      pdf.addPage();
-      pdf.text("Dữ liệu chi tiết", 10, 10);
-      let y = 20;
-      data.labels.forEach((label, index) => {
-        const value = data.datasets[0].data[index];
-        pdf.text(`${label}: ${value}`, 10, y);
-        y += 10;
+      // Chuẩn bị dữ liệu cho bảng - sử dụng originalLabels nếu có
+      const tableBody = data.labels.map((label, index) => {
+        // Sử dụng tên đầy đủ từ originalLabels nếu có
+        const fullLabel = data.originalLabels
+          ? data.originalLabels[index] || label
+          : label;
+        return [
+          { text: fullLabel, style: "tableCell" },
+          { text: data.datasets[0].data[index].toString(), style: "tableCell" },
+        ];
       });
 
-      pdf.save(`${title}.pdf`);
+      // Định nghĩa cấu trúc PDF
+      const docDefinition = {
+        content: [
+          { text: title, style: "header" },
+          { image: imgData, width: 500, margin: [0, 20] },
+          { text: "Dữ liệu chi tiết", style: "subheader", pageBreak: "before" },
+          {
+            table: {
+              headerRows: 1,
+              widths: ["*", "auto"],
+              body: [
+                [
+                  { text: "Loại", style: "tableHeader" },
+                  { text: "Số lượng", style: "tableHeader" },
+                ],
+                ...tableBody,
+              ],
+            },
+          },
+        ],
+        defaultStyle: {
+          font: "Roboto",
+        },
+        styles: {
+          header: {
+            fontSize: 18,
+            bold: true,
+            alignment: "center",
+            margin: [0, 0, 0, 20],
+          },
+          subheader: {
+            fontSize: 16,
+            bold: true,
+            margin: [0, 10, 0, 5],
+          },
+          tableHeader: {
+            bold: true,
+            fontSize: 13,
+            color: "black",
+            fillColor: "#eeeeee",
+          },
+          tableCell: {
+            fontSize: 12,
+          },
+        },
+      };
+
+      // Tạo PDF và tự động tải xuống
+      pdfMake.createPdf(docDefinition).download(`${title}.pdf`);
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
