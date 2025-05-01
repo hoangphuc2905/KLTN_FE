@@ -20,6 +20,8 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import * as XLSX from "xlsx";
 import Footer from "../../../components/Footer";
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 
 ChartJS.register(
   CategoryScale,
@@ -300,18 +302,146 @@ const StatisticsChartPage = () => {
   // Thêm các hàm xuất file bảng
   const exportTableToExcel = (data, title) => {
     try {
-      const worksheetData = data.map((item, index) => ({
-        STT: index + 1,
-        "Tên bài nghiên cứu": item.title,
-        "Lượt xem": item.views,
-        "Lượt tải": item.downloads,
-        "Điểm đóng góp": item.contributions,
-      }));
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Báo cáo");
 
-      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-      XLSX.writeFile(workbook, `${title}.xlsx`);
+      const headers = [
+        "STT",
+        "Tên bài nghiên cứu",
+        "Lượt xem",
+        "Lượt tải",
+        "Điểm đóng góp",
+      ];
+
+      const currentDate = new Date();
+      const formattedDate = `${currentDate.getDate()}/${
+        currentDate.getMonth() + 1
+      }/${currentDate.getFullYear()}`;
+
+      // Tiêu đề hệ thống
+      worksheet.mergeCells(
+        "A1",
+        `${String.fromCharCode(64 + headers.length)}7`
+      );
+      const systemNameCell = worksheet.getCell("A1");
+      systemNameCell.value =
+        "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
+      systemNameCell.font = { name: "Times New Roman", size: 14, bold: true };
+      systemNameCell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
+      };
+
+      // Ngày tạo
+      worksheet.mergeCells("A8", "C8");
+      const dateCell = worksheet.getCell("A8");
+      dateCell.value = `Ngày tạo: ${formattedDate}`;
+      dateCell.font = { name: "Times New Roman", size: 11 };
+      dateCell.alignment = { horizontal: "left", vertical: "middle" };
+
+      // Tiêu đề báo cáo
+      worksheet.mergeCells(
+        "A11",
+        `${String.fromCharCode(64 + headers.length)}11`
+      );
+      const titleCell = worksheet.getCell("A11");
+      titleCell.value =
+        title || "BÁO CÁO DANH SÁCH BÀI BÁO NGHIÊN CỨU KHOA HỌC";
+      titleCell.font = { name: "Times New Roman", size: 16, bold: true };
+      titleCell.alignment = { horizontal: "center", vertical: "middle" };
+      titleCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFCCEEFF" },
+      };
+
+      // Thêm header
+      const headerRow = worksheet.addRow(headers);
+      headerRow.eachCell((cell) => {
+        cell.font = { name: "Times New Roman", size: 12, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "D9E1F2" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      // Thêm dữ liệu
+      data.forEach((item, index) => {
+        const rowData = [
+          index + 1,
+          item.title,
+          item.views,
+          item.downloads,
+          item.contributions,
+        ];
+
+        const row = worksheet.addRow(rowData);
+        row.eachCell((cell, colNumber) => {
+          cell.font = { name: "Times New Roman", size: 12 };
+          if (colNumber === 1) {
+            cell.alignment = { horizontal: "center", vertical: "middle" };
+          } else if (colNumber >= 3 && colNumber <= 5) {
+            cell.alignment = { horizontal: "right", vertical: "middle" };
+          } else {
+            cell.alignment = { horizontal: "left", vertical: "middle" };
+          }
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+      });
+
+      // Tự động điều chỉnh độ rộng cột
+      worksheet.columns.forEach((column, index) => {
+        let maxLength = Math.max(headers[index] ? headers[index].length : 0);
+        data.forEach((item, rowIndex) => {
+          let value;
+          switch (index) {
+            case 0:
+              value = String(rowIndex + 1);
+              break;
+            case 1:
+              value = item.title;
+              break;
+            case 2:
+              value = String(item.views);
+              break;
+            case 3:
+              value = String(item.downloads);
+              break;
+            case 4:
+              value = String(item.contributions);
+              break;
+            default:
+              value = "";
+          }
+          if (value) {
+            maxLength = Math.max(maxLength, String(value).length);
+          }
+        });
+        column.width = maxLength + 4;
+      });
+
+      // Xuất file
+      workbook.xlsx.writeBuffer().then((buffer) => {
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
+        const fileName = `${title.replace(/\s+/g, "_")}_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`;
+        saveAs(blob, fileName);
+      });
     } catch (error) {
       console.error("Error generating Excel:", error);
     }
@@ -320,22 +450,165 @@ const StatisticsChartPage = () => {
   const exportTableToPDF = (data, title) => {
     try {
       const pdf = new jsPDF("p", "mm", "a4");
-      pdf.text(title, 10, 10);
-      let y = 20;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
 
-      data.forEach((item, index) => {
-        pdf.text(`STT: ${index + 1}`, 10, y);
-        pdf.text(`Tên bài nghiên cứu: ${item.title}`, 10, y + 5);
-        pdf.text(`Lượt xem: ${item.views}`, 10, y + 10);
-        pdf.text(`Lượt tải: ${item.downloads}`, 10, y + 15);
-        pdf.text(`Điểm đóng góp: ${item.contributions}`, 10, y + 20);
-        y += 30;
+      // Tiêu đề hệ thống
+      pdf.setFontSize(14);
+      pdf.setFont("helvetica", "bold");
+      const systemTitle =
+        "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
+      pdf.text(systemTitle, pageWidth / 2, 15, { align: "center" });
+
+      // Ngày tạo
+      const currentDate = new Date();
+      const formattedDate = `${currentDate.getDate()}/${
+        currentDate.getMonth() + 1
+      }/${currentDate.getFullYear()}`;
+      pdf.setFontSize(11);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Ngày tạo: ${formattedDate}`, 10, 35);
+
+      // Tiêu đề báo cáo
+      pdf.setFontSize(16);
+      pdf.setFont("helvetica", "bold");
+      pdf.text(
+        title || "BÁO CÁO DANH SÁCH BÀI BÁO NGHIÊN CỨU KHOA HỌC",
+        pageWidth / 2,
+        45,
+        { align: "center" }
+      );
+
+      // Định dạng bảng dữ liệu
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+
+      const headers = [
+        ["STT", "Tên bài nghiên cứu", "Lượt xem", "Lượt tải", "Điểm đóng góp"],
+      ];
+      const tableData = data.map((item, index) => [
+        index + 1,
+        item.title,
+        item.views,
+        item.downloads,
+        item.contributions,
+      ]);
+
+      // Độ rộng cột tự động điều chỉnh
+      const colWidths = [10, 100, 20, 20, 30];
+
+      // Vẽ bảng
+      pdf.autoTable({
+        head: headers,
+        body: tableData,
+        startY: 55,
+        columnStyles: {
+          0: { halign: "center" },
+          2: { halign: "right" },
+          3: { halign: "right" },
+          4: { halign: "right" },
+        },
+        headStyles: {
+          fillColor: [217, 225, 242],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+          halign: "center",
+        },
+        columnWidth: colWidths,
+        styles: {
+          font: "helvetica",
+          fontSize: 10,
+          overflow: "linebreak",
+          cellPadding: 3,
+        },
+        margin: { top: 55 },
       });
 
-      pdf.save(`${title}.pdf`);
+      const fileName = `${title.replace(/\s+/g, "_")}_${new Date()
+        .toISOString()
+        .slice(0, 10)}.pdf`;
+      pdf.save(fileName);
     } catch (error) {
       console.error("Error generating PDF:", error);
     }
+  };
+
+  // Thêm hàm mới để in bảng dưới dạng PDF thông qua trình duyệt
+  const printTopPapersTable = () => {
+    const printWindow = window.open("", "_blank");
+    const tableHtml = `
+      <html>
+        <head>
+          <title>Print Table</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+            }
+            h1 {
+              text-align: center;
+              margin-bottom: 20px;
+              font-size: 18px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th, td {
+              border: 1px solid black;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            .numeric {
+              text-align: right;
+            }
+            .date {
+              text-align: center;
+            }
+            .title-cell {
+              max-width: 300px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Top 5 bài báo nổi bật</h1>
+          <p>Năm học: ${selectedYear}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Tên bài nghiên cứu</th>
+                <th>Lượt xem</th>
+                <th>Lượt tải</th>
+                <th>Điểm đóng góp</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${top5Papers
+                .map(
+                  (paper, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}</td>
+                  <td class="title-cell">${paper.title || ""}</td>
+                  <td class="numeric">${paper.views || "0"}</td>
+                  <td class="numeric">${paper.downloads || "0"}</td>
+                  <td class="numeric">${paper.contributions || "0"}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(tableHtml);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const getAcademicYears = async () => {
@@ -1032,15 +1305,134 @@ const StatisticsChartPage = () => {
 
   const generateExcel = (data, title) => {
     try {
-      const worksheetData = data.labels.map((label, index) => ({
-        Label: label,
-        Value: data.datasets[0].data[index],
-      }));
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("Báo cáo");
 
-      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
-      XLSX.writeFile(workbook, `${title}.xlsx`);
+      // Lấy nhãn và giá trị từ dữ liệu biểu đồ
+      const labels = data.originalLabels || data.labels || [];
+      const values = data.datasets[0]?.data || [];
+
+      const headers = ["STT", "Tên", "Giá trị"];
+
+      const currentDate = new Date();
+      const formattedDate = `${currentDate.getDate()}/${
+        currentDate.getMonth() + 1
+      }/${currentDate.getFullYear()}`;
+
+      // Tiêu đề hệ thống
+      worksheet.mergeCells(
+        "A1",
+        `${String.fromCharCode(64 + headers.length)}7`
+      );
+      const systemNameCell = worksheet.getCell("A1");
+      systemNameCell.value =
+        "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
+      systemNameCell.font = { name: "Times New Roman", size: 14, bold: true };
+      systemNameCell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+        wrapText: true,
+      };
+
+      // Ngày tạo
+      worksheet.mergeCells("A8", "C8");
+      const dateCell = worksheet.getCell("A8");
+      dateCell.value = `Ngày tạo: ${formattedDate}`;
+      dateCell.font = { name: "Times New Roman", size: 11 };
+      dateCell.alignment = { horizontal: "left", vertical: "middle" };
+
+      // Tiêu đề báo cáo
+      worksheet.mergeCells(
+        "A11",
+        `${String.fromCharCode(64 + headers.length)}11`
+      );
+      const titleCell = worksheet.getCell("A11");
+      titleCell.value = title || "BÁO CÁO";
+      titleCell.font = { name: "Times New Roman", size: 16, bold: true };
+      titleCell.alignment = { horizontal: "center", vertical: "middle" };
+      titleCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFCCEEFF" },
+      };
+
+      // Thêm header
+      const headerRow = worksheet.addRow(headers);
+      headerRow.eachCell((cell) => {
+        cell.font = { name: "Times New Roman", size: 12, bold: true };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "D9E1F2" },
+        };
+        cell.border = {
+          top: { style: "thin" },
+          left: { style: "thin" },
+          bottom: { style: "thin" },
+          right: { style: "thin" },
+        };
+      });
+
+      // Thêm dữ liệu
+      labels.forEach((label, index) => {
+        const rowData = [index + 1, label, values[index]];
+
+        const row = worksheet.addRow(rowData);
+        row.eachCell((cell, colNumber) => {
+          cell.font = { name: "Times New Roman", size: 12 };
+          if (colNumber === 1) {
+            cell.alignment = { horizontal: "center", vertical: "middle" };
+          } else if (colNumber === 3) {
+            cell.alignment = { horizontal: "right", vertical: "middle" };
+          } else {
+            cell.alignment = { horizontal: "left", vertical: "middle" };
+          }
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+        });
+      });
+
+      // Tự động điều chỉnh độ rộng cột
+      worksheet.columns.forEach((column, index) => {
+        let maxLength = headers[index] ? headers[index].length : 0;
+
+        if (index === 0) {
+          // STT
+          column.width = 8;
+        } else if (index === 1) {
+          // Tên
+          labels.forEach((label) => {
+            const length = label ? label.length : 0;
+            if (length > maxLength) {
+              maxLength = length;
+            }
+          });
+          column.width = Math.min(maxLength + 4, 50); // Giới hạn độ rộng tối đa
+        } else {
+          // Giá trị
+          values.forEach((value) => {
+            const length = value ? String(value).length : 0;
+            if (length > maxLength) {
+              maxLength = length;
+            }
+          });
+          column.width = maxLength + 4;
+        }
+      });
+
+      // Xuất file
+      workbook.xlsx.writeBuffer().then((buffer) => {
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
+        const fileName = `${title.replace(/\s+/g, "_")}_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`;
+        saveAs(blob, fileName);
+      });
     } catch (error) {
       console.error("Error generating Excel:", error);
     }
@@ -1785,44 +2177,41 @@ const StatisticsChartPage = () => {
                 <h2 className="font-semibold text-gray-700 text-sm sm:text-base mb-2 sm:mb-0">
                   Top 5 bài báo nổi bật
                 </h2>
-                <div className="relative" ref={tableExportRef}>
-                  <button
-                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowTableExport(!showTableExport)}
-                  >
-                    <span className="text-xs">Xuất file</span>
-                  </button>
-                  {showTableExport && (
-                    <div
-                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "150px", right: "0" }}
+                <div className="flex gap-2">
+                  <div className="relative" ref={tableExportRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowTableExport(!showTableExport)}
                     >
-                      <div className="px-4 py-3 w-full">
-                        <div
-                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
-                          onClick={() =>
-                            exportTableToPDF(
-                              top5Papers,
-                              "Top 5 bài báo nổi bật"
-                            )
-                          }
-                        >
-                          PDF
-                        </div>
-                        <div
-                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
-                          onClick={() =>
-                            exportTableToExcel(
-                              top5Papers,
-                              "Top 5 bài báo nổi bật"
-                            )
-                          }
-                        >
-                          Excel
+                      <span className="text-xs">Xuất file</span>
+                    </button>
+                    {showTableExport && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={printTopPapersTable}
+                          >
+                            PDF
+                          </div>
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              exportTableToExcel(
+                                top5Papers,
+                                "Top 5 bài báo nổi bật"
+                              )
+                            }
+                          >
+                            Excel
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="overflow-x-auto">

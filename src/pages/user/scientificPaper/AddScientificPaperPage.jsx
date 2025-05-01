@@ -731,13 +731,13 @@ const AddScientificPaperPage = () => {
               const response = await userApi.createWorkUnit({
                 work_unit_id: randomUUID(),
                 name_vi: author.institution,
-                name_en: author.institution, // Assuming the same name for English
-                address_vi: "Unknown Address", // Default value
-                address_en: "Unknown Address", // Default value
+                name_en: author.institution,
+                address_vi: "Không có địa chỉ",
+                address_en: "No address",
               });
               return {
                 ...author,
-                institution: response._id, // Use the returned ObjectId
+                institution: response._id,
               };
             } catch (error) {
               console.error("Error saving custom institution:", error);
@@ -781,7 +781,7 @@ const AddScientificPaperPage = () => {
           author_name_vi: author.full_name || "",
           author_name_en: author.full_name_eng || "",
           role: author.role || "",
-          work_unit_id: author.institution, // Ensure this is a valid ObjectId
+          work_unit_id: author.institution,
           degree: "Bachelor",
           point: parseFloat(scores.perAuthor[`author_${index + 1}`]) || 0,
         })),
@@ -860,13 +860,13 @@ const AddScientificPaperPage = () => {
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
       <Header />
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto">
-        <div className="self-center w-full max-w-[1563px] px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600">
+      <div className="flex flex-col pb-7 pt-[80px] w-full md:max-w-[95%] lg:max-w-[calc(100%-100px)] xl:max-w-[calc(100%-220px)] mx-auto">
+        <div className="self-center w-full max-w-[1563px] px-2 sm:px-4 md:px-6 mt-4">
+          <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
             <img
               src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
               alt="Home Icon"
-              className="w-5 h-5"
+              className="w-4 h-4 sm:w-5 sm:h-5"
             />
             <span
               onClick={() => navigate("/home")}
@@ -881,18 +881,18 @@ const AddScientificPaperPage = () => {
           </div>
         </div>
 
-        <div className="self-center w-full max-w-[1563px] px-4 mt-4">
+        <div className="self-center w-full max-w-[1563px] px-2 sm:px-4 mt-4">
           <div className="flex flex-col gap-4">
             <div className="w-full relative">
               {/* Khối "Nhập thông tin" */}
-              <section className="flex flex-col bg-white rounded-lg p-6 mb-3">
+              <section className="flex flex-col bg-white rounded-lg p-3 sm:p-4 md:p-6 mb-3">
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin
                 </h2>
 
-                <div className="flex gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                   {/*Ảnh img bài báo */}
-                  <div className="flex flex-col w-[260px] justify-center">
+                  <div className="flex flex-col w-full md:w-[260px] items-center md:items-start justify-center mb-4 md:mb-0">
                     <label
                       htmlFor="cover-upload"
                       className={`cursor-pointer relative ${
@@ -908,7 +908,7 @@ const AddScientificPaperPage = () => {
                           "https://cdn-icons-png.flaticon.com/128/4904/4904233.png"
                         }
                         alt="Bìa bài báo"
-                        className="w-[210px] h-[315px] object-contain border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
+                        className="w-[180px] h-[270px] sm:w-[210px] sm:h-[315px] object-contain border border-gray-300 rounded-lg shadow-md hover:brightness-90 transition duration-300"
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 text-white font-semibold text-sm rounded-lg transition duration-300">
                         Chọn ảnh
@@ -934,7 +934,7 @@ const AddScientificPaperPage = () => {
                     )}
                   </div>
                   {/* Các input bên cạnh ảnh */}
-                  <div className="w-full grid grid-cols-1 pl-4">
+                  <div className="w-full grid grid-cols-1 md:pl-4">
                     {/* Loại bài báo */}
                     <div className="mb-2">
                       <label
@@ -1204,7 +1204,7 @@ const AddScientificPaperPage = () => {
                         )}
                       </div>
                     </div>
-                    {/* Thứ tự */}
+                    {/* Thứ tự
                     <div className="pb-7">
                       <label
                         htmlFor="orderNo"
@@ -1219,7 +1219,7 @@ const AddScientificPaperPage = () => {
                         min={1}
                         onChange={(value) => setOrderNo(value)}
                       />
-                    </div>
+                    </div> */}
                     {/* Bài tiêu biểu */}
                     <div className="pb-4">
                       <div className="flex items-center">
@@ -2042,19 +2042,33 @@ const AddScientificPaperPage = () => {
 
       {/* Modal for icon click */}
       <Modal
-        title="Sử dụng AI để nhận diện thông tin"
+        title={
+          <span className="text-sm sm:text-base">
+            Sử dụng AI để nhận diện thông tin
+          </span>
+        }
         visible={isIconModalVisible}
         onOk={handleIconModalOk}
         onCancel={handleIconModalCancel}
         footer={[
-          <Button key="confirm" type="primary" onClick={handleIconModalOk}>
+          <Button
+            key="confirm"
+            type="primary"
+            onClick={handleIconModalOk}
+            size="middle"
+            className="text-xs sm:text-sm"
+          >
             Xác nhận
           </Button>,
         ]}
+        className="responsive-modal"
       >
         <div className="relative">
           <Tabs defaultActiveKey="1">
-            <TabPane tab="Upload hình ảnh" key="1">
+            <TabPane
+              tab={<span className="text-xs sm:text-sm">Upload hình ảnh</span>}
+              key="1"
+            >
               <Upload
                 name="image"
                 listType="picture"
@@ -2068,7 +2082,12 @@ const AddScientificPaperPage = () => {
                   return false; // Prevent upload
                 }}
               >
-                <Button icon={<UploadOutlined />}>Tải ảnh lên</Button>
+                <Button
+                  icon={<UploadOutlined />}
+                  className="text-xs sm:text-sm"
+                >
+                  Tải ảnh lên
+                </Button>
               </Upload>
               {uploadedImage && (
                 <img
@@ -2082,11 +2101,15 @@ const AddScientificPaperPage = () => {
                 file hình ảnh có định dạng JPG, PNG và kích thước nhỏ hơn 5MB.
               </div>
             </TabPane>
-            <TabPane tab="Nhập link" key="2">
+            <TabPane
+              tab={<span className="text-xs sm:text-sm">Nhập link</span>}
+              key="2"
+            >
               <Input
                 placeholder="Nhập link"
                 value={link}
                 onChange={handleLinkChange}
+                className="text-xs sm:text-sm"
               />
               <div className="mt-4 text-xs text-red-700">
                 <span className="font-bold">LƯU Ý:</span> Hệ thống chỉ hỗ trợ
@@ -2097,26 +2120,37 @@ const AddScientificPaperPage = () => {
           <img
             src="https://cdn-icons-png.flaticon.com/512/3409/3409542.png"
             alt="Help Icon"
-            className="absolute top-0 right-0 w-6 h-6 m-2 cursor-pointer"
+            className="absolute top-0 right-0 w-4 h-4 sm:w-6 sm:h-6 m-2 cursor-pointer"
             onClick={showHelpModal}
           />
         </div>
       </Modal>
 
       <Modal
-        title="Hướng dẫn"
+        title={<span className="text-sm sm:text-base">Hướng dẫn</span>}
         visible={isHelpModalVisible}
         onOk={handleHelpModalOk}
         onCancel={handleHelpModalCancel}
         footer={[
-          <Button key="confirm" type="primary" onClick={handleHelpModalOk}>
+          <Button
+            key="confirm"
+            type="primary"
+            onClick={handleHelpModalOk}
+            size="middle"
+            className="text-xs sm:text-sm"
+          >
             Đóng
           </Button>,
         ]}
+        className="responsive-modal"
       >
-        <p>Đây là hướng dẫn sử dụng hệ thống.</p>
-        <p>Vui lòng làm theo các bước sau để hoàn thành việc nhập thông tin.</p>
-        {/* Add more instructions as needed */}
+        <div className="text-xs sm:text-sm">
+          <p>Đây là hướng dẫn sử dụng hệ thống.</p>
+          <p>
+            Vui lòng làm theo các bước sau để hoàn thành việc nhập thông tin.
+          </p>
+          {/* Add more instructions as needed */}
+        </div>
       </Modal>
     </div>
   );
