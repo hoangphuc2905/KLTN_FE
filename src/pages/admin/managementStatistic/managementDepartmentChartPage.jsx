@@ -872,25 +872,80 @@ const ManagementDepartmentChart = () => {
     }
   };
 
-  const handleDownload = (chartType, format, chartRef, data, title) => {
-    if (format === "pdf") {
-      generatePDF(chartRef, title, data);
-    } else if (format === "excel") {
-      generateExcel(data, title);
-    }
-  };
-
-  const handleChartTypeChange = (chartSection, type) => {
-    if (chartSection === "type") {
-      setTypeChartType(type);
-      setShowTypeChartFilter(false);
-    } else if (chartSection === "author") {
-      setAuthorChartType(type);
-      setShowAuthorChartFilter(false);
-    } else if (chartSection === "field") {
-      setFieldChartType(type);
-      setShowFieldChartFilter(false);
-    }
+  // Thêm hàm in bảng thông qua trình duyệt
+  const printTopPapersTable = () => {
+    const printWindow = window.open("", "_blank");
+    const tableHtml = `
+      <html>
+        <head>
+          <title>Print Table</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+            }
+            h1 {
+              text-align: center;
+              margin-bottom: 20px;
+              font-size: 18px;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 20px;
+            }
+            th, td {
+              border: 1px solid black;
+              padding: 8px;
+              text-align: left;
+            }
+            th {
+              background-color: #f2f2f2;
+              font-weight: bold;
+            }
+            .numeric {
+              text-align: right;
+            }
+            .date {
+              text-align: center;
+            }
+            .title-cell {
+              max-width: 300px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Top 5 bài nghiên cứu được nổi bật</h1>
+          <p>Năm học: ${selectedYear}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>STT</th>
+                <th>Tên bài nghiên cứu</th>
+                <th>Lượt xem</th>
+                <th>Lượt tải</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${topPapers
+                .map(
+                  (paper, index) => `
+                <tr>
+                  <td style="text-align: center;">${index + 1}</td>
+                  <td class="title-cell">${paper.title || ""}</td>
+                  <td class="numeric">${paper.views || "0"}</td>
+                  <td class="numeric">${paper.downloads || "0"}</td>
+                </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    printWindow.document.write(tableHtml);
+    printWindow.document.close();
+    printWindow.print();
   };
 
   const handleDownloadFormat = (
@@ -909,6 +964,27 @@ const ManagementDepartmentChart = () => {
       setShowAuthorDownloadFilter(false);
     } else if (chartSection === "field") {
       setShowFieldDownloadFilter(false);
+    }
+  };
+
+  const handleChartTypeChange = (chartSection, type) => {
+    if (chartSection === "type") {
+      setTypeChartType(type);
+      setShowTypeChartFilter(false);
+    } else if (chartSection === "author") {
+      setAuthorChartType(type);
+      setShowAuthorChartFilter(false);
+    } else if (chartSection === "field") {
+      setFieldChartType(type);
+      setShowFieldChartFilter(false);
+    }
+  };
+
+  const handleDownload = (chartType, format, chartRef, data, title) => {
+    if (format === "pdf") {
+      generatePDF(chartRef, title, data);
+    } else if (format === "excel") {
+      generateExcel(data, title);
     }
   };
 
@@ -1694,44 +1770,41 @@ const ManagementDepartmentChart = () => {
                 <h2 className="font-semibold text-gray-700">
                   Top 5 bài nghiên cứu được nổi bật
                 </h2>
-                <div className="relative" ref={tableExportRef}>
-                  <button
-                    className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
-                    onClick={() => setShowTableExport(!showTableExport)}
-                  >
-                    <span className="text-xs">Xuất file</span>
-                  </button>
-                  {showTableExport && (
-                    <div
-                      className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
-                      style={{ width: "150px", right: "0" }}
+                <div className="flex gap-2">
+                  <div className="relative" ref={tableExportRef}>
+                    <button
+                      className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                      onClick={() => setShowTableExport(!showTableExport)}
                     >
-                      <div className="px-4 py-3 w-full">
-                        <div
-                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
-                          onClick={() =>
-                            exportTableToPDF(
-                              topPapers,
-                              "Top 5 bài nghiên cứu được nổi bật"
-                            )
-                          }
-                        >
-                          PDF
-                        </div>
-                        <div
-                          className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
-                          onClick={() =>
-                            exportTableToExcel(
-                              topPapers,
-                              "Top 5 bài nghiên cứu được nổi bật"
-                            )
-                          }
-                        >
-                          Excel
+                      <span className="text-xs">Xuất file</span>
+                    </button>
+                    {showTableExport && (
+                      <div
+                        className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
+                        style={{ width: "150px", right: "0" }}
+                      >
+                        <div className="px-4 py-3 w-full">
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={printTopPapersTable}
+                          >
+                            PDF
+                          </div>
+                          <div
+                            className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
+                            onClick={() =>
+                              exportTableToExcel(
+                                topPapers,
+                                "Top 5 bài nghiên cứu được nổi bật"
+                              )
+                            }
+                          >
+                            Excel
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="overflow-x-auto">
