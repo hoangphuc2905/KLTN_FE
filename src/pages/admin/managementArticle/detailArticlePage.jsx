@@ -63,6 +63,10 @@ const DetailArticlePage = () => {
   const showEditModal = () => setIsEditModalVisible(true);
   const handleEditCancel = () => setIsEditModalVisible(false);
   const handleEditSend = async () => {
+    if (!requestContent.trim()) {
+      message.error("Vui lòng nhập nội dung yêu cầu chỉnh sửa.");
+      return;
+    }
     try {
       // Notify all authors about the edit request
       authors.forEach(async (author) => {
@@ -100,6 +104,10 @@ const DetailArticlePage = () => {
   const showRejectModal = () => setIsRejectModalVisible(true);
   const handleRejectCancel = () => setIsRejectModalVisible(false);
   const handleRejectSend = async () => {
+    if (!rejectReason.trim()) {
+      message.error("Vui lòng nhập lý do từ chối.");
+      return;
+    }
     try {
       // Update the status of the article to "refused"
       await userApi.updateScientificPaperStatus(id, "refused");
