@@ -8,6 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 import PDFViewer from "../../../components/PDFViewer";
 import { throttle } from "lodash";
 import { Modal, Spin } from "antd";
+import Footer from "../../../components/Footer";
 
 const ScientificPaperDetailPage = () => {
   const { id } = useParams();
@@ -758,6 +759,7 @@ const ScientificPaperDetailPage = () => {
           </Modal>
         )}
       </div>
+      <Footer />
     </div>
   );
 };
