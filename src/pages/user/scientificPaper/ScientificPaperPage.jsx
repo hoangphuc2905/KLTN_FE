@@ -165,7 +165,7 @@ const ScientificPaperPage = () => {
   const uniqueStatuses = [
     { value: "Tất cả", label: "Tất cả", color: "text-gray-600" },
     { value: "approved", label: "Đã duyệt", color: "text-green-600" },
-    { value: "pending", label: "Đang chờ", color: "text-yellow-600" },
+    { value: "pending", label: "Chờ duyệt", color: "text-yellow-600" },
     { value: "refused", label: "Từ chối", color: "text-red-600" },
     { value: "revision", label: "Chờ chỉnh sửa", color: "text-orange-600" },
   ];
@@ -173,7 +173,7 @@ const ScientificPaperPage = () => {
   const filteredPapers = (papers || [])
     .filter((paper) => {
       if (activeTab === "Đã duyệt" && paper.status !== "approved") return false;
-      if (activeTab === "Đang chờ" && paper.status !== "pending") return false;
+      if (activeTab === "Chờ duyệt" && paper.status !== "pending") return false;
       if (activeTab === "Chờ chỉnh sửa" && paper.status !== "revision")
         return false;
       if (activeTab === "Từ chối" && paper.status !== "refused") return false;
@@ -669,7 +669,7 @@ const ScientificPaperPage = () => {
                 </button>
                 <button
                   className={`px-4 py-2 text-center text-xs ${
-                    activeTab === "Đang chờ"
+                    activeTab === "Chờ duyệt"
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
                   } rounded-lg`}
