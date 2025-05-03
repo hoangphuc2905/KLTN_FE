@@ -18,6 +18,9 @@ const ScientificPaperDetailPage = () => {
   const [copySuccess, setCopySuccess] = useState(false);
   const [relatedPapers, setRelatedPapers] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isFeedbackModalVisible, setIsFeedbackModalVisible] = useState(false);
+  const [authorsWithEmails, setAuthorsWithEmails] = useState([]);
+  const [selectedAuthors, setSelectedAuthors] = useState([]); // Update to handle multiple selections
   const navigate = useNavigate();
   const location = useLocation();
   const user_id = localStorage.getItem("user_id");
@@ -28,6 +31,13 @@ const ScientificPaperDetailPage = () => {
   const hasScrolledRef = useRef(false);
   const [scrollPercent, setScrollPercent] = useState(0);
   const currentUrl = window.location.origin + location.pathname;
+
+  const roleMapping = {
+    MainAuthor: "Tác giả chính",
+    CorrespondingAuthor: "Tác giả liên hệ",
+    MainAndCorrespondingAuthor: "Tác giả vừa chính vừa liên hệ",
+    Participant: "Tác giả tham gia",
+  };
 
   useEffect(() => {
     if (paperRef.current) {
@@ -170,6 +180,7 @@ const ScientificPaperDetailPage = () => {
           fileUrl: data.file || null,
           submitter: data.author?.[0]?.author_name_vi || "Không có dữ liệu",
           institution: data.author?.[0]?.departmentName || "Không có dữ liệu",
+          author: data.author || [],
         };
 
         setPaper(transformedPaper);
@@ -328,6 +339,76 @@ const ScientificPaperDetailPage = () => {
     setIsModalVisible(false);
     hasTrackedView.current = false;
     resetModalTimer();
+  };
+
+  const fetchAuthorsEmails = async () => {
+    if (!paper?.author) return;
+    try {
+      const authors = await Promise.all(
+        paper.author.map(async (author) => {
+          let email = "Không có dữ liệu";
+          try {
+            if (author.user_id.trim().startsWith("0")) {
+              // Fetch as lecturer
+              const lecturerData = await userApi.getLecturerById(
+                author.user_id.trim()
+              );
+              email = lecturerData?.email || "Không có dữ liệu";
+            } else {
+              // Fetch as student
+              const studentData = await userApi.getStudentById(
+                author.user_id.trim()
+              );
+              email = studentData?.email || "Không có dữ liệu";
+            }
+          } catch (error) {
+            console.error(
+              `Error fetching email for ${author.author_name_vi}:`,
+              error
+            );
+          }
+          return { ...author, email };
+        })
+      );
+      setAuthorsWithEmails(authors);
+    } catch (error) {
+      console.error("Error fetching authors' emails:", error);
+      message.error("Không thể tải thông tin tác giả!");
+    }
+  };
+
+  const handleAuthorSelection = (author) => {
+    setSelectedAuthors(
+      (prev) =>
+        prev.includes(author)
+          ? prev.filter((a) => a !== author) // Deselect if already selected
+          : [...prev, author] // Add to selection
+    );
+  };
+
+  const handleFeedbackSubmit = () => {
+    if (selectedAuthors.length > 0) {
+      const recipientEmails = selectedAuthors
+        .map((author) => author.email)
+        .filter((email) => email !== "Không có dữ liệu")
+        .join(",");
+      if (recipientEmails) {
+        const subject = `Gửi ý kiến cho bài báo: ${
+          paper.title || "Không có tiêu đề"
+        }`;
+        const mailtoLink = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+          recipientEmails
+        )}&su=${encodeURIComponent(subject)}`;
+        window.open(mailtoLink, "_blank");
+        message.success("Gửi ý kiến thành công!");
+        setIsFeedbackModalVisible(false);
+        setSelectedAuthors([]);
+      } else {
+        message.error("Không có email hợp lệ để gửi!");
+      }
+    } else {
+      message.error("Vui lòng chọn ít nhất một tác giả để gửi ý kiến!");
+    }
   };
 
   if (!paper) {
@@ -613,7 +694,7 @@ const ScientificPaperDetailPage = () => {
 
             {/* Paper Stats */}
             <div className="bg-white rounded-xl p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 it">
                 <div>
                   <p>
                     Người đăng tải:{" "}
@@ -621,19 +702,18 @@ const ScientificPaperDetailPage = () => {
                       {paper.submitter}
                     </span>
                   </p>
-                  <p className="mt-2 flex items-center">
-                    Đánh giá:{" "}
-                    <span className="text-[#174371] font-bold ml-2 flex items-center">
-                      {[...Array(5)].map((_, index) => (
-                        <img
-                          key={index}
-                          src="https://cdn-icons-png.flaticon.com/512/1828/1828884.png"
-                          alt="Star"
-                          className="w-4 h-4"
-                        />
-                      ))}
-                    </span>
-                  </p>
+                  <div className="mt-2 flex items-center">
+                    <p className="mr-2">Đóng góp ý kiến:</p>
+                    <button
+                      className="bg-[#00A3FF] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#007ACC]"
+                      onClick={() => {
+                        fetchAuthorsEmails();
+                        setIsFeedbackModalVisible(true);
+                      }}
+                    >
+                      Gửi ý kiến
+                    </button>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center gap-2">
@@ -755,6 +835,61 @@ const ScientificPaperDetailPage = () => {
                   }
                 }}
               />
+            </div>
+          </Modal>
+        )}
+
+        {/* Feedback Modal */}
+        {isFeedbackModalVisible && (
+          <Modal
+            title={
+              <h2 className="text-lg font-semibold text-sky-900">Gửi ý kiến</h2>
+            }
+            open={isFeedbackModalVisible}
+            onCancel={() => {
+              setIsFeedbackModalVisible(false);
+              setSelectedAuthors([]); // Clear selection on cancel
+            }}
+            onOk={handleFeedbackSubmit}
+            okText="Gửi"
+            cancelText="Hủy"
+            centered
+            className="max-w-[600px]"
+          >
+            <p className="text-gray-600 mb-4">Chọn tác giả để gửi ý kiến:</p>
+            <div className="max-h-[300px] overflow-y-auto">
+              {authorsWithEmails.map((author, index) => (
+                <div
+                  key={index}
+                  className={`p-3 border rounded-lg hover:shadow-md transition-shadow flex items-start gap-3 cursor-pointer ${
+                    selectedAuthors.includes(author)
+                      ? "bg-blue-50 border-blue-400"
+                      : ""
+                  }`}
+                  onClick={() => handleAuthorSelection(author)} // Handle click on the container
+                >
+                  <input
+                    type="checkbox"
+                    className="mt-1 cursor-pointer"
+                    checked={selectedAuthors.includes(author)}
+                    onChange={() => handleAuthorSelection(author)} // Keep this for accessibility
+                  />
+                  <div>
+                    <p className="text-sm">
+                      <strong className="text-gray-700">Tên:</strong>{" "}
+                      {author.author_name_vi}
+                    </p>
+                    <p className="text-sm">
+                      <strong className="text-gray-700">Vai trò:</strong>{" "}
+                      {roleMapping[author.role] || "Không có dữ liệu"}
+                    </p>
+                    <p className="text-sm">
+                      <strong className="text-gray-700">Email:</strong>{" "}
+                      {author.email || "Không có dữ liệu"}
+                    </p>
+                  </div>
+                </div>
+              ))}
             </div>
           </Modal>
         )}
