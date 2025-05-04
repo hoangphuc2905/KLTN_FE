@@ -12,7 +12,6 @@ import { Modal, Button, Input, message, Spin, Select } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
-import { debounce } from "lodash";
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -29,7 +28,9 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div>
-          <h1>Đã xảy ra lỗi: {this.state.error?.message || "Unknown error"}</h1>
+          <h1>
+            Đã xảy ra lỗi: {this.state.error?.message || "Lỗi không xác định"}
+          </h1>
           <p>Vui lòng thử tải lại trang hoặc liên hệ hỗ trợ.</p>
         </div>
       );
@@ -44,6 +45,7 @@ const HomePage = () => {
   const [researchPapers, setResearchPapers] = useState([]);
   const [authors, setAuthors] = useState({});
   const [departments, setDepartments] = useState({});
+  const [departmentsList, setDepartmentsList] = useState([]);
   const [activeTab, setActiveTab] = useState("recent");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedPaper, setSelectedPaper] = useState(null);
@@ -52,18 +54,18 @@ const HomePage = () => {
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [categories, setCategories] = useState([]);
-  const [departmentsList, setDepartmentsList] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCriteria, setSelectedCriteria] = useState(""); // Add state for selected criteria
+  const [isSearching, setIsSearching] = useState(false); // Trạng thái tải
   const [collections, setCollections] = useState([]);
-  const [searchHistory, setSearchHistory] = useState([]);
-  const [isHistoryVisible, setIsHistoryVisible] = useState(false);
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
   const [currentPage, setCurrentPage] = useState(1);
-  const [papersPerPage, setPapersPerPage] = useState(10); // New state for papers per page
+  const [papersPerPage, setPapersPerPage] = useState(10);
   const [isRemoveModalVisible, setIsRemoveModalVisible] = useState(false);
   const [paperToRemove, setPaperToRemove] = useState(null);
+  const [availableYears, setAvailableYears] = useState([]); // State to store available years
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -75,39 +77,25 @@ const HomePage = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    const history = JSON.parse(localStorage.getItem("searchHistory")) || [];
-    setSearchHistory(history);
+    // Fetch available years dynamically (or hardcode if needed)
+    const currentYear = new Date().getFullYear();
+    const years = Array.from({ length: 50 }, (_, i) => currentYear - i); // Last 50 years
+    setAvailableYears(years);
   }, []);
 
+  // Lọc bài báo chỉ dựa trên department, không dựa trên searchQuery
   const filteredPapers = useMemo(() => {
     return researchPapers.filter((paper) => {
       const departmentMatch = selectedDepartment
         ? paper.department === selectedDepartment
         : true;
-
-      const searchMatch = searchQuery
-        ? paper.title_vn?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          paper.title_en?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (paper.author &&
-            paper.author.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          (paper.publish_date &&
-            paper.publish_date.toString().includes(searchQuery)) ||
-          (paper.keywords &&
-            Array.isArray(paper.keywords) &&
-            paper.keywords.some((keyword) =>
-              keyword.toLowerCase().includes(searchQuery.toLowerCase())
-            )) ||
-          (paper.summary &&
-            paper.summary.toLowerCase().includes(searchQuery.toLowerCase()))
-        : true;
-
-      return departmentMatch && searchMatch;
+      return departmentMatch;
     });
-  }, [researchPapers, selectedDepartment, searchQuery]);
+  }, [researchPapers, selectedDepartment]);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedDepartment, papersPerPage]); // Reset page when papersPerPage changes
+  }, [selectedDepartment, papersPerPage]);
 
   const currentPapers = useMemo(() => {
     return filteredPapers
@@ -119,16 +107,18 @@ const HomePage = () => {
             ? paper.author
                 .map(
                   (a) =>
-                    a.author_name_vi || a.author_name_en || "Unknown Author"
+                    a.author_name_vi ||
+                    a.author_name_en ||
+                    "Tác giả không xác định"
                 )
                 .join(", ")
             : typeof paper.author === "object"
             ? paper.author.author_name_vi ||
               paper.author.author_name_en ||
-              "Unknown Author"
-            : paper.author || "Unknown Author",
+              "Tác giả không xác định"
+            : paper.author || "Tác giả không xác định",
           departmentName:
-            departments[paper.department_name] || "Unknown Department",
+            departments[paper.department_name] || "Khoa không xác định",
         };
       });
   }, [filteredPapers, currentPage, departments, papersPerPage]);
@@ -146,21 +136,23 @@ const HomePage = () => {
     return {
       id: paper._id,
       paperId: paper.paper_id || "",
-      title: paper.title_vn || paper.title_en || "No Title",
+      title: paper.title_vn || paper.title_en || "Không có tiêu đề",
       author: paper.author
         ? paper.author
             .map(
-              (a) => a.author_name_vi || a.author_name_en || "Unknown Author"
+              (a) =>
+                a.author_name_vi || a.author_name_en || "Tác giả không xác định"
             )
             .join(", ")
-        : "Unknown Author",
-      department: paper.department || "Unknown Department",
+        : "Tác giả không xác định",
+      department: paper.department || "Khoa không xác định",
       departmentId: paper.department || "",
-      departmentName: departmentName || "Unknown Department",
+      departmentName: departmentName || "Khoa không xác định",
       thumbnailUrl: paper.cover_image || "",
-      summary: paper.summary || "No Summary",
+      summary: paper.summary || "Không có tóm tắt",
       publish_date: paper.publish_date || "",
-      magazine: paper.magazine_vi || paper.magazine_en || "Unknown Magazine",
+      magazine:
+        paper.magazine_vi || paper.magazine_en || "Tạp chí không xác định",
       magazineType: paper.magazine_type || "",
       page: paper.page || "",
       issnIsbn: paper.issn_isbn || "",
@@ -179,56 +171,132 @@ const HomePage = () => {
     const fetchInitialData = async () => {
       try {
         const userId = localStorage.getItem("user_id");
+
+        const storedDepartments = localStorage.getItem("departments");
+        const storedDepartmentsList = localStorage.getItem("departmentsList");
+        const storedRecentPapers = localStorage.getItem("recentPapers");
+        const storedFeaturedPapers = localStorage.getItem("featuredPapers");
+
+        let departmentsData = storedDepartments
+          ? JSON.parse(storedDepartments)
+          : null;
+        let departmentsListData = storedDepartmentsList
+          ? JSON.parse(storedDepartmentsList)
+          : null;
+        let recentPapersData = storedRecentPapers
+          ? JSON.parse(storedRecentPapers)
+          : null;
+        let featuredPapersData = storedFeaturedPapers
+          ? JSON.parse(storedFeaturedPapers)
+          : null;
+
+        if (!departmentsData || !departmentsListData) {
+          const departmentsResponse = await userApi.getAllDepartments();
+          departmentsData = departmentsResponse.reduce((acc, department) => {
+            acc[department.id] = department.department_name;
+            return acc;
+          }, {});
+          departmentsListData = departmentsResponse;
+
+          localStorage.setItem("departments", JSON.stringify(departmentsData));
+          localStorage.setItem(
+            "departmentsList",
+            JSON.stringify(departmentsListData)
+          );
+        }
+
+        if (!recentPapersData || !featuredPapersData) {
+          const [recentPapersResponse, featuredPapersResponse] =
+            await Promise.all([
+              userApi.getTop5NewestScientificPapers(),
+              userApi.getTop5MostViewedAndDownloadedPapers(),
+            ]);
+
+          recentPapersData = recentPapersResponse?.papers
+            ? await Promise.all(recentPapersResponse.papers.map(mapPaperData))
+            : [];
+          featuredPapersData = featuredPapersResponse?.papers
+            ? await Promise.all(featuredPapersResponse.papers.map(mapPaperData))
+            : [];
+
+          localStorage.setItem(
+            "recentPapers",
+            JSON.stringify(recentPapersData)
+          );
+          localStorage.setItem(
+            "featuredPapers",
+            JSON.stringify(featuredPapersData)
+          );
+        }
+
+        setDepartments(departmentsData);
+        setDepartmentsList(departmentsListData);
+        setRecentPapers(recentPapersData);
+        setFeaturedPapers(featuredPapersData);
+
         const [
           recommendationsResponse,
           allPapersResponse,
-          recentPapersResponse,
-          featuredPapersResponse,
           collectionsResponse,
-          departmentsResponse,
         ] = await Promise.all([
           userId
             ? userApi.getRecommendationsByUserHistory(userId)
             : Promise.resolve({ data: [] }),
           userApi.getAllScientificPapers(),
-          userApi.getTop5NewestScientificPapers(),
-          userApi.getTop5MostViewedAndDownloadedPapers(),
           userApi.getCollectionsByUserId(userId),
-          userApi.getAllDepartments(),
         ]);
 
-        const papers = recommendationsResponse?.data?.length
+        console.log("recommendationsResponse:", recommendationsResponse);
+        console.log("allPapersResponse:", allPapersResponse);
+
+        const hasRecommendations =
+          recommendationsResponse?.data &&
+          recommendationsResponse.data.length > 0 &&
+          recommendationsResponse.message !== "No data found";
+
+        const papers = hasRecommendations
           ? recommendationsResponse.data
-          : allPapersResponse?.data || [];
-        const mappedPapers = await Promise.all(papers.map(mapPaperData));
-        setResearchPapers(
-          mappedPapers.filter((paper) => paper.status === "approved")
+          : allPapersResponse?.scientificPapers || [];
+
+        console.log("Papers to display:", papers);
+
+        if (!papers.length) {
+          console.warn("No papers found to display.");
+          setResearchPapers([]);
+          message.warning("Không tìm thấy bài báo nào.");
+          return;
+        }
+
+        const mappedPapers = await Promise.all(
+          papers.map(async (paper) => {
+            try {
+              return await mapPaperData(paper);
+            } catch (error) {
+              console.error("Lỗi trong mapPaperData:", error, paper);
+              return null;
+            }
+          })
         );
 
-        setRecentPapers(
-          recentPapersResponse?.papers
-            ? await Promise.all(recentPapersResponse.papers.map(mapPaperData))
-            : []
+        console.log("Mapped papers:", mappedPapers);
+
+        const validPapers = mappedPapers.filter((paper) => paper !== null);
+        const approvedPapers = validPapers.filter(
+          (paper) => paper.status === "approved"
         );
 
-        setFeaturedPapers(
-          featuredPapersResponse?.papers
-            ? await Promise.all(featuredPapersResponse.papers.map(mapPaperData))
-            : []
-        );
+        console.log("Approved papers:", approvedPapers);
 
+        if (!approvedPapers.length && validPapers.length > 0) {
+          console.warn("Không có bài báo nào có trạng thái approved");
+          message.warning("Không có bài báo được phê duyệt.");
+        }
+
+        setResearchPapers(approvedPapers);
         setCollections(collectionsResponse || []);
-        const departmentMapping = departmentsResponse.reduce(
-          (acc, department) => {
-            acc[department.id] = department.department_name;
-            return acc;
-          },
-          {}
-        );
-        setDepartments(departmentMapping);
-        setDepartmentsList(departmentsResponse);
       } catch (error) {
-        console.error("Error loading initial data:", error);
+        console.error("Lỗi khi tải dữ liệu ban đầu:", error);
+        message.error("Lỗi khi tải dữ liệu. Vui lòng thử lại sau.");
       }
     };
 
@@ -241,44 +309,41 @@ const HomePage = () => {
       typeof departmentId !== "string" ||
       departmentId.length !== 24
     ) {
-      return "Unknown Department";
+      return "Khoa không xác định";
     }
     try {
       const response = await userApi.getDepartmentById(departmentId);
-      return response.department_name || "Unknown Department";
+      return response.department_name || "Khoa không xác định";
     } catch (error) {
-      console.error(`Error fetching department for ID ${departmentId}:`, error);
-      return "Unknown Department";
+      console.error(`Lỗi khi lấy khoa với ID ${departmentId}:`, error);
+      return "Khoa không xác định";
     }
   };
 
   const fetchDownloadCount = async (paperId) => {
     if (!paperId) {
-      console.error("Error: paperId is undefined.");
+      console.error("Lỗi: paperId không xác định.");
       return 0;
     }
     try {
       const response = await userApi.getDownloadCountByPaperId(paperId);
       return response.download_count || 0;
     } catch (error) {
-      console.error(
-        `Error fetching download count for paper ${paperId}:`,
-        error
-      );
+      console.error(`Lỗi khi lấy số lượt tải cho bài báo ${paperId}:`, error);
       return 0;
     }
   };
 
   const fetchViewCount = async (paperId) => {
     if (!paperId) {
-      console.error("Error: paperId is undefined.");
+      console.error("Lỗi: paperId không xác định.");
       return 0;
     }
     try {
       const response = await userApi.getViewCountByPaperId(paperId);
       return response.viewCount || 0;
     } catch (error) {
-      console.error(`Error fetching view count for paper ${paperId}:`, error);
+      console.error(`Lỗi khi lấy số lượt xem cho bài báo ${paperId}:`, error);
       return 0;
     }
   };
@@ -308,7 +373,7 @@ const HomePage = () => {
         })
       );
     } catch (error) {
-      console.error("Error fetching view/download counts:", error);
+      console.error("Lỗi khi lấy số lượt xem/tải:", error);
     }
   };
 
@@ -338,7 +403,7 @@ const HomePage = () => {
               authors:
                 authorNames.length > 0
                   ? authorNames.join(", ")
-                  : "Unknown Author",
+                  : "Tác giả không xác định",
             };
           })
         );
@@ -349,7 +414,7 @@ const HomePage = () => {
         }, {});
         setAuthors((prev) => ({ ...prev, ...newAuthors }));
       } catch (error) {
-        console.error("Lỗi khi lấy authors:", error);
+        console.error("Lỗi khi lấy thông tin tác giả:", error);
       }
     };
 
@@ -363,60 +428,106 @@ const HomePage = () => {
 
   const handlePapersPerPageChange = useCallback((e) => {
     setPapersPerPage(Number(e.target.value));
-    setCurrentPage(1); // Reset to first page when changing papers per page
+    setCurrentPage(1);
   }, []);
 
-  const debouncedSearch = useCallback(
-    debounce(async () => {
-      try {
-        console.log("Searching with query:", searchQuery);
-        const criteria = "title";
-        const response = await userApi.semanticSearch(
-          searchQuery,
-          selectedDepartment,
-          criteria
-        );
-        const papers =
-          response?.results?.map((result) => ({
-            id: result.paper._id,
-            title: result.paper.title_vn || result.paper.title_en || "No Title",
-            author:
-              result.paper.author
-                ?.map((a) => a.author_name_vi || a.author_name_en)
-                .join(", ") || "Unknown Author",
-            department: result.paper.department || "Unknown Department",
-            thumbnailUrl: result.paper.cover_image || "",
-            summary: result.paper.summary || "No Summary",
-            publish_date: result.paper.publish_date,
-            keywords: result.paper.keywords || [],
-            file: result.paper.file || "",
-            doi: result.paper.doi || "",
-            status: result.paper.status,
-          })) || [];
-        setResearchPapers(papers);
-        if (searchQuery.trim()) {
-          const updatedHistory = [
-            searchQuery,
-            ...searchHistory.filter((q) => q !== searchQuery),
-          ].slice(0, 5);
-          setSearchHistory(updatedHistory);
-          localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
-        }
-      } catch (error) {
-        console.error("Search error:", error);
-      }
-    }, 500),
-    [searchQuery, selectedDepartment, searchHistory]
-  );
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) {
+      message.warning("Vui lòng nhập từ khóa tìm kiếm.");
+      return;
+    }
+    setIsSearching(true); // Bật trạng thái tải
+    try {
+      console.log("Tìm kiếm với từ khóa:", searchQuery);
+      const response = await userApi.semanticSearch(
+        searchQuery,
+        selectedDepartment,
+        selectedCriteria // Use selected criteria
+      );
+      console.log("Phản hồi API tìm kiếm:", response);
 
-  useEffect(() => {
-    debouncedSearch();
-    return debouncedSearch.cancel;
-  }, [searchQuery, selectedDepartment]);
+      // Kiểm tra cấu trúc phản hồi
+      if (!response || !response.results) {
+        throw new Error("Phản hồi API không chứa dữ liệu kết quả.");
+      }
+
+      const papers = response.results.map((result) => ({
+        id: result.paper._id,
+        title:
+          result.paper.title_vn || result.paper.title_en || "Không có tiêu đề",
+        author:
+          result.paper.author
+            ?.map((a) => a.author_name_vi || a.author_name_en)
+            .join(", ") || "Tác giả không xác định",
+        department: result.paper.department || "Khoa không xác định",
+        thumbnailUrl: result.paper.cover_image || "",
+        summary: result.paper.summary || "Không có tóm tắt",
+        publish_date: result.paper.publish_date || "",
+        keywords: result.paper.keywords || [],
+        file: result.paper.file || "",
+        doi: result.paper.doi || "",
+        status: result.paper.status || "",
+      }));
+
+      setResearchPapers(papers);
+      setCurrentPage(1);
+      if (papers.length === 0) {
+        message.warning("Không tìm thấy bài báo phù hợp.");
+      } else {
+        message.success(`Tìm thấy ${papers.length} bài báo.`);
+      }
+    } catch (error) {
+      console.error("Lỗi tìm kiếm:", error);
+      message.error(
+        `Lỗi khi tìm kiếm: ${error.message || "Vui lòng thử lại."}`
+      );
+      setResearchPapers([]); // Đặt rỗng để hiển thị thông báo không tìm thấy
+    } finally {
+      setIsSearching(false); // Tắt trạng thái tải
+    }
+  }, [searchQuery, selectedDepartment, selectedCriteria]);
+
+  const handleResetSearch = useCallback(async () => {
+    setSearchQuery("");
+    setSelectedCriteria("");
+    setIsSearching(true); // Show loading state
+    try {
+      const userId = localStorage.getItem("user_id");
+      const response = userId
+        ? await userApi.getRecommendationsByUserHistory(userId)
+        : await userApi.getAllScientificPapers();
+
+      const papers = response?.data || response?.scientificPapers || [];
+      const mappedPapers = await Promise.all(
+        papers.map(async (paper) => {
+          try {
+            return await mapPaperData(paper);
+          } catch (error) {
+            console.error("Lỗi trong mapPaperData:", error, paper);
+            return null;
+          }
+        })
+      );
+
+      const validPapers = mappedPapers.filter((paper) => paper !== null);
+      const approvedPapers = validPapers.filter(
+        (paper) => paper.status === "approved"
+      );
+
+      setResearchPapers(approvedPapers);
+      setCurrentPage(1);
+      message.success("Đã reset kết quả tìm kiếm.");
+    } catch (error) {
+      console.error("Lỗi khi reset tìm kiếm:", error);
+      message.error("Lỗi khi reset tìm kiếm. Vui lòng thử lại.");
+    } finally {
+      setIsSearching(false); // Hide loading state
+    }
+  }, [mapPaperData]);
 
   const isPaperInCollection = async (userId, paperId) => {
     if (!userId || !paperId) {
-      console.error("Error: userId or paperId is undefined.");
+      console.error("Lỗi: userId hoặc paperId không xác định.");
       return false;
     }
     try {
@@ -424,7 +535,7 @@ const HomePage = () => {
       return response.exists;
     } catch (error) {
       console.error(
-        `Error checking paper in collection for paper ${paperId}:`,
+        `Lỗi khi kiểm tra bài báo trong bộ sưu tập cho bài ${paperId}:`,
         error
       );
       return false;
@@ -435,7 +546,7 @@ const HomePage = () => {
     const checkArchivedPapers = async () => {
       const userId = localStorage.getItem("user_id");
       if (!userId) {
-        console.error("Error: userId is undefined.");
+        console.error("Lỗi: userId không xác định.");
         return;
       }
       try {
@@ -454,7 +565,7 @@ const HomePage = () => {
             .map((status) => status.paperId)
         );
       } catch (error) {
-        console.error("Error checking archived papers:", error);
+        console.error("Lỗi khi kiểm tra bài báo lưu trữ:", error);
       }
     };
 
@@ -476,7 +587,7 @@ const HomePage = () => {
       );
 
       if (!collection || !collection._id) {
-        console.error("Collection not found for paper ID:", paperId);
+        console.error("Không tìm thấy bộ sưu tập cho bài báo ID:", paperId);
         message.error("Không tìm thấy danh mục chứa bài báo này.");
         return;
       }
@@ -506,7 +617,7 @@ const HomePage = () => {
 
       message.success("Bài nghiên cứu đã được xóa khỏi danh mục lưu trữ!");
     } catch (error) {
-      console.error("Error removing paper from collection:", error);
+      console.error("Lỗi khi xóa bài nghiên cứu khỏi bộ sưu tập:", error);
       message.error("Lỗi khi xóa bài nghiên cứu khỏi danh mục.");
     }
   };
@@ -529,7 +640,7 @@ const HomePage = () => {
       setCollections(userCollections);
       setCategories(userCollections.map((collection) => collection.name));
     } catch (error) {
-      console.error("Error fetching collections:", error);
+      console.error("Lỗi khi lấy danh mục:", error);
     }
   };
 
@@ -565,7 +676,7 @@ const HomePage = () => {
         !response.collection._id ||
         !response.collection.name
       ) {
-        throw new Error("API response is missing essential fields.");
+        throw new Error("Phản hồi API thiếu các trường cần thiết.");
       }
 
       const newCollection = response.collection;
@@ -597,22 +708,22 @@ const HomePage = () => {
           "Danh mục với tên này đã tồn tại. Vui lòng chọn tên khác."
         );
       } else {
-        console.error("Error creating collection:", error);
+        console.error("Lỗi khi tạo danh mục:", error);
         message.error(error.message || "Lỗi kết nối đến server");
       }
     }
   };
 
   const handleAddPaperToCollection = async (category) => {
-    console.log("handleAddPaperToCollection called");
-    console.log("Selected category:", category);
+    console.log("handleAddPaperToCollection được gọi");
+    console.log("Danh mục được chọn:", category);
 
     if (!category) {
       message.error("Vui lòng chọn danh mục trước khi lưu.");
       return;
     }
     if (!selectedPaper || !selectedPaper.id) {
-      console.log("Selected paper:", selectedPaper);
+      console.log("Bài báo được chọn:", selectedPaper);
       message.error("Không tìm thấy bài nghiên cứu để lưu.");
       return;
     }
@@ -651,16 +762,16 @@ const HomePage = () => {
         response &&
         response.message === "Paper already exists in the collection."
       ) {
-        console.warn("Paper already exists in the collection:", response);
+        console.warn("Bài báo đã tồn tại trong bộ sưu tập:", response);
         message.warning("Bài nghiên cứu đã tồn tại trong danh mục này.");
       } else {
         const errorMessage =
           response?.message || "API không trả về kết quả thành công.";
-        console.error("Error from API:", errorMessage);
+        console.error("Lỗi từ API:", errorMessage);
         message.error(errorMessage);
       }
     } catch (error) {
-      console.error("Error adding paper to collection:", error);
+      console.error("Lỗi khi thêm bài nghiên cứu vào danh mục:", error);
       message.error(
         error.message || "Lỗi khi thêm bài nghiên cứu vào danh mục."
       );
@@ -669,12 +780,12 @@ const HomePage = () => {
 
   const handleCategoryChange = useCallback((e) => {
     const newCategory = e.target.value;
-    console.log("Category changed to:", newCategory);
+    console.log("Danh mục thay đổi thành:", newCategory);
     setSelectedCategory(newCategory);
   }, []);
 
   const handleOk = useCallback(() => {
-    console.log("handleOk called");
+    console.log("handleOk được gọi");
     if (newCategory.trim() && !categories.includes(newCategory)) {
       handleCreateCollection();
     } else {
@@ -693,7 +804,7 @@ const HomePage = () => {
   const PaperItem = ({ index, style, data }) => {
     const paper = data[index];
     if (!paper.id) {
-      console.error("Paper thiếu id:", paper);
+      console.error("Bài báo thiếu id:", paper);
       return null;
     }
     return (
@@ -718,13 +829,13 @@ const HomePage = () => {
               <img
                 src={paper.thumbnailUrl}
                 className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[100px] max-md:max-w-[80px] m-0 border border-gray-200"
-                alt={paper.title_vn || "No Title"}
+                alt={paper.title_vn || "Không có tiêu đề"}
               />
             </div>
             <div className="grid grid-cols-1 gap-2 w-full max-md:gap-1 max-md:overflow-hidden relative">
               <div className="flex justify-between items-start">
                 <h2 className="text-sm font-bold break-words max-w-[70%] line-clamp-2 max-md:max-w-full max-md:text-xs max-md:w-full">
-                  {paper.title || paper.title_en || "No Title"}
+                  {paper.title || paper.title_en || "Không có tiêu đề"}
                 </h2>
 
                 <div className="flex flex-col items-end text-xs text-neutral-500 max-md:text-[10px] max-md:hidden ml-2 flex-shrink-0">
@@ -732,7 +843,7 @@ const HomePage = () => {
                     <img
                       src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
                       className="object-contain w-4 aspect-square max-md:w-2"
-                      alt="Views icon"
+                      alt="Biểu tượng lượt xem"
                     />
                     <div className="text-orange-500">
                       {typeof paper.views === "number" ? paper.views : 0}
@@ -740,7 +851,7 @@ const HomePage = () => {
                     <img
                       src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
                       className="object-contain w-4 aspect-[1.2] max-md:w-2"
-                      alt="Downloads icon"
+                      alt="Biểu tượng lượt tải"
                     />
                     <div>
                       {typeof paper.downloads === "number"
@@ -751,19 +862,19 @@ const HomePage = () => {
                   <div>
                     {paper.publish_date
                       ? new Date(paper.publish_date).toLocaleDateString()
-                      : "No Date"}
+                      : "Không có ngày"}
                   </div>
                 </div>
               </div>
 
               <div className="text-sm text-sky-900 max-md:text-[10px]">
-                {paper.author || "Unknown Author"}
+                {paper.author || "Không có thông tin tác giả"}
               </div>
               <p className="text-sm text-neutral-800 break-words w-full line-clamp-2 max-md:text-[10px] max-md:line-clamp-1">
-                {paper.summary || "No Summary"}
+                {paper.summary || "Không có thông tin tóm tắt"}
               </p>
               <div className="text-sm text-sky-900 max-md:text-[10px]">
-                {paper.departmentName || "Unknown Department"}
+                {paper.departmentName || "Không có thông tin khoa"}
               </div>
               <div className="flex justify-between items-center">
                 <div className="hidden max-md:flex max-md:items-center max-md:gap-1 max-md:text-[10px] text-neutral-500">
@@ -771,7 +882,7 @@ const HomePage = () => {
                     <img
                       src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
                       className="object-contain w-3 aspect-square"
-                      alt="Views icon"
+                      alt="Biểu tượng lượt xem"
                     />
                     <div className="text-orange-500">
                       {typeof paper.views === "number" ? paper.views : 0}
@@ -781,7 +892,7 @@ const HomePage = () => {
                     <img
                       src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
                       className="object-contain w-3 aspect-[1.2]"
-                      alt="Downloads icon"
+                      alt="Biểu tượng lượt tải"
                     />
                     <div>
                       {typeof paper.downloads === "number"
@@ -792,7 +903,7 @@ const HomePage = () => {
                   <div className="ml-2">
                     {paper.publish_date
                       ? new Date(paper.publish_date).toLocaleDateString()
-                      : "No Date"}
+                      : "Không có ngày"}
                   </div>
                 </div>
                 <div className="ml-auto">
@@ -868,7 +979,7 @@ const HomePage = () => {
             <div className="flex items-center gap-2 text-gray-600 text-sm max-md:text-xs">
               <img
                 src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
-                alt="Home Icon"
+                alt="Biểu tượng Trang chủ"
                 className="w-5 h-5 max-md:w-3 max-md:h-3"
               />
               <span>Trang chủ</span>
@@ -876,74 +987,58 @@ const HomePage = () => {
               <span className="font-semibold text-sky-900">Tìm kiếm</span>
             </div>
             <div className="flex gap-4 rounded-lg items-center mt-4 mb-3 max-md:flex-col max-md:gap-1.5">
-              <select className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs">
+              <select
+                className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
+                value={selectedCriteria}
+                onChange={(e) => setSelectedCriteria(e.target.value)} // Update selected criteria
+              >
                 <option value="">Tất cả</option>
                 <option value="title">Tiêu đề</option>
                 <option value="author">Tác giả</option>
-                <option value="publish_date">Năm xuất bản</option>
+                <option value="year">Năm xuất bản</option>
                 <option value="keywords">Từ khóa</option>
               </select>
               <div className="relative flex-1 max-md:w-full">
-                <input
-                  type="text"
-                  className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
-                  placeholder="Nhập từ khóa tìm kiếm..."
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setIsHistoryVisible(true);
-                  }}
-                  onFocus={() => setIsHistoryVisible(true)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      debouncedSearch();
-                      setIsHistoryVisible(false);
-                    }
-                  }}
-                />
-                {isHistoryVisible && searchHistory.length > 0 && (
-                  <ul className="absolute left-0 right-0 bg-white border rounded-lg shadow-md mt-1 z-10 max-h-40 overflow-y-auto max-md:text-xs">
-                    {searchHistory.map((query, index) => (
-                      <li
-                        key={index}
-                        className="flex justify-between items-center p-2 cursor-pointer hover:bg-gray-100 max-md:p-1"
-                      >
-                        <span
-                          onClick={() => {
-                            setSearchQuery(query);
-                            debouncedSearch();
-                            setIsHistoryVisible(false);
-                          }}
-                          className="flex-1 truncate"
-                        >
-                          {query}
-                        </span>
-                        <button
-                          className="text-red-500 hover:text-red-700 ml-2 max-md:ml-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const updatedHistory = searchHistory.filter(
-                              (_, i) => i !== index
-                            );
-                            setSearchHistory(updatedHistory);
-                            localStorage.setItem(
-                              "searchHistory",
-                              JSON.stringify(updatedHistory)
-                            );
-                          }}
-                        >
-                          x
-                        </button>
-                      </li>
+                {selectedCriteria === "year" ? (
+                  <select
+                    className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  >
+                    <option value="">Chọn năm</option>
+                    {availableYears.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
                     ))}
-                  </ul>
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    className="p-2 border rounded-lg w-full text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
+                    placeholder="Nhập từ khóa tìm kiếm..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleSearch();
+                      }
+                    }}
+                  />
                 )}
               </div>
               <button
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg text-sm max-md:w-full max-md:py-1.5 max-md:text-xs max-md:h-[32px] hover:bg-blue-600"
-                onClick={debouncedSearch}
+                onClick={handleSearch}
+                disabled={isSearching}
               >
-                Tìm kiếm
+                {isSearching ? "Đang tìm..." : "Tìm kiếm"}
+              </button>
+              <button
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm max-md:w-full max-md:py-1.5 max-md:text-xs max-md:h-[32px] hover:bg-gray-600"
+                onClick={handleResetSearch}
+              >
+                Làm mới
               </button>
             </div>
           </div>
@@ -951,9 +1046,13 @@ const HomePage = () => {
             <div className="flex gap-5 max-md:flex-col">
               <section className="w-[71%] max-md:w-full" ref={papersListRef}>
                 <div className="flex flex-col w-full max-md:mt-2 max-md:max-w-full">
-                  {filteredPapers.length === 0 ? (
+                  {isSearching ? (
                     <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
                       <Spin size="large" />
+                    </div>
+                  ) : filteredPapers.length === 0 ? (
+                    <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
+                      <p>Không tìm thấy bài báo nào.</p>
                     </div>
                   ) : (
                     <FixedSizeList
@@ -992,8 +1091,8 @@ const HomePage = () => {
                     </div>
 
                     <button
-                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
-                      disabled={currentPage === 1}
+                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-med:text-xs"
+                      disabled={currentPage === 1 || isSearching}
                       onClick={() =>
                         handlePageChange(Math.max(currentPage - 1, 1))
                       }
@@ -1013,6 +1112,7 @@ const HomePage = () => {
                             : "bg-white"
                         }`}
                         onClick={() => handlePageChange(i + 1)}
+                        disabled={isSearching}
                       >
                         {i + 1}
                       </button>
@@ -1022,7 +1122,8 @@ const HomePage = () => {
                       disabled={
                         currentPage ===
                           Math.ceil(filteredPapers.length / papersPerPage) ||
-                        filteredPapers.length === 0
+                        filteredPapers.length === 0 ||
+                        isSearching
                       }
                       onClick={() =>
                         handlePageChange(
@@ -1090,14 +1191,14 @@ const HomePage = () => {
                                             .slice(0, 18)
                                             .join(" ") + "..."
                                         : paper.title
-                                      : "No Title"}
+                                      : "Không có tiêu đề"}
                                   </h3>
                                   <div className="text-gray-600 text-xs pt-0.5 max-md:text-[10px]">
-                                    {paper.author || "Unknown Author"}
+                                    {paper.author || "Tác giả không xác định"}
                                   </div>
                                   <div className="text-gray-500 text-xs pb-1 max-md:text-[10px] max-md:pb-1 min-h-[20px] max-md:min-h-[16px]">
                                     {paper.departmentName ||
-                                      "Unknown Department"}
+                                      "Khoa không xác định"}
                                   </div>
                                 </div>
                               </Link>
@@ -1116,7 +1217,7 @@ const HomePage = () => {
           title="Thêm vào Lưu trữ"
           open={isModalVisible}
           onOk={handleOk}
-          onCancel={handleOk}
+          onCancel={handleCancel}
           footer={[
             <Button
               key="back"

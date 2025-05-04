@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; // Added import
+import { useNavigate } from "react-router-dom";
 import { Spin } from "antd"; // Import Spin from Ant Design
 import userApi from "../api/api";
 import Header from "./Header";
@@ -117,43 +117,66 @@ const NotificationPage = () => {
       : notifications;
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
-      <div className="flex-grow">
-        <div className="max-w-screen-xl mx-auto px-4 md:px-6 lg:px-8 py-8">
-          <Header />
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-            Thông báo
-          </h2>
-          <div className="flex space-x-4 mb-6">
+    <div className="bg-[#E7ECF0] min-h-screen">
+      <Header />
+      <div className="flex flex-col pb-7 pt-[80px] w-full md:max-w-[95%] lg:max-w-[calc(100%-100px)] xl:max-w-[calc(100%-220px)] mx-auto">
+        <div className="self-center w-full max-w-[1563px] px-2 sm:px-4 md:px-6 mt-4">
+          <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
+            <img
+              src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
+              alt="Home Icon"
+              className="w-4 h-4 sm:w-5 sm:h-5"
+            />
+            <span
+              onClick={() => navigate("/home")}
+              className="cursor-pointer hover:text-blue-500"
+            >
+              Trang chủ
+            </span>
+            <span className="text-gray-400"> &gt; </span>
+            <span className="font-semibold text-sky-900">Thông báo</span>
+          </div>
+
+          <div className="flex space-x-4 mb-6 mt-4">
             <button
-              className={`px-6 py-2 rounded-full transition-colors duration-300 ${
+              className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
                 activeTab === "all"
                   ? "bg-blue-500 text-white shadow-md"
                   : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
               }`}
               onClick={() => setActiveTab("all")}
             >
-              Tất cả
+              Tất cả ({notifications.length})
             </button>
             <button
-              className={`px-6 py-2 rounded-full transition-colors duration-300 ${
+              className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
                 activeTab === "unread"
                   ? "bg-blue-500 text-white shadow-md"
                   : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
               }`}
               onClick={() => setActiveTab("unread")}
             >
-              Chưa đọc
+              Chưa đọc (
+              {
+                notifications.filter((notification) => !notification.isread)
+                  .length
+              }
+              )
             </button>
             <button
-              className={`px-6 py-2 rounded-full transition-colors duration-300 ${
+              className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
                 activeTab === "read"
                   ? "bg-blue-500 text-white shadow-md"
                   : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
               }`}
               onClick={() => setActiveTab("read")}
             >
-              Đã đọc
+              Đã đọc (
+              {
+                notifications.filter((notification) => notification.isread)
+                  .length
+              }
+              )
             </button>
           </div>
           {loading ? (
