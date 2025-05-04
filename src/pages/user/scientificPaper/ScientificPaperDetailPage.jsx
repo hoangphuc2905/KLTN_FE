@@ -31,6 +31,8 @@ const ScientificPaperDetailPage = () => {
   const hasScrolledRef = useRef(false);
   const [scrollPercent, setScrollPercent] = useState(0);
   const currentUrl = window.location.origin + location.pathname;
+  const [downloadAttempts, setDownloadAttempts] = useState(0);
+  const [isDownloadBlocked, setIsDownloadBlocked] = useState(false);
 
   const roleMapping = {
     MainAuthor: "Tác giả chính",
@@ -411,6 +413,51 @@ const ScientificPaperDetailPage = () => {
     }
   };
 
+  const handleDownload = async () => {
+    if (isDownloadBlocked) {
+      message.error(
+        "Bạn đã tải xuống quá nhiều lần trong thời gian ngắn. Vui lòng thử lại sau."
+      );
+      return;
+    }
+
+    if (paper.fileUrl) {
+      const link = document.createElement("a");
+      link.href = paper.fileUrl;
+      link.download = paper.title
+        ? `${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
+        : "scientific_paper.pdf";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      try {
+        await userApi.createPaperDownload({
+          paper_id: id,
+          user_id: user_id,
+          user_type: user_type,
+          download_time: new Date().toISOString(),
+        });
+        message.success("Tải file thành công!");
+      } catch (error) {
+        console.error("Error logging download:", error);
+      }
+
+      setDownloadAttempts((prev) => prev + 1);
+
+      if (downloadAttempts + 1 >= 5) {
+        setIsDownloadBlocked(true);
+        setTimeout(() => {
+          setIsDownloadBlocked(false);
+          setDownloadAttempts(0);
+        }, 60000); // Reset after 1 minute
+      }
+    } else {
+      message.error("Không có file để tải về!");
+    }
+  };
+
   if (!paper) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -469,32 +516,7 @@ const ScientificPaperDetailPage = () => {
                   <div className="flex items-center gap-2">
                     <button
                       className="flex items-center gap-2 bg-[#00A3FF] text-white text-xs sm:text-sm px-2 py-1 rounded-lg w-[70px] sm:w-[80px] h-[30px] justify-center"
-                      onClick={async () => {
-                        if (paper.fileUrl) {
-                          const link = document.createElement("a");
-                          link.href = paper.fileUrl;
-                          link.download = paper.title
-                            ? `${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
-                            : "scientific_paper.pdf";
-                          link.target = "_blank";
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                          try {
-                            await userApi.createPaperDownload({
-                              paper_id: id,
-                              user_id: user_id,
-                              user_type: user_type,
-                              download_time: new Date().toISOString(),
-                            });
-                            message.success("Tải file thành công!");
-                          } catch (error) {
-                            console.error("Error logging download:", error);
-                          }
-                        } else {
-                          message.error("Không có file để tải về!");
-                        }
-                      }}
+                      onClick={handleDownload}
                     >
                       <Download className="w-4 h-4" />
                       Tải
