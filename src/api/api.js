@@ -454,10 +454,10 @@ const userApi = {
   getAllScientificPapers: async (academicYear) => {
     try {
       const response = await axios.get(`${API_URL}/scientificPapers`, {
-        params: { academicYear }, // Thêm tham số academicYear vào query string
+        params: { academicYear },
       });
 
-      return response.data; // Return only the data property
+      return response.data; 
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
