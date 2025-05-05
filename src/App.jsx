@@ -11,6 +11,7 @@ import UpdateProfilePage from "./pages/user/profile/UpdateProfilePage";
 import WorkProcessPage from "./pages/user/profile/WorkProcessPage";
 import ScientificPaperPage from "./pages/user/scientificPaper/ScientificPaperPage";
 import AddScientificPaperPage from "./pages/user/scientificPaper/AddScientificPaperPage";
+import ScientificPaperGuidePage from "./pages/user/scientificPaper/ScientificPaperGuidePage";
 import ScientificPaperDetailPage from "./pages/user/scientificPaper/ScientificPaperDetailPage";
 import StatisticsTablePage from "./pages/user/statistics/StatisticsTablePage";
 import StatisticsChartPage from "./pages/user/statistics/StatisticsChartPage";
@@ -183,6 +184,17 @@ const App = () => {
               element={
                 <ProtectedRoute roles={userRoles} path="/add-scientific-paper">
                   <AddScientificPaperPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/scientific-paper-guide"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/scientific-paper-guide"
+                >
+                  <ScientificPaperGuidePage />
                 </ProtectedRoute>
               }
             />

@@ -885,7 +885,14 @@ const AddScientificPaperPage = () => {
           <div className="flex flex-col gap-4">
             <div className="w-full relative">
               {/* Khối "Nhập thông tin" */}
-              <section className="flex flex-col bg-white rounded-lg p-3 sm:p-4 md:p-6 mb-3">
+              <section className="flex flex-col bg-white rounded-lg p-3 sm:p-4 md:p-6 mb-3 relative">
+                <Button
+                  type="link"
+                  onClick={() => navigate("/scientific-paper-guide")}
+                  className="absolute top-3 right-3 text-sky-500 hover:text-sky-700"
+                >
+                  Hướng dẫn thêm bài báo
+                </Button>
                 <h2 className="text-sm font-medium leading-none text-black uppercase mb-4">
                   Nhập thông tin
                 </h2>
