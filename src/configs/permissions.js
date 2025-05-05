@@ -18,6 +18,7 @@ const permissions = {
     "/scientific-paper/:id",
     "/admin/management/point/detail/:id",
     "/admin/management/ariticle/detail/:id",
+    "/scientific-paper-guide",
   ],
   Student: [
     "/home",
@@ -33,6 +34,7 @@ const permissions = {
     "/notifications",
     "/storage-scientific-paper",
     "/scientific-paper/edit/:id",
+    "/scientific-paper-guide",
   ],
   lecturer: [
     "/home",
@@ -56,6 +58,7 @@ const permissions = {
     "/admin/management/point/detail/:id",
     "/scientific-paper/edit/:id",
     "/management/table",
+    "/scientific-paper-guide",
   ],
   head_of_department: [
     "/management/chart",
@@ -73,6 +76,7 @@ const permissions = {
     "/update-profile",
     "/notifications",
     "/management/table",
+    "/scientific-paper-guide",
   ],
   deputy_head_of_department: [
     "/management/chart",
@@ -90,6 +94,7 @@ const permissions = {
     "/update-profile",
     "/notifications",
     "/management/table",
+    "/scientific-paper-guide",
   ],
   department_in_charge: [
     "/management/chart",
@@ -108,6 +113,7 @@ const permissions = {
     "/notifications",
     "/management/table",
     "/admin/management/user-approval",
+    "/scientific-paper-guide",
   ],
 };
 
