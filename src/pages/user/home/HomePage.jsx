@@ -66,6 +66,9 @@ const HomePage = () => {
   const [isRemoveModalVisible, setIsRemoveModalVisible] = useState(false);
   const [paperToRemove, setPaperToRemove] = useState(null);
   const [availableYears, setAvailableYears] = useState([]); // State to store available years
+  const [isLoadingRecent, setIsLoadingRecent] = useState(false); // Loading state for recent papers
+  const [isLoadingFeatured, setIsLoadingFeatured] = useState(false); // Loading state for featured papers
+  const [isLoadingPapers, setIsLoadingPapers] = useState(false); // Loading state for all papers
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -170,6 +173,10 @@ const HomePage = () => {
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
+        setIsLoadingRecent(true);
+        setIsLoadingFeatured(true);
+        setIsLoadingPapers(true);
+
         const userId = localStorage.getItem("user_id");
 
         const storedDepartments = localStorage.getItem("departments");
@@ -294,9 +301,17 @@ const HomePage = () => {
 
         setResearchPapers(approvedPapers);
         setCollections(collectionsResponse || []);
+
+        setIsLoadingRecent(false);
+        setIsLoadingFeatured(false);
+        setIsLoadingPapers(false);
       } catch (error) {
         console.error("Lỗi khi tải dữ liệu ban đầu:", error);
         message.error("Lỗi khi tải dữ liệu. Vui lòng thử lại sau.");
+
+        setIsLoadingRecent(false);
+        setIsLoadingFeatured(false);
+        setIsLoadingPapers(false);
       }
     };
 
@@ -1046,7 +1061,7 @@ const HomePage = () => {
             <div className="flex gap-5 max-md:flex-col">
               <section className="w-[71%] max-md:w-full" ref={papersListRef}>
                 <div className="flex flex-col w-full max-md:mt-2 max-md:max-w-full">
-                  {isSearching ? (
+                  {isLoadingPapers ? (
                     <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
                       <Spin size="large" />
                     </div>
@@ -1165,7 +1180,16 @@ const HomePage = () => {
                       </button>
                     </div>
                     <div className="flex flex-col gap-4 mt-5 max-md:gap-3 max-md:mt-3">
-                      {Array.isArray(displayedPapers) &&
+                      {activeTab === "recent" && isLoadingRecent ? (
+                        <div className="flex justify-center items-center min-h-[200px]">
+                          <Spin size="large" />
+                        </div>
+                      ) : activeTab === "featured" && isLoadingFeatured ? (
+                        <div className="flex justify-center items-center min-h-[200px]">
+                          <Spin size="large" />
+                        </div>
+                      ) : (
+                        Array.isArray(displayedPapers) &&
                         displayedPapers.map((paper, index) => (
                           <article
                             key={`paper-${index}`}
@@ -1204,7 +1228,8 @@ const HomePage = () => {
                               </Link>
                             </div>
                           </article>
-                        ))}
+                        ))
+                      )}
                     </div>
                   </aside>
                 </section>
