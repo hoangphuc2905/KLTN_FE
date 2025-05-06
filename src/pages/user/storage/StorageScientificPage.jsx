@@ -7,7 +7,7 @@ import {
   StepForwardOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
-import { Modal, Button, Input, Dropdown, Menu, message } from "antd";
+import { Modal, Button, Input, Dropdown, Menu, message, Spin } from "antd";
 import { useSwipeable } from "react-swipeable";
 import userApi from "../../../api/api";
 
@@ -53,6 +53,7 @@ const StorageScientificPage = () => {
   const [editCategoryName, setEditCategoryName] = useState("");
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [editCategoryError, setEditCategoryError] = useState(false); // Add error state
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -256,6 +257,7 @@ const StorageScientificPage = () => {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      setIsLoading(true);
       try {
         const fetchedCategories = await userApi.getCollectionsByUserId(user_id);
         setCategories(
@@ -285,6 +287,8 @@ const StorageScientificPage = () => {
         );
       } catch (error) {
         console.error("Failed to fetch categories:", error);
+      } finally {
+        setIsLoading(false); // Set loading to false after fetching
       }
     };
 
@@ -396,7 +400,11 @@ const StorageScientificPage = () => {
                   ref={categoryScrollRefs[selectedCategory]}
                   style={{ overflowX: "hidden" }}
                 >
-                  {currentPapers.length > 0 ? (
+                  {isLoading ? (
+                    <div className="flex justify-center items-center min-h-[300px]">
+                      <Spin size="large" />
+                    </div>
+                  ) : currentPapers.length > 0 ? (
                     currentPapers.map((paper, index) => (
                       <div
                         key={paper.id}
