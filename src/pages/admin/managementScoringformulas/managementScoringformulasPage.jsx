@@ -10,6 +10,7 @@ import {
   Input,
   DatePicker,
   Table,
+  Spin,
 } from "antd";
 import { MathJaxContext } from "better-react-mathjax";
 import EditScoringFormulaPage from "./EditScoringFormulaPage";
@@ -243,6 +244,7 @@ const ManagementFormulas = () => {
   const [pendingFormulaData, setPendingFormulaData] = useState(null); // Store formula data temporarily
   const [overlappingFormula, setOverlappingFormula] = useState(null); // Store overlapping formula details
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const filterRef = useRef(null);
 
@@ -452,6 +454,7 @@ const ManagementFormulas = () => {
 
   useEffect(() => {
     const fetchAllFormulas = async () => {
+      setIsLoading(true);
       try {
         const response = await userApi.getAllFormula();
         const formulasWithNames = await attachAttributeNames(response || []);
@@ -459,6 +462,8 @@ const ManagementFormulas = () => {
       } catch (error) {
         console.error("Error fetching all formulas:", error);
         setRecentFormulas([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -587,7 +592,7 @@ const ManagementFormulas = () => {
                   alt="Home Icon"
                   className="w-5 h-5"
                 />
-                
+
                 <span
                   onClick={() => navigate("/home")}
                   className="cursor-pointer hover:text-blue-500"
@@ -764,12 +769,18 @@ const ManagementFormulas = () => {
                         )}
                       </div>
                     </div>
-                    <Table
-                      columns={columns}
-                      dataSource={filteredFormulas}
-                      scroll={{ x: "max-content" }}
-                      pagination={{ pageSize: 5 }}
-                    />
+                    {isLoading ? (
+                      <div className="flex justify-center items-center min-h-[300px]">
+                        <Spin size="large" />
+                      </div>
+                    ) : (
+                      <Table
+                        columns={columns}
+                        dataSource={filteredFormulas}
+                        scroll={{ x: "max-content" }}
+                        pagination={{ pageSize: 5 }}
+                      />
+                    )}
                   </div>
                 </div>
               </div>

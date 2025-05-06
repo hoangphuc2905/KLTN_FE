@@ -9,6 +9,7 @@ import {
   Tooltip,
   Dropdown,
   Divider,
+  Spin,
 } from "antd";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
@@ -46,6 +47,7 @@ const ManagementUsers = () => {
   const [userCurrentPage, setUserCurrentPage] = useState(1);
   const [lecturerCurrentPage, setLecturerCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -823,6 +825,7 @@ const ManagementUsers = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setIsLoading(true); // Bắt đầu loading
       try {
         if (userRole === "admin") {
           const lecturersData = await userApi.getAllLecturers();
@@ -848,6 +851,8 @@ const ManagementUsers = () => {
         }
       } catch (error) {
         console.error("Error fetching data:", error);
+      } finally {
+        setIsLoading(false); // Kết thúc loading bất kể thành công hay thất bại
       }
     };
 
@@ -1366,48 +1371,54 @@ const ManagementUsers = () => {
                 </button>
               </div>
               <div className="overflow-x-auto">
-                <Table
-                  columns={filteredColumns}
-                  dataSource={filteredUsers}
-                  pagination={{
-                    current:
-                      activeTab === "user"
-                        ? userCurrentPage
-                        : lecturerCurrentPage,
-                    pageSize: itemsPerPage,
-                    total: filteredUsers.length,
-                    onChange: (page) =>
-                      activeTab === "user"
-                        ? setUserCurrentPage(page)
-                        : setLecturerCurrentPage(page),
-                  }}
-                  rowKey={(record) =>
-                    record._id || record.student_id || record.lecturer_id
-                  }
-                  className="text-sm"
-                  scroll={{
-                    x: columns.reduce(
-                      (total, col) => total + (col.width || 0),
-                      0
-                    ),
-                  }}
-                  locale={{
-                    emptyText: (
-                      <div className="text-center py-8 text-gray-500">
-                        Không có người dùng phù hợp
-                      </div>
-                    ),
-                  }}
-                  onChange={(pagination, filters, sorter) => {
-                    if (sorter.field) {
-                      setSortKey(sorter.field);
-                      setSortOrder(sorter.order);
-                    } else {
-                      setSortKey(null);
-                      setSortOrder(null);
+                {isLoading ? (
+                  <div className="flex justify-center items-center min-h-[300px]">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <Table
+                    columns={filteredColumns}
+                    dataSource={filteredUsers}
+                    pagination={{
+                      current:
+                        activeTab === "user"
+                          ? userCurrentPage
+                          : lecturerCurrentPage,
+                      pageSize: itemsPerPage,
+                      total: filteredUsers.length,
+                      onChange: (page) =>
+                        activeTab === "user"
+                          ? setUserCurrentPage(page)
+                          : setLecturerCurrentPage(page),
+                    }}
+                    rowKey={(record) =>
+                      record._id || record.student_id || record.lecturer_id
                     }
-                  }}
-                />
+                    className="text-sm"
+                    scroll={{
+                      x: columns.reduce(
+                        (total, col) => total + (col.width || 0),
+                        0
+                      ),
+                    }}
+                    locale={{
+                      emptyText: (
+                        <div className="text-center py-8 text-gray-500">
+                          Không có người dùng phù hợp
+                        </div>
+                      ),
+                    }}
+                    onChange={(pagination, filters, sorter) => {
+                      if (sorter.field) {
+                        setSortKey(sorter.field);
+                        setSortOrder(sorter.order);
+                      } else {
+                        setSortKey(null);
+                        setSortOrder(null);
+                      }
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
