@@ -614,10 +614,31 @@ const ManagementDepartmentChart = () => {
         ) {
           const labels = Object.keys(response.data);
           const data = Object.values(response.data);
+
+          // Tạo mảng màu có nhiều hơn 5 màu và đảm bảo mỗi màu là duy nhất
+          const colors = [
+            "#00A3FF",
+            "#7239EA",
+            "#F1416C",
+            "#FF0000",
+            "#FFC700",
+            "#50B83C",
+            "#9C6ADE",
+            "#47C1BF",
+            "#5C6AC4",
+            "#F49342",
+            "#DE3618",
+            "#00848E",
+            "#8A8A8A",
+            "#006EFF",
+            "#9C27B0",
+          ];
+
+          // Sử dụng các màu khác nhau cho mỗi lĩnh vực
           const backgroundColor = labels.map(
-            (_, index) =>
-              ["#00A3FF", "#7239EA", "#F1416C", "#FF0000", "#FFC700"][index % 5]
+            (_, index) => colors[index % colors.length]
           );
+
           const formattedLabels =
             fieldChartType === "bar"
               ? labels.map((label) =>
