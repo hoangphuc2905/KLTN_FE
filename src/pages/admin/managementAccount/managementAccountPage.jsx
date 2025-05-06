@@ -1842,9 +1842,35 @@ const ManagementUsers = () => {
                 {showColumnFilter && (
                   <div
                     ref={columnFilterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
+                    className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                   >
-                    {/* Column selection dropdown content will go here */}
+                    <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
+                      <Checkbox
+                        indeterminate={
+                          visibleColumns.length > 0 &&
+                          visibleColumns.length < columns.length
+                        }
+                        onChange={(e) => {
+                          setVisibleColumns(
+                            e.target.checked
+                              ? columns.map((col) => col.key)
+                              : []
+                          );
+                        }}
+                        checked={visibleColumns.length === columns.length}
+                      >
+                        Chọn tất cả
+                      </Checkbox>
+                      <div className="max-h-[300px] overflow-y-auto pr-1 mt-2">
+                        <Checkbox.Group
+                          options={columnOptions}
+                          value={visibleColumns}
+                          onChange={handleColumnVisibilityChange}
+                          className="flex flex-col gap-2"
+                        />
+                      </div>
+                      <Divider className="mt-4" />
+                    </div>
                   </div>
                 )}
               </div>
@@ -2028,38 +2054,6 @@ const ManagementUsers = () => {
           scroll={{ x: true }}
         />
       </Modal>
-      {showColumnFilter && (
-        <div
-          ref={columnFilterRef}
-          className="absolute top-full right-0 mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
-        >
-          <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
-            <Checkbox
-              indeterminate={
-                visibleColumns.length > 0 &&
-                visibleColumns.length < columns.length
-              }
-              onChange={(e) => {
-                setVisibleColumns(
-                  e.target.checked ? columns.map((col) => col.key) : []
-                );
-              }}
-              checked={visibleColumns.length === columns.length}
-            >
-              Chọn tất cả
-            </Checkbox>
-            <div className="max-h-[300px] overflow-y-auto pr-1 mt-2">
-              <Checkbox.Group
-                options={columnOptions}
-                value={visibleColumns}
-                onChange={handleColumnVisibilityChange}
-                className="flex flex-col gap-2"
-              />
-            </div>
-            <Divider className="mt-4" />
-          </div>
-        </div>
-      )}
       <Footer />
     </div>
   );
