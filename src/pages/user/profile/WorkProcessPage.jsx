@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Table, Button } from "antd";
+import { Table, Button, Spin } from "antd";
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
@@ -10,6 +10,7 @@ const WorkProcessPage = () => {
   const [workProcesses, setWorkProcesses] = useState([]);
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const fetchWorkProcesses = async () => {
     const user_id = localStorage.getItem("user_id");
@@ -17,7 +18,7 @@ const WorkProcessPage = () => {
       console.error("Thiếu user_id");
       return;
     }
-
+    setIsLoading(true); // Bắt đầu loading
     try {
       const userWorks = await userApi.getWorkProcesses(user_id);
       const workProcessesWithDetails = await Promise.all(
@@ -33,6 +34,8 @@ const WorkProcessPage = () => {
       setWorkProcesses(workProcessesWithDetails);
     } catch (error) {
       console.error("Lỗi khi lấy thông tin quá trình công tác:", error);
+    } finally {
+      setIsLoading(false); // Kết thúc loading
     }
   };
 
@@ -101,13 +104,19 @@ const WorkProcessPage = () => {
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
-            <Table
-              dataSource={dataSource}
-              columns={columns}
-              pagination={false}
-              bordered={false}
-              scroll={{ x: 320 }}
-            />
+            {isLoading ? (
+              <div className="flex justify-center items-center min-h-[300px]">
+                <Spin size="large" />
+              </div>
+            ) : (
+              <Table
+                dataSource={dataSource}
+                columns={columns}
+                pagination={false}
+                bordered={false}
+                scroll={{ x: 320 }}
+              />
+            )}
           </div>
         </div>
       </div>

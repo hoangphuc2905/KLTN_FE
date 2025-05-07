@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Select, Table, Checkbox, Divider, Tooltip } from "antd";
+import { Input, Select, Table, Checkbox, Divider, Tooltip, Spin } from "antd";
 import userApi from "../../../api/api";
 import { update } from "lodash";
 
@@ -447,9 +447,11 @@ const ManagementAriticle = () => {
   const [notes, setNotes] = useState({});
   const [filteredCounts, setFilteredCounts] = useState(null); // Add state for filtered counts
   const [pageSize, setPageSize] = useState(10); // Thêm state cho pageSize, mặc định là 10
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   useEffect(() => {
     const fetchPapers = async () => {
+      setIsLoading(true); // Bắt đầu loading
       try {
         let fetchedPapers = [];
         if (userRole === "admin") {
@@ -478,6 +480,8 @@ const ManagementAriticle = () => {
       } catch (error) {
         console.error("Error fetching papers:", error);
         setPapers([]);
+      } finally {
+        setIsLoading(false); // Kết thúc loading
       }
     };
 
@@ -1575,134 +1579,140 @@ const ManagementAriticle = () => {
                     position: "relative",
                   }}
                 >
-                  <Table
-                    columns={
-                      newColumns.length > 0
-                        ? newColumns
-                        : [
-                            {
-                              dataIndex: "placeholder",
-                              key: "placeholder",
-                              render: () =>
-                                "Please select at least one column to display",
-                            },
-                          ]
-                    }
-                    dataSource={newColumns.length > 0 ? filteredPapers : []}
-                    pagination={{
-                      current: currentPages[activeTab],
-                      pageSize: pageSize,
-                      total: filteredPapers.length,
-                      onChange: (page) => {
-                        setCurrentPages((prev) => ({
-                          ...prev,
-                          [activeTab]: page,
-                        }));
-                      },
-                      showSizeChanger: false,
-                      position: ["bottomRight"],
-                      showTotal: (total, range) => (
-                        <div className="flex items-center">
+                  {isLoading ? (
+                    <div className="flex justify-center items-center min-h-[300px]">
+                      <Spin size="large" />
+                    </div>
+                  ) : (
+                    <Table
+                      columns={
+                        newColumns.length > 0
+                          ? newColumns
+                          : [
+                              {
+                                dataIndex: "placeholder",
+                                key: "placeholder",
+                                render: () =>
+                                  "Please select at least one column to display",
+                              },
+                            ]
+                      }
+                      dataSource={newColumns.length > 0 ? filteredPapers : []}
+                      pagination={{
+                        current: currentPages[activeTab],
+                        pageSize: pageSize,
+                        total: filteredPapers.length,
+                        onChange: (page) => {
+                          setCurrentPages((prev) => ({
+                            ...prev,
+                            [activeTab]: page,
+                          }));
+                        },
+                        showSizeChanger: false,
+                        position: ["bottomRight"],
+                        showTotal: (total, range) => (
                           <div className="flex items-center">
-                            <Select
-                              value={pageSize}
-                              onChange={handlePageSizeChange}
-                              style={{ width: 120, marginRight: 8 }}
-                              dropdownRender={(menu) => (
-                                <div>
-                                  {menu}
-                                  <Divider style={{ margin: "4px 0" }} />
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      flexWrap: "nowrap",
-                                      padding: "8px",
-                                    }}
-                                  >
-                                    <Input
-                                      size="small"
-                                      type="number"
-                                      min={1}
-                                      placeholder="Số tùy chọn"
-                                      onChange={(e) => {
-                                        const value = parseInt(
-                                          e.target.value,
-                                          10
-                                        );
-                                        if (!isNaN(value) && value > 0) {
-                                          setPageSize(value);
-                                          setCurrentPages((prev) => ({
-                                            ...prev,
-                                            [activeTab]: 1,
-                                          }));
-                                        }
+                            <div className="flex items-center">
+                              <Select
+                                value={pageSize}
+                                onChange={handlePageSizeChange}
+                                style={{ width: 120, marginRight: 8 }}
+                                dropdownRender={(menu) => (
+                                  <div>
+                                    {menu}
+                                    <Divider style={{ margin: "4px 0" }} />
+                                    <div
+                                      style={{
+                                        display: "flex",
+                                        flexWrap: "nowrap",
+                                        padding: "8px",
                                       }}
-                                      onPressEnter={(e) => {
-                                        const value = parseInt(
-                                          e.target.value,
-                                          10
-                                        );
-                                        if (!isNaN(value) && value > 0) {
-                                          setPageSize(value);
-                                          setCurrentPages((prev) => ({
-                                            ...prev,
-                                            [activeTab]: 1,
-                                          }));
-                                          // Đóng dropdown sau khi đã nhập giá trị
-                                          const selectElement =
-                                            document.querySelector(
-                                              ".ant-select-dropdown-hidden"
-                                            );
-                                          if (selectElement) {
-                                            selectElement.click(); // Giả lập việc click bên ngoài để đóng dropdown
+                                    >
+                                      <Input
+                                        size="small"
+                                        type="number"
+                                        min={1}
+                                        placeholder="Số tùy chọn"
+                                        onChange={(e) => {
+                                          const value = parseInt(
+                                            e.target.value,
+                                            10
+                                          );
+                                          if (!isNaN(value) && value > 0) {
+                                            setPageSize(value);
+                                            setCurrentPages((prev) => ({
+                                              ...prev,
+                                              [activeTab]: 1,
+                                            }));
                                           }
-                                        }
-                                      }}
-                                      style={{ flex: 1 }}
-                                    />
+                                        }}
+                                        onPressEnter={(e) => {
+                                          const value = parseInt(
+                                            e.target.value,
+                                            10
+                                          );
+                                          if (!isNaN(value) && value > 0) {
+                                            setPageSize(value);
+                                            setCurrentPages((prev) => ({
+                                              ...prev,
+                                              [activeTab]: 1,
+                                            }));
+                                            // Đóng dropdown sau khi đã nhập giá trị
+                                            const selectElement =
+                                              document.querySelector(
+                                                ".ant-select-dropdown-hidden"
+                                              );
+                                            if (selectElement) {
+                                              selectElement.click(); // Giả lập việc click bên ngoài để đóng dropdown
+                                            }
+                                          }
+                                        }}
+                                        style={{ flex: 1 }}
+                                      />
+                                    </div>
                                   </div>
-                                </div>
-                              )}
-                              options={[
-                                { value: 10, label: "10 / trang" },
-                                { value: 20, label: "20 / trang" },
-                                { value: 30, label: "30 / trang" },
-                                { value: 50, label: "50 / trang" },
-                                { value: 100, label: "100 / trang" },
-                                ...(![10, 20, 30, 50, 100].includes(pageSize)
-                                  ? [
-                                      {
-                                        value: pageSize,
-                                        label: `${pageSize} / trang`,
-                                      },
-                                    ]
-                                  : []),
-                              ]}
-                            />
-                            <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                                )}
+                                options={[
+                                  { value: 10, label: "10 / trang" },
+                                  { value: 20, label: "20 / trang" },
+                                  { value: 30, label: "30 / trang" },
+                                  { value: 50, label: "50 / trang" },
+                                  { value: 100, label: "100 / trang" },
+                                  ...(![10, 20, 30, 50, 100].includes(pageSize)
+                                    ? [
+                                        {
+                                          value: pageSize,
+                                          label: `${pageSize} / trang`,
+                                        },
+                                      ]
+                                    : []),
+                                ]}
+                              />
+                              <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                            </div>
                           </div>
-                        </div>
-                      ),
-                    }}
-                    rowKey={(record) => record._id || record.key}
-                    className="text-sm"
-                    scroll={{
-                      x: 1265,
-                    }}
-                    onRow={(record) => ({
-                      onClick: () =>
-                        newColumns.length > 0 && handleRowClick(record),
-                      style: {
-                        cursor: newColumns.length > 0 ? "pointer" : "default",
-                      },
-                    })}
-                    locale={{
-                      emptyText: <div style={{ height: "35px" }}></div>,
-                    }}
-                    onChange={(pagination, filters, sorter) => {
-                      setSortedInfo(sorter);
-                    }}
-                  />
+                        ),
+                      }}
+                      rowKey={(record) => record._id || record.key}
+                      className="text-sm"
+                      scroll={{
+                        x: 1265,
+                      }}
+                      onRow={(record) => ({
+                        onClick: () =>
+                          newColumns.length > 0 && handleRowClick(record),
+                        style: {
+                          cursor: newColumns.length > 0 ? "pointer" : "default",
+                        },
+                      })}
+                      locale={{
+                        emptyText: <div style={{ height: "35px" }}></div>,
+                      }}
+                      onChange={(pagination, filters, sorter) => {
+                        setSortedInfo(sorter);
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             </div>

@@ -5,7 +5,7 @@ import Footer from "../../../components/Footer";
 import { useNavigate, Link } from "react-router-dom";
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import { Pagination } from "antd";
+import { Pagination, Spin } from "antd";
 
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
@@ -24,6 +24,7 @@ const ProfilePage = () => {
   const chartRef = useRef(null);
   const navigate = useNavigate();
   const [academicYears, setAcademicYears] = useState([]); // State for academic years
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const formatViewDate = (viewDate) => {
     const now = new Date();
@@ -90,7 +91,7 @@ const ProfilePage = () => {
     const fetchRecentlyViewedPapers = async () => {
       const userId = localStorage.getItem("user_id");
       if (!userId) return;
-
+      setIsLoading(true);
       try {
         const response = await userApi.getAllPaperViewsByUser(userId);
         const formattedPapers = response.map((item) => ({
@@ -105,6 +106,8 @@ const ProfilePage = () => {
         setRecentlyViewedPapers(formattedPapers);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu bài báo đã xem gần đây:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -115,7 +118,7 @@ const ProfilePage = () => {
     const fetchRecentlyDownloadedPapers = async () => {
       const userId = localStorage.getItem("user_id");
       if (!userId) return;
-
+      setIsLoading(true);
       try {
         const response = await userApi.getAllPaperDownloadsByUser(userId);
         const formattedPapers = (response || []).map((item) => ({
@@ -135,6 +138,8 @@ const ProfilePage = () => {
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu bài báo đã tải gần đây:", error);
         setRecentlyDownloadedPapers([]);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -556,7 +561,11 @@ const ProfilePage = () => {
                         </div>
                         {/* Content */}
                         {activeTab === "viewed" &&
-                          (recentlyViewedPapers.length > 0 ? (
+                          (isLoading ? (
+                            <div className="flex justify-center items-center min-h-[300px]">
+                              <Spin size="large" />
+                            </div>
+                          ) : recentlyViewedPapers.length > 0 ? (
                             getPaginatedData(recentlyViewedPapers).map(
                               (paper, index) => (
                                 <Link
@@ -602,7 +611,11 @@ const ProfilePage = () => {
                             </div>
                           ))}
                         {activeTab === "downloaded" &&
-                          (recentlyDownloadedPapers.length > 0 ? (
+                          (isLoading ? (
+                            <div className="flex justify-center items-center min-h-[300px]">
+                              <Spin size="large" />
+                            </div>
+                          ) : recentlyDownloadedPapers.length > 0 ? (
                             getPaginatedData(recentlyDownloadedPapers).map(
                               (paper, index) => (
                                 <Link

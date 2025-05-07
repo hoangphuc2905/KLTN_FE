@@ -231,9 +231,28 @@ const Dashboard = () => {
         if (response && response.data) {
           const labels = Object.keys(response.data);
           const data = Object.values(response.data);
+
+          // Sử dụng mảng màu với nhiều màu khác nhau
+          const colors = [
+            "#00A3FF",
+            "#7239EA",
+            "#F1416C",
+            "#FF0000",
+            "#FFC700",
+            "#50B83C",
+            "#9C6ADE",
+            "#47C1BF",
+            "#5C6AC4",
+            "#F49342",
+            "#DE3618",
+            "#00848E",
+            "#8A8A8A",
+            "#006EFF",
+            "#9C27B0",
+          ];
+
           const backgroundColor = labels.map(
-            (_, index) =>
-              ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][index % 5]
+            (_, index) => colors[index % colors.length]
           );
 
           setTypeChartData({

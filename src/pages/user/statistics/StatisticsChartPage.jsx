@@ -251,6 +251,11 @@ const StatisticsChartPage = () => {
           "#F1416C",
           "#39eaa3",
           "#FFB700",
+          "#50B83C",
+          "#9C6ADE",
+          "#47C1BF",
+          "#5C6AC4",
+          "#F49342",
         ],
         borderWidth: 0,
         borderRadius: 6,
@@ -280,6 +285,11 @@ const StatisticsChartPage = () => {
           "#F1416C",
           "#FFC700",
           "#856666",
+          "#50B83C",
+          "#9C6ADE",
+          "#47C1BF",
+          "#5C6AC4",
+          "#F49342",
         ],
         borderWidth: 0,
       },
@@ -749,6 +759,11 @@ const StatisticsChartPage = () => {
                     "#F1416C",
                     "#39eaa3",
                     "#FFB700",
+                    "#50B83C",
+                    "#9C6ADE",
+                    "#47C1BF",
+                    "#5C6AC4",
+                    "#F49342",
                   ],
                   borderWidth: 0,
                   borderRadius: 6,
@@ -838,6 +853,11 @@ const StatisticsChartPage = () => {
                     "#F1416C",
                     "#FFC700",
                     "#856666",
+                    "#50B83C",
+                    "#9C6ADE",
+                    "#47C1BF",
+                    "#5C6AC4",
+                    "#F49342",
                   ],
                   borderWidth: 0,
                 },
@@ -1148,9 +1168,18 @@ const StatisticsChartPage = () => {
               ? Object.values(typeCounts)
                   .map(
                     (_, index) =>
-                      ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
-                        index % 5
-                      ]
+                      [
+                        "#00A3FF",
+                        "#7239EA",
+                        "#F1416C",
+                        "#39eaa3",
+                        "#FF0000",
+                        "#FFC700",
+                        "#50B83C",
+                        "#9C6ADE",
+                        "#47C1BF",
+                        "#5C6AC4",
+                      ][index % 10]
                   )
                   .filter((_, index) => Object.values(typeCounts)[index] > 0)
               : Object.keys(typeCounts)
@@ -1161,9 +1190,18 @@ const StatisticsChartPage = () => {
                   )
                   .map(
                     (_, index) =>
-                      ["#00A3FF", "#7239EA", "#F1416C", "#7239EA", "#FF0000"][
-                        index % 5
-                      ]
+                      [
+                        "#00A3FF",
+                        "#7239EA",
+                        "#F1416C",
+                        "#39eaa3",
+                        "#FF0000",
+                        "#FFC700",
+                        "#50B83C",
+                        "#9C6ADE",
+                        "#47C1BF",
+                        "#5C6AC4",
+                      ][index % 10]
                   )
             : [],
         borderWidth: 0,

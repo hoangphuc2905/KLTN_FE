@@ -1,7 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Table, Checkbox, Tooltip, Modal, Space, Select } from "antd";
+import {
+  Input,
+  Table,
+  Checkbox,
+  Tooltip,
+  Modal,
+  Space,
+  Select,
+  Spin,
+} from "antd";
 import { saveAs } from "file-saver";
 import ExcelJS from "exceljs";
 import { useNavigate } from "react-router-dom";
@@ -45,6 +54,7 @@ const StatisticsPointPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
   const [sortedInfo, setSortedInfo] = useState({});
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -105,6 +115,7 @@ const StatisticsPointPage = () => {
 
   useEffect(() => {
     const fetchPapers = async () => {
+      setIsLoading(true); // Bắt đầu loading
       try {
         const user_id = localStorage.getItem("user_id");
         if (!user_id) {
@@ -187,6 +198,8 @@ const StatisticsPointPage = () => {
       } catch (error) {
         console.error("Error fetching scientific papers:", error);
         setPapers([]);
+      } finally {
+        setIsLoading(false); // Kết thúc loading
       }
     };
 
@@ -1156,55 +1169,60 @@ const StatisticsPointPage = () => {
                   </div>
                 )}
               </div>
-
-              <Table
-                columns={columns}
-                dataSource={filteredPapers.map((paper, index) => ({
-                  ...paper,
-                  key: paper.id || index,
-                }))}
-                pagination={{
-                  current: currentPage,
-                  pageSize: pageSize,
-                  total: filteredPapers.length,
-                  onChange: (page) => setCurrentPage(page),
-                  showSizeChanger: false,
-                  showTotal: (total, range) => (
-                    <div className="flex items-center">
-                      <Select
-                        value={pageSize}
-                        onChange={handlePageSizeChange}
-                        style={{ width: 120, marginRight: 16 }}
-                        options={[
-                          { value: 10, label: "10 / trang" },
-                          { value: 20, label: "20 / trang" },
-                          { value: 50, label: "50 / trang" },
-                          { value: 100, label: "100 / trang" },
-                        ]}
-                      />
-                      <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
-                    </div>
-                  ),
-                }}
-                rowKey="key"
-                className="text-sm"
-                onChange={handleChange}
-                onRow={(record) => ({
-                  onClick: () => handleRowClick(record),
-                })}
-                scroll={{
-                  x: columns.reduce(
-                    (total, col) => total + (col.width || 0),
-                    0
-                  ),
-                }}
-                locale={{
-                  emptyText: <div style={{ height: "35px" }}></div>,
-                }}
-                style={{
-                  minHeight: "525px",
-                }}
-              />
+              {isLoading ? (
+                <div className="flex justify-center items-center min-h-[300px]">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <Table
+                  columns={columns}
+                  dataSource={filteredPapers.map((paper, index) => ({
+                    ...paper,
+                    key: paper.id || index,
+                  }))}
+                  pagination={{
+                    current: currentPage,
+                    pageSize: pageSize,
+                    total: filteredPapers.length,
+                    onChange: (page) => setCurrentPage(page),
+                    showSizeChanger: false,
+                    showTotal: (total, range) => (
+                      <div className="flex items-center">
+                        <Select
+                          value={pageSize}
+                          onChange={handlePageSizeChange}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 50, label: "50 / trang" },
+                            { value: 100, label: "100 / trang" },
+                          ]}
+                        />
+                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                      </div>
+                    ),
+                  }}
+                  rowKey="key"
+                  className="text-sm"
+                  onChange={handleChange}
+                  onRow={(record) => ({
+                    onClick: () => handleRowClick(record),
+                  })}
+                  scroll={{
+                    x: columns.reduce(
+                      (total, col) => total + (col.width || 0),
+                      0
+                    ),
+                  }}
+                  locale={{
+                    emptyText: <div style={{ height: "35px" }}></div>,
+                  }}
+                  style={{
+                    minHeight: "525px",
+                  }}
+                />
+              )}
             </div>
           </div>
         </div>
