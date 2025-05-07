@@ -24,6 +24,14 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import {
+  DownloadOutlined,
+  FilterOutlined,
+  BarChartOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
+  ExportOutlined,
+} from "@ant-design/icons";
 
 if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
   pdfMake.vfs = pdfFonts.pdfMake.vfs;
@@ -1876,6 +1884,7 @@ const Dashboard = () => {
                   className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
                   onClick={() => setShowExportAllFilter(!showExportAllFilter)}
                 >
+                  <DownloadOutlined className="text-blue-500" />
                   <span className="text-sm">Tải tất cả</span>
                 </button>
                 {showExportAllFilter && (
@@ -1888,12 +1897,14 @@ const Dashboard = () => {
                         className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                         onClick={() => exportAllCharts("pdf")}
                       >
+                        <FilePdfOutlined className="text-red-500 mr-1" />
                         PDF
                       </div>
                       <div
                         className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                         onClick={() => exportAllCharts("excel")}
                       >
+                        <FileExcelOutlined className="text-green-500 mr-1" />
                         Excel
                       </div>
                     </div>
@@ -1931,6 +1942,7 @@ const Dashboard = () => {
                         setShowTypeChartFilter(!showTypeChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showTypeChartFilter && (
@@ -1972,6 +1984,7 @@ const Dashboard = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowFilter(!showFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showFilter && (
@@ -2018,6 +2031,7 @@ const Dashboard = () => {
                         setShowTypeDownloadFilter(!showTypeDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showTypeDownloadFilter && (
@@ -2038,6 +2052,7 @@ const Dashboard = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2052,6 +2067,7 @@ const Dashboard = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-500 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2106,6 +2122,7 @@ const Dashboard = () => {
                         setShowDepartmentChartFilter(!showDepartmentChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showDepartmentChartFilter && (
@@ -2147,6 +2164,7 @@ const Dashboard = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowRoleFilter(!showRoleFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showRoleFilter && (
@@ -2195,6 +2213,7 @@ const Dashboard = () => {
                         )
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showDepartmentDownloadFilter && (
@@ -2215,6 +2234,7 @@ const Dashboard = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2229,6 +2249,7 @@ const Dashboard = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-500 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2286,6 +2307,7 @@ const Dashboard = () => {
                         setShowFieldChartFilter(!showFieldChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showFieldChartFilter && (
@@ -2327,6 +2349,7 @@ const Dashboard = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowFieldFilter(!showFieldFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showFieldFilter && (
@@ -2373,6 +2396,7 @@ const Dashboard = () => {
                         setShowFieldDownloadFilter(!showFieldDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showFieldDownloadFilter && (
@@ -2393,6 +2417,7 @@ const Dashboard = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2407,6 +2432,7 @@ const Dashboard = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-500 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2459,6 +2485,7 @@ const Dashboard = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowTableExport(!showTableExport)}
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showTableExport && (
@@ -2473,12 +2500,14 @@ const Dashboard = () => {
                               exportTableToExcel(topPapers, "Top_5_Papers")
                             }
                           >
+                            <FileExcelOutlined className="text-green-500 mr-1" />
                             Excel
                           </div>
                           <div
                             className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                             onClick={printTopPapersTable}
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                         </div>
