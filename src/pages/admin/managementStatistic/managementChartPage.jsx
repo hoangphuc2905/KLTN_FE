@@ -1877,15 +1877,15 @@ const Dashboard = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2 flex-wrap sm:flex-nowrap">
               {/* Thêm nút Tải tất cả */}
               <div className="relative" ref={exportAllFilterRef}>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  className="flex items-center justify-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm w-full sm:w-auto min-w-[100px]"
                   onClick={() => setShowExportAllFilter(!showExportAllFilter)}
                 >
                   <DownloadOutlined className="text-blue-500" />
-                  <span className="text-sm">Tải tất cả</span>
+                  <span className="text-sm whitespace-nowrap">Tải tất cả</span>
                 </button>
                 {showExportAllFilter && (
                   <div
@@ -1912,7 +1912,7 @@ const Dashboard = () => {
                 )}
               </div>
               <select
-                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm min-w-[100px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
