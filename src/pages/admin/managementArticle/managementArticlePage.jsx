@@ -1072,7 +1072,7 @@ const ManagementAriticle = () => {
   ]);
 
   const handleRowClick = (record) => {
-    navigate(`/admin/management/ariticle/detail/${record._id}`);
+    navigate(`/admin/management/article/detail/${record._id}`);
   };
 
   // Hàm xử lý khi thay đổi pageSize

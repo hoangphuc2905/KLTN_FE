@@ -26,6 +26,7 @@ import ManagementData from "./pages/admin/managementData/managementDataPage";
 import RoleSelectionPage from "./components/RoleSelectionPage";
 import ErrorPage from "./components/ErrorPage";
 import DetailArticlePage from "./pages/admin/managementArticle/detailArticlePage";
+import DetailArticleCheckDuplicatePage from "./pages/admin/managementArticle/detailArticleCheckDuplicatePage";
 import StorageScientificPage from "./pages/user/storage/StorageScientificPage";
 import EditScientificPaperPage from "./pages/user/scientificPaper/EditScientificPaperPage";
 import UserApprovalPage from "./pages/admin/managementAccount/UserApprovalPage";
@@ -266,24 +267,35 @@ const App = () => {
               }
             />
             <Route
-              path="/admin/management/ariticle"
+              path="/admin/management/article"
               element={
                 <ProtectedRoute
                   roles={userRoles}
-                  path="/admin/management/ariticle"
+                  path="/admin/management/article"
                 >
                   <ManagementAriticle />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/admin/management/ariticle/detail/:id"
+              path="/admin/management/article/detail/:id"
               element={
                 <ProtectedRoute
                   roles={userRoles}
-                  path="/admin/management/ariticle/detail/:id"
+                  path="/admin/management/article/detail/:id"
                 >
                   <DetailArticlePage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/management/article/detail/check-duplicate/:id"
+              element={
+                <ProtectedRoute
+                  roles={userRoles}
+                  path="/admin/management/article/detail/check-duplicate/:id"
+                >
+                  <DetailArticleCheckDuplicatePage />
                 </ProtectedRoute>
               }
             />
