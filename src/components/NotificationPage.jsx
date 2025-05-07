@@ -94,7 +94,7 @@ const NotificationPage = () => {
           navigate(`/scientific-paper/edit/${notification.paper_id._id}`);
         } else if (notification.message_type === "Request for Approval") {
           navigate(
-            `/admin/management/ariticle/detail/${notification.paper_id._id}`
+            `/admin/management/article/detail/${notification.paper_id._id}`
           );
         } else {
           navigate(`/scientific-paper/${notification.paper_id._id}`);
