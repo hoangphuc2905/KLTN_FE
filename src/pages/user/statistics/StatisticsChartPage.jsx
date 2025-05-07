@@ -24,6 +24,14 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import {
+  DownloadOutlined,
+  FilterOutlined,
+  BarChartOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
+  ExportOutlined,
+} from "@ant-design/icons";
 
 if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
   pdfMake.vfs = pdfFonts.pdfMake.vfs;
@@ -2156,14 +2164,15 @@ const StatisticsChartPage = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2 flex-wrap sm:flex-nowrap">
               {/* Thêm nút Tải tất cả */}
               <div className="relative" ref={exportAllFilterRef}>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  className="flex items-center justify-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm w-full sm:w-auto min-w-[100px]"
                   onClick={() => setShowExportAllFilter(!showExportAllFilter)}
                 >
-                  <span className="text-sm">Tải tất cả</span>
+                  <DownloadOutlined className="text-blue-500" />
+                  <span className="text-sm whitespace-nowrap">Tải tất cả</span>
                 </button>
                 {showExportAllFilter && (
                   <div
@@ -2175,12 +2184,14 @@ const StatisticsChartPage = () => {
                         className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                         onClick={() => exportAllCharts("pdf")}
                       >
+                        <FilePdfOutlined className="text-red-500 mr-1" />
                         PDF
                       </div>
                       <div
                         className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                         onClick={() => exportAllCharts("excel")}
                       >
+                        <FileExcelOutlined className="text-green-500 mr-1" />
                         Excel
                       </div>
                     </div>
@@ -2188,7 +2199,7 @@ const StatisticsChartPage = () => {
                 )}
               </div>
               <select
-                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm min-w-[100px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -2219,6 +2230,7 @@ const StatisticsChartPage = () => {
                         setShowTypeChartFilter(!showTypeChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showTypeChartFilter && (
@@ -2260,6 +2272,7 @@ const StatisticsChartPage = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowTypeFilter(!showTypeFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showTypeFilter && (
@@ -2306,6 +2319,7 @@ const StatisticsChartPage = () => {
                         setShowTypeDownloadFilter(!showTypeDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showTypeDownloadFilter && (
@@ -2326,6 +2340,7 @@ const StatisticsChartPage = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2340,6 +2355,7 @@ const StatisticsChartPage = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2394,6 +2410,7 @@ const StatisticsChartPage = () => {
                         setShowPointChartFilter(!showPointChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showPointChartFilter && (
@@ -2435,6 +2452,7 @@ const StatisticsChartPage = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowPointFilter(!showPointFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showPointFilter && (
@@ -2481,6 +2499,7 @@ const StatisticsChartPage = () => {
                         setShowPointDownloadFilter(!showPointDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showPointDownloadFilter && (
@@ -2501,6 +2520,7 @@ const StatisticsChartPage = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2515,6 +2535,7 @@ const StatisticsChartPage = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2569,6 +2590,7 @@ const StatisticsChartPage = () => {
                         setShowDonutChartFilter(!showDonutChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showDonutChartFilter && (
@@ -2610,6 +2632,7 @@ const StatisticsChartPage = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowDonutFilter(!showDonutFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showDonutFilter && (
@@ -2656,6 +2679,7 @@ const StatisticsChartPage = () => {
                         setShowDonutDownloadFilter(!showDonutDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showDonutDownloadFilter && (
@@ -2676,6 +2700,7 @@ const StatisticsChartPage = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2690,6 +2715,7 @@ const StatisticsChartPage = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2737,6 +2763,7 @@ const StatisticsChartPage = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowTableExport(!showTableExport)}
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showTableExport && (
@@ -2749,6 +2776,7 @@ const StatisticsChartPage = () => {
                             className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                             onClick={printTopPapersTable}
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2760,6 +2788,7 @@ const StatisticsChartPage = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>

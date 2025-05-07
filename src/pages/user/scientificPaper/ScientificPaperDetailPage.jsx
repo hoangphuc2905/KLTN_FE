@@ -716,9 +716,9 @@ const ScientificPaperDetailPage = () => {
 
             {/* Paper Stats */}
             <div className="bg-white rounded-xl p-4 sm:p-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 it">
-                <div>
-                  <p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div className="flex flex-col items-center justify-center">
+                  <p className="text-center">
                     Người đăng tải:{" "}
                     <span className="text-[#174371] font-bold">
                       {paper.submitter}
@@ -737,7 +737,7 @@ const ScientificPaperDetailPage = () => {
                     </button>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="flex flex-col items-center justify-center gap-2">
                   <div className="flex items-center gap-2">
                     <span>
                       Tổng số lượt xem:{" "}

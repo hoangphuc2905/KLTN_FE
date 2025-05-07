@@ -24,6 +24,14 @@ import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 import pdfMake from "pdfmake/build/pdfmake";
 import pdfFonts from "pdfmake/build/vfs_fonts";
+import {
+  DownloadOutlined,
+  FilterOutlined,
+  BarChartOutlined,
+  FileExcelOutlined,
+  FilePdfOutlined,
+  ExportOutlined,
+} from "@ant-design/icons";
 
 if (pdfFonts.pdfMake && pdfFonts.pdfMake.vfs) {
   pdfMake.vfs = pdfFonts.pdfMake.vfs;
@@ -1961,14 +1969,15 @@ const ManagementDepartmentChart = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2">
+            <div className="w-full lg:w-auto flex justify-center lg:justify-end gap-2 flex-wrap sm:flex-nowrap">
               {/* Thêm nút Tải tất cả */}
               <div className="relative" ref={exportAllFilterRef}>
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm"
+                  className="flex items-center justify-center gap-2 text-gray-600 px-2 py-1 rounded-lg border bg-white h-[35px] text-sm w-full sm:w-auto min-w-[100px]"
                   onClick={() => setShowExportAllFilter(!showExportAllFilter)}
                 >
-                  <span className="text-sm">Tải tất cả</span>
+                  <DownloadOutlined className="text-blue-500" />
+                  <span className="text-sm whitespace-nowrap">Tải tất cả</span>
                 </button>
                 {showExportAllFilter && (
                   <div
@@ -1980,12 +1989,14 @@ const ManagementDepartmentChart = () => {
                         className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                         onClick={() => exportAllCharts("pdf")}
                       >
+                        <FilePdfOutlined className="text-red-500 mr-1" />
                         PDF
                       </div>
                       <div
                         className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                         onClick={() => exportAllCharts("excel")}
                       >
+                        <FileExcelOutlined className="text-green-500 mr-1" />
                         Excel
                       </div>
                     </div>
@@ -1993,7 +2004,7 @@ const ManagementDepartmentChart = () => {
                 )}
               </div>
               <select
-                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm sm:text-base w-full sm:w-[110px]"
+                className="p-1 border rounded-lg bg-[#00A3FF] text-white h-[35px] text-sm min-w-[100px]"
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(e.target.value)}
               >
@@ -2023,6 +2034,7 @@ const ManagementDepartmentChart = () => {
                         setShowTypeChartFilter(!showTypeChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showTypeChartFilter && (
@@ -2064,6 +2076,7 @@ const ManagementDepartmentChart = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowFilter(!showFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showFilter && (
@@ -2110,6 +2123,7 @@ const ManagementDepartmentChart = () => {
                         setShowTypeDownloadFilter(!showTypeDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showTypeDownloadFilter && (
@@ -2130,6 +2144,7 @@ const ManagementDepartmentChart = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2144,6 +2159,7 @@ const ManagementDepartmentChart = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2198,6 +2214,7 @@ const ManagementDepartmentChart = () => {
                         setShowAuthorChartFilter(!showAuthorChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showAuthorChartFilter && (
@@ -2239,6 +2256,7 @@ const ManagementDepartmentChart = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowAuthorFilter(!showAuthorFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showAuthorFilter && (
@@ -2292,6 +2310,7 @@ const ManagementDepartmentChart = () => {
                         setShowAuthorDownloadFilter(!showAuthorDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showAuthorDownloadFilter && (
@@ -2312,6 +2331,7 @@ const ManagementDepartmentChart = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2326,6 +2346,7 @@ const ManagementDepartmentChart = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2383,6 +2404,7 @@ const ManagementDepartmentChart = () => {
                         setShowFieldChartFilter(!showFieldChartFilter)
                       }
                     >
+                      <BarChartOutlined className="text-blue-500" />
                       <span className="text-xs">Loại biểu đồ</span>
                     </button>
                     {showFieldChartFilter && (
@@ -2424,6 +2446,7 @@ const ManagementDepartmentChart = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowFieldFilter(!showFieldFilter)}
                     >
+                      <FilterOutlined className="text-blue-500" />
                       <span className="text-xs">Bộ lọc</span>
                     </button>
                     {showFieldFilter && (
@@ -2470,6 +2493,7 @@ const ManagementDepartmentChart = () => {
                         setShowFieldDownloadFilter(!showFieldDownloadFilter)
                       }
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showFieldDownloadFilter && (
@@ -2490,6 +2514,7 @@ const ManagementDepartmentChart = () => {
                               )
                             }
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2504,6 +2529,7 @@ const ManagementDepartmentChart = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>
@@ -2559,6 +2585,7 @@ const ManagementDepartmentChart = () => {
                       className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
                       onClick={() => setShowTableExport(!showTableExport)}
                     >
+                      <DownloadOutlined className="text-blue-500" />
                       <span className="text-xs">Xuất file</span>
                     </button>
                     {showTableExport && (
@@ -2571,6 +2598,7 @@ const ManagementDepartmentChart = () => {
                             className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
                             onClick={printTopPapersTable}
                           >
+                            <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
                           </div>
                           <div
@@ -2582,6 +2610,7 @@ const ManagementDepartmentChart = () => {
                               )
                             }
                           >
+                            <FileExcelOutlined className="text-green-600 mr-1" />
                             Excel
                           </div>
                         </div>

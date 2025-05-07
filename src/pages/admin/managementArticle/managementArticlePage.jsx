@@ -1254,10 +1254,21 @@ const ManagementAriticle = () => {
     {
       title: "MINH CHỨNG",
       key: "evidence",
-      render: () => (
+      render: (text, record) => (
         <div className="flex-col text-[#00A3FF]">
-          <button className="hover:underline">Xem link</button>
-          <button className="hover:underline">Xem file</button>
+          {record.file ? (
+            <button
+              className="hover:underline"
+              onClick={(e) => {
+                e.stopPropagation(); // Ngăn chặn sự kiện click lan tỏa lên hàng (row)
+                window.open(record.file, "_blank");
+              }}
+            >
+              Xem file
+            </button>
+          ) : (
+            <span className="text-gray-400">Không có</span>
+          )}
         </div>
       ),
       width: 150,
@@ -1485,14 +1496,14 @@ const ManagementAriticle = () => {
             <div className="bg-white rounded-xl shadow-sm p-4">
               <div className="flex justify-end mb-4 relative gap-2 max-sm:flex-wrap">
                 <button
-                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs"
+                  className="flex items-center gap-2 text-gray-600 px-2 py-1 rounded-lg border text-xs max-sm:px-1 max-sm:py-0.5 max-sm:w-full max-sm:justify-center"
                   onClick={() => {
                     setShowFilter(!showFilter);
                     setShowColumnFilter(false);
                   }}
                 >
-                  <Filter className="w-4 h-4" />
-                  <span className="text-xs">Bộ lọc</span>
+                  <Filter className="w-4 h-4 max-sm:w-3 max-sm:h-3" />
+                  <span className="text-xs max-sm:text-[10px]">Bộ lọc</span>
                 </button>
                 {showFilter && (
                   <div
@@ -1577,142 +1588,93 @@ const ManagementAriticle = () => {
                   style={{
                     minWidth: "1200px",
                     position: "relative",
+                    minHeight: "525px",
                   }}
                 >
                   {isLoading ? (
-                    <div className="flex justify-center items-center min-h-[300px]">
+                    <div className="flex justify-center items-center absolute inset-0 bg-white bg-opacity-80 z-10">
                       <Spin size="large" />
                     </div>
-                  ) : (
-                    <Table
-                      columns={
-                        newColumns.length > 0
-                          ? newColumns
-                          : [
-                              {
-                                dataIndex: "placeholder",
-                                key: "placeholder",
-                                render: () =>
-                                  "Please select at least one column to display",
-                              },
-                            ]
-                      }
-                      dataSource={newColumns.length > 0 ? filteredPapers : []}
-                      pagination={{
-                        current: currentPages[activeTab],
-                        pageSize: pageSize,
-                        total: filteredPapers.length,
-                        onChange: (page) => {
-                          setCurrentPages((prev) => ({
-                            ...prev,
-                            [activeTab]: page,
-                          }));
-                        },
-                        showSizeChanger: false,
-                        position: ["bottomRight"],
-                        showTotal: (total, range) => (
+                  ) : null}
+
+                  <Table
+                    columns={
+                      newColumns.length > 0
+                        ? newColumns
+                        : [
+                            {
+                              dataIndex: "placeholder",
+                              key: "placeholder",
+                              render: () =>
+                                "Please select at least one column to display",
+                            },
+                          ]
+                    }
+                    dataSource={newColumns.length > 0 ? filteredPapers : []}
+                    loading={false}
+                    pagination={{
+                      current: currentPages[activeTab],
+                      pageSize: pageSize,
+                      total: filteredPapers.length,
+                      onChange: (page) => {
+                        setCurrentPages((prev) => ({
+                          ...prev,
+                          [activeTab]: page,
+                        }));
+                      },
+                      showSizeChanger: false,
+                      position: ["bottomRight"],
+                      showTotal: (total, range) => (
+                        <div className="flex items-center">
                           <div className="flex items-center">
-                            <div className="flex items-center">
-                              <Select
-                                value={pageSize}
-                                onChange={handlePageSizeChange}
-                                style={{ width: 120, marginRight: 8 }}
-                                dropdownRender={(menu) => (
-                                  <div>
-                                    {menu}
-                                    <Divider style={{ margin: "4px 0" }} />
-                                    <div
-                                      style={{
-                                        display: "flex",
-                                        flexWrap: "nowrap",
-                                        padding: "8px",
-                                      }}
-                                    >
-                                      <Input
-                                        size="small"
-                                        type="number"
-                                        min={1}
-                                        placeholder="Số tùy chọn"
-                                        onChange={(e) => {
-                                          const value = parseInt(
-                                            e.target.value,
-                                            10
-                                          );
-                                          if (!isNaN(value) && value > 0) {
-                                            setPageSize(value);
-                                            setCurrentPages((prev) => ({
-                                              ...prev,
-                                              [activeTab]: 1,
-                                            }));
-                                          }
-                                        }}
-                                        onPressEnter={(e) => {
-                                          const value = parseInt(
-                                            e.target.value,
-                                            10
-                                          );
-                                          if (!isNaN(value) && value > 0) {
-                                            setPageSize(value);
-                                            setCurrentPages((prev) => ({
-                                              ...prev,
-                                              [activeTab]: 1,
-                                            }));
-                                            // Đóng dropdown sau khi đã nhập giá trị
-                                            const selectElement =
-                                              document.querySelector(
-                                                ".ant-select-dropdown-hidden"
-                                              );
-                                            if (selectElement) {
-                                              selectElement.click(); // Giả lập việc click bên ngoài để đóng dropdown
-                                            }
-                                          }
-                                        }}
-                                        style={{ flex: 1 }}
-                                      />
-                                    </div>
-                                  </div>
-                                )}
-                                options={[
-                                  { value: 10, label: "10 / trang" },
-                                  { value: 20, label: "20 / trang" },
-                                  { value: 30, label: "30 / trang" },
-                                  { value: 50, label: "50 / trang" },
-                                  { value: 100, label: "100 / trang" },
-                                  ...(![10, 20, 30, 50, 100].includes(pageSize)
-                                    ? [
-                                        {
-                                          value: pageSize,
-                                          label: `${pageSize} / trang`,
-                                        },
-                                      ]
-                                    : []),
-                                ]}
-                              />
-                              <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
-                            </div>
+                            <Select
+                              value={pageSize}
+                              onChange={handlePageSizeChange}
+                              style={{ width: 120, marginRight: 8 }}
+                            >
+                              <Option value={10}>10 / trang</Option>
+                              <Option value={20}>20 / trang</Option>
+                              <Option value={50}>50 / trang</Option>
+                              <Option value={100}>100 / trang</Option>
+                            </Select>
+                            <span className="max-sm:text-xs">{`${range[0]}-${range[1]} của ${total} mục`}</span>
                           </div>
+                        </div>
+                      ),
+                    }}
+                    rowKey={(record) => record._id || record.key}
+                    className="text-sm max-sm:text-xs"
+                    scroll={{
+                      x: newColumns.reduce(
+                        (total, col) => total + (col.width || 0),
+                        0
+                      ),
+                    }}
+                    onRow={(record) => ({
+                      onClick: () =>
+                        newColumns.length > 0 && handleRowClick(record),
+                      style: {
+                        cursor: newColumns.length > 0 ? "pointer" : "default",
+                      },
+                    })}
+                    locale={{
+                      emptyText:
+                        papers.length === 0 ? (
+                          <div className="flex justify-center items-center h-64">
+                            <p>Không có dữ liệu để hiển thị.</p>
+                          </div>
+                        ) : (
+                          <div style={{ height: "35px" }}></div>
                         ),
-                      }}
-                      rowKey={(record) => record._id || record.key}
-                      className="text-sm"
-                      scroll={{
-                        x: 1265,
-                      }}
-                      onRow={(record) => ({
-                        onClick: () =>
-                          newColumns.length > 0 && handleRowClick(record),
-                        style: {
-                          cursor: newColumns.length > 0 ? "pointer" : "default",
-                        },
-                      })}
-                      locale={{
-                        emptyText: <div style={{ height: "35px" }}></div>,
-                      }}
-                      onChange={(pagination, filters, sorter) => {
-                        setSortedInfo(sorter);
-                      }}
-                    />
-                  )}
+                    }}
+                    style={{
+                      height: "525px",
+                      minHeight: "525px",
+                    }}
+                    onChange={(pagination, filters, sorter) => {
+                      setSortedInfo(sorter);
+                    }}
+                  />
                 </div>
               </div>
             </div>
