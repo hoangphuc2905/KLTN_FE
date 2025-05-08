@@ -45,7 +45,6 @@ const WorkProcessPage = () => {
 
   const columns = [
     { title: "STT", dataIndex: "stt", key: "stt" },
-    { title: "Mã cơ quan", dataIndex: "work_unit_id", key: "work_unit_id" },
     { title: "Tên cơ quan", dataIndex: "name_vi", key: "name_vi" },
     { title: "Địa chỉ", dataIndex: "address_vi", key: "address_vi" },
     { title: "Vai trò", dataIndex: "role_vi", key: "role_vi" },
@@ -67,66 +66,72 @@ const WorkProcessPage = () => {
   }));
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
-        <div className="w-full bg-white">
-          <Header />
-        </div>
-
-        <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4 max-sm:px-4 max-sm:pt-[60px]">
-          <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
-              alt="Home Icon"
-              className="w-4 h-4 sm:w-5 sm:h-5"
-            />
-            <span
-              onClick={() => navigate("/home")}
-              className="cursor-pointer hover:text-blue-500"
-            >
-              Trang chủ
-            </span>
-            <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900">
-              Quá trình công tác
-            </span>
+    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+      {" "}
+      {/* Add flex and flex-col */}
+      <div className="flex-grow">
+        {" "}
+        {/* Add flex-grow to make content take available space */}
+        <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
+          <div className="w-full bg-white">
+            <Header />
           </div>
-        </div>
 
-        <div className="flex justify-end mb-4 mr-4 sm:mr-6 pt-16">
-          <Button
-            type="primary"
-            onClick={() => setShowAddWorkProcessPopup(true)}
-          >
-            + Thêm quá trình công tác
-          </Button>
-        </div>
-
-        <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
-          <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
-            {isLoading ? (
-              <div className="flex justify-center items-center min-h-[300px]">
-                <Spin size="large" />
-              </div>
-            ) : (
-              <Table
-                dataSource={dataSource}
-                columns={columns}
-                pagination={false}
-                bordered={false}
-                scroll={{ x: 320 }}
+          <div className="self-center w-full max-w-[1563px] px-6 pt-[80px] bg-[#E7ECF0] z-10 max-md:px-4 max-sm:px-4 max-sm:pt-[60px]">
+            <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
+              <img
+                src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
+                alt="Home Icon"
+                className="w-4 h-4 sm:w-5 sm:h-5"
               />
-            )}
+              <span
+                onClick={() => navigate("/home")}
+                className="cursor-pointer hover:text-blue-500"
+              >
+                Trang chủ
+              </span>
+              <span className="text-gray-400"> &gt; </span>
+              <span className="font-semibold text-sky-900">
+                Quá trình công tác
+              </span>
+            </div>
+          </div>
+
+          <div className="flex justify-end mb-4 mr-4 sm:mr-6 pt-16">
+            <Button
+              type="primary"
+              onClick={() => setShowAddWorkProcessPopup(true)}
+            >
+              + Thêm quá trình công tác
+            </Button>
+          </div>
+
+          <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full max-sm:px-4">
+            <div className="bg-white p-4 sm:p-6 rounded-lg shadow">
+              {isLoading ? (
+                <div className="flex justify-center items-center min-h-[300px]">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <Table
+                  dataSource={dataSource}
+                  columns={columns}
+                  pagination={false}
+                  bordered={false}
+                  scroll={{ x: 320 }}
+                />
+              )}
+            </div>
           </div>
         </div>
+        {showAddWorkProcessPopup && (
+          <AddWorkProcessPage
+            onClose={() => setShowAddWorkProcessPopup(false)}
+            refreshData={fetchWorkProcesses} // Pass the refresh function
+          />
+        )}
       </div>
-      {showAddWorkProcessPopup && (
-        <AddWorkProcessPage
-          onClose={() => setShowAddWorkProcessPopup(false)}
-          refreshData={fetchWorkProcesses} // Pass the refresh function
-        />
-      )}
-      <Footer />
+      <Footer /> {/* Footer remains at the bottom */}
     </div>
   );
 };

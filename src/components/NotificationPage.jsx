@@ -117,110 +117,120 @@ const NotificationPage = () => {
       : notifications;
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen">
-      <Header />
-      <div className="flex flex-col pb-7 pt-[80px] w-full md:max-w-[95%] lg:max-w-[calc(100%-100px)] xl:max-w-[calc(100%-220px)] mx-auto">
-        <div className="self-center w-full max-w-[1563px] px-2 sm:px-4 md:px-6 mt-4">
-          <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
-            <img
-              src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
-              alt="Home Icon"
-              className="w-4 h-4 sm:w-5 sm:h-5"
-            />
-            <span
-              onClick={() => navigate("/home")}
-              className="cursor-pointer hover:text-blue-500"
-            >
-              Trang chủ
-            </span>
-            <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900">Thông báo</span>
-          </div>
-
-          <div className="flex space-x-4 mb-6 mt-4">
-            <button
-              className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
-                activeTab === "all"
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveTab("all")}
-            >
-              Tất cả ({notifications.length})
-            </button>
-            <button
-              className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
-                activeTab === "unread"
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveTab("unread")}
-            >
-              Chưa đọc (
-              {
-                notifications.filter((notification) => !notification.isread)
-                  .length
-              }
-              )
-            </button>
-            <button
-              className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
-                activeTab === "read"
-                  ? "bg-blue-500 text-white shadow-md"
-                  : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveTab("read")}
-            >
-              Đã đọc (
-              {
-                notifications.filter((notification) => notification.isread)
-                  .length
-              }
-              )
-            </button>
-          </div>
-          {loading ? (
-            <div className="flex justify-center items-center h-64">
-              <Spin size="large" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-6 min-h-[256px]">
-              {filteredNotifications.length > 0 ? (
-                (showAll
-                  ? filteredNotifications
-                  : filteredNotifications.slice(0, 5)
-                ).map((notification, index) => (
-                  <div
-                    key={index}
-                    className={`p-4 rounded-lg shadow-md cursor-pointer ${
-                      notification.isread ? "bg-white" : "bg-blue-100"
-                    }`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                      {translateMessageType(notification.message_type)}
-                    </h3>
-                    <p className="text-gray-600 mb-2">{notification.content}</p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(notification.createdAt).toLocaleDateString(
-                        "vi-VN"
-                      )}
-                    </p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-600">Không có thông báo nào.</p>
-              )}
-              {!showAll && filteredNotifications.length > 5 && (
-                <button
-                  className="text-blue-500 mt-4"
-                  onClick={() => setShowAll(true)}
+    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
+      {" "}
+      {/* Add flex and flex-col */}
+      <div className="flex-grow">
+        {" "}
+        {/* Add flex-grow to make content take available space */}
+        <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
+          <Header />
+          <div className="flex flex-col pb-7 pt-[80px] w-full md:max-w-[95%] lg:max-w-[calc(100%-100px)] xl:max-w-[calc(100%-220px)] mx-auto">
+            <div className="self-center w-full max-w-[1563px] px-2 sm:px-4 md:px-6 mt-4">
+              <div className="flex items-center gap-2 text-gray-600 text-sm sm:text-base">
+                <img
+                  src="https://cdn-icons-png.flaticon.com/512/25/25694.png"
+                  alt="Home Icon"
+                  className="w-4 h-4 sm:w-5 sm:h-5"
+                />
+                <span
+                  onClick={() => navigate("/home")}
+                  className="cursor-pointer hover:text-blue-500"
                 >
-                  Xem thêm
+                  Trang chủ
+                </span>
+                <span className="text-gray-400"> &gt; </span>
+                <span className="font-semibold text-sky-900">Thông báo</span>
+              </div>
+
+              <div className="flex space-x-4 mb-6 mt-4">
+                <button
+                  className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
+                    activeTab === "all"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setActiveTab("all")}
+                >
+                  Tất cả ({notifications.length})
                 </button>
+                <button
+                  className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
+                    activeTab === "unread"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setActiveTab("unread")}
+                >
+                  Chưa đọc (
+                  {
+                    notifications.filter((notification) => !notification.isread)
+                      .length
+                  }
+                  )
+                </button>
+                <button
+                  className={`px-4 py-1.5 rounded-full transition-colors duration-300 ${
+                    activeTab === "read"
+                      ? "bg-blue-500 text-white shadow-md"
+                      : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-100"
+                  }`}
+                  onClick={() => setActiveTab("read")}
+                >
+                  Đã đọc (
+                  {
+                    notifications.filter((notification) => notification.isread)
+                      .length
+                  }
+                  )
+                </button>
+              </div>
+              {loading ? (
+                <div className="flex justify-center items-center h-64">
+                  <Spin size="large" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-6 min-h-[256px]">
+                  {filteredNotifications.length > 0 ? (
+                    (showAll
+                      ? filteredNotifications
+                      : filteredNotifications.slice(0, 5)
+                    ).map((notification, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-lg shadow-md cursor-pointer ${
+                          notification.isread ? "bg-white" : "bg-blue-100"
+                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                          {translateMessageType(notification.message_type)}
+                        </h3>
+                        <p className="text-gray-600 mb-2">
+                          {notification.content}
+                        </p>
+                        <p className="text-sm text-gray-400">
+                          {new Date(notification.createdAt).toLocaleDateString(
+                            "vi-VN"
+                          )}
+                        </p>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-600">Không có thông báo nào.</p>
+                  )}
+                  {!showAll && filteredNotifications.length > 5 && (
+                    <button
+                      className="text-blue-500 mt-4"
+                      onClick={() => setShowAll(true)}
+                    >
+                      Xem thêm
+                    </button>
+                  )}
+                </div>
               )}
             </div>
-          )}
+          </div>
         </div>
       </div>
       <Footer />
