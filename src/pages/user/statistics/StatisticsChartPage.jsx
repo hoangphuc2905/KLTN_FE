@@ -483,168 +483,103 @@ const StatisticsChartPage = () => {
     }
   };
 
-  const exportTableToPDF = (data, title) => {
+  const pdfTopPapersTable = () => {
     try {
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Tiêu đề hệ thống
-      pdf.setFontSize(14);
-      pdf.setFont("helvetica", "bold");
-      const systemTitle =
-        "HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC\nCỦA TRƯỜNG ĐẠI HỌC CÔNG NGHIỆP TPHCM";
-      pdf.text(systemTitle, pageWidth / 2, 15, { align: "center" });
-
-      // Ngày tạo
-      const currentDate = new Date();
-      const formattedDate = `${currentDate.getDate()}/${
-        currentDate.getMonth() + 1
-      }/${currentDate.getFullYear()}`;
-      pdf.setFontSize(11);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(`Ngày tạo: ${formattedDate}`, 10, 35);
-
-      // Tiêu đề báo cáo
-      pdf.setFontSize(16);
-      pdf.setFont("helvetica", "bold");
-      pdf.text(
-        title || "BÁO CÁO DANH SÁCH BÀI BÁO NGHIÊN CỨU KHOA HỌC",
-        pageWidth / 2,
-        45,
-        { align: "center" }
-      );
-
-      // Định dạng bảng dữ liệu
-      pdf.setFontSize(10);
-      pdf.setFont("helvetica", "normal");
-
-      const headers = [
-        ["STT", "Tên bài nghiên cứu", "Lượt xem", "Lượt tải", "Điểm đóng góp"],
-      ];
-      const tableData = data.map((item, index) => [
-        index + 1,
-        item.title,
-        item.views,
-        item.downloads,
-        item.contributions,
+      // Chuẩn bị dữ liệu cho bảng top papers
+      const papersTableBody = top5Papers.map((paper, index) => [
+        { text: (index + 1).toString(), style: "tableCell" },
+        { text: paper.title || "", style: "tableCell" },
+        { text: paper.views.toString() || "0", style: "tableCell" },
+        { text: paper.downloads.toString() || "0", style: "tableCell" },
+        { text: paper.contributions.toString() || "0", style: "tableCell" },
       ]);
 
-      // Độ rộng cột tự động điều chỉnh
-      const colWidths = [10, 100, 20, 20, 30];
+      // Định nghĩa cấu trúc PDF
+      const docDefinition = {
+        content: [
+          {
+            text: "BÁO CÁO THỐNG KÊ NGHIÊN CỨU KHOA HỌC CÁ NHÂN",
+            style: "mainHeader",
+          },
+          { text: `Năm học: ${selectedYear}`, style: "subHeader" },
+          {
+            text: `Ngày tạo: ${new Date().toLocaleDateString("vi-VN")}`,
+            style: "dateHeader",
+          },
+          { text: "", margin: [0, 10] },
 
-      // Vẽ bảng
-      pdf.autoTable({
-        head: headers,
-        body: tableData,
-        startY: 55,
-        columnStyles: {
-          0: { halign: "center" },
-          2: { halign: "right" },
-          3: { halign: "right" },
-          4: { halign: "right" },
+          // Top 5 papers
+          {
+            text: "4. TOP 5 BÀI BÁO NỔI BẬT",
+            style: "header",
+          },
+          {
+            table: {
+              headerRows: 1,
+              widths: ["auto", "*", "auto", "auto", "auto"],
+              body: [
+                [
+                  { text: "STT", style: "tableHeader" },
+                  { text: "Tên bài nghiên cứu", style: "tableHeader" },
+                  { text: "Lượt xem", style: "tableHeader" },
+                  { text: "Lượt tải", style: "tableHeader" },
+                  { text: "Điểm đóng góp", style: "tableHeader" },
+                ],
+                ...papersTableBody,
+              ],
+            },
+            margin: [0, 10],
+          },
+        ],
+        defaultStyle: {
+          font: "Roboto",
         },
-        headStyles: {
-          fillColor: [217, 225, 242],
-          textColor: [0, 0, 0],
-          fontStyle: "bold",
-          halign: "center",
-        },
-        columnWidth: colWidths,
         styles: {
-          font: "helvetica",
-          fontSize: 10,
-          overflow: "linebreak",
-          cellPadding: 3,
+          mainHeader: {
+            fontSize: 16,
+            bold: true,
+            alignment: "center",
+            margin: [0, 0, 0, 5],
+          },
+          subHeader: {
+            fontSize: 14,
+            alignment: "center",
+            margin: [0, 5, 0, 0],
+          },
+          dateHeader: {
+            fontSize: 12,
+            alignment: "center",
+            margin: [0, 0, 0, 10],
+          },
+          header: {
+            fontSize: 14,
+            bold: true,
+            margin: [0, 10, 0, 10],
+          },
+          tableHeader: {
+            bold: true,
+            fontSize: 11,
+            color: "black",
+            fillColor: "#eeeeee",
+            alignment: "center",
+          },
+          tableCell: {
+            fontSize: 10,
+          },
         },
-        margin: { top: 55 },
-      });
+      };
 
-      const fileName = `${title.replace(/\s+/g, "_")}_${new Date()
-        .toISOString()
-        .slice(0, 10)}.pdf`;
-      pdf.save(fileName);
+      // Tạo PDF và tự động tải xuống
+      pdfMake
+        .createPdf(docDefinition)
+        .download(
+          `Top_5_Bai_Bao_Noi_Bat_${new Date()
+            .toLocaleDateString("vi-VN")
+            .replace(/\//g, "_")}.pdf`
+        );
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Error generating PDF for top papers table:", error);
     }
-  };
-
-  // Thêm hàm mới để in bảng dưới dạng PDF thông qua trình duyệt
-  const printTopPapersTable = () => {
-    const printWindow = window.open("", "_blank");
-    const tableHtml = `
-      <html>
-        <head>
-          <title>Print Table</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 20px;
-            }
-            h1 {
-              text-align: center;
-              margin-bottom: 20px;
-              font-size: 18px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 20px;
-            }
-            th, td {
-              border: 1px solid black;
-              padding: 8px;
-              text-align: left;
-            }
-            th {
-              background-color: #f2f2f2;
-              font-weight: bold;
-            }
-            .numeric {
-              text-align: right;
-            }
-            .date {
-              text-align: center;
-            }
-            .title-cell {
-              max-width: 300px;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>Top 5 bài báo nổi bật</h1>
-          <p>Năm học: ${selectedYear}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Tên bài nghiên cứu</th>
-                <th>Lượt xem</th>
-                <th>Lượt tải</th>
-                <th>Điểm đóng góp</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${top5Papers
-                .map(
-                  (paper, index) => `
-                <tr>
-                  <td style="text-align: center;">${index + 1}</td>
-                  <td class="title-cell">${paper.title || ""}</td>
-                  <td class="numeric">${paper.views || "0"}</td>
-                  <td class="numeric">${paper.downloads || "0"}</td>
-                  <td class="numeric">${paper.contributions || "0"}</td>
-                </tr>`
-                )
-                .join("")}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(tableHtml);
-    printWindow.document.close();
-    printWindow.print();
   };
 
   const getAcademicYears = async () => {
@@ -2774,7 +2709,7 @@ const StatisticsChartPage = () => {
                         <div className="px-4 py-3 w-full">
                           <div
                             className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
-                            onClick={printTopPapersTable}
+                            onClick={pdfTopPapersTable}
                           >
                             <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
