@@ -455,7 +455,7 @@ const ManagementAriticle = () => {
       try {
         let fetchedPapers = [];
         if (userRole === "admin") {
-          const response = await getAllScientificPapers(
+          const response = await getAllScientificPapersByAllStatus(
             selectedYear === "Tất cả" ? null : selectedYear
           );
           fetchedPapers = Array.isArray(response.scientificPapers)
@@ -506,9 +506,11 @@ const ManagementAriticle = () => {
     fetchDepartments();
   }, []);
 
-  const getAllScientificPapers = async (academicYear) => {
+  const getAllScientificPapersByAllStatus = async (academicYear) => {
     try {
-      const response = await userApi.getAllScientificPapers(academicYear);
+      const response = await userApi.getAllScientificPapersByAllStatus(
+        academicYear
+      );
       return response;
     } catch (error) {
       console.error("Error fetching scientific papers:", error);

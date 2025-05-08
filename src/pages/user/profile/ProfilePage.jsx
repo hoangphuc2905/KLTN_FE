@@ -121,19 +121,20 @@ const ProfilePage = () => {
       setIsLoading(true);
       try {
         const response = await userApi.getAllPaperDownloadsByUser(userId);
-        const formattedPapers = (response || []).map((item) => ({
-          id: item.paper_id?._id || "N/A",
-          title: item.paper_id?.title_vn || "N/A",
-          author:
-            item.paper_id?.author?.map((a) => a.author_name_vi).join(", ") ||
-            "N/A",
-          summary: item.paper_id?.summary || "N/A",
-          departmentName: item.paper_id?.department?.department_name || "N/A",
-          thumbnailUrl: item.paper_id?.cover_image || "",
-          downloadDate: item.paper_id?.publish_date
-            ? new Date(item.paper_id.publish_date).toLocaleDateString("vi-VN")
-            : "N/A",
-        }));
+        const formattedPapers = (response || [])
+          .map((item) => ({
+            id: item.paper_id?._id || "N/A",
+            title: item.paper_id?.title_vn || "N/A",
+            author:
+              item.paper_id?.author?.map((a) => a.author_name_vi).join(", ") ||
+              "N/A",
+            summary: item.paper_id?.summary || "N/A",
+            departmentName: item.paper_id?.department?.department_name || "N/A",
+            thumbnailUrl: item.paper_id?.cover_image || "",
+            downloadDate: formatViewDate(item.createdAt), // Use createdAt for download time
+            createdAt: item.createdAt, // Keep createdAt for sorting
+          }))
+          .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by createdAt descending
         setRecentlyDownloadedPapers(formattedPapers);
       } catch (error) {
         console.error("Lỗi khi lấy dữ liệu bài báo đã tải gần đây:", error);

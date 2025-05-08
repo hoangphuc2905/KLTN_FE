@@ -1393,7 +1393,7 @@ const EditScientificPaperPage = () => {
                     <Input
                       id="file-upload"
                       placeholder="Upload file..."
-                      value={originalFileName || ""}
+                      value={originalFileName || selectedFile || ""} // Show file name if available, otherwise Cloudinary link
                       readOnly
                       className="w-full mb-2 sm:mb-0"
                     />
