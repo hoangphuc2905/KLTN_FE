@@ -438,21 +438,21 @@ const ScientificPaperPage = () => {
     {
       title: "MINH CHỨNG",
       key: "evidence",
-      render: (_, record) => (
+      render: (text, record) => (
         <div className="flex-col text-[#00A3FF]">
-          <button
-            className="hover:underline mr-1"
-            onClick={(e) => handleViewLink(record, e)}
-          >
-            Xem link
-          </button>
-          |
-          <button
-            className="hover:underline ml-1"
-            onClick={(e) => handleViewFile(record, e)}
-          >
-            Xem file
-          </button>
+          {record.file ? (
+            <button
+              className="hover:underline"
+              onClick={(e) => {
+                e.stopPropagation(); // Ngăn chặn sự kiện click lan tỏa lên hàng (row)
+                window.open(record.file, "_blank");
+              }}
+            >
+              Xem file
+            </button>
+          ) : (
+            <span className="text-gray-400">Không có</span>
+          )}
         </div>
       ),
       width: 150,
@@ -673,7 +673,7 @@ const ScientificPaperPage = () => {
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
                   } rounded-lg`}
-                  onClick={() => setActiveTab("Đang chờ")}
+                  onClick={() => setActiveTab("Chờ duyệt")}
                 >
                   Chờ duyệt (
                   {papers.filter((paper) => paper.status === "pending").length})

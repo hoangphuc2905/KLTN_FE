@@ -7,7 +7,7 @@ import {
   StepForwardOutlined,
   MoreOutlined,
 } from "@ant-design/icons";
-import { Modal, Button, Input, Dropdown, Menu, message } from "antd";
+import { Modal, Button, Input, Dropdown, Menu, message, Spin } from "antd";
 import { useSwipeable } from "react-swipeable";
 import userApi from "../../../api/api";
 
@@ -53,6 +53,7 @@ const StorageScientificPage = () => {
   const [editCategoryName, setEditCategoryName] = useState("");
   const [editCategoryId, setEditCategoryId] = useState(null);
   const [editCategoryError, setEditCategoryError] = useState(false); // Add error state
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -256,6 +257,7 @@ const StorageScientificPage = () => {
 
   useEffect(() => {
     const fetchCategories = async () => {
+      setIsLoading(true);
       try {
         const fetchedCategories = await userApi.getCollectionsByUserId(user_id);
         setCategories(
@@ -285,6 +287,8 @@ const StorageScientificPage = () => {
         );
       } catch (error) {
         console.error("Failed to fetch categories:", error);
+      } finally {
+        setIsLoading(false); // Set loading to false after fetching
       }
     };
 
@@ -396,7 +400,11 @@ const StorageScientificPage = () => {
                   ref={categoryScrollRefs[selectedCategory]}
                   style={{ overflowX: "hidden" }}
                 >
-                  {currentPapers.length > 0 ? (
+                  {isLoading ? (
+                    <div className="flex justify-center items-center min-h-[300px]">
+                      <Spin size="large" />
+                    </div>
+                  ) : currentPapers.length > 0 ? (
                     currentPapers.map((paper, index) => (
                       <div
                         key={paper.id}
@@ -424,29 +432,6 @@ const StorageScientificPage = () => {
                             <h2 className="text-sm font-bold break-words max-w-[900px] line-clamp-2 max-md:max-w-full">
                               {paper.title}
                             </h2>
-                            <div className="flex flex-col items-center ml-auto">
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/87fb9c7b3922853af65bc057e6708deb4040c10fe982c630a5585932d65a17da"
-                                  className="object-contain w-4 aspect-square max-md:w-3"
-                                  alt="Views icon"
-                                />
-                                <div className="text-xs text-orange-500">
-                                  {paper.viewCount}
-                                </div>
-                                <img
-                                  src="https://cdn.builder.io/api/v1/image/assets/TEMP/b0161c9148a33f73655f05930afc1a30c84052ef573d5ac5f01cb4e7fc703c72"
-                                  className="object-contain w-4 aspect-[1.2] max-md:w-3"
-                                  alt="Comments icon"
-                                />
-                                <div className="text-xs">
-                                  {paper.commentCount}
-                                </div>
-                              </div>
-                              <div className="text-xs text-neutral-500 mt-1">
-                                {paper.publishDate}
-                              </div>
-                            </div>
                           </div>
                           <div className="text-sm text-sky-900 max-md:text-xs">
                             {paper.author}

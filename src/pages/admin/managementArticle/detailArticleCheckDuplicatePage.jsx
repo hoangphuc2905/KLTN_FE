@@ -4,16 +4,14 @@ import { useNavigate } from "react-router-dom";
 import { Input, Table, Button, Modal, message, Spin } from "antd";
 import userApi from "../../../api/api";
 import { useParams } from "react-router-dom";
-import { v4 as uuidv4 } from "uuid";
 import { FilePdfOutlined } from "@ant-design/icons";
 
-const { TextArea } = Input;
-
-const DetailArticlePage = () => {
+const detailArticleCheckDuplicatePage = () => {
   const [paper, setPaper] = useState(null);
   const [authors, setAuthors] = useState([]);
   const { id } = useParams();
-  const user_id = localStorage.getItem("user_id");
+  const [duplicatePapers, setDuplicatePapers] = useState([]);
+  const [isDuplicateModalVisible, setIsDuplicateModalVisible] = useState(false);
 
   const columns = [
     {
@@ -102,7 +100,6 @@ const DetailArticlePage = () => {
       render: (status) => {
         let color = "";
         let text = "";
-
         switch (status) {
           case "approved":
             color = "green";
@@ -124,7 +121,6 @@ const DetailArticlePage = () => {
             color = "gray";
             text = "Không xác định";
         }
-
         return (
           <span
             className={`px-2 py-1 text-xs font-medium text-white rounded-lg bg-${color}-500`}
@@ -153,162 +149,11 @@ const DetailArticlePage = () => {
 
   const navigate = useNavigate();
 
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
-  const [requestContent, setRequestContent] = useState("");
-  const [rejectReason, setRejectReason] = useState("");
-  const [duplicatePapers, setDuplicatePapers] = useState([]);
-  const [isDuplicateModalVisible, setIsDuplicateModalVisible] = useState(false);
-
-  const showEditModal = () => setIsEditModalVisible(true);
-  const handleEditCancel = () => setIsEditModalVisible(false);
-  const handleEditSend = async () => {
-    if (!requestContent.trim()) {
-      message.error("Vui lòng nhập nội dung yêu cầu chỉnh sửa.");
-      return;
-    }
-    try {
-      // Notify all authors about the edit request
-      authors.forEach(async (author) => {
-        const messageData = {
-          message_id: uuidv4(),
-          message_type: "Request for Edit",
-          status: "Pending Response",
-          sender_id: user_id,
-          sender_model: "Lecturer",
-          receiver_id: author.mssvMsgv,
-          receiver_model: author.role === "Chính" ? "Lecturer" : "Student",
-          paper_id: id,
-          content: `Yêu cầu chỉnh sửa bài báo ${paper.title_vn}: ${requestContent}`,
-          isread: false,
-          time: new Date(),
-        };
-
-        await userApi.createMessage(messageData);
-      });
-
-      // Update the status of the article to "revision"
-      await userApi.updateScientificPaperStatus(id, "revision");
-      setPaper((prevPaper) => ({ ...prevPaper, status: "revision" }));
-
-      message.success("Yêu cầu chỉnh sửa đã được gửi thành công!");
-      setIsEditModalVisible(false);
-
-      // Navigate to the "revision" tab
-      navigate("/admin/management/article");
-    } catch (error) {
-      console.error("Error sending edit request:", error);
-      message.error("Gửi yêu cầu chỉnh sửa thất bại.");
-    }
-  };
-  const showRejectModal = () => setIsRejectModalVisible(true);
-  const handleRejectCancel = () => setIsRejectModalVisible(false);
-  const handleRejectSend = async () => {
-    if (!rejectReason.trim()) {
-      message.error("Vui lòng nhập lý do từ chối.");
-      return;
-    }
-    try {
-      // Update the status of the article to "refused"
-      await userApi.updateScientificPaperStatus(id, "refused");
-      setPaper((prevPaper) => ({ ...prevPaper, status: "refused" }));
-
-      // Notify all authors about the rejection
-      authors.forEach(async (author) => {
-        const messageData = {
-          message_id: uuidv4(),
-          message_type: "Rejection",
-          status: "Pending Response",
-          sender_id: user_id,
-          sender_model: "Lecturer",
-          receiver_id: author.mssvMsgv,
-          receiver_model: author.role === "Chính" ? "Lecturer" : "Student",
-          paper_id: id,
-          content: `Bài báo "${paper.title_vn}" đã bị từ chối. Lý do: ${rejectReason}`,
-          isread: false,
-          time: new Date(),
-        };
-
-        await userApi.createMessage(messageData);
-      });
-
-      message.success("Yêu cầu từ chối đã được gửi thành công!");
-      setIsRejectModalVisible(false);
-      navigate("/admin/management/article");
-    } catch (error) {
-      console.error("Error sending rejection request:", error);
-      message.error("Gửi yêu cầu từ chối thất bại.");
-    }
-  };
-
   const roleMapping = {
     MainAuthor: "Chính",
     CorrespondingAuthor: "Liên hệ",
     MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
     Participant: "Tham gia",
-  };
-
-  const updateScientificPaperStatus = async (status) => {
-    try {
-      console.log("ID being sent to API:", id);
-      console.log("Status being sent to API:", status);
-      await userApi.updateScientificPaperStatus(id, status);
-      setPaper((prevPaper) => ({ ...prevPaper, status }));
-
-      if (status === "approved") {
-        message.success("Bài báo đã được duyệt thành công!");
-        // Notify all authors
-        authors.forEach((author) => createMessage(author, id));
-        navigate("/admin/management/article");
-      }
-      if (status === "refused") {
-        message.success("Bài báo đã bị từ chối thành công!");
-      }
-      if (status === "pending") {
-        message.success("Bài báo đã được yêu cầu chỉnh sửa thành công!");
-      }
-    } catch (error) {
-      console.error("Error updating paper status:", error);
-      if (error.response) {
-        console.error("API Error Response:", error.response.data);
-      }
-      message.error(
-        error.response?.data?.message || "Cập nhật trạng thái thất bại."
-      );
-    }
-  };
-
-  const handleCheckDuplicate = async () => {
-    try {
-      if (!paper?.title_vn) {
-        message.error("Không tìm thấy tiêu đề bài báo để kiểm tra.");
-        return;
-      }
-
-      const duplicates = await userApi.getScientificPapersByTitle(
-        paper.title_vn || paper.title_en
-      );
-
-      // Filter out the currently displayed article
-      const filteredDuplicates = duplicates.filter(
-        (duplicate) => duplicate.paper_id !== paper.paper_id
-      );
-
-      if (filteredDuplicates.length === 0) {
-        Modal.info({
-          title: "Thông báo",
-          content: "Không có bài báo trùng lặp.",
-          centered: true,
-          onOk: () => {},
-        });
-      } else {
-        setDuplicatePapers(filteredDuplicates);
-        setIsDuplicateModalVisible(true);
-      }
-    } catch (error) {
-      console.error("Error checking duplicates:", error);
-      message.error("Kiểm tra trùng lặp thất bại.");
-    }
   };
 
   useEffect(() => {
@@ -321,9 +166,9 @@ const DetailArticlePage = () => {
           try {
             const departmentData = await userApi.getDepartmentById(
               data.department
-            ); // Call API to get department details
+            );
             departmentName =
-              departmentData.department_name || "Không có dữ liệu"; // Use department_name
+              departmentData.department_name || "Không có dữ liệu";
           } catch (error) {
             console.error("Error fetching department details:", error);
           }
@@ -335,17 +180,16 @@ const DetailArticlePage = () => {
               author.work_unit_id?.name_vi || "Không có dữ liệu";
 
             return {
-              key: author._id || index, // Ensure a unique key for each row
+              key: author._id || index,
               id: author._id,
               mssvMsgv: author.user_id || "Không có dữ liệu",
               full_name: author.author_name_vi || "Không có dữ liệu",
               full_name_eng: author.author_name_en || "Không có dữ liệu",
-              role: roleMapping[author.role] || "Không có dữ liệu", // Map role to Vietnamese
-              institution: workUnitName, // Use extracted work unit name
+              role: roleMapping[author.role] || "Không có dữ liệu",
+              institution: workUnitName,
             };
           }) || [];
 
-        // Transform the API response to match the expected structure
         const transformedPaper = {
           paper_id: data.paper_id || "Không có dữ liệu",
           article_type: data.article_type?.type_name || "Không có dữ liệu",
@@ -377,7 +221,7 @@ const DetailArticlePage = () => {
       }
     };
     fetchPaper();
-  }, [id]); // Add id as a dependency
+  }, [id]);
 
   if (!paper) {
     return (
@@ -386,43 +230,6 @@ const DetailArticlePage = () => {
       </div>
     );
   }
-
-  const createMessage = async (author, paperId) => {
-    try {
-      // Kiểm tra nếu mssvMsgv bị thiếu
-      if (!author.mssvMsgv) {
-        console.warn(`Missing mssvMsgv for author: ${author.full_name}`);
-        return;
-      }
-
-      // Tạo dữ liệu thông báo
-      const messageData = {
-        message_id: uuidv4(),
-        message_type: "Approved",
-        status: "Pending Response",
-        sender_id: user_id,
-        sender_model: "Lecturer",
-        receiver_id: author.mssvMsgv,
-        receiver_model: author.role === "Chính" ? "Lecturer" : "Student",
-        paper_id: paperId,
-        content: `Bài báo "${paper.title_vn}" đã được duyệt.`,
-        isread: false,
-        time: new Date(),
-      };
-
-      console.log("Sending message to:", author.mssvMsgv);
-      console.log("Message data:", messageData);
-
-      // Gửi thông báo qua API
-      await userApi.createMessage(messageData);
-      console.log(`Message sent successfully to mssvMsgv: ${author.mssvMsgv}`);
-    } catch (error) {
-      console.error(
-        `Error sending message to mssvMsgv: ${author.mssvMsgv}`,
-        error
-      );
-    }
-  };
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen overflow-y-auto">
@@ -450,8 +257,15 @@ const DetailArticlePage = () => {
               Bài báo nghiên cứu khoa học
             </span>
             <span className="text-gray-400"> &gt; </span>
-            <span className="font-semibold text-sky-900 text-sm md:text-base">
+            <span
+              onClick={() => window.history.back()}
+              className="cursor-pointer hover:text-blue-500 text-sm md:text-base"
+            >
               Kiểm tra bài báo
+            </span>
+            <span className="text-gray-400"> &gt; </span>
+            <span className="font-semibold text-sky-900 text-sm md:text-base">
+              Chi tiết bài báo
             </span>
           </div>
         </div>
@@ -635,7 +449,6 @@ const DetailArticlePage = () => {
               <h2 className="text-sm font-medium leading-none text-sky-900 uppercase mb-6">
                 Thông tin minh chứng
               </h2>
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center mb-2">
@@ -685,186 +498,21 @@ const DetailArticlePage = () => {
                     </a>
                   </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  {/* Phần trạng thái đã được xóa */}
-                </div>
+                <div className="flex flex-col gap-2"></div>
               </div>
-
               {/* Action buttons */}
               <div className="flex flex-wrap justify-end gap-4">
-                {paper.status === "pending" && (
-                  <>
-                    <Button
-                      className="bg-blue-500 text-white hover:bg-blue-600"
-                      onClick={handleCheckDuplicate}
-                    >
-                      Kiểm tra trùng lặp
-                    </Button>
-                    <Button
-                      className="bg-yellow-500 text-white hover:bg-yellow-600"
-                      onClick={showEditModal}
-                    >
-                      Yêu cầu chỉnh sửa
-                    </Button>
-
-                    <Button
-                      className="bg-red-500 text-white hover:bg-red-600"
-                      onClick={showRejectModal}
-                    >
-                      Từ chối
-                    </Button>
-                    <Button
-                      className="bg-green-500 text-white hover:bg-green-600"
-                      onClick={() => updateScientificPaperStatus("approved")}
-                    >
-                      Duyệt bài
-                    </Button>
-                  </>
-                )}
-                {paper.status === "approved" && (
-                  <>
-                    <Button
-                      className="bg-blue-500 text-white hover:bg-blue-600"
-                      onClick={handleCheckDuplicate}
-                    >
-                      Kiểm tra trùng lặp
-                    </Button>
-                    <Button
-                      className="bg-yellow-500 text-white hover:bg-yellow-600"
-                      onClick={showEditModal}
-                    >
-                      Yêu cầu chỉnh sửa
-                    </Button>
-
-                    <Button
-                      className="bg-red-500 text-white hover:bg-red-600"
-                      onClick={showRejectModal}
-                    >
-                      Từ chối
-                    </Button>
-                  </>
-                )}
-                {paper.status === "refused" && (
-                  <>
-                    <Button
-                      className="bg-blue-500 text-white hover:bg-blue-600"
-                      onClick={handleCheckDuplicate}
-                    >
-                      Kiểm tra trùng lặp
-                    </Button>
-                    <Button
-                      className="bg-yellow-500 text-white hover:bg-yellow-600"
-                      onClick={showEditModal}
-                    >
-                      Yêu cầu chỉnh sửa
-                    </Button>
-
-                    <Button
-                      className="bg-green-500 text-white hover:bg-green-600"
-                      onClick={() => updateScientificPaperStatus("approved")}
-                    >
-                      Duyệt bài
-                    </Button>
-                  </>
-                )}
-                {paper.status === "revision" && (
-                  <>
-                    <Button
-                      className="bg-blue-500 text-white hover:bg-blue-600"
-                      onClick={handleCheckDuplicate}
-                    >
-                      Kiểm tra trùng lặp
-                    </Button>
-                    <Button
-                      className="bg-yellow-500 text-white hover:bg-yellow-600"
-                      onClick={showEditModal}
-                    >
-                      Yêu cầu chỉnh sửa
-                    </Button>
-
-                    <Button
-                      className="bg-red-500 text-white hover:bg-red-600"
-                      onClick={showRejectModal}
-                    >
-                      Từ chối
-                    </Button>
-                    <Button
-                      className="bg-green-500 text-white hover:bg-green-600"
-                      onClick={() => updateScientificPaperStatus("approved")}
-                    >
-                      Duyệt bài
-                    </Button>
-                  </>
-                )}
+                <Button
+                  className="bg-blue-500 text-white hover:bg-blue-600"
+                  onClick={() => window.history.back()}
+                >
+                  Quay về duyệt bài
+                </Button>
               </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Modal cho yêu cầu chỉnh sửa */}
-      <Modal
-        title={<div className="text-center">Yêu cầu chỉnh sửa</div>}
-        open={isEditModalVisible}
-        onCancel={handleEditCancel}
-        centered
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleEditCancel}
-            className="bg-red-500 text-white hover:bg-red-600"
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleEditSend}
-            className="bg-green-500 hover:bg-green-600"
-          >
-            Gửi
-          </Button>,
-        ]}
-      >
-        <TextArea
-          placeholder="Nội dung yêu cầu chỉnh sửa"
-          rows={4}
-          value={requestContent}
-          onChange={(e) => setRequestContent(e.target.value)}
-        />
-      </Modal>
-
-      {/* Modal cho từ chối */}
-      <Modal
-        title={<div className="text-center">Yêu cầu từ chối</div>}
-        open={isRejectModalVisible}
-        onCancel={handleRejectCancel}
-        centered
-        footer={[
-          <Button
-            key="cancel"
-            onClick={handleRejectCancel}
-            className="bg-red-500 text-white hover:bg-red-600"
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="submit"
-            type="primary"
-            onClick={handleRejectSend}
-            className="bg-green-500 hover:bg-green-600"
-          >
-            Gửi
-          </Button>,
-        ]}
-      >
-        <TextArea
-          placeholder="Lý do từ chối"
-          rows={4}
-          value={rejectReason}
-          onChange={(e) => setRejectReason(e.target.value)}
-        />
-      </Modal>
 
       {/* Modal hiển thị bài báo trùng lặp */}
       <Modal
@@ -891,26 +539,15 @@ const DetailArticlePage = () => {
             scroll={{ x: "max-content" }}
             bordered
             className="w-full"
-            rowClassName={() => "hoverable-row"}
             onRow={(record) => ({
               onClick: () =>
-                navigate(
-                  `/admin/management/article/detail/check-duplicate/${record._id}`
-                ),
+                navigate(`/admin/management/article/detail/${record._id}`),
             })}
           />
         </div>
-        <style jsx>{`
-          .hoverable-row {
-            cursor: pointer;
-          }
-          .hoverable-row:hover {
-            background-color: #f5f5f5;
-          }
-        `}</style>
       </Modal>
     </div>
   );
 };
 
-export default DetailArticlePage;
+export default detailArticleCheckDuplicatePage;

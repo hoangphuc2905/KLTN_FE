@@ -457,10 +457,43 @@ const userApi = {
         params: { academicYear },
       });
 
-      return response.data; 
+      return response.data;
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
       throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getAllScientificPapersByAllStatus: async (academicYear) => {
+    try {
+      const response = await axios.get(
+        `${API_URL}/scientificPapers/getAllScientificPapersByAllStatus`,
+        {
+          params: { academicYear },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching scientific papers:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  getScientificPapersByTitle: async (title) => {
+    try {
+      if (!title) {
+        throw new Error("Title is required");
+      }
+
+      const response = await axios.get(`${API_URL}/scientificPapers/by-title`, {
+        params: { title },
+      });
+
+      return response.data.scientificPapers || [];
+    } catch (error) {
+      console.error("Error fetching scientific papers by title:", error);
+      throw error.response?.data || { message: "Lỗi kết nối đến server" };
     }
   },
 

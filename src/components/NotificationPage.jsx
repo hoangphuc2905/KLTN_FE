@@ -94,7 +94,7 @@ const NotificationPage = () => {
           navigate(`/scientific-paper/edit/${notification.paper_id._id}`);
         } else if (notification.message_type === "Request for Approval") {
           navigate(
-            `/admin/management/ariticle/detail/${notification.paper_id._id}`
+            `/admin/management/article/detail/${notification.paper_id._id}`
           );
         } else {
           navigate(`/scientific-paper/${notification.paper_id._id}`);
@@ -183,30 +183,34 @@ const NotificationPage = () => {
             <div className="flex justify-center items-center h-64">
               <Spin size="large" />
             </div>
-          ) : filteredNotifications.length > 0 ? (
-            <div className="grid grid-cols-1 gap-6">
-              {(showAll
-                ? filteredNotifications
-                : filteredNotifications.slice(0, 5)
-              ).map((notification, index) => (
-                <div
-                  key={index}
-                  className={`p-4 rounded-lg shadow-md cursor-pointer ${
-                    notification.isread ? "bg-white" : "bg-blue-100"
-                  }`}
-                  onClick={() => handleNotificationClick(notification)}
-                >
-                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                    {translateMessageType(notification.message_type)}
-                  </h3>
-                  <p className="text-gray-600 mb-2">{notification.content}</p>
-                  <p className="text-sm text-gray-400">
-                    {new Date(notification.createdAt).toLocaleDateString(
-                      "vi-VN"
-                    )}
-                  </p>
-                </div>
-              ))}
+          ) : (
+            <div className="grid grid-cols-1 gap-6 min-h-[256px]">
+              {filteredNotifications.length > 0 ? (
+                (showAll
+                  ? filteredNotifications
+                  : filteredNotifications.slice(0, 5)
+                ).map((notification, index) => (
+                  <div
+                    key={index}
+                    className={`p-4 rounded-lg shadow-md cursor-pointer ${
+                      notification.isread ? "bg-white" : "bg-blue-100"
+                    }`}
+                    onClick={() => handleNotificationClick(notification)}
+                  >
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      {translateMessageType(notification.message_type)}
+                    </h3>
+                    <p className="text-gray-600 mb-2">{notification.content}</p>
+                    <p className="text-sm text-gray-400">
+                      {new Date(notification.createdAt).toLocaleDateString(
+                        "vi-VN"
+                      )}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-600">Không có thông báo nào.</p>
+              )}
               {!showAll && filteredNotifications.length > 5 && (
                 <button
                   className="text-blue-500 mt-4"
@@ -216,8 +220,6 @@ const NotificationPage = () => {
                 </button>
               )}
             </div>
-          ) : (
-            <p className="text-gray-600">Không có thông báo nào.</p>
           )}
         </div>
       </div>

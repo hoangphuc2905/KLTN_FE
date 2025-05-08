@@ -55,7 +55,7 @@ const AdminMenu = ({ currentRole }) => {
           </Link>
 
           <Link
-            to="/admin/management/ariticle"
+            to="/admin/management/article"
             className="menu-item"
             onClick={toggleMenu}
           >

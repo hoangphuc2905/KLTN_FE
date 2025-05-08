@@ -2,7 +2,16 @@ import { useState, useEffect, useRef } from "react";
 import Header from "../../../components/Header";
 import { useNavigate } from "react-router-dom";
 import { Filter, ChevronDown } from "lucide-react";
-import { Input, Table, Tooltip, Modal, Space, Checkbox, Select } from "antd";
+import {
+  Input,
+  Table,
+  Tooltip,
+  Modal,
+  Space,
+  Checkbox,
+  Select,
+  Spin,
+} from "antd";
 import { saveAs } from "file-saver";
 import * as XLSX from "xlsx";
 import ExcelJS from "exceljs";
@@ -16,6 +25,7 @@ const StatisticsTablePage = () => {
   const [toAuthorCount, setToAuthorCount] = useState("");
   const navigate = useNavigate();
   const [pageSize, setPageSize] = useState(10);
+  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
   const [showFilter, setShowFilter] = useState(false);
   const uniqueGroups = [
@@ -78,6 +88,7 @@ const StatisticsTablePage = () => {
 
   useEffect(() => {
     const fetchPapers = async () => {
+      setIsLoading(true); // Bắt đầu loading
       try {
         const user_id = localStorage.getItem("user_id");
         if (!user_id) {
@@ -154,6 +165,8 @@ const StatisticsTablePage = () => {
       } catch (error) {
         console.error("Error fetching scientific papers:", error);
         setPapers([]);
+      } finally {
+        setIsLoading(false); // Kết thúc loading
       }
     };
 
@@ -1077,45 +1090,51 @@ const StatisticsTablePage = () => {
               </div>
 
               <div className="overflow-x-auto">
-                <Table
-                  columns={filteredColumns}
-                  dataSource={filteredPapers}
-                  pagination={{
-                    current: currentPage,
-                    pageSize: pageSize,
-                    total: filteredPapers.length,
-                    onChange: (page) => setCurrentPage(page),
-                    showSizeChanger: false,
-                    showTotal: (total, range) => (
-                      <div className="flex items-center">
-                        <Select
-                          value={pageSize}
-                          onChange={handlePageSizeChange}
-                          style={{ width: 120, marginRight: 16 }}
-                          options={[
-                            { value: 10, label: "10 / trang" },
-                            { value: 20, label: "20 / trang" },
-                            { value: 30, label: "30 / trang" },
-                            { value: 50, label: "50 / trang" },
-                            { value: 100, label: "100 / trang" },
-                          ]}
-                        />
-                        <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
-                      </div>
-                    ),
-                  }}
-                  rowKey={(record) => record.id || record.key}
-                  className="text-sm"
-                  onRow={(record) => ({
-                    onClick: () => handleRowClick(record),
-                  })}
-                  scroll={{
-                    x: filteredColumns.reduce(
-                      (total, col) => total + (col.width || 0),
-                      0
-                    ),
-                  }}
-                />
+                {isLoading ? (
+                  <div className="flex justify-center items-center min-h-[300px]">
+                    <Spin size="large" />
+                  </div>
+                ) : (
+                  <Table
+                    columns={filteredColumns}
+                    dataSource={filteredPapers}
+                    pagination={{
+                      current: currentPage,
+                      pageSize: pageSize,
+                      total: filteredPapers.length,
+                      onChange: (page) => setCurrentPage(page),
+                      showSizeChanger: false,
+                      showTotal: (total, range) => (
+                        <div className="flex items-center">
+                          <Select
+                            value={pageSize}
+                            onChange={handlePageSizeChange}
+                            style={{ width: 120, marginRight: 16 }}
+                            options={[
+                              { value: 10, label: "10 / trang" },
+                              { value: 20, label: "20 / trang" },
+                              { value: 30, label: "30 / trang" },
+                              { value: 50, label: "50 / trang" },
+                              { value: 100, label: "100 / trang" },
+                            ]}
+                          />
+                          <span>{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                        </div>
+                      ),
+                    }}
+                    rowKey={(record) => record.id || record.key}
+                    className="text-sm"
+                    onRow={(record) => ({
+                      onClick: () => handleRowClick(record),
+                    })}
+                    scroll={{
+                      x: filteredColumns.reduce(
+                        (total, col) => total + (col.width || 0),
+                        0
+                      ),
+                    }}
+                  />
+                )}
               </div>
             </div>
           </div>
