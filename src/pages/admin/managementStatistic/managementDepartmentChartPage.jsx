@@ -1198,80 +1198,101 @@ const ManagementDepartmentChart = () => {
     }
   };
 
-  // Thêm hàm in bảng thông qua trình duyệt
-  const printTopPapersTable = () => {
-    const printWindow = window.open("", "_blank");
-    const tableHtml = `
-      <html>
-        <head>
-          <title>Print Table</title>
-          <style>
-            body {
-              font-family: Arial, sans-serif;
-              margin: 20px;
-            }
-            h1 {
-              text-align: center;
-              margin-bottom: 20px;
-              font-size: 18px;
-            }
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-bottom: 20px;
-            }
-            th, td {
-              border: 1px solid black;
-              padding: 8px;
-              text-align: left;
-            }
-            th {
-              background-color: #f2f2f2;
-              font-weight: bold;
-            }
-            .numeric {
-              text-align: right;
-            }
-            .date {
-              text-align: center;
-            }
-            .title-cell {
-              max-width: 300px;
-            }
-          </style>
-        </head>
-        <body>
-          <h1>Top 5 bài nghiên cứu được nổi bật</h1>
-          <p>Năm học: ${selectedYear}</p>
-          <table>
-            <thead>
-              <tr>
-                <th>STT</th>
-                <th>Tên bài nghiên cứu</th>
-                <th>Lượt xem</th>
-                <th>Lượt tải</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${topPapers
-                .map(
-                  (paper, index) => `
-                <tr>
-                  <td style="text-align: center;">${index + 1}</td>
-                  <td class="title-cell">${paper.title || ""}</td>
-                  <td class="numeric">${paper.views || "0"}</td>
-                  <td class="numeric">${paper.downloads || "0"}</td>
-                </tr>`
-                )
-                .join("")}
-            </tbody>
-          </table>
-        </body>
-      </html>
-    `;
-    printWindow.document.write(tableHtml);
-    printWindow.document.close();
-    printWindow.print();
+  const pdfTopPapersTable = () => {
+    try {
+      // Chuẩn bị dữ liệu cho bảng top papers
+      const papersTableBody = topPapers.map((paper, index) => [
+        { text: (index + 1).toString(), style: "tableCell" },
+        { text: paper.title || "", style: "tableCell" },
+        { text: paper.views.toString() || "0", style: "tableCell" },
+        { text: paper.downloads.toString() || "0", style: "tableCell" },
+      ]);
+
+      // Định nghĩa cấu trúc PDF
+      const docDefinition = {
+        content: [
+          {
+            text: "BÁO CÁO THỐNG KÊ HỆ THỐNG QUẢN LÝ CÁC BÀI BÁO NGHIÊN CỨU KHOA HỌC",
+            style: "mainHeader",
+          },
+          { text: `Năm học: ${selectedYear}`, style: "subHeader" },
+          {
+            text: `Ngày tạo: ${new Date().toLocaleDateString("vi-VN")}`,
+            style: "dateHeader",
+          },
+          { text: "", margin: [0, 10] },
+
+          // Top 5 papers
+          {
+            text: "TOP 5 BÀI NGHIÊN CỨU ĐƯỢC NỔI BẬT",
+            style: "header",
+          },
+          {
+            table: {
+              headerRows: 1,
+              widths: ["auto", "*", "auto", "auto"],
+              body: [
+                [
+                  { text: "STT", style: "tableHeader" },
+                  { text: "Tên bài nghiên cứu", style: "tableHeader" },
+                  { text: "Lượt xem", style: "tableHeader" },
+                  { text: "Lượt tải", style: "tableHeader" },
+                ],
+                ...papersTableBody,
+              ],
+            },
+            margin: [0, 10],
+          },
+        ],
+        defaultStyle: {
+          font: "Roboto",
+        },
+        styles: {
+          mainHeader: {
+            fontSize: 16,
+            bold: true,
+            alignment: "center",
+            margin: [0, 0, 0, 5],
+          },
+          subHeader: {
+            fontSize: 14,
+            alignment: "center",
+            margin: [0, 5, 0, 0],
+          },
+          dateHeader: {
+            fontSize: 12,
+            alignment: "center",
+            margin: [0, 0, 0, 10],
+          },
+          header: {
+            fontSize: 14,
+            bold: true,
+            margin: [0, 10, 0, 10],
+          },
+          tableHeader: {
+            bold: true,
+            fontSize: 11,
+            color: "black",
+            fillColor: "#eeeeee",
+            alignment: "center",
+          },
+          tableCell: {
+            fontSize: 10,
+          },
+        },
+      };
+
+      // Tạo PDF và tự động tải xuống
+      pdfMake
+        .createPdf(docDefinition)
+        .download(
+          `Top_5_Bai_Nghien_Cuu_Noi_Bat_${new Date()
+            .toLocaleDateString("vi-VN")
+            .replace(/\//g, "_")}.pdf`
+        );
+    } catch (error) {
+      console.error("Error generating PDF for top papers table:", error);
+    }
   };
 
   const handleDownloadFormat = (
@@ -2596,7 +2617,7 @@ const ManagementDepartmentChart = () => {
                         <div className="px-4 py-3 w-full">
                           <div
                             className="flex items-center mb-2 cursor-pointer hover:bg-gray-100 p-1"
-                            onClick={printTopPapersTable}
+                            onClick={pdfTopPapersTable}
                           >
                             <FilePdfOutlined className="text-red-500 mr-1" />
                             PDF
