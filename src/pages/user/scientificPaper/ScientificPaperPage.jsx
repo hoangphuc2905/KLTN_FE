@@ -673,7 +673,7 @@ const ScientificPaperPage = () => {
                       ? "bg-[#00A3FF] text-white"
                       : "bg-white text-gray-700"
                   } rounded-lg`}
-                  onClick={() => setActiveTab("Đang chờ")}
+                  onClick={() => setActiveTab("Chờ duyệt")}
                 >
                   Chờ duyệt (
                   {papers.filter((paper) => paper.status === "pending").length})

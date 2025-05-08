@@ -958,11 +958,9 @@ const ManagementUsers = () => {
 
           const adminId = localStorage.getItem("user_id");
           if (!adminId) {
-            console.error("Admin ID is missing in localStorage");
             throw new Error("Admin ID is missing in localStorage");
           }
           if (!selectedUser.lecturer_id) {
-            console.error("Lecturer ID is missing");
             throw new Error("Lecturer ID is missing");
           }
 
@@ -978,10 +976,11 @@ const ManagementUsers = () => {
                   role
                 );
               } catch (error) {
-                console.error("Error assigning role:", error);
-                throw new Error(
-                  error.response?.data?.message || "Failed to assign role"
+                message.error(
+                  error.response?.data?.message ||
+                    "Quyền này đã tồn tại trong hệ thống!"
                 );
+                return;
               }
             }
           }
@@ -1006,6 +1005,7 @@ const ManagementUsers = () => {
 
         message.success("Cập nhật trạng thái và chức vụ thành công!");
         await reloadData();
+        setIsModalVisible(false); // Chỉ đóng modal khi không có lỗi
       } catch (error) {
         console.error("Error updating status or roles:", error);
         message.error(
@@ -1013,7 +1013,6 @@ const ManagementUsers = () => {
         );
       }
     }
-    setIsModalVisible(false);
   };
 
   const handleCancel = () => {
