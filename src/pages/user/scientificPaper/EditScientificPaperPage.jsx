@@ -590,32 +590,85 @@ const EditScientificPaperPage = () => {
     calculateAndSetScore(updatedInput);
   };
 
-  const handleClear = () => {
-    setAuthors([
-      {
-        id: 1,
-        mssvMsgv: "",
-        full_name: "",
-        full_name_eng: "",
-        role: "",
-        institution: "",
-        institutions: [],
-        customInstitution: "",
-      },
-      {
-        id: 2,
-        mssvMsgv: "",
-        full_name: "",
-        full_name_eng: "",
-        role: "",
-        institution: "",
-        institutions: [],
-        customInstitution: "",
-      },
-    ]);
-    setSelectedFile(null);
-    setCoverImage(null);
-    message.info("Đã xóa trắng thông tin.");
+  const handleClear = async () => {
+    try {
+      const paperData = await userApi.getScientificPaperById(id);
+
+      // Reset fields to initial data
+      setTitleVn(paperData.title_vn || "");
+      setTitleEn(paperData.title_en || "");
+      setPublishDate(moment(paperData.publish_date));
+      setMagazineVi(paperData.magazine_vi || "");
+      setMagazineEn(paperData.magazine_en || "");
+      setMagazineType(paperData.magazine_type || "");
+      setPageCount(paperData.page || 0);
+      setIssnIsbn(paperData.issn_isbn || "");
+      setOrderNo(paperData.order_no || true);
+      setFeatured(paperData.featured || "");
+      setKeywords(paperData.keywords || "");
+      setSummary(paperData.summary || "");
+      setSelectedDepartment(paperData.department || "");
+      setDoi(paperData.doi || "");
+      setCoverImage(paperData.cover_image || "");
+      setSelectedFile(paperData.file || "");
+      setLink(paperData.link || "");
+      setSelectedPaperType(paperData.article_type?._id || "");
+      setSelectedPaperGroup(paperData.article_group?._id || "");
+
+      const authorsWithDetails = await Promise.all(
+        paperData.author.map(async (author, index) => {
+          let institutions = [];
+          if (author.user_id) {
+            try {
+              const institutionsResponse = await userApi.getUserWorksByUserId(
+                author.user_id
+              );
+              if (institutionsResponse?.length > 0) {
+                institutions = await Promise.all(
+                  institutionsResponse.map(async (item) => {
+                    const workUnit = await userApi.getWorkUnitById(
+                      item.work_unit_id
+                    );
+                    return {
+                      _id: workUnit._id,
+                      name:
+                        workUnit.name_vi ||
+                        workUnit.name ||
+                        "Unknown Institution",
+                    };
+                  })
+                );
+              }
+            } catch {
+              institutions = [];
+            }
+          }
+          return {
+            id: index + 1,
+            mssvMsgv: author.user_id || "",
+            full_name: author.author_name_vi || "",
+            full_name_eng: author.author_name_en || "",
+            role: author.role || "",
+            institution: author.work_unit_id?._id || "",
+            institutions,
+            point: author.point || 0,
+            customInstitution: "",
+          };
+        })
+      );
+
+      setAuthors(authorsWithDetails);
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+
+      message.success("Dữ liệu đã được khôi phục!");
+    } catch (error) {
+      console.error("Error resetting data:", error);
+      message.error("Không thể khôi phục dữ liệu.");
+    }
   };
 
   const handleSave = async () => {
@@ -1458,7 +1511,7 @@ const EditScientificPaperPage = () => {
                     onClick={handleClear}
                     className="w-full sm:w-auto mb-2 sm:mb-0"
                   >
-                    Xóa trắng
+                    Hủy
                   </Button>
                   <Button
                     type="primary"
