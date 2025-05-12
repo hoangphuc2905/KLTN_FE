@@ -818,7 +818,9 @@ const ScientificPaperDetailPage = () => {
                 </div>
               ))
             ) : (
-              <p>Không có bài nghiên cứu liên quan.</p>
+              <div className="flex justify-center items-center h-20">
+                <Spin size="large" />
+              </div>
             )}
           </div>
         </div>
