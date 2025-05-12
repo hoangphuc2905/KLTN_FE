@@ -1586,97 +1586,89 @@ const ManagementAriticle = () => {
                   position: "relative",
                 }}
               >
-                <div
-                  style={{
-                    minWidth: "1200px",
-                    position: "relative",
-                    minHeight: "525px",
-                  }}
-                >
+                <div className="relative">
                   {isLoading ? (
                     <div className="flex justify-center items-center absolute inset-0 bg-white bg-opacity-80 z-10">
                       <Spin size="large" />
                     </div>
                   ) : null}
 
-                  <Table
-                    columns={
-                      newColumns.length > 0
-                        ? newColumns
-                        : [
-                            {
-                              dataIndex: "placeholder",
-                              key: "placeholder",
-                              render: () =>
-                                "Please select at least one column to display",
-                            },
-                          ]
-                    }
-                    dataSource={newColumns.length > 0 ? filteredPapers : []}
-                    loading={false}
-                    pagination={{
-                      current: currentPages[activeTab],
-                      pageSize: pageSize,
-                      total: filteredPapers.length,
-                      onChange: (page) => {
-                        setCurrentPages((prev) => ({
-                          ...prev,
-                          [activeTab]: page,
-                        }));
-                      },
-                      showSizeChanger: false,
-                      position: ["bottomRight"],
-                      showTotal: (total, range) => (
-                        <div className="flex items-center">
+                  <div className="overflow-x-auto">
+                    <Table
+                      columns={
+                        newColumns.length > 0
+                          ? newColumns
+                          : [
+                              {
+                                dataIndex: "placeholder",
+                                key: "placeholder",
+                                render: () =>
+                                  "Please select at least one column to display",
+                              },
+                            ]
+                      }
+                      dataSource={newColumns.length > 0 ? filteredPapers : []}
+                      loading={false}
+                      pagination={{
+                        current: currentPages[activeTab],
+                        pageSize: pageSize,
+                        total: filteredPapers.length,
+                        onChange: (page) => {
+                          setCurrentPages((prev) => ({
+                            ...prev,
+                            [activeTab]: page,
+                          }));
+                        },
+                        showSizeChanger: false,
+                        position: ["bottomRight"],
+                        showTotal: (total, range) => (
                           <div className="flex items-center">
-                            <Select
-                              value={pageSize}
-                              onChange={handlePageSizeChange}
-                              style={{ width: 120, marginRight: 8 }}
-                            >
-                              <Option value={10}>10 / trang</Option>
-                              <Option value={20}>20 / trang</Option>
-                              <Option value={50}>50 / trang</Option>
-                              <Option value={100}>100 / trang</Option>
-                            </Select>
-                            <span className="max-sm:text-xs">{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                            <div className="flex items-center">
+                              <Select
+                                value={pageSize}
+                                onChange={handlePageSizeChange}
+                                style={{ width: 120, marginRight: 8 }}
+                              >
+                                <Option value={10}>10 / trang</Option>
+                                <Option value={20}>20 / trang</Option>
+                                <Option value={50}>50 / trang</Option>
+                                <Option value={100}>100 / trang</Option>
+                              </Select>
+                              <span className="max-sm:text-xs">{`${range[0]}-${range[1]} của ${total} mục`}</span>
+                            </div>
                           </div>
-                        </div>
-                      ),
-                    }}
-                    rowKey={(record) => record._id || record.key}
-                    className="text-sm max-sm:text-xs"
-                    scroll={{
-                      x: newColumns.reduce(
-                        (total, col) => total + (col.width || 0),
-                        0
-                      ),
-                    }}
-                    onRow={(record) => ({
-                      onClick: () =>
-                        newColumns.length > 0 && handleRowClick(record),
-                      style: {
-                        cursor: newColumns.length > 0 ? "pointer" : "default",
-                      },
-                    })}
-                    locale={{
-                      emptyText:
-                        papers.length === 0 ? (
-                          <div className="flex justify-center items-center h-64">
-                            <p>Không có dữ liệu để hiển thị.</p>
-                          </div>
-                        ) : (
-                          <div style={{ height: "35px" }}></div>
                         ),
-                    }}
-                    style={{
-                      height: "525px",
-                      minHeight: "525px",
-                    }}
-                    onChange={(pagination, filters, sorter) => {
-                      setSortedInfo(sorter);
-                    }}
-                  />
+                      }}
+                      rowKey={(record) => record._id || record.key}
+                      className="text-sm max-sm:text-xs"
+                      scroll={{
+                        x: newColumns.reduce(
+                          (total, col) => total + (col.width || 0),
+                          0
+                        ),
+                      }}
+                      onRow={(record) => ({
+                        onClick: () =>
+                          newColumns.length > 0 && handleRowClick(record),
+                        style: {
+                          cursor: newColumns.length > 0 ? "pointer" : "default",
+                        },
+                      })}
+                      locale={{
+                        emptyText:
+                          papers.length === 0 ? (
+                            <div className="flex justify-center items-center h-64">
+                              <p>Không có dữ liệu để hiển thị.</p>
+                            </div>
+                          ) : (
+                            <div style={{ height: "35px" }}></div>
+                          ),
+                      }}
+                      onChange={(pagination, filters, sorter) => {
+                        setSortedInfo(sorter);
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
