@@ -511,9 +511,23 @@ const ManagementAriticle = () => {
       const response = await userApi.getAllScientificPapersByAllStatus(
         academicYear
       );
+
+      // Cache the response in localStorage
+      const cacheKey = `scientificPapers_${academicYear || "all"}`;
+      localStorage.setItem(cacheKey, JSON.stringify(response));
+
       return response;
     } catch (error) {
       console.error("Error fetching scientific papers:", error);
+
+      // Fallback to cached data if available
+      const cacheKey = `scientificPapers_${academicYear || "all"}`;
+      const cachedData = localStorage.getItem(cacheKey);
+      if (cachedData) {
+        console.warn("Using cached data due to API error.");
+        return JSON.parse(cachedData);
+      }
+
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   };
