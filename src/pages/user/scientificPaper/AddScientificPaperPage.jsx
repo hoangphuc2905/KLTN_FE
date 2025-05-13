@@ -53,7 +53,7 @@ const AddScientificPaperPage = () => {
   const [pageCount, setPageCount] = useState(0); // State for page count
   const [issnIsbn, setIssnIsbn] = useState(""); // State for ISSN/ISBN
   const [orderNo, setOrderNo] = useState(true); // State for order number
-  const [featured, setFeatured] = useState(true); // State for featured status
+  const [featured, setFeatured] = useState(false); // State for featured status
   const [keywords, setKeywords] = useState(""); // State for keywords
   const [summary, setSummary] = useState(""); // State for summary
   const [selectedDepartment, setSelectedDepartment] = useState(""); // State for selected department
@@ -76,7 +76,7 @@ const AddScientificPaperPage = () => {
       const payload = {
         createdAt: new Date().toISOString(),
         doi: inputData.doi || false,
-        featured: inputData.featured || false,
+        featured: inputData.featured || "",
         article_group: inputData.article_group || "",
         authors: inputData.authors.map((author) => ({
           role: author.role,
@@ -117,6 +117,8 @@ const AddScientificPaperPage = () => {
       featured,
       ...updatedField,
     };
+
+    console.log("Payload sent to API:", updatedInput);
 
     calculateAndSetScore(updatedInput);
   };
@@ -1242,8 +1244,9 @@ const AddScientificPaperPage = () => {
                           className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                           checked={featured}
                           onChange={(e) => {
-                            setFeatured(e.target.checked);
-                            handleFieldChange({ featured: e.target.checked });
+                            const isChecked = e.target.checked;
+                            setFeatured(isChecked);
+                            handleFieldChange({ featured: isChecked });
                           }}
                         />
                       </div>
@@ -1914,7 +1917,7 @@ const AddScientificPaperPage = () => {
                             <Input
                               className="w-1/2 text-center"
                               readOnly
-                              id={`contribution-${index}`}
+                              di={`contribution-${index}`}
                               value={
                                 scores.perAuthor[`author_${index + 1}`] || 0
                               }
