@@ -76,6 +76,42 @@ const userApi = {
     }
   },
 
+  updateUserWorkById: async (userWorkId, userWorkData) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/userworks/${userWorkId}`,
+        userWorkData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating user work:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  deleteUserWorkById: async (userWorkId) => {
+    try {
+      const response = await axios.delete(`${API_URL}/userworks/${userWorkId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting user work:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
+  updateWorkUnitById: async (workUnitId, workUnitData) => {
+    try {
+      const response = await axios.put(
+        `${API_URL}/workUnits/${workUnitId}`,
+        workUnitData
+      );
+      return response.data;
+    } catch (error) {
+      console.error("Error updating work unit:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   // Cập nhật công thức theo khoảng thời gian
   updateFormula: async (startDate, endDate, formulaData) => {
     try {

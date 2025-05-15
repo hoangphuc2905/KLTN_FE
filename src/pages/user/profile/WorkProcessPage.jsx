@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Spin } from "antd";
+import { Table, Button, Spin, Dropdown, Menu, Modal, message } from "antd"; // Import Modal
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
+import EditWorkProcessPage from "./EditWorkProcessPage"; // Import EditWorkProcessPage
 import Footer from "../../../components/Footer";
 import { useNavigate } from "react-router-dom";
 
 const WorkProcessPage = () => {
   const [workProcesses, setWorkProcesses] = useState([]);
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
+  const [showEditWorkProcessPopup, setShowEditWorkProcessPopup] =
+    useState(false);
+  const [selectedWorkProcess, setSelectedWorkProcess] = useState(null); // State for selected record
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
 
@@ -43,6 +47,30 @@ const WorkProcessPage = () => {
     fetchWorkProcesses();
   }, []);
 
+  const handleEdit = (record) => {
+    setSelectedWorkProcess(record); // Set the selected record
+    setShowEditWorkProcessPopup(true); // Show the edit popup
+  };
+
+  const handleDelete = (record) => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc chắn muốn xóa quá trình công tác này không?",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          await userApi.deleteUserWorkById(record._id);
+          fetchWorkProcesses();
+          message.success("Xóa quá trình công tác thành công!");
+        } catch (error) {
+          console.error("Lỗi khi xóa quá trình công tác:", error);
+        }
+      },
+    });
+  };
+
   const columns = [
     { title: "STT", dataIndex: "stt", key: "stt" },
     { title: "Tên cơ quan", dataIndex: "name_vi", key: "name_vi" },
@@ -50,12 +78,33 @@ const WorkProcessPage = () => {
     { title: "Vai trò", dataIndex: "role_vi", key: "role_vi" },
     { title: "Ngày bắt đầu", dataIndex: "start_date", key: "start_date" },
     { title: "Ngày kết thúc", dataIndex: "end_date", key: "end_date" },
+    {
+      title: "Hành động",
+      key: "action",
+      render: (_, record) => {
+        const menu = (
+          <Menu>
+            <Menu.Item key="1" onClick={() => handleEdit(record)}>
+              Chỉnh sửa
+            </Menu.Item>
+            <Menu.Item key="2" onClick={() => handleDelete(record)}>
+              Xóa
+            </Menu.Item>
+          </Menu>
+        );
+        return (
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <Button type="text">⋮</Button>
+          </Dropdown>
+        );
+      },
+    },
   ];
 
   const dataSource = workProcesses.map((process, index) => ({
     key: index + 1,
     stt: index + 1,
-    work_unit_id: process.work_unit_id,
+    _id: process._id, // Ensure _id is included in the data source
     name_vi: process.name_vi,
     address_vi: process.address_vi,
     role_vi: process.role_vi,
@@ -130,8 +179,15 @@ const WorkProcessPage = () => {
             refreshData={fetchWorkProcesses} // Pass the refresh function
           />
         )}
+        {showEditWorkProcessPopup && (
+          <EditWorkProcessPage
+            workProcess={selectedWorkProcess} // Đổi từ "data" thành "workProcess"
+            onClose={() => setShowEditWorkProcessPopup(false)}
+            refreshData={fetchWorkProcesses}
+          />
+        )}
       </div>
-      <Footer /> {/* Footer remains at the bottom */}
+      <Footer />
     </div>
   );
 };
