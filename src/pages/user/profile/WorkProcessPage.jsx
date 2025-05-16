@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Spin, Dropdown, Menu, Modal, message } from "antd"; // Import Modal
+import { Table, Button, Spin, Dropdown, Menu, Modal, message } from "antd";
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
-import EditWorkProcessPage from "./EditWorkProcessPage"; // Import EditWorkProcessPage
+import EditWorkProcessPage from "./EditWorkProcessPage";
 import Footer from "../../../components/Footer";
 import { useNavigate } from "react-router-dom";
 
@@ -12,9 +12,9 @@ const WorkProcessPage = () => {
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
   const [showEditWorkProcessPopup, setShowEditWorkProcessPopup] =
     useState(false);
-  const [selectedWorkProcess, setSelectedWorkProcess] = useState(null); // State for selected record
+  const [selectedWorkProcess, setSelectedWorkProcess] = useState(null);
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchWorkProcesses = async () => {
     const user_id = localStorage.getItem("user_id");
@@ -22,7 +22,7 @@ const WorkProcessPage = () => {
       console.error("Thiếu user_id");
       return;
     }
-    setIsLoading(true); // Bắt đầu loading
+    setIsLoading(true);
     try {
       const userWorks = await userApi.getWorkProcesses(user_id);
       const workProcessesWithDetails = await Promise.all(
@@ -31,7 +31,9 @@ const WorkProcessPage = () => {
           return {
             ...userWork,
             name_vi: workUnit.name_vi,
+            name_en: workUnit.name_en,
             address_vi: workUnit.address_vi,
+            address_en: workUnit.address_en,
           };
         })
       );
@@ -39,7 +41,7 @@ const WorkProcessPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy thông tin quá trình công tác:", error);
     } finally {
-      setIsLoading(false); // Kết thúc loading
+      setIsLoading(false);
     }
   };
 
@@ -48,8 +50,8 @@ const WorkProcessPage = () => {
   }, []);
 
   const handleEdit = (record) => {
-    setSelectedWorkProcess(record); // Set the selected record
-    setShowEditWorkProcessPopup(true); // Show the edit popup
+    setSelectedWorkProcess(record);
+    setShowEditWorkProcessPopup(true);
   };
 
   const handleDelete = (record) => {
@@ -104,23 +106,25 @@ const WorkProcessPage = () => {
   const dataSource = workProcesses.map((process, index) => ({
     key: index + 1,
     stt: index + 1,
-    _id: process._id, // Ensure _id is included in the data source
+    _id: process._id,
+    work_unit_id: process.work_unit_id,
     name_vi: process.name_vi,
+    name_en: process.name_en,
     address_vi: process.address_vi,
+    address_en: process.address_en,
     role_vi: process.role_vi,
+    role_en: process.role_en,
     start_date: new Date(process.start_date).toLocaleDateString("vi-VN"),
     end_date: process.end_date
       ? new Date(process.end_date).toLocaleDateString("vi-VN")
       : "--",
+    raw_start_date: process.start_date, // Giữ giá trị gốc
+    raw_end_date: process.end_date, // Giữ giá trị gốc
   }));
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
-      {" "}
-      {/* Add flex and flex-col */}
       <div className="flex-grow">
-        {" "}
-        {/* Add flex-grow to make content take available space */}
         <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
           <div className="w-full bg-white">
             <Header />
@@ -176,12 +180,12 @@ const WorkProcessPage = () => {
         {showAddWorkProcessPopup && (
           <AddWorkProcessPage
             onClose={() => setShowAddWorkProcessPopup(false)}
-            refreshData={fetchWorkProcesses} // Pass the refresh function
+            refreshData={fetchWorkProcesses}
           />
         )}
         {showEditWorkProcessPopup && (
           <EditWorkProcessPage
-            workProcess={selectedWorkProcess} // Đổi từ "data" thành "workProcess"
+            workProcess={selectedWorkProcess}
             onClose={() => setShowEditWorkProcessPopup(false)}
             refreshData={fetchWorkProcesses}
           />

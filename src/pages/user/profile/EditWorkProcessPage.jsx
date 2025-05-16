@@ -15,12 +15,22 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
   });
 
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (workProcess) {
+      // Hàm định dạng ngày, kiểm tra tính hợp lệ
+      const formatDate = (date) => {
+        if (!date) return "";
+        const parsedDate = new Date(date);
+        return parsedDate instanceof Date && !isNaN(parsedDate)
+          ? parsedDate.toISOString().split("T")[0]
+          : "";
+      };
+
       setFormData({
-        fromDate: workProcess.start_date || "",
-        toDate: workProcess.end_date || "",
+        fromDate: formatDate(workProcess.raw_start_date),
+        toDate: formatDate(workProcess.raw_end_date),
         workplaceVi: workProcess.name_vi || "",
         workplaceEn: workProcess.name_en || "",
         addressVi: workProcess.address_vi || "",
@@ -66,31 +76,46 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
       return;
     }
 
+    setLoading(true);
     try {
-      await userApi.updateWorkUnit({
-        work_unit_id: workProcess.work_unit_id,
+      const workUnitId =
+        typeof workProcess.work_unit_id === "number"
+          ? workProcess.work_unit_id
+          : Number(workProcess.work_unit_id);
+
+      if (!workUnitId || isNaN(workUnitId)) {
+        message.error(
+          "Không tìm thấy mã cơ quan công tác hợp lệ để cập nhật. Vui lòng liên hệ quản trị viên hoặc kiểm tra lại dữ liệu."
+        );
+        setLoading(false);
+        return;
+      }
+
+      await userApi.updateWorkUnitById(workUnitId, {
         name_vi: formData.workplaceVi,
         name_en: formData.workplaceEn,
         address_vi: formData.addressVi,
         address_en: formData.addressEn,
       });
 
-      await userApi.updateUserWork({
-        work_unit_id: workProcess.work_unit_id,
+      await userApi.updateUserWorkById(workProcess._id, {
+        work_unit_id: workProcess.work_unit_id?.toString(),
         user_id: localStorage.getItem("user_id"),
-        start_date: formData.fromDate || "",
-        end_date: formData.toDate,
+        start_date: formData.fromDate,
+        end_date: formData.toDate || null,
         role_vi: formData.roleVi,
         role_en: formData.roleEn,
         department: formData.roleEn,
       });
-
+      // ...existing code...
       message.success("Cập nhật quá trình công tác thành công!");
-      refreshData(); // Call the refresh function to reload the table
+      refreshData();
       onClose();
     } catch (error) {
-      console.error("Error updating data:", error);
+      console.error("Lỗi khi cập nhật dữ liệu:", error);
       message.error("Cập nhật quá trình công tác thất bại!");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,6 +140,7 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
                 className={`w-1/2 p-1 border rounded-md text-sm ${
                   errors.fromDate ? "border-red-500" : ""
                 }`}
+                required
               />
               <input
                 type="date"
@@ -156,6 +182,7 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
                       className={`w-full p-1 border rounded-md text-sm mb-1 ${
                         errors.roleVi ? "border-red-500" : ""
                       }`}
+                      required
                     >
                       <option value="">Chọn vai trò</option>
                       <option value="Giảng viên">Giảng viên</option>
@@ -166,7 +193,7 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
                       name="roleEn"
                       value={formData.roleEn}
                       readOnly
-                      placeholder="Role (English)"
+                      placeholder="Vai trò (Tiếng Anh)"
                       className={`w-full p-1 border rounded-md text-sm ${
                         errors.roleEn ? "border-red-500" : ""
                       }`}
@@ -183,6 +210,7 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
                       className={`w-full p-1 border rounded-md text-sm mb-1 ${
                         errors[nameVi] ? "border-red-500" : ""
                       }`}
+                      required
                     />
                     <input
                       type="text"
@@ -193,6 +221,7 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
                       className={`w-full p-1 border rounded-md text-sm ${
                         errors[nameEn] ? "border-red-500" : ""
                       }`}
+                      required
                     />
                   </>
                 )}
@@ -206,14 +235,16 @@ const EditWorkProcessPage = ({ onClose, refreshData, workProcess }) => {
               type="button"
               className="px-3 py-1 bg-red-500 text-white text-sm rounded-md hover:bg-red-600"
               onClick={onClose}
+              disabled={loading}
             >
               Hủy
             </button>
             <button
               type="submit"
               className="px-3 py-1 bg-blue-500 text-white text-sm rounded-md hover:bg-blue-600"
+              disabled={loading}
             >
-              Lưu
+              {loading ? "Đang lưu..." : "Lưu"}
             </button>
           </div>
         </form>
