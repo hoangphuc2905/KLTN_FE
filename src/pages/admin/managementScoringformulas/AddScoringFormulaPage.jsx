@@ -115,7 +115,7 @@ const AddScoringFormulaPage = ({ onClose, selectedYear, onAddAttribute }) => {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-[600px] border-2 relative">
+      <div className="bg-white p-5 rounded-lg shadow-lg w-full max-w-[600px] md:max-w-[600px] border-2 relative max-h-[70vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}

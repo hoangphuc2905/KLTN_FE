@@ -76,9 +76,10 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
     }
   };
 
+  // Thay đổi div chứa toàn bộ modal
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-[600px] border-2 relative">
+      <div className="bg-white p-5 rounded-lg shadow-lg w-full max-w-[600px] md:max-w-[600px] border-2 relative max-h-[70vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
@@ -91,7 +92,7 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
           HIỂN THỊ CÔNG THỨC TÍNH ĐIỂM
         </h2>
 
-        <Form onFinish={handleSubmit}>
+        <Form onFinish={handleSubmit} className="overflow-y-auto pr-1">
           <div className="space-y-4 pt-4">
             {/* Ngày bắt đầu */}
             <div className="space-y-2">
@@ -145,7 +146,7 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
                 <label className="text-sm font-medium">
                   Thành phần - Hệ số <span className="text-red-500">(*)</span>
                 </label>
-                <div className="flex gap-4">
+                <div className="flex gap-2">
                   <Input
                     name="key"
                     value={field.key}
@@ -164,6 +165,7 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
                     icon={<MinusOutlined />}
                     onClick={() => handleRemoveField(index)}
                     size="small"
+                    className="flex-shrink-0"
                   />
                 </div>
               </div>
