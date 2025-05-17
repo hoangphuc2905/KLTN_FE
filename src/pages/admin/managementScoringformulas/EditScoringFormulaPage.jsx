@@ -6,6 +6,26 @@ import moment from "moment";
 
 const { Option } = Select;
 
+const AUTHOR_ROLE_OPTIONS = [
+  { label: "Tác giả chính", value: "MainAuthor" },
+  { label: "Tham gia", value: "Participant" },
+  { label: "Vừa chính vừa liên hệ", value: "MainAndCorrespondingAuthor" },
+  { label: "Liên hệ", value: "CorrespondingAuthor" },
+];
+
+const JOURNAL_GROUP_OPTIONS = [
+  { label: "Q1", value: "Q1" },
+  { label: "Q2", value: "Q2" },
+  { label: "Q3", value: "Q3" },
+  { label: "Q4", value: "Q4" },
+  { label: "None", value: "None" },
+];
+
+const BOOLEAN_OPTIONS = [
+  { label: "Có", value: "true" },
+  { label: "Không", value: "false" },
+];
+
 const ShowScoringFormulaPage = ({ onClose, data }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -49,9 +69,15 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
     setAdditionalFields(newFields);
   };
 
-  const handleAdditionalFieldChange = (index, e) => {
+  const handleAdditionalFieldChange = (index, eOrValue) => {
     const newFields = [...additionalFields];
-    newFields[index][e.target.name] = e.target.value;
+    // eOrValue có thể là event hoặc value trực tiếp (từ Select)
+    if (typeof eOrValue === "object" && eOrValue.target) {
+      newFields[index][eOrValue.target.name] = eOrValue.target.value;
+    } else {
+      // Nếu là Select, luôn là thay đổi 'key'
+      newFields[index]["key"] = eOrValue;
+    }
     setAdditionalFields(newFields);
   };
 
@@ -62,7 +88,11 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
   const handleSubmit = async () => {
     try {
       const values = additionalFields.reduce((acc, field) => {
-        acc[field.key] = field.value;
+        let key = field.key;
+        if (formData.name === "doi" || formData.name === "exemplary_paper") {
+          key = key === "true" || key === true ? true : false;
+        }
+        acc[key] = field.value;
         return acc;
       }, {});
       const updatedData = { ...formData, values };
@@ -89,7 +119,7 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
         </button>
 
         <h2 className="text-lg font-semibold text-blue-600 text-center mb-4">
-          HIỂN THỊ CÔNG THỨC TÍNH ĐIỂM
+          CHỈNH SỬA CÔNG THỨC TÍNH ĐIỂM
         </h2>
 
         <Form onFinish={handleSubmit} className="overflow-y-auto pr-1">
@@ -134,7 +164,6 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
               >
                 <Option value="journal_group">NHÓM TẠP CHÍ</Option>
                 <Option value="author_role">VAI TRÒ</Option>
-                <Option value="institution_count">CƠ ĐỨNG TÊN</Option>
                 <Option value="doi">DOI</Option>
                 <Option value="exemplary_paper">TIÊU BIỂU</Option>
               </Select>
@@ -147,13 +176,76 @@ const ShowScoringFormulaPage = ({ onClose, data }) => {
                   Thành phần - Hệ số <span className="text-red-500">(*)</span>
                 </label>
                 <div className="flex gap-2">
-                  <Input
-                    name="key"
-                    value={field.key}
-                    onChange={(e) => handleAdditionalFieldChange(index, e)}
-                    placeholder="Thành phần"
-                    className="w-1/2"
-                  />
+                  {/* Thành phần */}
+                  {formData.name === "doi" ||
+                  formData.name === "exemplary_paper" ? (
+                    <Select
+                      name="key"
+                      value={
+                        field.key === true
+                          ? "true"
+                          : field.key === false
+                          ? "false"
+                          : field.key
+                      }
+                      onChange={(value) =>
+                        handleAdditionalFieldChange(index, value)
+                      }
+                      className="w-1/2"
+                      placeholder="Chọn"
+                    >
+                      {BOOLEAN_OPTIONS.map((opt) => (
+                        <Option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </Option>
+                      ))}
+                    </Select>
+                  ) : formData.name === "journal_group" ? (
+                    <Select
+                      name="key"
+                      value={field.key}
+                      onChange={(value) =>
+                        handleAdditionalFieldChange(index, value)
+                      }
+                      className="w-1/2"
+                      placeholder="Chọn nhóm"
+                      allowClear
+                      showSearch
+                    >
+                      {JOURNAL_GROUP_OPTIONS.map((opt) => (
+                        <Option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </Option>
+                      ))}
+                    </Select>
+                  ) : formData.name === "author_role" ? (
+                    <Select
+                      name="key"
+                      value={field.key}
+                      onChange={(value) =>
+                        handleAdditionalFieldChange(index, value)
+                      }
+                      className="w-1/2"
+                      placeholder="Chọn vai trò"
+                      allowClear
+                      showSearch
+                    >
+                      {AUTHOR_ROLE_OPTIONS.map((opt) => (
+                        <Option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </Option>
+                      ))}
+                    </Select>
+                  ) : (
+                    <Input
+                      name="key"
+                      value={field.key}
+                      onChange={(e) => handleAdditionalFieldChange(index, e)}
+                      placeholder="Thành phần"
+                      className="w-1/2"
+                    />
+                  )}
+                  {/* Hệ số */}
                   <Input
                     name="value"
                     value={field.value}
