@@ -25,9 +25,12 @@ const Header = () => {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Thiếu token. Chuyển hướng đến trang đăng nhập.");
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (!accessToken || !refreshToken) {
+        console.error(
+          "Thiếu accessToken hoặc refreshToken. Chuyển hướng đến trang đăng nhập."
+        );
         window.location.href = "/";
         return;
       }
@@ -35,7 +38,7 @@ const Header = () => {
       try {
         const response = await userApi.getUserInfo({
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 

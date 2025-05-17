@@ -1,24 +1,25 @@
-import axios from "axios";
+import { api } from "./authApi";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const userApi = {
   getUserInfo: async () => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      throw new Error("No token found. Please log in.");
+    const accessToken = localStorage.getItem("accessToken");
+    const refreshToken = localStorage.getItem("refreshToken");
+    if (!accessToken && !refreshToken) {
+      throw new Error("No accesstoken found");
     }
 
-    return await axios.get(`${API_URL}/auth/userinfo`, {
+    return await api.get(`${API_URL}/auth/userinfo`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
   },
 
   getWorkProcesses: async (user_id) => {
     try {
-      const response = await axios.get(`${API_URL}/userworks/${user_id}`);
+      const response = await api.get(`${API_URL}/userworks/${user_id}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching work processes:", error);
@@ -28,7 +29,7 @@ const userApi = {
 
   getWorkUnitById: async (work_unit_id) => {
     try {
-      const response = await axios.get(`${API_URL}/workUnits/${work_unit_id}`);
+      const response = await api.get(`${API_URL}/workUnits/${work_unit_id}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching work unit:", error);
@@ -38,7 +39,7 @@ const userApi = {
 
   createWorkUnit: async (workUnitData) => {
     try {
-      const response = await axios.post(`${API_URL}/workUnits`, workUnitData);
+      const response = await api.post(`${API_URL}/workUnits`, workUnitData);
       return response.data;
     } catch (error) {
       console.error("Error creating work unit:", error);
@@ -48,7 +49,7 @@ const userApi = {
 
   createUserWork: async (userWorkData) => {
     try {
-      const response = await axios.post(`${API_URL}/userworks`, userWorkData);
+      const response = await api.post(`${API_URL}/userworks`, userWorkData);
       return response.data;
     } catch (error) {
       console.error("Error creating user work:", error);
@@ -58,7 +59,7 @@ const userApi = {
 
   createFormula: async (formulaData) => {
     try {
-      const response = await axios.post(`${API_URL}/formulas`, formulaData);
+      const response = await api.post(`${API_URL}/formulas`, formulaData);
       return response.data;
     } catch (error) {
       console.error("Error creating formula:", error);
@@ -68,7 +69,7 @@ const userApi = {
 
   getUserWorksByUserId: async (user_id) => {
     try {
-      const response = await axios.get(`${API_URL}/userworks/${user_id}`);
+      const response = await api.get(`${API_URL}/userworks/${user_id}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching user works:", error);
@@ -78,7 +79,7 @@ const userApi = {
 
   updateUserWorkById: async (userWorkId, userWorkData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/userworks/${userWorkId}`,
         userWorkData
       );
@@ -91,7 +92,7 @@ const userApi = {
 
   deleteUserWorkById: async (userWorkId) => {
     try {
-      const response = await axios.delete(`${API_URL}/userworks/${userWorkId}`);
+      const response = await api.delete(`${API_URL}/userworks/${userWorkId}`);
       return response.data;
     } catch (error) {
       console.error("Error deleting user work:", error);
@@ -101,7 +102,7 @@ const userApi = {
 
   updateWorkUnitById: async (workUnitId, workUnitData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/workUnits/${workUnitId}`,
         workUnitData
       );
@@ -115,7 +116,7 @@ const userApi = {
   // Cập nhật công thức theo khoảng thời gian
   updateFormula: async (startDate, endDate, formulaData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/formulas/update-by-date-range?startDate=${startDate}&endDate=${endDate}`,
         formulaData
       );
@@ -128,7 +129,7 @@ const userApi = {
 
   updateFormulaById: async (formulaId, formulaData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/formulas/update/${formulaId}`,
         formulaData
       );
@@ -141,7 +142,7 @@ const userApi = {
 
   calculateScoreFromInput: async (inputData) => {
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/authorScores/input`,
         inputData
       );
@@ -155,13 +156,10 @@ const userApi = {
   // Lấy công thức theo khoảng thời gian
   getFormulaByDateRange: async (startDate, endDate) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/formulas/get-by-date-range`,
-        {
-          startDate,
-          endDate,
-        }
-      );
+      const response = await api.post(`${API_URL}/formulas/get-by-date-range`, {
+        startDate,
+        endDate,
+      });
       return response.data;
     } catch (error) {
       console.error("Error fetching formulas:", error);
@@ -172,7 +170,7 @@ const userApi = {
   // Lấy tất cả
   getAllFormula: async () => {
     try {
-      const response = await axios.get(`${API_URL}/formulas`);
+      const response = await api.get(`${API_URL}/formulas`);
       return response.data;
     } catch (error) {
       console.error("Error fetching date ranges:", error);
@@ -183,7 +181,7 @@ const userApi = {
   // Tạo mới một Attribute
   createAttribute: async (attributeData) => {
     try {
-      const response = await axios.post(`${API_URL}/attributes`, attributeData);
+      const response = await api.post(`${API_URL}/attributes`, attributeData);
       return response.data;
     } catch (error) {
       console.error("Error creating attribute:", error);
@@ -194,7 +192,7 @@ const userApi = {
   // Cập nhật Attribute theo tên
   updateAttribute: async (name, attributeData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/attributes/${name}`,
         attributeData
       );
@@ -208,7 +206,7 @@ const userApi = {
   // Lấy tất cả Attribute
   getAllAttributes: async () => {
     try {
-      const response = await axios.get(`${API_URL}/attributes`);
+      const response = await api.get(`${API_URL}/attributes`);
       return response.data;
     } catch (error) {
       console.error("Error fetching attributes:", error);
@@ -219,7 +217,7 @@ const userApi = {
   // Lấy Attribute theo ID
   getAttributeById: async (id) => {
     try {
-      const response = await axios.post(`${API_URL}/attributes/id`, { id });
+      const response = await api.post(`${API_URL}/attributes/id`, { id });
       return response.data;
     } catch (error) {
       console.error(
@@ -233,7 +231,7 @@ const userApi = {
   // Xóa Attribute theo tên
   deleteAttributeByName: async (name) => {
     try {
-      const response = await axios.delete(`${API_URL}/attributes/${name}`);
+      const response = await api.delete(`${API_URL}/attributes/${name}`);
       return response.data;
     } catch (error) {
       console.error("Error deleting attribute:", error);
@@ -244,7 +242,7 @@ const userApi = {
   // Xóa công thức theo khoảng thời gian
   deleteFormulaByDateRange: async (startDate, endDate) => {
     try {
-      const response = await axios.delete(
+      const response = await api.delete(
         `${API_URL}/formulas?startDate=${startDate}&endDate=${endDate}`
       );
       return response.data;
@@ -256,7 +254,7 @@ const userApi = {
 
   addNewYear: async (year) => {
     try {
-      const response = await axios.post(`${API_URL}/formulas/add-year`, {
+      const response = await api.post(`${API_URL}/formulas/add-year`, {
         year,
       });
       return response.data;
@@ -268,7 +266,7 @@ const userApi = {
 
   createPaperType: async (paperTypeData) => {
     try {
-      const response = await axios.post(`${API_URL}/papertypes`, paperTypeData);
+      const response = await api.post(`${API_URL}/papertypes`, paperTypeData);
       return response.data;
     } catch (error) {
       console.error("Error creating paper type:", error);
@@ -278,7 +276,7 @@ const userApi = {
 
   getAllPaperTypes: async () => {
     try {
-      const response = await axios.get(`${API_URL}/papertypes`);
+      const response = await api.get(`${API_URL}/papertypes`);
 
       return response.data;
     } catch (error) {
@@ -289,7 +287,7 @@ const userApi = {
 
   updatePaperType: async (paperTypeData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/papertypes/${paperTypeData._id}`,
         paperTypeData
       );
@@ -303,10 +301,7 @@ const userApi = {
 
   createPaperGroup: async (paperGroupData) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/papergroups`,
-        paperGroupData
-      );
+      const response = await api.post(`${API_URL}/papergroups`, paperGroupData);
 
       return response.data;
     } catch (error) {
@@ -317,7 +312,7 @@ const userApi = {
 
   getAllPaperGroups: async () => {
     try {
-      const response = await axios.get(`${API_URL}/papergroups`);
+      const response = await api.get(`${API_URL}/papergroups`);
 
       return response.data;
     } catch (error) {
@@ -328,7 +323,7 @@ const userApi = {
 
   updatePaperGroup: async (paperGroupData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/papergroups/${paperGroupData._id}`,
         paperGroupData
       );
@@ -342,7 +337,7 @@ const userApi = {
 
   getAllLecturers: async () => {
     try {
-      const response = await axios.get(`${API_URL}/lecturers`);
+      const response = await api.get(`${API_URL}/lecturers`);
 
       return response.data;
     } catch (error) {
@@ -353,7 +348,7 @@ const userApi = {
 
   getAllStudents: async () => {
     try {
-      const response = await axios.get(`${API_URL}/students`);
+      const response = await api.get(`${API_URL}/students`);
 
       return response.data;
     } catch (error) {
@@ -364,7 +359,7 @@ const userApi = {
 
   getDepartmentById: async (department) => {
     try {
-      const response = await axios.get(`${API_URL}/departments/${department}`);
+      const response = await api.get(`${API_URL}/departments/${department}`);
 
       return response.data;
     } catch (error) {
@@ -375,7 +370,7 @@ const userApi = {
 
   getAllDepartments: async () => {
     try {
-      const response = await axios.get(`${API_URL}/departments`);
+      const response = await api.get(`${API_URL}/departments`);
 
       return response.data;
     } catch (error) {
@@ -386,7 +381,7 @@ const userApi = {
 
   getLecturerAndStudentByDepartment: async (department) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/lecturers/lecturers-and-students/${department}`
       );
 
@@ -399,7 +394,7 @@ const userApi = {
 
   updateStatusLecturerById: async (lecturer_id, isActive) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/lecturers/status/${lecturer_id}`,
         { isActive }
       );
@@ -413,7 +408,7 @@ const userApi = {
 
   updateStatusStudentById: async (student_id, isActive) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/students/status/${student_id}`,
         { isActive }
       );
@@ -427,7 +422,7 @@ const userApi = {
 
   assignRole: async (adminId, lecturerId, newRole) => {
     try {
-      const response = await axios.post(`${API_URL}/lecturers/assign-role`, {
+      const response = await api.post(`${API_URL}/lecturers/assign-role`, {
         adminId,
         lecturerId,
         newRole,
@@ -442,7 +437,7 @@ const userApi = {
 
   deleteRole: async (adminId, lecturerId, role) => {
     try {
-      const response = await axios.post(`${API_URL}/lecturers/delete-role`, {
+      const response = await api.post(`${API_URL}/lecturers/delete-role`, {
         adminId,
         lecturerId,
         role,
@@ -457,7 +452,7 @@ const userApi = {
 
   getAllRoles: async () => {
     try {
-      const response = await axios.get(`${API_URL}/roles`);
+      const response = await api.get(`${API_URL}/roles`);
 
       return response.data;
     } catch (error) {
@@ -468,7 +463,7 @@ const userApi = {
 
   getLecturerById: async (lecturer_id) => {
     try {
-      const response = await axios.get(`${API_URL}/lecturers/${lecturer_id}`);
+      const response = await api.get(`${API_URL}/lecturers/${lecturer_id}`);
 
       return response.data;
     } catch (error) {
@@ -478,7 +473,7 @@ const userApi = {
   },
   getStudentById: async (student_id) => {
     try {
-      const response = await axios.get(`${API_URL}/students/${student_id}`);
+      const response = await api.get(`${API_URL}/students/${student_id}`);
 
       return response.data;
     } catch (error) {
@@ -489,7 +484,7 @@ const userApi = {
 
   getAllScientificPapers: async (academicYear) => {
     try {
-      const response = await axios.get(`${API_URL}/scientificPapers`, {
+      const response = await api.get(`${API_URL}/scientificPapers`, {
         params: { academicYear },
       });
 
@@ -502,7 +497,7 @@ const userApi = {
 
   getAllScientificPapersByAllStatus: async (academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/scientificPapers/getAllScientificPapersByAllStatus`,
         {
           params: { academicYear },
@@ -522,7 +517,7 @@ const userApi = {
         throw new Error("Title is required");
       }
 
-      const response = await axios.get(`${API_URL}/scientificPapers/by-title`, {
+      const response = await api.get(`${API_URL}/scientificPapers/by-title`, {
         params: { title },
       });
 
@@ -535,7 +530,7 @@ const userApi = {
 
   getScientificPapersByDepartment: async (department, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/scientificPapers/department/${department}`,
         {
           params: { academicYear }, // Add academicYear to query string
@@ -550,9 +545,7 @@ const userApi = {
 
   getScientificPaperById: async (paper_id) => {
     try {
-      const response = await axios.get(
-        `${API_URL}/scientificPapers/${paper_id}`
-      );
+      const response = await api.get(`${API_URL}/scientificPapers/${paper_id}`);
 
       return response.data;
     } catch (error) {
@@ -563,7 +556,7 @@ const userApi = {
 
   updateScientificPaperById: async (paper_id, paperData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/scientificPapers/${paper_id}`,
         paperData
       );
@@ -577,7 +570,7 @@ const userApi = {
 
   getScientificPapersByAuthorId: async (user_id, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/scientificPapers/author/${user_id}`,
         {
           params: { academicYear }, // Add academicYear to query string
@@ -593,7 +586,7 @@ const userApi = {
 
   getAuthorsByPaperId: async (paper_id) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/paperauthor/paper/${paper_id}`
       );
 
@@ -609,7 +602,7 @@ const userApi = {
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/articlesAI/uploadimage`,
         formData,
         {
@@ -634,7 +627,7 @@ const userApi = {
       const formData = new FormData();
       formData.append("file", file);
 
-      const response = await axios.post(`${API_URL}/files/upload`, formData, {
+      const response = await api.post(`${API_URL}/files/upload`, formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -652,10 +645,7 @@ const userApi = {
 
   createScientificPaper: async (paperData) => {
     try {
-      const response = await axios.post(
-        `${API_URL}/scientificPapers`,
-        paperData
-      );
+      const response = await api.post(`${API_URL}/scientificPapers`, paperData);
 
       return response.data;
     } catch (error) {
@@ -666,7 +656,7 @@ const userApi = {
 
   createMessage: async (messageData) => {
     try {
-      const response = await axios.post(`${API_URL}/messages`, messageData);
+      const response = await api.post(`${API_URL}/messages`, messageData);
 
       return response.data;
     } catch (error) {
@@ -677,7 +667,7 @@ const userApi = {
 
   getMessagesByReceiverId: async (receiverId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/messages/receiver/${receiverId}`
       );
 
@@ -690,7 +680,7 @@ const userApi = {
 
   markMessageAsRead: async (messageId) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/messages/read/${messageId}`,
         {}
       );
@@ -704,7 +694,7 @@ const userApi = {
 
   updateScientificPaperStatus: async (paperId, status) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/scientificPapers/status/${paperId}`,
         { status }
       );
@@ -718,7 +708,7 @@ const userApi = {
 
   createPaperDownload: async (paperDownloadData) => {
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/paperdownload`,
         paperDownloadData
       );
@@ -732,7 +722,7 @@ const userApi = {
 
   getDownloadCountByPaperId: async (paperId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/paperdownload/count/${paperId}`
       );
 
@@ -745,7 +735,7 @@ const userApi = {
 
   createPaperView: async (paperViewData) => {
     try {
-      const response = await axios.post(`${API_URL}/paperview`, paperViewData);
+      const response = await api.post(`${API_URL}/paperview`, paperViewData);
 
       return response.data;
     } catch (error) {
@@ -756,7 +746,7 @@ const userApi = {
 
   getViewCountByPaperId: async (paperId) => {
     try {
-      const response = await axios.get(`${API_URL}/paperview/count/${paperId}`);
+      const response = await api.get(`${API_URL}/paperview/count/${paperId}`);
 
       return response.data; // Return the response data
     } catch (error) {
@@ -767,7 +757,7 @@ const userApi = {
 
   getCollectionsByUserId: async (userId) => {
     try {
-      const response = await axios.get(`${API_URL}/papercollections/${userId}`);
+      const response = await api.get(`${API_URL}/papercollections/${userId}`);
 
       return response.data;
     } catch (error) {
@@ -777,7 +767,7 @@ const userApi = {
   },
   createCollection: async (collectionData) => {
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/papercollections`,
         collectionData
       );
@@ -791,7 +781,7 @@ const userApi = {
 
   addPaperToCollection: async (payload) => {
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/papercollections/addpaper`,
         payload
       );
@@ -805,7 +795,7 @@ const userApi = {
 
   removePaperFromCollection: async (payload) => {
     try {
-      const response = await axios.post(
+      const response = await api.post(
         `${API_URL}/papercollections/removepaper`,
         payload
       );
@@ -819,7 +809,7 @@ const userApi = {
 
   updateCollection: async (collectionId, collectionData) => {
     try {
-      const response = await axios.put(
+      const response = await api.put(
         `${API_URL}/papercollections/${collectionId}`,
         collectionData
       );
@@ -833,7 +823,7 @@ const userApi = {
 
   deleteCollection: async (collectionId) => {
     try {
-      const response = await axios.delete(
+      const response = await api.delete(
         `${API_URL}/papercollections/${collectionId}`
       );
 
@@ -846,7 +836,7 @@ const userApi = {
 
   isPaperInCollection: async (userId, paperId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/papercollections/check/${userId}/${paperId}`
       );
       return response.data;
@@ -858,9 +848,7 @@ const userApi = {
 
   getTop5NewestScientificPapers: async () => {
     try {
-      const response = await axios.get(
-        `${API_URL}/scientificPapers/top5-newest`
-      );
+      const response = await api.get(`${API_URL}/scientificPapers/top5-newest`);
       return response.data;
     } catch (error) {
       console.error("Error fetching top 5 newest scientific papers:", error);
@@ -870,7 +858,7 @@ const userApi = {
 
   getTop5MostViewedAndDownloadedPapers: async (academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/scientificPapers/top5-most-viewed-downloaded`,
         {
           params: { academicYear },
@@ -888,7 +876,7 @@ const userApi = {
 
   getTotalPapersByAuthorId: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/total-by-author/${userId}`,
         {
           params: { academicYear },
@@ -902,7 +890,7 @@ const userApi = {
   },
   getTotalViewsByAuthorId: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/total-views-by-author/${userId}`,
         {
           params: { academicYear },
@@ -916,7 +904,7 @@ const userApi = {
   },
   getTotalDownloadsByAuthorId: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/total-downloads-by-author/${userId}`,
         {
           params: { academicYear },
@@ -930,7 +918,7 @@ const userApi = {
   },
   getTotalPointByAuthorId: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/total-points-by-author/${userId}`,
         {
           params: { academicYear },
@@ -944,7 +932,7 @@ const userApi = {
   },
   getTop5PapersByAuthorId: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/top5-papers-by-author/${userId}`,
         {
           params: { academicYear },
@@ -959,7 +947,7 @@ const userApi = {
 
   getAllPaperAuthorsByTolalPointsAndTotalPapers: async (academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/paperauthor/statistics-by-department`,
         {
           params: { academicYear },
@@ -977,7 +965,7 @@ const userApi = {
 
   getPaperAuthorsByDepartment: async (department, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/paperauthor/department/${department}`,
         {
           params: { academicYear }, // Pass academicYear as a query parameter
@@ -1008,7 +996,7 @@ const userApi = {
 
   getStatisticsByDepartmentId: async (departmentId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/statistics-by-department/${departmentId}`,
         {
           params: { academicYear },
@@ -1024,7 +1012,7 @@ const userApi = {
 
   // getTop5MostViewedAndDownloadedPapers: async () => {
   //   try {
-  //     const response = await axios.get(
+  //     const response = await api.get(
   //       `${API_URL}/statistics/top5-most-viewed-and-downloaded-papers`
   //     );
   //     console.log("API Response:", response.data);
@@ -1040,7 +1028,7 @@ const userApi = {
 
   getStatisticsForAll: async (academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/statistics-for-all`,
         {
           params: { academicYear },
@@ -1058,7 +1046,7 @@ const userApi = {
     academicYear
   ) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/top5-papers-by-department/${departmentId}`,
         {
           params: { academicYear }, // Pass academicYear as a query parameter
@@ -1077,7 +1065,7 @@ const userApi = {
 
   getStatisticsByAllGroup: async (academicYear) => {
     try {
-      const response = await axios.get(`${API_URL}/statistics/by-all-group`, {
+      const response = await api.get(`${API_URL}/statistics/by-all-group`, {
         params: { academicYear },
       });
 
@@ -1090,7 +1078,7 @@ const userApi = {
 
   getStatisticsTop5ByAllDepartment: async (academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/top5-by-all-group`,
         {
           params: { academicYear },
@@ -1106,7 +1094,7 @@ const userApi = {
 
   getStatisticsTop5ByType: async (academicYear) => {
     try {
-      const response = await axios.get(`${API_URL}/statistics/top5-by-type`, {
+      const response = await api.get(`${API_URL}/statistics/top5-by-type`, {
         params: { academicYear },
       });
 
@@ -1119,7 +1107,7 @@ const userApi = {
 
   getStatisticsByGroupByDepartment: async (departmentId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/group-by-department/${departmentId}`,
         {
           params: { academicYear },
@@ -1135,7 +1123,7 @@ const userApi = {
 
   getTop5AuthorsByDepartment: async (departmentId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/top5-authors-by-department/${departmentId}`,
         {
           params: { academicYear },
@@ -1151,7 +1139,7 @@ const userApi = {
 
   getStatisticsTop5ByTypeByDepartment: async (departmentId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/top5-by-type-by-department/${departmentId}`,
         {
           params: { academicYear },
@@ -1166,7 +1154,7 @@ const userApi = {
   },
   getPaperGroupsByUser: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/paper-group-by-user/${userId}`,
         {
           params: { academicYear },
@@ -1182,7 +1170,7 @@ const userApi = {
 
   getTop5PapersByPointByUser: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/top5-papers-points-by-author/${userId}`,
         {
           params: { academicYear },
@@ -1198,7 +1186,7 @@ const userApi = {
 
   getTop5PaperTypesByUser: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/statistics/top5-paper-types-by-user/${userId}`,
         {
           params: { academicYear },
@@ -1214,7 +1202,7 @@ const userApi = {
 
   getAcademicYears: async () => {
     try {
-      const response = await axios.get(`${API_URL}/academic-years`);
+      const response = await api.get(`${API_URL}/academic-years`);
 
       return response.data;
     } catch (error) {
@@ -1225,7 +1213,7 @@ const userApi = {
 
   getRecommendations: async (paperId) => {
     try {
-      const response = await axios.get(`${API_URL}/recommendations/${paperId}`);
+      const response = await api.get(`${API_URL}/recommendations/${paperId}`);
 
       return response.data;
     } catch (error) {
@@ -1236,7 +1224,7 @@ const userApi = {
 
   getRecommendationsByUserHistory: async (userId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/recommendations/user-history/${userId}`
       );
 
@@ -1249,7 +1237,7 @@ const userApi = {
 
   semanticSearch: async (query, department = null, criteria = null) => {
     try {
-      const response = await axios.post(`${API_URL}/search/semantic`, {
+      const response = await api.post(`${API_URL}/search/semantic`, {
         query,
         department,
         criteria,
@@ -1264,7 +1252,7 @@ const userApi = {
 
   createStudent: async (studentData) => {
     try {
-      const response = await axios.post(`${API_URL}/students`, studentData);
+      const response = await api.post(`${API_URL}/students`, studentData);
 
       return response.data;
     } catch (error) {
@@ -1280,16 +1268,12 @@ const userApi = {
 
       console.log("FormData entries:", [...formData.entries()]);
 
-      const response = await axios.post(
-        `${API_URL}/students/import`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await api.post(`${API_URL}/students/import`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
 
       return response.data;
     } catch (error) {
@@ -1309,16 +1293,12 @@ const userApi = {
 
       console.log("FormData entries:", [...formData.entries()]);
 
-      const response = await axios.post(
-        `${API_URL}/lecturers/import`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
+      const response = await api.post(`${API_URL}/lecturers/import`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+        },
+      });
 
       return response.data;
     } catch (error) {
@@ -1332,7 +1312,7 @@ const userApi = {
 
   createLecturer: async (lecturerData) => {
     try {
-      const response = await axios.post(`${API_URL}/lecturers`, lecturerData);
+      const response = await api.post(`${API_URL}/lecturers`, lecturerData);
 
       return response.data;
     } catch (error) {
@@ -1342,7 +1322,7 @@ const userApi = {
   },
   getMessagesByStatusRejectionByPaperId: async (paperId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/messages/paperbyrejection/${paperId}`
       );
 
@@ -1354,7 +1334,7 @@ const userApi = {
   },
   getMessagesByStatusRequestforEditByPaperId: async (paperId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/messages/paperbyrequestforedit/${paperId}`
       );
 
@@ -1366,7 +1346,7 @@ const userApi = {
   },
   getMessagesByPaperByRejection: async (paperId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/messages/paperbyrejection/${paperId}`,
         {
           headers: {
@@ -1382,7 +1362,7 @@ const userApi = {
 
   getMessagesByPaperByRequestForEdit: async (paperId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/messages/paperbyrequestforedit/${paperId}`,
         {
           headers: {
@@ -1398,7 +1378,7 @@ const userApi = {
 
   getAllPaperViewsByUser: async (userId) => {
     try {
-      const response = await axios.get(`${API_URL}/paperview/user/${userId}`);
+      const response = await api.get(`${API_URL}/paperview/user/${userId}`);
 
       return response.data;
     } catch (error) {
@@ -1409,9 +1389,7 @@ const userApi = {
 
   getAllPaperDownloadsByUser: async (userId) => {
     try {
-      const response = await axios.get(
-        `${API_URL}/paperdownload/user/${userId}`
-      );
+      const response = await api.get(`${API_URL}/paperdownload/user/${userId}`);
 
       return response.data;
     } catch (error) {
@@ -1422,7 +1400,7 @@ const userApi = {
 
   getTotalPointsByAuthorAndYear: async (userId, academicYear) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/paperauthor/${userId}/total-points`,
         {
           params: { academicYear },
@@ -1438,7 +1416,7 @@ const userApi = {
 
   getInactiveStudentsByDepartment: async (departmentId) => {
     try {
-      const response = await axios.get(
+      const response = await api.get(
         `${API_URL}/students/inactive/${departmentId}`
       );
 

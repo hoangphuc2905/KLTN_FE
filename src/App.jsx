@@ -44,9 +44,11 @@ const App = () => {
       try {
         const roles = localStorage.getItem("roles");
         const currentRole = localStorage.getItem("current_role");
-        const token = localStorage.getItem("token");
+        const accessToken = localStorage.getItem("accessToken");
+        const refreshToken = localStorage.getItem("refreshToken");
 
-        console.log("Token hiện tại:", token);
+        console.log("Access Token:", accessToken);
+        console.log("Refresh Token:", refreshToken);
         console.log("Roles hiện tại:", roles);
         console.log("Vai trò hiện tại:", currentRole);
 
@@ -104,7 +106,7 @@ const App = () => {
           <UserMenu />
         ))}
       <Routes>
-        {!localStorage.getItem("token") ? (
+        {!localStorage.getItem("accessToken") ? (
           <>
             <Route path="/" element={<LoginPage />} />
             <Route path="*" element={<Navigate to="/" replace />} />

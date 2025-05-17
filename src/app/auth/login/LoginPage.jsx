@@ -36,12 +36,13 @@ const LoginPage = () => {
       );
 
       // Lưu thông tin vào localStorage
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user_id", userId);
-      localStorage.setItem("roles", JSON.stringify(roles));
-      localStorage.setItem("email", email || "");
-      localStorage.setItem("user_type", userType || "");
-      localStorage.setItem("department", department || "");
+      // localStorage.setItem("accessToken", data.accessToken);
+      // localStorage.setItem("refreshToken", data.refreshToken);
+      // localStorage.setItem("user_id", userId);
+      // localStorage.setItem("roles", JSON.stringify(roles));
+      // localStorage.setItem("email", email || "");
+      // localStorage.setItem("user_type", userType || "");
+      // localStorage.setItem("department", department || "");
 
       // Lưu current_role (vì chỉ có 1 vai trò)
       const currentRole = roles[0];
