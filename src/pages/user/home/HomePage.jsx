@@ -104,6 +104,14 @@ const HomePage = () => {
     return filteredPapers
       .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
       .map((paper) => {
+        // Lấy tên khoa ưu tiên theo thứ tự
+        const departmentName =
+          paper.department_name ||
+          (paper.department && paper.department.department_name) ||
+          departments[paper.department] ||
+          departments[paper.departmentId] ||
+          paper.departmentName ||
+          "Khoa không xác định";
         return {
           ...paper,
           author: Array.isArray(paper.author)
@@ -120,8 +128,7 @@ const HomePage = () => {
               paper.author.author_name_en ||
               "Tác giả không xác định"
             : paper.author || "Tác giả không xác định",
-          departmentName:
-            departments[paper.department_name] || "Khoa không xác định",
+          departmentName,
         };
       });
   }, [filteredPapers, currentPage, departments, papersPerPage]);
@@ -200,7 +207,7 @@ const HomePage = () => {
         if (!departmentsData || !departmentsListData) {
           const departmentsResponse = await userApi.getAllDepartments();
           departmentsData = departmentsResponse.reduce((acc, department) => {
-            acc[department.id] = department.department_name;
+            acc[department._id] = department.department_name;
             return acc;
           }, {});
           departmentsListData = departmentsResponse;
@@ -475,6 +482,8 @@ const HomePage = () => {
             ?.map((a) => a.author_name_vi || a.author_name_en)
             .join(", ") || "Tác giả không xác định",
         department: result.paper.department || "Khoa không xác định",
+        departmentName:
+          departments[result.paper.department] || "Khoa không xác định",
         thumbnailUrl: result.paper.cover_image || "",
         summary: result.paper.summary || "Không có tóm tắt",
         publish_date: result.paper.publish_date || "",
@@ -505,7 +514,7 @@ const HomePage = () => {
   const handleResetSearch = useCallback(async () => {
     setSearchQuery("");
     setSelectedCriteria("");
-    setIsSearching(true); // Show loading state
+    setIsSearching(true);
     try {
       const userId = localStorage.getItem("user_id");
       const response = userId
@@ -513,12 +522,16 @@ const HomePage = () => {
         : await userApi.getAllScientificPapers();
 
       const papers = response?.data || response?.scientificPapers || [];
+      // Map lại departmentName cho từng paper
       const mappedPapers = await Promise.all(
         papers.map(async (paper) => {
           try {
-            return await mapPaperData(paper);
+            return {
+              ...paper,
+              departmentName:
+                departments[paper.department] || "Khoa không xác định",
+            };
           } catch (error) {
-            console.error("Lỗi trong mapPaperData:", error, paper);
             return null;
           }
         })
@@ -536,9 +549,9 @@ const HomePage = () => {
       console.error("Lỗi khi reset tìm kiếm:", error);
       message.error("Lỗi khi reset tìm kiếm. Vui lòng thử lại.");
     } finally {
-      setIsSearching(false); // Hide loading state
+      setIsSearching(false);
     }
-  }, [mapPaperData]);
+  }, [departments]);
 
   const isPaperInCollection = async (userId, paperId) => {
     if (!userId || !paperId) {
