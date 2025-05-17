@@ -25,6 +25,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isSameOrAfter);
+
 const ItemTypes = {
   ATTRIBUTE: "attribute",
 };
@@ -37,7 +38,7 @@ const attributeNames = {
   featured: "Tiêu biểu",
 };
 
-const DraggableAttribute = ({ attribute, onSettingsClick }) => {
+const DraggableAttribute = ({ attribute, onSettingsClick, onDeleteClick }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.ATTRIBUTE,
     item: { attribute },
@@ -63,7 +64,10 @@ const DraggableAttribute = ({ attribute, onSettingsClick }) => {
         >
           <Settings className="w-4 h-4" />
         </button>
-        <button className="p-1 rounded-full text-red-500 hover:bg-red-50">
+        <button
+          className="p-1 rounded-full text-red-500 hover:bg-red-50"
+          onClick={() => onDeleteClick(attribute)}
+        >
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -236,15 +240,20 @@ const ManagementFormulas = () => {
   const [startDate, setStartDate] = useState(null);
   const [endDate, setEndDate] = useState(null);
   const [addAttributeModalVisible, setAddAttributeModalVisible] =
-    useState(false); // State for modal visibility
+    useState(false);
   const [showFilter, setShowFilter] = useState(false);
   const [filterStartDate, setFilterStartDate] = useState(null);
   const [filterEndDate, setFilterEndDate] = useState(null);
-  const [confirmSaveModalVisible, setConfirmSaveModalVisible] = useState(false); // State for confirmation modal
-  const [pendingFormulaData, setPendingFormulaData] = useState(null); // Store formula data temporarily
-  const [overlappingFormula, setOverlappingFormula] = useState(null); // Store overlapping formula details
+  const [confirmSaveModalVisible, setConfirmSaveModalVisible] = useState(false);
+  const [pendingFormulaData, setPendingFormulaData] = useState(null);
+  const [overlappingFormula, setOverlappingFormula] = useState(null);
+  const [deleteAttributeModalVisible, setDeleteAttributeModalVisible] =
+    useState(false);
+  const [attributeToDelete, setAttributeToDelete] = useState(null);
+  const [isSubmittingAttribute, setIsSubmittingAttribute] = useState(false); // Thêm trạng thái để ngăn gọi nhiều lần
+  const isSubmittingAttributeRef = useRef(false);
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
+  const [isLoading, setIsLoading] = useState(false);
 
   const filterRef = useRef(null);
 
@@ -288,6 +297,7 @@ const ManagementFormulas = () => {
       return null;
     }
   };
+
   const handleSettingsClick = (attribute) => {
     setSelectedAttribute(attribute);
     setSettingsModalVisible(true);
@@ -315,13 +325,43 @@ const ManagementFormulas = () => {
   };
 
   const handleAddAttribute = async (newAttribute) => {
+    // Kiểm tra trùng tên thuộc tính trước khi gửi API
+    const existed = attributes.some(
+      (attr) => attr && attr.name === newAttribute.name
+    );
+    if (existed) {
+      message.error("Thuộc tính này đã tồn tại!");
+      return;
+    }
+    if (isSubmittingAttribute || isSubmittingAttributeRef.current) {
+      console.log("Đang gửi yêu cầu thêm thuộc tính, bỏ qua yêu cầu mới");
+      return;
+    }
+    setIsSubmittingAttribute(true);
+    isSubmittingAttributeRef.current = true;
     try {
+      console.log(
+        "Calling handleAddAttribute with data:",
+        JSON.stringify(newAttribute, null, 2)
+      );
       const response = await userApi.createAttribute(newAttribute);
       setAttributes((prevAttributes) => [...prevAttributes, response]);
       message.success("Thêm thuộc tính thành công!");
+      setAddAttributeModalVisible(false); // Đóng modal sau khi thêm thành công
     } catch (error) {
+      // Log the full error object for debugging
       console.error("Error adding attribute:", error);
-      message.error("Lỗi khi thêm thuộc tính.");
+      if (error.response) {
+        console.error("Error response data:", error.response.data);
+        console.error("Error response status:", error.response.status);
+        console.error("Error response headers:", error.response.headers);
+      }
+      const errorMessage =
+        error.response?.data?.message || "Lỗi khi thêm thuộc tính.";
+      message.error(errorMessage);
+    } finally {
+      setIsSubmittingAttribute(false);
+      isSubmittingAttributeRef.current = false;
     }
   };
 
@@ -331,8 +371,8 @@ const ManagementFormulas = () => {
       const formulaEnd = formula.endDate ? dayjs(formula.endDate) : null;
 
       const isOverlapping =
-        (!formulaEnd || dayjs(startDate).isSameOrBefore(formulaEnd, "day")) && // Ensure startDate is not before formulaEnd
-        (!endDate || dayjs(endDate).isAfter(formulaStart, "day")); // Ensure endDate is after formulaStart
+        (!formulaEnd || dayjs(startDate).isSameOrBefore(formulaEnd, "day")) &&
+        (!endDate || dayjs(endDate).isAfter(formulaStart, "day"));
 
       return isOverlapping;
     });
@@ -386,7 +426,6 @@ const ManagementFormulas = () => {
     try {
       const response = await userApi.createFormula(formulaData);
 
-      // Attach attribute names to the formula before updating the table
       const updatedFormula = await Promise.all(
         response.formula.map(async (slot) => {
           const attributeName = await getAttributeNameById(slot.attribute);
@@ -476,7 +515,6 @@ const ManagementFormulas = () => {
         const response = await userApi.getAllFormula();
         const formulasWithNames = await attachAttributeNames(response || []);
 
-        // Select the formula with an endDate that hasn't passed or is null
         const defaultFormula = formulasWithNames.find(
           (formula) =>
             !formula.endDate || dayjs(formula.endDate).isAfter(dayjs(), "day")
@@ -497,11 +535,11 @@ const ManagementFormulas = () => {
   useEffect(() => {
     const fetchAllAttributes = async () => {
       try {
-        const response = await userApi.getAllAttributes(); // Fetch all attributes
+        const response = await userApi.getAllAttributes();
         setAttributes(response || []);
       } catch (error) {
         console.error("Error fetching attributes:", error);
-        setAttributes([]); // Clear attributes on error
+        setAttributes([]);
       }
     };
 
@@ -520,7 +558,6 @@ const ManagementFormulas = () => {
 
   const handleFilterStartDateChange = (date) => {
     setFilterStartDate(date);
-    // Nếu ngày kết thúc hiện tại nhỏ hơn ngày bắt đầu mới, reset ngày kết thúc
     if (filterEndDate && date && date.isAfter(filterEndDate)) {
       setFilterEndDate(null);
     }
@@ -541,7 +578,7 @@ const ManagementFormulas = () => {
       title: "NGÀY KẾT THÚC",
       dataIndex: "endDate",
       key: "endDate",
-      render: (text) => (text ? formatDate(text) : formatDate(new Date())), // Always format the date
+      render: (text) => (text ? formatDate(text) : formatDate(new Date())),
     },
     {
       title: "CÔNG THỨC",
@@ -576,6 +613,52 @@ const ManagementFormulas = () => {
     formula: item.formula,
   }));
 
+  const handleDeleteAttributeClick = (attribute) => {
+    setAttributeToDelete(attribute);
+    setDeleteAttributeModalVisible(true);
+  };
+
+  const handleConfirmDeleteAttribute = async () => {
+    if (!attributeToDelete) return;
+    try {
+      const isUsedInFormula = recentFormulas.some((formula) =>
+        formula.formula.some(
+          (slot) =>
+            slot?.attribute?._id === attributeToDelete._id ||
+            slot?.attribute === attributeToDelete._id
+        )
+      );
+      if (isUsedInFormula) {
+        message.error(
+          "Không thể xóa thuộc tính đang được sử dụng trong công thức điểm."
+        );
+        return;
+      }
+      if (!attributeToDelete.name) {
+        message.error("Không tìm thấy tên thuộc tính để xóa.");
+        return;
+      }
+      await userApi.deleteAttributeByName(attributeToDelete.name);
+      setAttributes((prev) =>
+        prev.filter((a) => a._id !== attributeToDelete._id)
+      );
+      message.success("Xóa thuộc tính thành công!");
+    } catch (error) {
+      if (error?.response?.data?.message) {
+        message.error(error.response.data.message);
+        console.error("Error deleting attribute:", error.response.data);
+      } else if (typeof error === "object") {
+        message.error("Lỗi khi xóa thuộc tính.");
+        console.error("Error deleting attribute:", error);
+      } else {
+        message.error(String(error));
+      }
+    } finally {
+      setDeleteAttributeModalVisible(false);
+      setAttributeToDelete(null);
+    }
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <MathJaxContext>
@@ -592,7 +675,6 @@ const ManagementFormulas = () => {
                   alt="Home Icon"
                   className="w-5 h-5"
                 />
-
                 <span
                   onClick={() => navigate("/home")}
                   className="cursor-pointer hover:text-blue-500"
@@ -617,6 +699,7 @@ const ManagementFormulas = () => {
                     <Button
                       className="bg-blue-500 text-white hover:bg-blue-600 text-xs md:text-sm"
                       onClick={() => setAddAttributeModalVisible(true)}
+                      disabled={isSubmittingAttribute} // Vô hiệu hóa nút khi đang gửi
                     >
                       Thêm
                     </Button>
@@ -629,6 +712,7 @@ const ManagementFormulas = () => {
                             key={attribute._id}
                             attribute={attribute}
                             onSettingsClick={handleSettingsClick}
+                            onDeleteClick={handleDeleteAttributeClick}
                           />
                         )
                     )}
@@ -787,7 +871,6 @@ const ManagementFormulas = () => {
             </div>
           </div>
 
-          {/* Keep modals intact */}
           <Modal
             title="Hiển thị công thức tính điểm"
             open={showAddFormulasPopup}
@@ -889,6 +972,28 @@ const ManagementFormulas = () => {
             )}
             <p>Bạn có chắc chắn muốn lưu công thức mới không?</p>
           </Modal>
+
+          <Modal
+            title="Xác nhận xóa thuộc tính"
+            open={deleteAttributeModalVisible}
+            onOk={handleConfirmDeleteAttribute}
+            onCancel={() => setDeleteAttributeModalVisible(false)}
+            okText="Xóa"
+            cancelText="Hủy"
+            centered
+            closable={false}
+          >
+            <p>
+              Bạn có chắc chắn muốn xóa thuộc tính{" "}
+              <span className="font-semibold text-red-500">
+                {attributeNames[attributeToDelete?.name] ||
+                  attributeToDelete?.name ||
+                  ""}
+              </span>{" "}
+              không?
+            </p>
+          </Modal>
+
           <Footer />
         </div>
       </MathJaxContext>
