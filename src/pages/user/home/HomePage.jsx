@@ -1225,13 +1225,17 @@ const HomePage = () => {
                                       ? paper.title.split(" ").length > 18
                                         ? paper.title
                                             .split(" ")
-                                            .slice(0, 18)
+                                            .slice(0, 19)
                                             .join(" ") + "..."
                                         : paper.title
                                       : "Không có tiêu đề"}
                                   </h3>
                                   <div className="text-gray-600 text-xs pt-0.5 max-md:text-[10px]">
-                                    {paper.author || "Tác giả không xác định"}
+                                    {paper.author
+                                      ? paper.author.length > 30
+                                        ? paper.author.substring(0, 35) + "..."
+                                        : paper.author
+                                      : "Tác giả không xác định"}
                                   </div>
                                   <div className="text-gray-500 text-xs pb-1 max-md:text-[10px] max-md:pb-1 min-h-[20px] max-md:min-h-[16px]">
                                     {paper.departmentName ||
