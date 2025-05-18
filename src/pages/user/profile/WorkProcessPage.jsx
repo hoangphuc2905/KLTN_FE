@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import { Table, Button, Spin } from "antd";
+import { Table, Button, Spin, Dropdown, Menu, Modal, message } from "antd";
 import userApi from "../../../api/api";
 import Header from "../../../components/Header";
 import AddWorkProcessPage from "./AddWorkProcessPage";
+import EditWorkProcessPage from "./EditWorkProcessPage";
 import Footer from "../../../components/Footer";
 import { useNavigate } from "react-router-dom";
 
 const WorkProcessPage = () => {
   const [workProcesses, setWorkProcesses] = useState([]);
   const [showAddWorkProcessPopup, setShowAddWorkProcessPopup] = useState(false);
+  const [showEditWorkProcessPopup, setShowEditWorkProcessPopup] =
+    useState(false);
+  const [selectedWorkProcess, setSelectedWorkProcess] = useState(null);
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchWorkProcesses = async () => {
     const user_id = localStorage.getItem("user_id");
@@ -18,7 +22,7 @@ const WorkProcessPage = () => {
       console.error("Thiếu user_id");
       return;
     }
-    setIsLoading(true); // Bắt đầu loading
+    setIsLoading(true);
     try {
       const userWorks = await userApi.getWorkProcesses(user_id);
       const workProcessesWithDetails = await Promise.all(
@@ -27,7 +31,9 @@ const WorkProcessPage = () => {
           return {
             ...userWork,
             name_vi: workUnit.name_vi,
+            name_en: workUnit.name_en,
             address_vi: workUnit.address_vi,
+            address_en: workUnit.address_en,
           };
         })
       );
@@ -35,13 +41,37 @@ const WorkProcessPage = () => {
     } catch (error) {
       console.error("Lỗi khi lấy thông tin quá trình công tác:", error);
     } finally {
-      setIsLoading(false); // Kết thúc loading
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchWorkProcesses();
   }, []);
+
+  const handleEdit = (record) => {
+    setSelectedWorkProcess(record);
+    setShowEditWorkProcessPopup(true);
+  };
+
+  const handleDelete = (record) => {
+    Modal.confirm({
+      title: "Xác nhận xóa",
+      content: "Bạn có chắc chắn muốn xóa quá trình công tác này không?",
+      okText: "Xóa",
+      okType: "danger",
+      cancelText: "Hủy",
+      onOk: async () => {
+        try {
+          await userApi.deleteUserWorkById(record._id);
+          fetchWorkProcesses();
+          message.success("Xóa quá trình công tác thành công!");
+        } catch (error) {
+          console.error("Lỗi khi xóa quá trình công tác:", error);
+        }
+      },
+    });
+  };
 
   const columns = [
     { title: "STT", dataIndex: "stt", key: "stt" },
@@ -50,28 +80,51 @@ const WorkProcessPage = () => {
     { title: "Vai trò", dataIndex: "role_vi", key: "role_vi" },
     { title: "Ngày bắt đầu", dataIndex: "start_date", key: "start_date" },
     { title: "Ngày kết thúc", dataIndex: "end_date", key: "end_date" },
+    {
+      title: "Hành động",
+      key: "action",
+      render: (_, record) => {
+        const menu = (
+          <Menu>
+            <Menu.Item key="1" onClick={() => handleEdit(record)}>
+              Chỉnh sửa
+            </Menu.Item>
+            <Menu.Item key="2" onClick={() => handleDelete(record)}>
+              Xóa
+            </Menu.Item>
+          </Menu>
+        );
+        return (
+          <Dropdown overlay={menu} trigger={["click"]}>
+            <Button type="text">⋮</Button>
+          </Dropdown>
+        );
+      },
+    },
   ];
 
   const dataSource = workProcesses.map((process, index) => ({
     key: index + 1,
     stt: index + 1,
+    _id: process._id,
     work_unit_id: process.work_unit_id,
     name_vi: process.name_vi,
+    name_en: process.name_en,
     address_vi: process.address_vi,
+    address_en: process.address_en,
     role_vi: process.role_vi,
+    role_en: process.role_en,
     start_date: new Date(process.start_date).toLocaleDateString("vi-VN"),
     end_date: process.end_date
       ? new Date(process.end_date).toLocaleDateString("vi-VN")
       : "--",
+    raw_start_date: process.start_date, // Giữ giá trị gốc
+    raw_end_date: process.end_date, // Giữ giá trị gốc
   }));
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
-      {" "}
-      {/* Add flex and flex-col */}
       <div className="flex-grow">
-        {" "}
-        {/* Add flex-grow to make content take available space */}
         <div className="flex flex-col pb-7 max-w-[calc(100%-220px)] mx-auto max-sm:max-w-[calc(100%-32px)]">
           <div className="w-full bg-white">
             <Header />
@@ -127,11 +180,18 @@ const WorkProcessPage = () => {
         {showAddWorkProcessPopup && (
           <AddWorkProcessPage
             onClose={() => setShowAddWorkProcessPopup(false)}
-            refreshData={fetchWorkProcesses} // Pass the refresh function
+            refreshData={fetchWorkProcesses}
+          />
+        )}
+        {showEditWorkProcessPopup && (
+          <EditWorkProcessPage
+            workProcess={selectedWorkProcess}
+            onClose={() => setShowEditWorkProcessPopup(false)}
+            refreshData={fetchWorkProcesses}
           />
         )}
       </div>
-      <Footer /> {/* Footer remains at the bottom */}
+      <Footer />
     </div>
   );
 };

@@ -32,9 +32,12 @@ const UpdateProfilePage = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       setLoading(true); // Bắt đầu loading
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Thiếu token. Vui lòng đăng nhập.");
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (!accessToken || !refreshToken) {
+        console.error(
+          "Thiếu accessToken hoặc refreshToken. Chuyển hướng đến trang đăng nhập."
+        );
         setLoading(false); // Kết thúc loading
         return;
       }
@@ -42,7 +45,7 @@ const UpdateProfilePage = () => {
       try {
         const response = await userApi.getUserInfo({
           headers: {
-            Authorization: `Bearer ${token}`,
+            Authorization: `Bearer ${accessToken}`,
           },
         });
 
