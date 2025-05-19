@@ -967,7 +967,12 @@ const ManagementPointDetailPage = () => {
       <Modal
         title={
           <div className="font-semibold">
-            Chi tiết bài viết: {selectedAuthor?.author}
+            <div className="text-center uppercase font-bold">
+              Chi tiết điểm đóng góp
+            </div>
+            <div className="text-sm font-normal text-gray-500 mt-3">
+              Tác giả: {selectedAuthor?.author}
+            </div>
             <div className="text-sm font-normal text-gray-500 mt-1">
               Khoa: {departmentName} | Mã tác giả: {selectedAuthor?.authorId}
             </div>
