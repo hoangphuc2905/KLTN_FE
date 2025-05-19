@@ -82,6 +82,7 @@ const ManagementPointDetailPage = () => {
       key: "totalPoints",
       sorter: (a, b) => a.totalPoints - b.totalPoints,
       width: 130,
+      render: (text) => parseFloat(text).toFixed(1),
     },
     {
       title: "XEM CHI TIẾT",
@@ -682,8 +683,8 @@ const ManagementPointDetailPage = () => {
   }, [showFilter, showColumnFilter]);
 
   return (
-    <div className="bg-[#E7ECF0] min-h-screen flex flex-col">
-      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto flex-grow max-lg:max-w-full max-lg:px-4">
+    <div className="bg-[#E7ECF0] min-h-screen">
+      <div className="flex flex-col pb-7 pt-[80px] max-w-[calc(100%-220px)] mx-auto max-lg:max-w-full max-lg:px-4">
         <div className="w-full bg-white">
           <Header />
         </div>
@@ -722,7 +723,7 @@ const ManagementPointDetailPage = () => {
         </div>
 
         <div className="self-center mt-6 w-full max-w-[1563px] px-6 max-md:max-w-full">
-          <div className="flex justify-end items-center gap-4 mb-4">
+          <div className="flex justify-end gap-4 mb-4 flex-wrap">
             <button
               onClick={downloadExcel}
               className="flex items-center gap-2 px-3 py-1 bg-blue-500 text-white rounded-lg"
@@ -772,7 +773,7 @@ const ManagementPointDetailPage = () => {
                 {showColumnFilter && (
                   <div
                     ref={columnFilterRef}
-                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200 max-sm:w-full"
+                    className="absolute top-full mt-2 z-50 shadow-lg bg-white rounded-lg border border-gray-200"
                   >
                     <div className="px-4 py-5 w-full max-w-[350px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3">
                       <Checkbox
@@ -799,7 +800,7 @@ const ManagementPointDetailPage = () => {
                     className="absolute top-full mt-2 z-50 shadow-lg max-sm:w-full"
                   >
                     <form className="relative px-4 py-5 w-full bg-white max-w-[400px] max-md:px-3 max-md:py-4 max-sm:px-2 max-sm:py-3 rounded-lg border border-gray-200">
-                      <div className="max-h-[500px] overflow-y-auto pr-1">
+                      <div className="max-h-[400px] overflow-y-auto pr-1">
                         <div className="mb-3">
                           <label className="block text-gray-700 text-xs">
                             Tên tác giả:
@@ -1021,7 +1022,9 @@ const ManagementPointDetailPage = () => {
                 <div className="text-lg">
                   Tổng điểm:{" "}
                   <span className="font-semibold">
-                    {selectedAuthor?.totalPoints || 0}
+                    {selectedAuthor?.totalPoints
+                      ? parseFloat(selectedAuthor.totalPoints).toFixed(1)
+                      : "0"}
                   </span>
                 </div>
               </div>
