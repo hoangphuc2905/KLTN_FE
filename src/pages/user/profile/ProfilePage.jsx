@@ -522,7 +522,7 @@ const ProfilePage = () => {
                                 Hoàn thành
                               </div>
                               <div className="text-base font-semibold mt-2 text-sky-600">
-                                {contributionStats.totalAchieved}/
+                                {contributionStats.totalAchieved.toFixed(1)}/
                                 {contributionStats.totalRequired} điểm
                               </div>
                             </div>
