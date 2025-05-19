@@ -167,6 +167,18 @@ const userApi = {
     }
   },
 
+  getFormulaByDate: async (date) => {
+    try {
+      const response = await api.post(`${API_URL}/formulas/get-by-date`, {
+        date,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching formulas:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
+
   // Lấy tất cả
   getAllFormula: async () => {
     try {

@@ -54,7 +54,10 @@ const StatisticsPointPage = () => {
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [modalContent, setModalContent] = useState({});
   const [sortedInfo, setSortedInfo] = useState({});
-  const [isLoading, setIsLoading] = useState(false); // Thêm state cho loading
+  const [isLoading, setIsLoading] = useState(false);
+  const [formulaDetail, setFormulaDetail] = useState(""); // new state for formula
+  const [attributeDefs, setAttributeDefs] = useState([]); // store attribute definitions
+  const [showFormulaModal, setShowFormulaModal] = useState(false);
 
   const filterRef = useRef(null);
   const columnFilterRef = useRef(null);
@@ -115,7 +118,7 @@ const StatisticsPointPage = () => {
 
   useEffect(() => {
     const fetchPapers = async () => {
-      setIsLoading(true); // Bắt đầu loading
+      setIsLoading(true);
       try {
         const user_id = localStorage.getItem("user_id");
         if (!user_id) {
@@ -160,11 +163,11 @@ const StatisticsPointPage = () => {
                   case "MainAndCorrespondingAuthor":
                     return "Vừa chính vừa liên hệ";
                   case "CorrespondingAuthor":
-                    return "Liên hệ";
+                    return "Tác giả liên hệ";
                   case "MainAuthor":
-                    return "Chính";
+                    return "Tác giả chính";
                   case "Participant":
-                    return "Tham gia";
+                    return "Tác giả tham gia";
                   default:
                     return "N/A";
                 }
@@ -182,6 +185,8 @@ const StatisticsPointPage = () => {
                 authorCount: paper.author_count || "0",
                 role: displayRole,
                 institution: departmentName,
+                featured: paper.featured || "N/A",
+
                 publicationDate: paper.publish_date
                   ? formatDate(paper.publish_date)
                   : "N/A",
@@ -199,7 +204,7 @@ const StatisticsPointPage = () => {
         console.error("Error fetching scientific papers:", error);
         setPapers([]);
       } finally {
-        setIsLoading(false); // Kết thúc loading
+        setIsLoading(false);
       }
     };
 
@@ -232,7 +237,7 @@ const StatisticsPointPage = () => {
     setSortedInfo(sorter);
   };
 
-  const handleRowClick = (record) => {
+  const handleRowClick = async (record) => {
     setModalContent({
       ...record,
       publicationDate:
@@ -240,6 +245,41 @@ const StatisticsPointPage = () => {
           ? record.publicationDate
           : "Không xác định",
     });
+
+    // Find the author object for the current user
+    const user_id = localStorage.getItem("user_id");
+    const paper = papers.find((p) => p.id === record.id);
+    let createdAt = null;
+    if (paper && paper.id && paper.title && paper.authorCount) {
+      // Try to find the author object in the original API data
+      const originalPaper = papers.find((p) => p.id === record.id);
+      if (originalPaper && originalPaper.id) {
+        // You may need to keep the original API data for this to work robustly
+        // For now, try to get createdAt from record (if mapped), fallback to modalContent
+        createdAt = record.dateAdded || record.createdAt || null;
+      }
+    }
+    // If not found, fallback to record.dateAdded
+    if (!createdAt) createdAt = record.dateAdded;
+
+    // Fetch formula by date if possible
+    if (createdAt) {
+      try {
+        const formulaRes = await userApi.getFormulaByDate(createdAt);
+        setFormulaDetail(formulaRes?.formula || "Không tìm thấy công thức.");
+
+        // If formula is array, fetch attribute definitions
+        if (Array.isArray(formulaRes?.formula)) {
+          const attrIds = formulaRes.formula.map((f) => f.attribute);
+          await fetchAttributeDefs(attrIds);
+        }
+      } catch (err) {
+        setFormulaDetail("Không tìm thấy công thức.");
+      }
+    } else {
+      setFormulaDetail("Không tìm thấy công thức.");
+    }
+
     setIsModalVisible(true);
   };
 
@@ -401,7 +441,7 @@ const StatisticsPointPage = () => {
       sortOrder:
         sortedInfo.columnKey === "publicationDate" ? sortedInfo.order : null,
       width: 160,
-      render: (date) => <span>{formatDate(date)}</span>,
+      render: (date) => <span>{date}</span>,
     },
     {
       title: "ĐIỂM",
@@ -666,6 +706,182 @@ const StatisticsPointPage = () => {
     showInstitutionFilter,
     showPaperTypeFilter,
   ]);
+
+  // Helper to fetch attribute definitions by ids
+  const fetchAttributeDefs = async (attributeIds) => {
+    // Only fetch those not already in state
+    const missingIds = attributeIds.filter(
+      (id) => !attributeDefs.some((def) => def._id === id)
+    );
+    if (missingIds.length === 0) return;
+
+    try {
+      // You may need to adjust this API call to your backend
+      // For demo, assume userApi.getAttributesByIds returns [{_id, name, ...}]
+      const defs = await userApi.getAttributesByIds(missingIds);
+      setAttributeDefs((prev) => [...prev, ...defs]);
+    } catch (err) {
+      // fallback: do nothing
+    }
+  };
+
+  // Helper to get attribute name in Vietnamese
+  const getAttributeName = (idOrName) => {
+    // Map English attribute keys to Vietnamese
+    const viMap = {
+      article_group: "Nhóm bài báo",
+      author_role: "Vai trò tác giả",
+      featured: "Bài nổi bật",
+    };
+    if (typeof idOrName === "string" && viMap[idOrName]) return viMap[idOrName];
+    const found = attributeDefs.find(
+      (def) => def._id === idOrName || def.name === idOrName
+    );
+    if (found && found.name && viMap[found.name]) return viMap[found.name];
+    if (found && found.name) return found.name;
+    return idOrName;
+  };
+
+  // Helper to get value label in Vietnamese for each attribute
+  const getValueLabel = (attr, value) => {
+    if (attr === "article_group") {
+      const map = {
+        Q1: "Q1",
+        Q2: "Q2",
+        Q3: "Q3",
+        Q4: "Q4",
+        None: "Không xếp hạng",
+      };
+      return map[value] || value;
+    }
+    if (attr === "author_role") {
+      const map = {
+        MainAuthor: "Tác giả chính",
+        CorrespondingAuthor: "Tác giả liên hệ",
+        MainAndCorrespondingAuthor: "Vừa chính vừa liên hệ",
+        Participant: "Tham gia",
+      };
+      return map[value] || value;
+    }
+    if (attr === "featured") {
+      const map = { true: "Có", false: "Không" };
+      return map[value] || value;
+    }
+    return value;
+  };
+
+  // Helper to stringify formulaDetail for display
+  const stringifyFormula = (formula, paper) => {
+    if (!formula) return "";
+    if (typeof formula === "string") return formula;
+    if (Array.isArray(formula)) {
+      let total = 0;
+      // General formula (from API)
+      const generalFormula =
+        "Tổng điểm = " +
+        formula
+          .map(
+            (item) => `[${getAttributeName(item.attribute)}] x ${item.weight}%`
+          )
+          .join(" + ");
+
+      // Thay số (actual values, only show numbers)
+      const getActualValue = (item) => {
+        if (!paper) return "";
+        if (item.attribute === "article_group") {
+          const groupVN = paper.group;
+          const groupKey = Object.keys(item.values || {}).find(
+            (k) => getValueLabel(item.attribute, k) === groupVN
+          );
+          return groupKey ? item.values[groupKey] : "";
+        }
+        if (item.attribute === "author_role") {
+          const roleVN = paper.role;
+          const roleKey = Object.keys(item.values || {}).find(
+            (k) => getValueLabel(item.attribute, k) === roleVN
+          );
+          return roleKey ? item.values[roleKey] : "";
+        }
+        if (item.attribute === "featured") {
+          if (typeof paper.featured !== "undefined") {
+            const val =
+              paper.featured === true || paper.featured === "true"
+                ? "true"
+                : "false";
+            return item.values && item.values[val] !== undefined
+              ? item.values[val]
+              : "";
+          }
+          return "";
+        }
+        return "";
+      };
+
+      const calcFormula = formula
+        .map((item) => {
+          const actualValue = getActualValue(item);
+          const weight = item.weight;
+          const partValue = Number(actualValue) * (Number(weight) / 100);
+          total += isNaN(partValue) ? 0 : partValue;
+          return `${actualValue} x ${weight}%`;
+        })
+        .join(" + ");
+
+      let sumStr = ` = ${total.toFixed(2)}`;
+
+      return `${generalFormula}\nThay số: ${calcFormula}${sumStr}`;
+    }
+    if (typeof formula === "object") {
+      return Object.entries(formula)
+        .map(([k, v]) => `${k}: ${v}`)
+        .join(", ");
+    }
+    return String(formula);
+  };
+
+  const getGeneralFormulaModalContent = () => {
+    if (
+      !formulaDetail ||
+      typeof formulaDetail === "string" ||
+      !Array.isArray(formulaDetail)
+    ) {
+      // fallback to static text if formulaDetail is not available
+      return (
+        <span style={{ whiteSpace: "pre-line" }}>
+          {typeof formulaDetail === "string" && formulaDetail !== ""
+            ? formulaDetail
+            : "Không tìm thấy công thức."}
+        </span>
+      );
+    }
+    // Build from formulaDetail (API)
+    const generalFormula =
+      "Công thức tổng quát: Tổng điểm = " +
+      formulaDetail
+        .map(
+          (item) => `[${getAttributeName(item.attribute)}] x ${item.weight}%`
+        )
+        .join(" + ");
+    const explanation =
+      "Trong đó:\n" +
+      formulaDetail
+        .map((item) => {
+          const attrName = getAttributeName(item.attribute);
+          let valuesStr = "";
+          if (item.values && typeof item.values === "object") {
+            valuesStr = Object.entries(item.values)
+              .map(([k, v]) => `${getValueLabel(item.attribute, k)}: ${v}`)
+              .join(", ");
+          }
+          return `- ${attrName}: ${valuesStr} [hệ số: ${item.weight}%]`;
+        })
+        .join("\n");
+    return (
+      <span style={{ whiteSpace: "pre-line" }}>
+        {generalFormula + "\n" + explanation}
+      </span>
+    );
+  };
 
   return (
     <div className="bg-[#E7ECF0] min-h-screen">
@@ -1233,6 +1449,13 @@ const StatisticsPointPage = () => {
         onCancel={() => setIsModalVisible(false)}
         footer={[
           <button
+            key="formula"
+            onClick={() => setShowFormulaModal(true)}
+            className="px-4 py-2 bg-gray-500 text-white rounded-lg text-sm mr-2"
+          >
+            Xem công thức điểm chi tiết
+          </button>,
+          <button
             key="close"
             onClick={() => setIsModalVisible(false)}
             className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-sm"
@@ -1265,6 +1488,10 @@ const StatisticsPointPage = () => {
           <p>
             <strong>Ngày công bố:</strong> {modalContent.publicationDate}
           </p>
+          <p>
+            <strong>Bài nổi bật:</strong>{" "}
+            {modalContent.featured ? "Có" : "Không"}
+          </p>
         </Space>
         <h3 className="font-bold text-lg mb-3 mt-4">Bảng điểm chi tiết</h3>
         <Table
@@ -1272,7 +1499,13 @@ const StatisticsPointPage = () => {
             {
               key: "1",
               points: modalContent.points,
-              formula: getPointFormula(modalContent),
+              // Format formulaDetail for display
+              formula: (
+                <span style={{ whiteSpace: "pre-line" }}>
+                  {stringifyFormula(formulaDetail, modalContent) ||
+                    getPointFormula(modalContent)}
+                </span>
+              ),
             },
           ]}
           columns={[
@@ -1292,6 +1525,23 @@ const StatisticsPointPage = () => {
           pagination={false}
           bordered
         />
+      </Modal>
+      <Modal
+        title="Công thức tính điểm chi tiết"
+        open={showFormulaModal}
+        onCancel={() => setShowFormulaModal(false)}
+        footer={[
+          <button
+            key="close"
+            onClick={() => setShowFormulaModal(false)}
+            className="px-4 py-2 bg-[#00A3FF] text-white rounded-lg text-sm"
+          >
+            Đóng
+          </button>,
+        ]}
+        width={700}
+      >
+        {getGeneralFormulaModalContent()}
       </Modal>
       <Footer />
     </div>
