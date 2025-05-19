@@ -1434,9 +1434,6 @@ const StatisticsPointPage = () => {
                   locale={{
                     emptyText: <div style={{ height: "35px" }}></div>,
                   }}
-                  style={{
-                    minHeight: "525px",
-                  }}
                 />
               )}
             </div>
