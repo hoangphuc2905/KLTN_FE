@@ -337,6 +337,7 @@ const ManagementPointDepartmentPage = () => {
       sortOrder:
         sortedInfo.columnKey === "totalPoints" ? sortedInfo.order : null,
       width: 130,
+      render: (text) => parseFloat(text).toFixed(1),
     },
     {
       title: "XEM CHI TIẾT",
@@ -1151,7 +1152,9 @@ const ManagementPointDepartmentPage = () => {
                 <div className="text-lg">
                   Tổng điểm:{" "}
                   <span className="font-semibold">
-                    {selectedAuthor?.totalPoints || 0}
+                    {selectedAuthor?.totalPoints
+                      ? parseFloat(selectedAuthor.totalPoints).toFixed(1)
+                      : "0"}
                   </span>
                 </div>
               </div>
