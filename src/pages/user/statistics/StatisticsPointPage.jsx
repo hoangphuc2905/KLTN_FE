@@ -1441,7 +1441,11 @@ const StatisticsPointPage = () => {
         </div>
       </div>
       <Modal
-        title="Chi tiết điểm"
+        title={
+          <div className="text-center uppercase font-bold">
+            Chi tiết điểm đóng góp
+          </div>
+        }
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[
@@ -1524,7 +1528,11 @@ const StatisticsPointPage = () => {
         />
       </Modal>
       <Modal
-        title="Công thức tính điểm chi tiết"
+        title={
+          <div className="text-center uppercase font-bold pb-2">
+            Công thức tính điểm chi tiết
+          </div>
+        }
         open={showFormulaModal}
         onCancel={() => setShowFormulaModal(false)}
         footer={[
