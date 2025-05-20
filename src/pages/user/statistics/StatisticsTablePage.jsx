@@ -1143,7 +1143,11 @@ const StatisticsTablePage = () => {
       <Footer />
 
       <Modal
-        title="Chi tiết"
+        title={
+          <div className="text-center uppercase font-bold">
+            Chi tiết bài báo
+          </div>
+        }
         open={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         footer={[

@@ -1244,10 +1244,6 @@ const ScientificPaperPage = () => {
                       locale={{
                         emptyText: <div style={{ height: "35px" }}></div>,
                       }}
-                      style={{
-                        height: "525px",
-                        minHeight: "525px",
-                      }}
                     />
                   </div>
                 )}
