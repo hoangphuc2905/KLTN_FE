@@ -200,7 +200,7 @@ const NotificationPage = () => {
                         key={index}
                         className={`p-4 rounded-lg shadow-md cursor-pointer ${
                           notification.isread ? "bg-white" : "bg-blue-100"
-                        }`}
+                        } max-h-[160px] overflow-y-auto`}
                         onClick={() => handleNotificationClick(notification)}
                       >
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">

@@ -337,6 +337,7 @@ const ManagementPointDepartmentPage = () => {
       sortOrder:
         sortedInfo.columnKey === "totalPoints" ? sortedInfo.order : null,
       width: 130,
+      render: (text) => parseFloat(text).toFixed(1),
     },
     {
       title: "XEM CHI TIẾT",
@@ -1099,10 +1100,17 @@ const ManagementPointDepartmentPage = () => {
       <Modal
         title={
           <div className="font-semibold">
-            Chi tiết bài viết: {selectedAuthor?.author}
+            <div className="text-center uppercase font-bold">
+              Chi tiết điểm đóng góp
+            </div>
+            <div className="text-sm font-normal text-gray-500 mt-3">
+              Tác giả: {selectedAuthor?.author}
+            </div>
             <div className="text-sm font-normal text-gray-500 mt-1">
-              Khoa: {selectedAuthor?.department} | Mã tác giả:{" "}
-              {selectedAuthor?.authorId}
+              Mã tác giả: {selectedAuthor?.authorId}
+            </div>
+            <div className="text-sm font-normal text-gray-500 mt-1">
+              Khoa: {selectedAuthor?.department}
             </div>
           </div>
         }
@@ -1151,7 +1159,9 @@ const ManagementPointDepartmentPage = () => {
                 <div className="text-lg">
                   Tổng điểm:{" "}
                   <span className="font-semibold">
-                    {selectedAuthor?.totalPoints || 0}
+                    {selectedAuthor?.totalPoints
+                      ? parseFloat(selectedAuthor.totalPoints).toFixed(1)
+                      : "0"}
                   </span>
                 </div>
               </div>
