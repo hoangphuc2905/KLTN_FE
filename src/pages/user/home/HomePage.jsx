@@ -8,10 +8,11 @@ import React, {
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import { Link } from "react-router-dom";
-import { Modal, Button, Input, message, Spin, Select } from "antd";
+import { Modal, Button, Input, message, Spin, Select, Tabs } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
+import ForceGraph2D from 'react-force-graph-2d';
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -69,6 +70,7 @@ const HomePage = () => {
   const [isLoadingRecent, setIsLoadingRecent] = useState(false); // Loading state for recent papers
   const [isLoadingFeatured, setIsLoadingFeatured] = useState(false); // Loading state for featured papers
   const [isLoadingPapers, setIsLoadingPapers] = useState(false); // Loading state for all papers
+  const [viewMode, setViewMode] = useState("list"); // Mode xem: "list" hoặc "graph"
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -974,6 +976,153 @@ const HomePage = () => {
     setPaperToRemove(null);
   };
 
+  // Component hiển thị biểu đồ mạng
+  const GraphView = ({ papers, selectedPaper, onSelectPaper, archivedPapers, showModal }) => {
+    // Chọn bài báo có điểm cao nhất làm trung tâm nếu chưa chọn bài nào
+    const centralPaper = useMemo(() => {
+      return selectedPaper || (papers.length ? papers[0] : null);
+    }, [selectedPaper, papers]);
+    
+    // Chuẩn bị dữ liệu cho biểu đồ
+    const graphData = useMemo(() => {
+      if (!centralPaper || papers.length === 0) return { nodes: [], links: [] };
+      
+      // Tạo nodes - mỗi node là một bài báo
+      const nodes = papers.map(paper => ({
+        id: paper.id,
+        title: paper.title || "Không có tiêu đề",
+        val: paper.score ? paper.score * 10 : (paper.id === centralPaper.id ? 10 : 5), // Kích thước node
+        color: paper.id === centralPaper.id ? '#8844aa' : '#1a88e3',
+        year: paper.publish_date ? new Date(paper.publish_date).getFullYear() : "N/A",
+        author: paper.author || "Không có tác giả",
+        paper: paper // Lưu thông tin đầy đủ của paper để dễ truy cập
+      }));
+      
+      // Tạo links - kết nối từ bài báo trung tâm đến các bài khác
+      const links = papers
+        .filter(paper => paper.id !== centralPaper.id)
+        .map(paper => ({
+          source: centralPaper.id,
+          target: paper.id,
+          value: paper.score || 0.5, // Độ đậm của đường nối
+        }));
+      
+      return { nodes, links };
+    }, [papers, centralPaper]);
+    
+    return (
+      <div className="grid grid-cols-[1fr,2fr,1fr] gap-4 h-[600px] max-md:grid-cols-1 max-md:h-auto">
+        {/* Danh sách bài báo bên trái */}
+        <div className="overflow-auto border rounded-lg bg-white p-2 max-md:h-[200px]">
+          <h3 className="font-bold text-sm mb-2 text-sky-900">Danh sách bài báo</h3>
+          {papers.map(paper => (
+            <div 
+              key={paper.id}
+              className={`p-2 border-b cursor-pointer hover:bg-gray-50 ${
+                selectedPaper?.id === paper.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+              }`}
+              onClick={() => onSelectPaper(paper)}
+            >
+              <h3 className="font-semibold text-sm line-clamp-2">{paper.title || "Không có tiêu đề"}</h3>
+              <p className="text-xs text-gray-500">{paper.author || "Không có tác giả"}</p>
+              <p className="text-xs text-gray-400">
+                {paper.publish_date ? new Date(paper.publish_date).toLocaleDateString() : "Không có ngày"}
+              </p>
+            </div>
+          ))}
+        </div>
+        
+        {/* Biểu đồ ở giữa */}
+        <div className="border rounded-lg overflow-hidden bg-white max-md:h-[400px]">
+          {papers.length > 0 ? (
+            <ForceGraph2D
+              graphData={graphData}
+              nodeLabel={node => `${node.title} (${node.year})`}
+              nodeRelSize={6}
+              onNodeClick={node => onSelectPaper(node.paper)}
+              cooldownTicks={100}
+              linkWidth={link => link.value * 2}
+              linkColor={() => "#999"}
+              nodeCanvasObject={(node, ctx, globalScale) => {
+                const label = node.title;
+                const fontSize = 12/globalScale;
+                ctx.font = `${fontSize}px Sans-Serif`;
+                const textWidth = ctx.measureText(label).width;
+                const backgroundNodeSize = node.val;
+                
+                // Draw node
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, backgroundNodeSize, 0, 2 * Math.PI, false);
+                ctx.fillStyle = node.color;
+                ctx.fill();
+                
+                // Draw text only on hover or for central node
+                if (node.id === centralPaper.id || node.x !== 0) {
+                  ctx.fillStyle = 'white';
+                  ctx.textAlign = 'center';
+                  ctx.textBaseline = 'middle';
+                  ctx.fillText(label, node.x, node.y);
+                }
+              }}
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <Spin size="large" />
+            </div>
+          )}
+        </div>
+        
+        {/* Chi tiết bài báo bên phải */}
+        <div className="border p-4 rounded-lg overflow-auto bg-white max-md:h-[300px]">
+          {selectedPaper ? (
+            <>
+              <h2 className="text-lg font-bold mb-2">{selectedPaper.title || "Không có tiêu đề"}</h2>
+              <p className="text-sm text-gray-600 mb-2">{selectedPaper.author || "Không có tác giả"}</p>
+              <p className="text-xs text-gray-500 mb-4">
+                {selectedPaper.departmentName || "Không có khoa"} • 
+                {selectedPaper.publish_date 
+                  ? new Date(selectedPaper.publish_date).toLocaleDateString() 
+                  : "Không có ngày"}
+              </p>
+              <p className="text-sm">{selectedPaper.summary || "Không có tóm tắt"}</p>
+              
+              {selectedPaper.keywords && Array.isArray(selectedPaper.keywords) && selectedPaper.keywords.length > 0 && (
+                <div className="mt-4">
+                  <p className="font-semibold">Từ khóa:</p>
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {selectedPaper.keywords.map((keyword, index) => (
+                      <span key={index} className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-4 flex gap-2">
+                <Link to={`/scientific-paper/${selectedPaper.id}`}>
+                  <Button type="primary" size="small">Xem chi tiết</Button>
+                </Link>
+                <Button 
+                  type={archivedPapers.includes(selectedPaper.id) ? "default" : "primary"} 
+                  size="small"
+                  icon={archivedPapers.includes(selectedPaper.id) ? <FaArchive /> : <FaRegFileArchive />}
+                  onClick={() => showModal(selectedPaper)}
+                >
+                  {archivedPapers.includes(selectedPaper.id) ? 'Đã lưu' : 'Lưu trữ'}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <p className="text-gray-500 text-center mt-10">
+              Chọn một bài báo để xem chi tiết
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <ErrorBoundary>
       <div className="bg-[#E7ECF0] min-h-screen">
@@ -1071,186 +1220,224 @@ const HomePage = () => {
             </div>
           </div>
           <div className="self-center mt-6 w-full max-w-[1563px] max-md:max-w-full">
-            <div className="flex gap-5 max-md:flex-col">
-              <section className="w-[71%] max-md:w-full" ref={papersListRef}>
-                <div className="flex flex-col w-full max-md:mt-2 max-md:max-w-full">
-                  {isLoadingPapers ? (
-                    <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
-                      <Spin size="large" />
-                    </div>
-                  ) : filteredPapers.length === 0 ? (
-                    <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
-                      <p>Không tìm thấy bài báo nào.</p>
-                    </div>
-                  ) : (
-                    <FixedSizeList
-                      height={window.innerWidth <= 768 ? 500 : 600}
-                      width="100%"
-                      itemCount={currentPapers.length}
-                      itemSize={window.innerWidth <= 768 ? 150 : 220}
-                      itemData={currentPapers}
-                      className="max-md:!h-[500px]"
-                    >
-                      {PaperItem}
-                    </FixedSizeList>
-                  )}
-                  <div className="flex justify-center items-center mt-6 gap-2 max-md:mt-3 max-md:flex-wrap">
-                    <div className="flex items-center">
-                      <Select
-                        value={papersPerPage}
-                        onChange={(value) => {
-                          setPapersPerPage(value);
-                          setCurrentPage(1);
-                        }}
-                        style={{ width: 120, marginRight: 16 }}
-                        options={[
-                          { value: 10, label: "10 / trang" },
-                          { value: 20, label: "20 / trang" },
-                          { value: 30, label: "30 / trang" },
-                          { value: 50, label: "50 / trang" },
-                        ]}
-                      />
-                      <span>{`${
-                        (currentPage - 1) * papersPerPage + 1
-                      }-${Math.min(
-                        currentPage * papersPerPage,
-                        filteredPapers.length
-                      )} của ${filteredPapers.length} mục`}</span>
-                    </div>
+            {/* Nút chuyển đổi giữa dạng bảng và dạng biểu đồ - đặt ở trên cùng bên trái */}
+            <div className="flex gap-4 items-center mb-4">
+              <span className="text-sm text-gray-600">Chế độ xem:</span>
+              <button 
+                className={`px-4 py-1.5 rounded-lg text-sm ${viewMode === "list" ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-700"}`}
+                onClick={() => setViewMode("list")}
+              >
+                Dạng bảng
+              </button>
+              <button 
+                className={`px-4 py-1.5 rounded-lg text-sm ${viewMode === "graph" ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-700"}`}
+                onClick={() => setViewMode("graph")}
+              >
+                Dạng biểu đồ
+              </button>
+            </div>
 
-                    <button
-                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-med:text-xs"
-                      disabled={currentPage === 1 || isSearching}
-                      onClick={() =>
-                        handlePageChange(Math.max(currentPage - 1, 1))
-                      }
-                    >
-                      Trước
-                    </button>
-                    {[
-                      ...Array(
-                        Math.ceil(filteredPapers.length / papersPerPage)
-                      ),
-                    ].map((_, i) => (
-                      <button
-                        key={i}
-                        className={`px-3 py-1 border rounded-md max-md:px-2 max-md:py-0.5 max-md:text-xs ${
-                          currentPage === i + 1
-                            ? "bg-blue-500 text-white"
-                            : "bg-white"
-                        }`}
-                        onClick={() => handlePageChange(i + 1)}
-                        disabled={isSearching}
+            <div className="flex gap-5 max-md:flex-col">
+              <section className={viewMode === "list" ? "w-[71%] max-md:w-full" : "w-full max-md:w-full"} ref={papersListRef}>
+                <div className="flex flex-col w-full max-md:mt-2 max-md:max-w-full">
+                  {/* Hiển thị theo chế độ xem */}
+                  {viewMode === "list" ? (
+                    // Nội dung dạng bảng - giữ nguyên code hiện tại
+                    isLoadingPapers ? (
+                      <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
+                        <Spin size="large" />
+                      </div>
+                    ) : filteredPapers.length === 0 ? (
+                      <div className="flex justify-center items-center min-h-[300px] max-md:min-h-[200px]">
+                        <p>Không tìm thấy bài báo nào.</p>
+                      </div>
+                    ) : (
+                      <FixedSizeList
+                        height={window.innerWidth <= 768 ? 500 : 600}
+                        width="100%"
+                        itemCount={currentPapers.length}
+                        itemSize={window.innerWidth <= 768 ? 150 : 220}
+                        itemData={currentPapers}
+                        className="max-md:!h-[500px]"
                       >
-                        {i + 1}
+                        {PaperItem}
+                      </FixedSizeList>
+                    )
+                  ) : (
+                    // Hiển thị dạng biểu đồ
+                    <GraphView 
+                      papers={filteredPapers.slice(0, 20)} // Giới hạn 20 bài để đảm bảo hiệu suất
+                      selectedPaper={selectedPaper}
+                      onSelectPaper={setSelectedPaper}
+                      archivedPapers={archivedPapers}
+                      showModal={showModal}
+                    />
+                  )}
+                  
+                  {/* Phân trang chỉ hiển thị trong chế độ bảng */}
+                  {viewMode === "list" && (
+                    <div className="flex justify-center items-center mt-6 gap-2 max-md:mt-3 max-md:flex-wrap">
+                      <div className="flex items-center">
+                        <Select
+                          value={papersPerPage}
+                          onChange={(value) => {
+                            setPapersPerPage(value);
+                            setCurrentPage(1);
+                          }}
+                          style={{ width: 120, marginRight: 16 }}
+                          options={[
+                            { value: 10, label: "10 / trang" },
+                            { value: 20, label: "20 / trang" },
+                            { value: 30, label: "30 / trang" },
+                            { value: 50, label: "50 / trang" },
+                          ]}
+                        />
+                        <span>{`${
+                          (currentPage - 1) * papersPerPage + 1
+                        }-${Math.min(
+                          currentPage * papersPerPage,
+                          filteredPapers.length
+                        )} của ${filteredPapers.length} mục`}</span>
+                      </div>
+
+                      <button
+                        className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-med:text-xs"
+                        disabled={currentPage === 1 || isSearching}
+                        onClick={() =>
+                          handlePageChange(Math.max(currentPage - 1, 1))
+                        }
+                      >
+                        Trước
                       </button>
-                    ))}
-                    <button
-                      className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
-                      disabled={
-                        currentPage ===
-                          Math.ceil(filteredPapers.length / papersPerPage) ||
-                        filteredPapers.length === 0 ||
-                        isSearching
-                      }
-                      onClick={() =>
-                        handlePageChange(
-                          Math.min(
-                            currentPage + 1,
-                            Math.ceil(filteredPapers.length / papersPerPage)
+                      {[
+                        ...Array(
+                          Math.ceil(filteredPapers.length / papersPerPage)
+                        ),
+                      ].map((_, i) => (
+                        <button
+                          key={i}
+                          className={`px-3 py-1 border rounded-md max-md:px-2 max-md:py-0.5 max-md:text-xs ${
+                            currentPage === i + 1
+                              ? "bg-blue-500 text-white"
+                              : "bg-white"
+                          }`}
+                          onClick={() => handlePageChange(i + 1)}
+                          disabled={isSearching}
+                        >
+                          {i + 1}
+                        </button>
+                      ))}
+                      <button
+                        className="px-3 py-1 border rounded-md bg-white shadow-sm hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed max-md:px-2 max-md:py-0.5 max-md:text-xs"
+                        disabled={
+                          currentPage ===
+                            Math.ceil(filteredPapers.length / papersPerPage) ||
+                          filteredPapers.length === 0 ||
+                          isSearching
+                        }
+                        onClick={() =>
+                          handlePageChange(
+                            Math.min(
+                              currentPage + 1,
+                              Math.ceil(filteredPapers.length / papersPerPage)
+                            )
                           )
-                        )
-                      }
-                    >
-                      Sau
-                    </button>
-                  </div>
+                        }
+                      >
+                        Sau
+                      </button>
+                    </div>
+                  )}
                 </div>
               </section>
-              <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full max-md:mt-3">
-                <section className="sticky top-[195px] z-10 max-md:static">
-                  <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-3 max-md:py-4 max-md:mt-2 max-md:max-w-full">
-                    <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px] max-md:w-full max-md:text-[10px] max-md:gap-2">
-                      <button
-                        className={`flex-1 px-4 pt-1.5 pb-1.5 rounded-lg text-center max-md:px-2 max-md:py-1 ${
-                          activeTab === "recent"
-                            ? "text-white bg-sky-500"
-                            : "bg-white text-neutral-500"
-                        }`}
-                        onClick={() => setActiveTab("recent")}
-                      >
-                        Bài nghiên cứu mới
-                      </button>
-                      <button
-                        className={`flex-1 px-4 pt-1.5 pb-1.5 rounded-lg text-center max-md:px-2 max-md:py-1 ${
-                          activeTab === "featured"
-                            ? "text-white bg-sky-500"
-                            : "bg-white text-neutral-500"
-                        }`}
-                        onClick={() => setActiveTab("featured")}
-                      >
-                        Bài nghiên cứu nổi bật
-                      </button>
-                    </div>
-                    <div className="flex flex-col gap-4 mt-5 max-md:gap-3 max-md:mt-3">
-                      {activeTab === "recent" && isLoadingRecent ? (
-                        <div className="flex justify-center items-center min-h-[200px]">
-                          <Spin size="large" />
-                        </div>
-                      ) : activeTab === "featured" && isLoadingFeatured ? (
-                        <div className="flex justify-center items-center min-h-[200px]">
-                          <Spin size="large" />
-                        </div>
-                      ) : (
-                        Array.isArray(displayedPapers) &&
-                        displayedPapers.map((paper, index) => (
-                          <article
-                            key={`paper-${index}`}
-                            className="w-full flex gap-4 max-md:gap-2"
-                          >
-                            <div className="lg:block max-lg:hidden">
-                              <Link to={`/scientific-paper/${paper.id}`}>
-                                <img
-                                  src={paper.thumbnailUrl}
-                                  className="object-contain rounded-md aspect-[0.72] w-[72px] border border-gray-200"
-                                  alt={paper.title}
-                                />
-                              </Link>
-                            </div>
-                            <div className="flex flex-col text-sm tracking-tight leading-none text-slate-400 w-fit max-md:text-xs">
-                              <Link to={`/scientific-paper/${paper.id}`}>
-                                <div className="paper-details-container flex flex-col gap-2 pt-0 max-md:gap-1">
-                                  <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2 w-[220px] max-md:text-xs max-md:h-[34px] max-md:pb-1 max-md:w-full">
-                                    {paper.title
-                                      ? paper.title.split(" ").length > 18
-                                        ? paper.title
-                                            .split(" ")
-                                            .slice(0, 19)
-                                            .join(" ") + "..."
-                                        : paper.title
-                                      : "Không có tiêu đề"}
-                                  </h3>
-                                  <div className="text-gray-600 text-xs pt-0.5 max-md:text-[10px]">
-                                    {paper.author
-                                      ? paper.author.length > 30
-                                        ? paper.author.substring(0, 35) + "..."
-                                        : paper.author
-                                      : "Tác giả không xác định"}
+              
+              {/* Phần bên phải chỉ hiển thị trong chế độ bảng */}
+              {viewMode === "list" && (
+                <div className="ml-5 w-[29%] max-md:ml-0 max-md:w-full max-md:mt-3">
+                  <section className="sticky top-[195px] z-10 max-md:static">
+                    <aside className="overflow-hidden px-4 py-6 mx-auto w-full bg-white rounded-xl shadow-md max-md:px-3 max-md:py-4 max-md:mt-2 max-md:max-w-full">
+                      <div className="flex gap-4 justify-between items-start max-w-full text-xs font-bold tracking-tight leading-loose w-[362px] max-md:w-full max-md:text-[10px] max-md:gap-2">
+                        <button
+                          className={`flex-1 px-4 pt-1.5 pb-1.5 rounded-lg text-center max-md:px-2 max-md:py-1 ${
+                            activeTab === "recent"
+                              ? "text-white bg-sky-500"
+                              : "bg-white text-neutral-500"
+                          }`}
+                          onClick={() => setActiveTab("recent")}
+                        >
+                          Bài nghiên cứu mới
+                        </button>
+                        <button
+                          className={`flex-1 px-4 pt-1.5 pb-1.5 rounded-lg text-center max-md:px-2 max-md:py-1 ${
+                            activeTab === "featured"
+                              ? "text-white bg-sky-500"
+                              : "bg-white text-neutral-500"
+                          }`}
+                          onClick={() => setActiveTab("featured")}
+                        >
+                          Bài nghiên cứu nổi bật
+                        </button>
+                      </div>
+                      <div className="flex flex-col gap-4 mt-5 max-md:gap-3 max-md:mt-3">
+                        {activeTab === "recent" && isLoadingRecent ? (
+                          <div className="flex justify-center items-center min-h-[200px]">
+                            <Spin size="large" />
+                          </div>
+                        ) : activeTab === "featured" && isLoadingFeatured ? (
+                          <div className="flex justify-center items-center min-h-[200px]">
+                            <Spin size="large" />
+                          </div>
+                        ) : (
+                          Array.isArray(displayedPapers) &&
+                          displayedPapers.map((paper, index) => (
+                            <article
+                              key={`paper-${index}`}
+                              className="w-full flex gap-4 max-md:gap-2"
+                            >
+                              <div className="lg:block max-lg:hidden">
+                                <Link to={`/scientific-paper/${paper.id}`}>
+                                  <img
+                                    src={paper.thumbnailUrl}
+                                    className="object-contain rounded-md aspect-[0.72] w-[72px] border border-gray-200"
+                                    alt={paper.title}
+                                  />
+                                </Link>
+                              </div>
+                              <div className="flex flex-col text-sm tracking-tight leading-none text-slate-400 w-fit max-md:text-xs">
+                                <Link to={`/scientific-paper/${paper.id}`}>
+                                  <div className="paper-details-container flex flex-col gap-2 pt-0 max-md:gap-1">
+                                    <h3 className="text-black h-[40px] font-bold text-sm line-clamp-2 pb-2 w-[220px] max-md:text-xs max-md:h-[34px] max-md:pb-1 max-md:w-full">
+                                      {paper.title
+                                        ? paper.title.split(" ").length > 18
+                                          ? paper.title
+                                              .split(" ")
+                                              .slice(0, 19)
+                                              .join(" ") + "..."
+                                          : paper.title
+                                        : "Không có tiêu đề"}
+                                    </h3>
+                                    <div className="text-gray-600 text-xs pt-0.5 max-md:text-[10px]">
+                                      {paper.author
+                                        ? paper.author.length > 30
+                                          ? paper.author.substring(0, 35) + "..."
+                                          : paper.author
+                                        : "Tác giả không xác định"}
+                                    </div>
+                                    <div className="text-gray-500 text-xs pb-1 max-md:text-[10px] max-md:pb-1 min-h-[20px] max-md:min-h-[16px]">
+                                      {paper.departmentName ||
+                                        "Khoa không xác định"}
+                                    </div>
                                   </div>
-                                  <div className="text-gray-500 text-xs pb-1 max-md:text-[10px] max-md:pb-1 min-h-[20px] max-md:min-h-[16px]">
-                                    {paper.departmentName ||
-                                      "Khoa không xác định"}
-                                  </div>
-                                </div>
-                              </Link>
-                            </div>
-                          </article>
-                        ))
-                      )}
-                    </div>
-                  </aside>
-                </section>
-              </div>
+                                </Link>
+                              </div>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </aside>
+                  </section>
+                </div>
+              )}
             </div>
           </div>
         </div>
