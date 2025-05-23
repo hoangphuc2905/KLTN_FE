@@ -8,15 +8,17 @@ import {
   Modal,
   Tabs,
   Upload,
+  Progress,
 } from "antd";
 import {
   CloseCircleOutlined,
   MinusOutlined,
   PlusOutlined,
   UploadOutlined,
+  CompressOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import userApi from "../../../api/api";
@@ -81,6 +83,9 @@ const EditScientificPaperPage = () => {
   const [originalFileName, setOriginalFileName] = useState(""); // State for original file name
   const [fileError, setFileError] = useState(""); // State for file error
   const [fileTouched, setFileTouched] = useState(false); // State for file touched
+  const [isCompressing, setIsCompressing] = useState(false);
+  const [compressionProgress, setCompressionProgress] = useState(0);
+  const [compressionResult, setCompressionResult] = useState(null);
   const navigate = useNavigate();
   const { id } = useParams();
   const [authorErrors, setAuthorErrors] = useState([]);
@@ -264,6 +269,62 @@ const EditScientificPaperPage = () => {
     }
   };
 
+  // Hàm nén file giống AddScientificPaperPage
+  const compressFile = async (file) => {
+    try {
+      setIsCompressing(true);
+      setCompressionProgress(0);
+      setCompressionResult(null);
+
+      message.loading({ content: "Đang nén file...", key: "compress" });
+
+      // Hiệu ứng tiến trình giả lập
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 10 + 5;
+        if (progress >= 95) {
+          clearInterval(interval);
+        } else {
+          setCompressionProgress(Math.floor(progress));
+        }
+      }, 200);
+
+      // Gọi API nén PDF
+      const result = await userApi.compressPDF(file);
+
+      clearInterval(interval);
+      setCompressionProgress(100);
+
+      if (!result || !result.cloudinaryUrl || !result.originalName) {
+        throw new Error("API nén không trả về thông tin hợp lệ");
+      }
+
+      setCompressionResult(result);
+
+      // TỰ ĐỘNG LƯU LINK FILE NÉN
+      setSelectedFile(result.cloudinaryUrl);
+      setOriginalFileName(result.originalName);
+
+      message.success({
+        content: result.display || "Đã nén file thành công",
+        key: "compress",
+      });
+
+      setIsCompressing(false);
+
+      return result;
+    } catch (error) {
+      console.error("Lỗi khi nén file:", error);
+      message.error({
+        content: error.message || "Không thể nén file",
+        key: "compress",
+      });
+      setIsCompressing(false);
+      setCompressionResult(null);
+      throw error;
+    }
+  };
+
   const handleFileChange = () => {
     const input = document.createElement("input");
     input.type = "file";
@@ -271,36 +332,95 @@ const EditScientificPaperPage = () => {
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (file) {
-        // Check file size (limit to 3.5MB)
-        const maxSize = 3.5 * 1024 * 1024; // 3.5MB in bytes
+        const maxSize = 3.5 * 1024 * 1024;
         if (file.size > maxSize) {
-          message.error("Kích thước tệp vượt quá giới hạn 3.5MB.");
+          Modal.confirm({
+            title: "File vượt quá kích thước cho phép",
+            content: (
+              <div>
+                <p>
+                  Kích thước file hiện tại:{" "}
+                  <b>{(file.size / (1024 * 1024)).toFixed(2)}MB</b>, vượt quá
+                  giới hạn 3.5MB.
+                </p>
+                <p>Bạn có muốn nén file để tải lên không?</p>
+              </div>
+            ),
+            icon: <CompressOutlined style={{ color: "#1890ff" }} />,
+            okText: "Nén file",
+            cancelText: "Hủy",
+            onOk: async () => {
+              const compressedResult = await compressFile(file);
+              if (compressedResult && compressedResult.compressedSize) {
+                let sizeStr = compressedResult.compressedSize.trim();
+                let sizeBytes = 0;
+                if (sizeStr.toLowerCase().endsWith("mb")) {
+                  sizeBytes = parseFloat(sizeStr) * 1024 * 1024;
+                } else if (sizeStr.toLowerCase().endsWith("kb")) {
+                  sizeBytes = parseFloat(sizeStr) * 1024;
+                } else if (sizeStr.toLowerCase().endsWith("b")) {
+                  sizeBytes = parseFloat(sizeStr);
+                }
+                if (sizeBytes <= maxSize) {
+                  if (
+                    compressedResult.cloudinaryUrl &&
+                    compressedResult.originalName
+                  ) {
+                    fetch(compressedResult.cloudinaryUrl)
+                      .then((compressedRes) => compressedRes.blob())
+                      .then(async (compressedBlob) => {
+                        const compressedFile = new File(
+                          [compressedBlob],
+                          compressedResult.originalName,
+                          { type: "application/pdf" }
+                        );
+                        await uploadFile(compressedFile);
+                        setOriginalFileName(compressedResult.originalName);
+                      })
+                      .catch((err) => {
+                        console.error("Lỗi khi tải file nén:", err);
+                        message.error("Không thể upload file nén.");
+                      });
+                  }
+                } else {
+                  message.warning(
+                    `File sau khi nén vẫn có kích thước ${sizeStr}, vượt quá giới hạn 3.5MB. Vui lòng chọn file nhỏ hơn.`
+                  );
+                }
+              }
+            },
+          });
           return;
         }
-
-        try {
-          const response = await userApi.uploadFile(file);
-          setSelectedFile(response.url); // Save the Cloudinary URL for backend
-          setOriginalFileName(file.name); // Use the uploaded file's name
-          setFileError(""); // Clear error when file is uploaded
-          setFileTouched(true);
-          message.success("File đã được tải lên thành công!");
-          console.log("Uploaded file response:", response);
-        } catch (error) {
-          console.error(
-            "Error uploading file:",
-            error.response?.data || error.message
-          );
-          message.error("Không thể tải file lên. Vui lòng thử lại.");
-          setOriginalFileName(""); // Reset original file name on error
-          setSelectedFile(null); // Reset Cloudinary URL on error
-        }
+        // Nếu file nhỏ hơn 3.5MB thì upload luôn
+        uploadFile(file);
       } else {
         setFileTouched(true);
         validateFile();
       }
     };
     input.click();
+  };
+
+  // Helper uploadFile giống Add
+  const uploadFile = async (file) => {
+    try {
+      setOriginalFileName(file.name);
+      const response = await userApi.uploadFile(file);
+      setSelectedFile(response.url);
+      setFileError("");
+      setFileTouched(true);
+      message.success("File đã được tải lên thành công!");
+      console.log("Uploaded file response:", response);
+    } catch (error) {
+      console.error(
+        "Error uploading file:",
+        error.response?.data || error.message
+      );
+      message.error("Không thể tải file lên. Vui lòng thử lại.");
+      setOriginalFileName("");
+      setSelectedFile(null);
+    }
   };
 
   const handleRemoveFile = () => {
@@ -1446,7 +1566,7 @@ const EditScientificPaperPage = () => {
                     <Input
                       id="file-upload"
                       placeholder="Upload file..."
-                      value={originalFileName || selectedFile || ""} // Show file name if available, otherwise Cloudinary link
+                      value={originalFileName || selectedFile || ""}
                       readOnly
                       className="w-full mb-2 sm:mb-0"
                     />
@@ -1458,14 +1578,49 @@ const EditScientificPaperPage = () => {
                       Choose
                     </Button>
                     {selectedFile && (
-                      <Button
-                        icon={<CloseCircleOutlined />}
-                        onClick={handleRemoveFile}
-                        danger
-                        className="w-full sm:w-auto mt-2 sm:mt-0"
-                      />
+                      <>
+                        <Button
+                          icon={<CloseCircleOutlined />}
+                          onClick={handleRemoveFile}
+                          danger
+                          className="w-full sm:w-auto mt-2 sm:mt-0"
+                        />
+                        <Button
+                          type="default"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(selectedFile);
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = originalFileName || "compressed.pdf";
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              window.URL.revokeObjectURL(url);
+                            } catch (err) {
+                              message.error("Không thể tải file về.");
+                            }
+                          }}
+                          className="w-full sm:w-auto mb-2 sm:mb-0"
+                        >
+                          Tải file
+                        </Button>
+                      </>
                     )}
                   </div>
+                  {/* Thêm đoạn này để hiển thị kết quả nén */}
+                  {isCompressing && (
+                    <div className="mt-2 w-full">
+                      <Progress percent={compressionProgress} status="active" />
+                    </div>
+                  )}
+                  {compressionResult && (
+                    <div className="mt-2 text-sm bg-green-50 border border-green-200 rounded p-2 text-green-800">
+                      <b>Kết quả nén:</b> {compressionResult.display}
+                    </div>
+                  )}
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>

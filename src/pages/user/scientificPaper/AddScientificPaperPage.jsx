@@ -18,7 +18,7 @@ import {
   CompressOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import userApi from "../../../api/api";
@@ -395,7 +395,7 @@ const AddScientificPaperPage = () => {
       try {
         const response = await userApi.uploadImage(file);
         setCoverImage(response.url);
-        setCoverImageError(""); // Clear error when image is selected
+        setCoverImageError("");
         message.success("Ảnh bìa đã được tải lên thành công!");
         console.log("Uploaded image response:", response);
       } catch (error) {
@@ -420,23 +420,60 @@ const AddScientificPaperPage = () => {
         if (file.size > maxSize) {
           // Hiển thị modal hỏi người dùng có muốn nén file không
           Modal.confirm({
-            title: 'File vượt quá kích thước cho phép',
+            title: "File vượt quá kích thước cho phép",
             content: (
               <div>
-                <p>Kích thước file hiện tại: <b>{(file.size / (1024 * 1024)).toFixed(2)}MB</b>, vượt quá giới hạn 3.5MB.</p>
+                <p>
+                  Kích thước file hiện tại:{" "}
+                  <b>{(file.size / (1024 * 1024)).toFixed(2)}MB</b>, vượt quá
+                  giới hạn 3.5MB.
+                </p>
                 <p>Bạn có muốn nén file để tải lên không?</p>
               </div>
             ),
-            icon: <CompressOutlined style={{ color: '#1890ff' }} />,
-            okText: 'Nén file',
-            cancelText: 'Hủy',
+            icon: <CompressOutlined style={{ color: "#1890ff" }} />,
+            okText: "Nén file",
+            cancelText: "Hủy",
             onOk: async () => {
-              const compressedFile = await compressFile(file);
-              if (compressedFile && compressedFile.size <= maxSize) {
-                // Upload compressed file
-                uploadFile(compressedFile);
-              } else if (compressedFile) {
-                message.warning(`File sau khi nén vẫn có kích thước ${(compressedFile.size / (1024 * 1024)).toFixed(2)}MB, vượt quá giới hạn 3.5MB. Vui lòng chọn file nhỏ hơn.`);
+              const compressedResult = await compressFile(file);
+              if (compressedResult && compressedResult.compressedSize) {
+                // Parse compressedSize string to bytes
+                let sizeStr = compressedResult.compressedSize.trim();
+                let sizeBytes = 0;
+                if (sizeStr.toLowerCase().endsWith("mb")) {
+                  sizeBytes = parseFloat(sizeStr) * 1024 * 1024;
+                } else if (sizeStr.toLowerCase().endsWith("kb")) {
+                  sizeBytes = parseFloat(sizeStr) * 1024;
+                } else if (sizeStr.toLowerCase().endsWith("b")) {
+                  sizeBytes = parseFloat(sizeStr);
+                }
+                if (sizeBytes <= maxSize) {
+                  // Tải file nén từ downloadUrl và upload lại
+                  if (
+                    compressedResult.cloudinaryUrl &&
+                    compressedResult.originalName
+                  ) {
+                    fetch(compressedResult.cloudinaryUrl)
+                      .then((compressedRes) => compressedRes.blob())
+                      .then(async (compressedBlob) => {
+                        const compressedFile = new File(
+                          [compressedBlob],
+                          compressedResult.originalName,
+                          { type: "application/pdf" }
+                        );
+                        await uploadFile(compressedFile);
+                        setOriginalFileName(compressedResult.originalName);
+                      })
+                      .catch((err) => {
+                        console.error("Lỗi khi tải file nén:", err);
+                        message.error("Không thể upload file nén.");
+                      });
+                  }
+                } else {
+                  message.warning(
+                    `File sau khi nén vẫn có kích thước ${sizeStr}, vượt quá giới hạn 3.5MB. Vui lòng chọn file nhỏ hơn.`
+                  );
+                }
               }
             },
           });
@@ -452,7 +489,7 @@ const AddScientificPaperPage = () => {
     };
     input.click();
   };
-  
+
   // Helper function to upload file
   const uploadFile = async (file) => {
     try {
@@ -464,7 +501,10 @@ const AddScientificPaperPage = () => {
       message.success("File đã được tải lên thành công!");
       console.log("Uploaded file response:", response);
     } catch (error) {
-      console.error("Error uploading file:", error.response?.data || error.message);
+      console.error(
+        "Error uploading file:",
+        error.response?.data || error.message
+      );
       message.error("Không thể tải file lên. Vui lòng thử lại.");
       setOriginalFileName("");
       setSelectedFile(null);
@@ -889,53 +929,80 @@ const AddScientificPaperPage = () => {
     setIsHelpModalVisible(false);
   };
 
-  // Hàm giả lập nén file - sẽ được thay thế bằng API thực tế sau này
+  const [compressionResult, setCompressionResult] = useState(null); // Thông tin nén thực tế
+  const [showUploadCompressedModal, setShowUploadCompressedModal] =
+    useState(false);
+  const compressedFileRef = useRef(null);
+
+  // Sửa hàm compressFile để gọi API thực tế
   const compressFile = async (file) => {
     try {
-      // Đánh dấu là đang nén
       setIsCompressing(true);
       setCompressionProgress(0);
-      
-      // Lưu kích thước ban đầu
       setOriginalFileSize(file.size);
-      
-      // Thông báo đang nén
-      message.loading({ content: 'Đang nén file...', key: 'compress' });
-      
-      // Giả lập tiến trình nén 
-      for (let i = 0; i <= 10; i++) {
-        await new Promise(resolve => setTimeout(resolve, 200)); // delay 200ms
-        setCompressionProgress(i * 10);
+      setCompressionResult(null);
+
+      message.loading({ content: "Đang nén file...", key: "compress" });
+
+      // Tạo hiệu ứng tiến trình giả lập
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 10 + 5;
+        if (progress >= 95) {
+          clearInterval(interval);
+        } else {
+          setCompressionProgress(Math.floor(progress));
+        }
+      }, 200);
+
+      // Gọi API nén PDF
+      const result = await userApi.compressPDF(file);
+
+      clearInterval(interval);
+      setCompressionProgress(100);
+
+      if (!result || !result.cloudinaryUrl || !result.originalName) {
+        throw new Error("API nén không trả về thông tin hợp lệ");
       }
-      
-      // Giả lập kích thước file sau nén (giảm khoảng 30-50%)
-      const compressionRate = 0.5 + Math.random() * 0.2; // 50-70% kích thước ban đầu
-      const newSize = Math.floor(file.size * compressionRate);
-      setCompressedFileSize(newSize);
-      
-      // Tạo một bản sao của file với tên mới
-      const compressedFile = new File(
-        [file], 
-        file.name.replace('.pdf', '_compressed.pdf'),
-        { type: file.type }
-      );
-      
-      // Thông báo nén thành công
-      message.success({ 
-        content: `Đã nén file từ ${(file.size / (1024 * 1024)).toFixed(2)}MB xuống ${(newSize / (1024 * 1024)).toFixed(2)}MB`, 
-        key: 'compress' 
+
+      // Lấy kích thước thực tế từ response
+      let compressedSizeInMB = 0;
+      if (result.compressedSize) {
+        const sizeStr = result.compressedSize.trim().toLowerCase();
+        if (sizeStr.endsWith("mb")) {
+          compressedSizeInMB = parseFloat(sizeStr);
+        } else if (sizeStr.endsWith("kb")) {
+          compressedSizeInMB = parseFloat(sizeStr) / 1024;
+        } else if (sizeStr.endsWith("b")) {
+          compressedSizeInMB = parseFloat(sizeStr) / (1024 * 1024);
+        }
+      }
+      setCompressedFileSize(compressedSizeInMB * 1024 * 1024); // Chuyển về bytes
+      setCompressionResult(result);
+
+      setCompressionProgress(100);
+
+      // TỰ ĐỘNG LƯU LINK FILE NÉN
+      setSelectedFile(result.cloudinaryUrl);
+      setOriginalFileName(result.originalName);
+
+      message.success({
+        content: result.display || "Đã nén file thành công",
+        key: "compress",
       });
-      
-      // Kết thúc nén
+
       setIsCompressing(false);
-      
-      return compressedFile;
+
+      return result;
     } catch (error) {
-      // Xử lý lỗi
       console.error("Lỗi khi nén file:", error);
-      message.error({ content: "Không thể nén file", key: 'compress' });
+      message.error({
+        content: error.message || "Không thể nén file",
+        key: "compress",
+      });
       setIsCompressing(false);
-      return null;
+      setCompressionResult(null);
+      throw error; // Ném lỗi để xử lý bên ngoài
     }
   };
 
@@ -2051,47 +2118,44 @@ const AddScientificPaperPage = () => {
                       {selectedFile && (
                         <Button
                           type="default"
-                          onClick={() => {
-                            // Tạo một đối tượng file từ URL
-                            fetch(selectedFile)
-                              .then(r => r.blob())
-                              .then(blob => {
-                                const file = new File([blob], originalFileName, { type: blob.type });
-                                // Nén file
-                                compressFile(file).then(compressedFile => {
-                                  if (compressedFile) {
-                                    uploadFile(compressedFile);
-                                  }
-                                });
-                              })
-                              .catch(err => {
-                                console.error("Lỗi khi lấy file:", err);
-                                message.error("Không thể nén file.");
-                              });
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(selectedFile);
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = originalFileName || "compressed.pdf";
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              window.URL.revokeObjectURL(url);
+                            } catch (err) {
+                              message.error("Không thể tải file về.");
+                            }
                           }}
-                          icon={<CompressOutlined />}
-                          loading={isCompressing}
-                          disabled={isCompressing}
                         >
-                          {isCompressing ? 'Đang nén...' : 'Nén PDF'}
+                          Tải file
                         </Button>
                       )}
                     </div>
-                    
+
                     {/* Hiển thị tiến trình nén */}
                     {isCompressing && (
                       <div className="mt-2">
-                        <Progress percent={compressionProgress} status="active" />
+                        <Progress
+                          percent={compressionProgress}
+                          status="active"
+                        />
                       </div>
                     )}
-                    
-                    {/* Hiển thị kết quả nén */}
-                    {!isCompressing && originalFileSize > 0 && compressedFileSize > 0 && (
-                      <div className="mt-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Kích thước ban đầu: <b>{(originalFileSize / (1024 * 1024)).toFixed(2)}MB</b></span>
-                          <span>Kích thước sau nén: <b>{(compressedFileSize / (1024 * 1024)).toFixed(2)}MB</b></span>
-                          <span>Tỷ lệ nén: <b className="text-green-600">{(100 - (compressedFileSize / originalFileSize) * 100).toFixed(1)}%</b></span>
+
+                    {/* Hiển thị kết quả nén thực tế */}
+                    {/* Không còn hiển thị link tải file nén nữa, chỉ thông báo */}
+                    {compressionResult && (
+                      <div className="mt-2 text-sm bg-green-50 border border-green-200 rounded p-2">
+                        <div>
+                          <b>Kết quả nén:</b> {compressionResult.display}
                         </div>
                       </div>
                     )}
@@ -2114,13 +2178,10 @@ const AddScientificPaperPage = () => {
                         className={`w-full ${
                           linkError ? "border-red-500" : ""
                         }`}
-                        placeholder="Link công bố bài báo (http://...)"
-                        required
+                        placeholder="Nhập link công bố bài báo"
+                        value={link}
+                        onChange={handleLinkChange}
                         status={linkError ? "error" : ""}
-                        onChange={(e) => {
-                          setLink(e.target.value);
-                          setLinkError("");
-                        }}
                         onBlur={() => {
                           setLinkTouched(true);
                           validateLink();
@@ -2151,6 +2212,7 @@ const AddScientificPaperPage = () => {
                     <Input
                       id="doi"
                       placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
+                      value={doi}
                       onChange={(e) => setDoi(e.target.value)}
                     />
                   </div>

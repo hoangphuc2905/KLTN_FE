@@ -1438,6 +1438,28 @@ const userApi = {
       throw error.response?.data || "Lỗi kết nối đến server";
     }
   },
+
+  compressPDF: async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await api.post(
+        `${API_URL}/scientificPapers/compress`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      return response.data;
+    } catch (error) {
+      console.error("Error compressing PDF:", error);
+      throw error.response?.data || "Lỗi kết nối đến server";
+    }
+  },
 };
 
 export default userApi;
