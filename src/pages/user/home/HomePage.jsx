@@ -12,7 +12,6 @@ import { Modal, Button, Input, message, Spin, Select, Tabs } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
-import ForceGraph2D from 'react-force-graph-2d';
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -977,151 +976,438 @@ const HomePage = () => {
   };
 
   // Component hiển thị biểu đồ mạng
-  const GraphView = ({ papers, selectedPaper, onSelectPaper, archivedPapers, showModal }) => {
-    // Chọn bài báo có điểm cao nhất làm trung tâm nếu chưa chọn bài nào
-    const centralPaper = useMemo(() => {
-      return selectedPaper || (papers.length ? papers[0] : null);
-    }, [selectedPaper, papers]);
-    
-    // Chuẩn bị dữ liệu cho biểu đồ
-    const graphData = useMemo(() => {
-      if (!centralPaper || papers.length === 0) return { nodes: [], links: [] };
+  const GraphView = React.memo(({ papers, selectedPaper, onSelectPaper, archivedPapers, showModal, searchQuery }) => {
+    const graphRef = useRef(null);
+    const containerRef = useRef(null);
+    const resizeObserverRef = useRef(null);
+    const tooltipRef = useRef(null);
+    const [containerSize, setContainerSize] = useState({ width: 0, height: 0 });
+    const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
+    const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+
+    // Cleanup function for tooltips
+    const cleanupTooltips = useCallback(() => {
+      const tooltips = document.querySelectorAll('.graph-tooltip');
+      tooltips.forEach(tooltip => tooltip.remove());
+      if (tooltipRef.current) {
+        tooltipRef.current.remove();
+        tooltipRef.current = null;
+      }
+    }, []);
+
+    // Cleanup on unmount
+    useEffect(() => {
+      return () => {
+        cleanupTooltips();
+      };
+    }, [cleanupTooltips]);
+
+    // Tối ưu processedData với useMemo
+    const processedData = useMemo(() => {
+      if (!papers?.length) return { nodes: [], edges: [] };
+
+      // Tạo Map để theo dõi các node đã được thêm
+      const nodesMap = new Map();
+      const edges = [];
       
-      // Tạo nodes - mỗi node là một bài báo
-      const nodes = papers.map(paper => ({
-        id: paper.id,
-        title: paper.title || "Không có tiêu đề",
-        val: paper.score ? paper.score * 10 : (paper.id === centralPaper.id ? 10 : 5), // Kích thước node
-        color: paper.id === centralPaper.id ? '#8844aa' : '#1a88e3',
-        year: paper.publish_date ? new Date(paper.publish_date).getFullYear() : "N/A",
-        author: paper.author || "Không có tác giả",
-        paper: paper // Lưu thông tin đầy đủ của paper để dễ truy cập
-      }));
-      
-      // Tạo links - kết nối từ bài báo trung tâm đến các bài khác
-      const links = papers
-        .filter(paper => paper.id !== centralPaper.id)
-        .map(paper => ({
-          source: centralPaper.id,
-          target: paper.id,
-          value: paper.score || 0.5, // Độ đậm của đường nối
-        }));
-      
-      return { nodes, links };
-    }, [papers, centralPaper]);
-    
-    return (
-      <div className="grid grid-cols-[1fr,2fr,1fr] gap-4 h-[600px] max-md:grid-cols-1 max-md:h-auto">
-        {/* Danh sách bài báo bên trái */}
-        <div className="overflow-auto border rounded-lg bg-white p-2 max-md:h-[200px]">
-          <h3 className="font-bold text-sm mb-2 text-sky-900">Danh sách bài báo</h3>
-          {papers.map(paper => (
-            <div 
-              key={paper.id}
-              className={`p-2 border-b cursor-pointer hover:bg-gray-50 ${
-                selectedPaper?.id === paper.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-              }`}
-              onClick={() => onSelectPaper(paper)}
-            >
-              <h3 className="font-semibold text-sm line-clamp-2">{paper.title || "Không có tiêu đề"}</h3>
-              <p className="text-xs text-gray-500">{paper.author || "Không có tác giả"}</p>
-              <p className="text-xs text-gray-400">
-                {paper.publish_date ? new Date(paper.publish_date).toLocaleDateString() : "Không có ngày"}
-              </p>
-            </div>
-          ))}
-        </div>
-        
-        {/* Biểu đồ ở giữa */}
-        <div className="border rounded-lg overflow-hidden bg-white max-md:h-[400px]">
-          {papers.length > 0 ? (
-            <ForceGraph2D
-              graphData={graphData}
-              nodeLabel={node => `${node.title} (${node.year})`}
-              nodeRelSize={6}
-              onNodeClick={node => onSelectPaper(node.paper)}
-              cooldownTicks={100}
-              linkWidth={link => link.value * 2}
-              linkColor={() => "#999"}
-              nodeCanvasObject={(node, ctx, globalScale) => {
-                const label = node.title;
-                const fontSize = 12/globalScale;
-                ctx.font = `${fontSize}px Sans-Serif`;
-                const textWidth = ctx.measureText(label).width;
-                const backgroundNodeSize = node.val;
-                
-                // Draw node
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, backgroundNodeSize, 0, 2 * Math.PI, false);
-                ctx.fillStyle = node.color;
-                ctx.fill();
-                
-                // Draw text only on hover or for central node
-                if (node.id === centralPaper.id || node.x !== 0) {
-                  ctx.fillStyle = 'white';
-                  ctx.textAlign = 'center';
-                  ctx.textBaseline = 'middle';
-                  ctx.fillText(label, node.x, node.y);
+      // Hàm kiểm tra keywords chung
+      const hasCommonKeywords = (keywords1, keywords2) => {
+        if (!Array.isArray(keywords1) || !Array.isArray(keywords2)) return false;
+        return keywords1.some(k1 => keywords2.includes(k1));
+      };
+
+      // Hàm kiểm tra mối liên quan giữa các papers
+      const areRelated = (paper1, paper2) => {
+        // Kiểm tra cùng tác giả
+        const sameAuthor = paper1.author && paper2.author && 
+          (typeof paper1.author === 'string' && typeof paper2.author === 'string' ? 
+            paper1.author === paper2.author :
+            JSON.stringify(paper1.author) === JSON.stringify(paper2.author));
+
+        // Kiểm tra cùng keywords
+        const sameKeywords = hasCommonKeywords(
+          Array.isArray(paper1.keywords) ? paper1.keywords : [],
+          Array.isArray(paper2.keywords) ? paper2.keywords : []
+        );
+
+        // Kiểm tra cùng department
+        const sameDepartment = paper1.department && paper2.department && 
+          paper1.department === paper2.department;
+
+        // Kiểm tra cùng chủ đề nghiên cứu (nếu có)
+        const sameResearchArea = paper1.research_area && paper2.research_area &&
+          paper1.research_area === paper2.research_area;
+
+        return sameAuthor || sameKeywords || sameDepartment || sameResearchArea;
+      };
+
+      // Hàm tạo node với kích thước dựa trên số lượng kết nối
+      const createNode = (paper, isMainPaper = false) => ({
+        id: paper.id || paper._id,
+        label: (paper.title || paper.title_vn || paper.title_en || 'Không có tiêu đề').substring(0, 30) + '...',
+        size: isMainPaper ? 50 : 30,
+        style: {
+          fill: paper.id === selectedPaper?.id ? '#1890ff' : 
+                isMainPaper ? '#f6a6b2' : '#91d5ff',
+          stroke: '#40a9ff',
+          lineWidth: isMainPaper ? 2 : 1,
+        },
+        paper: {
+          ...paper,
+          title: paper.title || paper.title_vn || paper.title_en || 'Không có tiêu đề',
+          author: typeof paper.author === 'string' ? paper.author : 
+                  Array.isArray(paper.author) ? paper.author.map(a => 
+                    a.author_name_vi || a.author_name_en || a.name || 'Không có tên'
+                  ).join(', ') : 'Không có tác giả',
+          department: paper.department || paper.departmentId || '',
+          keywords: Array.isArray(paper.keywords) ? paper.keywords : []
+        },
+        isMainPaper,
+        connections: 0
+      });
+
+      // Xử lý papers để lấy ra các bài liên quan
+      papers.forEach((paper, index) => {
+        // Chỉ xử lý các bài chính (trong khoảng 10-60 bài)
+        const maxPapers = Math.min(Math.max(10, Math.floor(papers.length * 0.3)), 60);
+        if (index < maxPapers) {
+          if (!nodesMap.has(paper.id)) {
+            nodesMap.set(paper.id, createNode(paper, true));
+          }
+
+          // Tìm các bài liên quan
+          const relatedPapers = papers
+            .filter(p => p.id !== paper.id)
+            .filter(p => areRelated(paper, p))
+            .slice(0, 5);
+
+          relatedPapers.forEach(relatedPaper => {
+            if (!nodesMap.has(relatedPaper.id)) {
+              nodesMap.set(relatedPaper.id, createNode(relatedPaper, false));
+            }
+
+            // Tăng số lượng kết nối cho cả hai node
+            const sourceNode = nodesMap.get(paper.id);
+            const targetNode = nodesMap.get(relatedPaper.id);
+            if (sourceNode && targetNode) {
+              sourceNode.connections++;
+              targetNode.connections++;
+
+              edges.push({
+                source: paper.id,
+                target: relatedPaper.id,
+                style: {
+                  stroke: '#91d5ff',
+                  lineWidth: 1,
                 }
-              }}
-            />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <Spin size="large" />
-            </div>
+              });
+            }
+          });
+        }
+      });
+
+      // Điều chỉnh kích thước node dựa trên số lượng kết nối
+      nodesMap.forEach(node => {
+        node.size = node.isMainPaper ? 
+          Math.min(50 + node.connections * 2, 80) : 
+          Math.min(30 + node.connections, 50);
+      });
+
+      return {
+        nodes: Array.from(nodesMap.values()),
+        edges
+      };
+    }, [papers, selectedPaper?.id, searchQuery]);
+
+    // Graph initialization
+    useEffect(() => {
+      if (!containerRef.current || !containerSize.width || !papers.length) {
+        return;
+      }
+
+      const initGraph = async () => {
+        try {
+          const G6 = (await import('@antv/g6')).default;
+          
+          if (graphRef.current) {
+            graphRef.current.destroy();
+            graphRef.current = null;
+          }
+
+          // Cleanup existing tooltips before creating new graph
+          cleanupTooltips();
+
+          const graph = new G6.Graph({
+            container: containerRef.current,
+            width: containerSize.width,
+            height: containerSize.height,
+            modes: {
+              default: ['drag-canvas', 'zoom-canvas', 'drag-node'],
+            },
+            layout: {
+              type: 'force',
+              preventOverlap: true,
+              linkDistance: 200,
+              nodeStrength: -100,
+              edgeStrength: 0.1,
+              center: [containerSize.width / 2, containerSize.height / 2],
+              gravity: 0.1,
+              nodeSize: node => node.size,
+              workerEnabled: true, // Enable web worker for better performance
+            },
+            defaultNode: {
+              labelCfg: {
+                style: {
+                  fill: '#333',
+                  fontSize: 12,
+                  background: {
+                    fill: '#fff',
+                    padding: [4, 8],
+                    radius: 4,
+                  },
+                },
+              },
+            },
+            defaultEdge: {
+              style: {
+                stroke: '#91d5ff',
+                lineWidth: 1,
+                endArrow: {
+                  path: 'M 0,0 L 8,4 L 8,-4 Z',
+                  fill: '#91d5ff',
+                },
+              },
+              labelCfg: {
+                autoRotate: true,
+              },
+            },
+          });
+
+          // Add custom behaviors
+          graph.on('node:dragstart', () => {
+            graph.layout().stop();
+          });
+
+          graph.on('node:click', (evt) => {
+            const node = evt.item;
+            const model = node.getModel();
+            onSelectPaper(model.paper);
+          });
+
+          // Tooltip handling with cleanup
+          graph.on('node:mouseenter', (evt) => {
+            cleanupTooltips();
+
+            const node = evt.item;
+            const model = node.getModel();
+            const paper = model.paper;
+            
+            const tooltip = document.createElement('div');
+            tooltip.className = 'graph-tooltip';
+            tooltip.style.position = 'absolute';
+            tooltip.style.backgroundColor = 'white';
+            tooltip.style.padding = '8px';
+            tooltip.style.borderRadius = '4px';
+            tooltip.style.boxShadow = '0 2px 8px rgba(0,0,0,0.15)';
+            tooltip.style.maxWidth = '300px';
+            tooltip.style.zIndex = '1000';
+            tooltip.innerHTML = `
+              <div style="font-weight: bold;">${paper.title}</div>
+              <div style="font-size: 12px; color: #666;">${paper.author || 'Không có tác giả'}</div>
+              <div style="font-size: 11px; color: #888;">Kết nối: ${model.connections}</div>
+              ${model.isMainPaper ? '<div style="color: #f6a6b2; font-size: 11px;">Bài chính</div>' : ''}
+            `;
+            
+            document.body.appendChild(tooltip);
+            tooltipRef.current = tooltip;
+            
+            const point = graph.getCanvasByPoint(evt.x, evt.y);
+            tooltip.style.left = `${point.x + 10}px`;
+            tooltip.style.top = `${point.y + 10}px`;
+          });
+
+          graph.on('node:mouseleave', () => {
+            cleanupTooltips();
+          });
+
+          graph.on('canvas:click', () => {
+            cleanupTooltips();
+          });
+
+          graph.data(processedData);
+          graph.render();
+          graph.fitView();
+
+          graphRef.current = graph;
+
+          // Add zoom controls
+          const zoomRatio = 1.2;
+          graph.addBehaviors(
+            {
+              type: 'zoom-canvas',
+              sensitivity: 1.5,
+              minZoom: 0.5,
+              maxZoom: 2,
+            },
+            'default'
+          );
+
+          // Fit view when data changes
+          graph.on('afterlayout', () => {
+            graph.fitView();
+          });
+
+        } catch (error) {
+          console.error('Error initializing G6:', error);
+          message.error('Không thể khởi tạo biểu đồ');
+        }
+      };
+
+      initGraph();
+
+      return () => {
+        if (graphRef.current) {
+          graphRef.current.destroy();
+          graphRef.current = null;
+        }
+        cleanupTooltips();
+      };
+    }, [containerSize.width, containerSize.height, processedData, onSelectPaper, cleanupTooltips, searchQuery]);
+
+    // Tính toán các class và style dựa trên trạng thái collapse
+    const leftPanelClasses = `transition-all duration-300 ease-in-out ${
+      leftPanelCollapsed ? 'w-[40px]' : 'w-[300px]'
+    } overflow-hidden border rounded-lg bg-white p-2 max-md:h-[200px] relative`;
+
+    const rightPanelClasses = `transition-all duration-300 ease-in-out ${
+      rightPanelCollapsed ? 'w-[40px]' : 'w-[300px]'
+    } border p-4 rounded-lg overflow-hidden bg-white max-md:h-[300px] relative`;
+
+    const mainContainerClasses = `grid grid-cols-[auto,1fr,auto] gap-4 h-[600px] max-md:grid-cols-1 max-md:h-auto`;
+
+    return (
+      <div className={mainContainerClasses}>
+        {/* Left Panel */}
+        <div className={leftPanelClasses}>
+          <button 
+            className="absolute right-2 top-2 z-10 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+            onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
+          >
+            {leftPanelCollapsed ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
+              </svg>
+            )}
+          </button>
+          
+          {!leftPanelCollapsed && (
+            <>
+              <h3 className="font-bold text-sm mb-2 text-sky-900">Top 10 bài báo</h3>
+              {processedData.nodes
+                .filter(node => node.isMainPaper)
+                .map(node => (
+                  <div 
+                    key={node.id}
+                    className={`p-2 border-b cursor-pointer hover:bg-gray-50 ${
+                      selectedPaper?.id === node.paper.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    }`}
+                    onClick={() => onSelectPaper(node.paper)}
+                  >
+                    <h3 className="font-semibold text-sm line-clamp-2">{node.paper.title || "Không có tiêu đề"}</h3>
+                    <p className="text-xs text-gray-500">{node.paper.author || "Không có tác giả"}</p>
+                    <p className="text-xs text-gray-400">
+                      {node.paper.publish_date ? new Date(node.paper.publish_date).toLocaleDateString() : "Không có ngày"}
+                    </p>
+                  </div>
+                ))}
+            </>
           )}
         </div>
         
-        {/* Chi tiết bài báo bên phải */}
-        <div className="border p-4 rounded-lg overflow-auto bg-white max-md:h-[300px]">
-          {selectedPaper ? (
-            <>
-              <h2 className="text-lg font-bold mb-2">{selectedPaper.title || "Không có tiêu đề"}</h2>
-              <p className="text-sm text-gray-600 mb-2">{selectedPaper.author || "Không có tác giả"}</p>
-              <p className="text-xs text-gray-500 mb-4">
-                {selectedPaper.departmentName || "Không có khoa"} • 
-                {selectedPaper.publish_date 
-                  ? new Date(selectedPaper.publish_date).toLocaleDateString() 
-                  : "Không có ngày"}
-              </p>
-              <p className="text-sm">{selectedPaper.summary || "Không có tóm tắt"}</p>
-              
-              {selectedPaper.keywords && Array.isArray(selectedPaper.keywords) && selectedPaper.keywords.length > 0 && (
-                <div className="mt-4">
-                  <p className="font-semibold">Từ khóa:</p>
-                  <div className="flex flex-wrap gap-1 mt-1">
-                    {selectedPaper.keywords.map((keyword, index) => (
-                      <span key={index} className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
-                        {keyword}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              <div className="mt-4 flex gap-2">
-                <Link to={`/scientific-paper/${selectedPaper.id}`}>
-                  <Button type="primary" size="small">Xem chi tiết</Button>
-                </Link>
-                <Button 
-                  type={archivedPapers.includes(selectedPaper.id) ? "default" : "primary"} 
-                  size="small"
-                  icon={archivedPapers.includes(selectedPaper.id) ? <FaArchive /> : <FaRegFileArchive />}
-                  onClick={() => showModal(selectedPaper)}
-                >
-                  {archivedPapers.includes(selectedPaper.id) ? 'Đã lưu' : 'Lưu trữ'}
-                </Button>
+        {/* Graph Container */}
+        <div className="border rounded-lg overflow-hidden bg-white max-md:h-[400px]">
+          <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+            {(!graphRef.current && papers.length > 0) && (
+              <div className="flex items-center justify-center h-full">
+                <Spin size="large" />
               </div>
-            </>
-          ) : (
-            <p className="text-gray-500 text-center mt-10">
-              Chọn một bài báo để xem chi tiết
-            </p>
+            )}
+          </div>
+        </div>
+        
+        {/* Right Panel */}
+        <div className={rightPanelClasses}>
+          <button 
+            className="absolute left-2 top-2 z-10 bg-white rounded-full p-1 shadow-md hover:bg-gray-100"
+            onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+          >
+            {rightPanelCollapsed ? (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7M19 19l-7-7 7-7" />
+              </svg>
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+              </svg>
+            )}
+          </button>
+
+          {!rightPanelCollapsed && (
+            selectedPaper ? (
+              <>
+                <h2 className="text-lg font-bold mb-2">{selectedPaper.title || "Không có tiêu đề"}</h2>
+                <p className="text-sm text-gray-600 mb-2">{selectedPaper.author || "Không có tác giả"}</p>
+                <p className="text-xs text-gray-500 mb-4">
+                  {selectedPaper.departmentName || "Không có khoa"} • 
+                  {selectedPaper.publish_date 
+                    ? new Date(selectedPaper.publish_date).toLocaleDateString() 
+                    : "Không có ngày"}
+                </p>
+                <p className="text-sm">{selectedPaper.summary || "Không có tóm tắt"}</p>
+                
+                {selectedPaper.keywords && Array.isArray(selectedPaper.keywords) && selectedPaper.keywords.length > 0 && (
+                  <div className="mt-4">
+                    <p className="font-semibold">Từ khóa:</p>
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {selectedPaper.keywords.map((keyword, index) => (
+                        <span key={index} className="bg-gray-100 px-2 py-0.5 rounded-full text-xs">
+                          {keyword}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="mt-4 flex gap-2">
+                  <Link to={`/scientific-paper/${selectedPaper.id}`}>
+                    <Button type="primary" size="small">Xem chi tiết</Button>
+                  </Link>
+                  <Button 
+                    type={archivedPapers.includes(selectedPaper.id) ? "default" : "primary"} 
+                    size="small"
+                    icon={archivedPapers.includes(selectedPaper.id) ? <FaArchive /> : <FaRegFileArchive />}
+                    onClick={() => showModal(selectedPaper)}
+                  >
+                    {archivedPapers.includes(selectedPaper.id) ? 'Đã lưu' : 'Lưu trữ'}
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p className="text-gray-500 text-center mt-10">
+                Chọn một bài báo để xem chi tiết
+              </p>
+            )
           )}
         </div>
       </div>
     );
-  };
+  });
+
+  GraphView.displayName = 'GraphView';
 
   return (
     <ErrorBoundary>
@@ -1271,6 +1557,7 @@ const HomePage = () => {
                       onSelectPaper={setSelectedPaper}
                       archivedPapers={archivedPapers}
                       showModal={showModal}
+                      searchQuery={searchQuery}
                     />
                   )}
                   
