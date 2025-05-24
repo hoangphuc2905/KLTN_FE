@@ -413,43 +413,72 @@ const HomePage = () => {
     fetchCountsForCurrentPapers();
   }, [filteredPapers, currentPage, papersPerPage]);
 
-  useEffect(() => {
-    const fetchMetadataForCurrentPapers = async () => {
+  const fetchMetadataForCurrentPapers = async () => {
+    try {
       const papersToFetch = filteredPapers
         .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
-        .filter((paper) => paper.id && !authors[paper.id]);
+        .filter((paper) => {
+          if (!paper.id) {
+            console.warn("Paper missing ID:", paper);
+            return false;
+          }
+          return !authors[paper.id];
+        });
 
       if (papersToFetch.length === 0) {
         return;
       }
 
-      try {
-        const authorsData = await Promise.all(
-          papersToFetch.map(async (paper) => {
+      console.log("Fetching metadata for papers:", papersToFetch);
+
+      const authorsData = await Promise.all(
+        papersToFetch.map(async (paper) => {
+          try {
             const authorsData = await userApi.getAuthorsByPaperId(paper.id);
-            const authorNames = authorsData.map(
-              (author) => author.author_name_vi || author.author_name_en
-            );
+            console.log(`Authors data for paper ${paper.id}:`, authorsData);
+
+            const authorNames = authorsData
+              .filter(author => author) // Filter out null/undefined authors
+              .map((author) => {
+                const name = author.author_name_vi || author.author_name_en;
+                if (!name) {
+                  console.warn(`Author missing name for paper ${paper.id}:`, author);
+                }
+                return name;
+              })
+              .filter(name => name); // Filter out empty names
+            
             return {
               paperId: paper.id,
-              authors:
-                authorNames.length > 0
-                  ? authorNames.join(", ")
-                  : "Tác giả không xác định",
+              authors: authorNames.length > 0 
+                ? authorNames.join(", ") 
+                : "Tác giả không xác định",
             };
-          })
-        );
+          } catch (error) {
+            console.error(`Error fetching authors for paper ${paper.id}:`, error);
+            return {
+              paperId: paper.id,
+              authors: "Tác giả không xác định"
+            };
+          }
+        })
+      );
 
-        const newAuthors = authorsData.reduce((acc, { paperId, authors }) => {
-          acc[paperId] = authors;
-          return acc;
-        }, {});
-        setAuthors((prev) => ({ ...prev, ...newAuthors }));
-      } catch (error) {
-        console.error("Lỗi khi lấy thông tin tác giả:", error);
-      }
-    };
+      console.log("Processed authors data:", authorsData);
 
+      const newAuthors = authorsData.reduce((acc, { paperId, authors }) => {
+        acc[paperId] = authors;
+        return acc;
+      }, {});
+      
+      setAuthors((prev) => ({ ...prev, ...newAuthors }));
+    } catch (error) {
+      console.error("Error fetching metadata:", error);
+      message.error("Lỗi khi tải thông tin tác giả");
+    }
+  };
+
+  useEffect(() => {
     fetchMetadataForCurrentPapers();
   }, [filteredPapers, currentPage, authors, papersPerPage]);
 
@@ -482,42 +511,56 @@ const HomePage = () => {
         selectedDepartment,
         selectedCriteria
       );
-      console.log("Kết quả tìm kiếm:", {
-        totalResults: response?.results?.length || 0,
-        searchTime: new Date().toISOString(),
-        response
-      });
 
       if (!response || !response.results) {
         throw new Error("Phản hồi API không chứa dữ liệu kết quả.");
       }
 
-      const papers = response.results.map((result) => {
-        console.log("Chi tiết kết quả:", {
-          id: result.paper._id,
-          title: result.paper.title_vn || result.paper.title_en,
-          score: result.score,
-          department: result.paper.department
+      console.log("Kết quả API gốc:", response);
+
+      const papers = response.results
+        .filter(result => {
+          if (!result || !result.paper || !result.paper._id) {
+            console.warn("Bỏ qua kết quả không hợp lệ:", result);
+            return false;
+          }
+          return true;
+        })
+        .map((result) => {
+          console.log("Xử lý paper:", result.paper);
+          
+          let authorString = "";
+          if (Array.isArray(result.paper.author)) {
+            authorString = result.paper.author
+              .map(a => a.author_name_vi || a.author_name_en || "")
+              .filter(Boolean)
+              .join(", ");
+          } else if (typeof result.paper.author === 'object' && result.paper.author !== null) {
+            authorString = result.paper.author.author_name_vi || result.paper.author.author_name_en || "";
+          } else if (typeof result.paper.author === 'string') {
+            authorString = result.paper.author;
+          }
+          
+          if (!authorString) {
+            authorString = "Tác giả không xác định";
+          }
+
+          return {
+            id: result.paper._id,
+            title: result.paper.title_vn || result.paper.title_en || "Không có tiêu đề",
+            author: authorString,
+            department: result.paper.department || "Khoa không xác định",
+            departmentName: departments[result.paper.department] || "Khoa không xác định",
+            thumbnailUrl: result.paper.cover_image || "",
+            summary: result.paper.summary || "Không có tóm tắt",
+            publish_date: result.paper.publish_date || "",
+            keywords: result.paper.keywords || [],
+            file: result.paper.file || "",
+            doi: result.paper.doi || "",
+            status: result.paper.status || "",
+            score: result.score || 1
+          };
         });
-        
-        return {
-          id: result.paper._id,
-          title: result.paper.title_vn || result.paper.title_en || "Không có tiêu đề",
-          author: result.paper.author
-            ?.map((a) => a.author_name_vi || a.author_name_en)
-            .join(", ") || "Tác giả không xác định",
-          department: result.paper.department || "Khoa không xác định",
-          departmentName: departments[result.paper.department] || "Khoa không xác định",
-          thumbnailUrl: result.paper.cover_image || "",
-          summary: result.paper.summary || "Không có tóm tắt",
-          publish_date: result.paper.publish_date || "",
-          keywords: result.paper.keywords || [],
-          file: result.paper.file || "",
-          doi: result.paper.doi || "",
-          status: result.paper.status || "",
-          score: result.score || 1
-        };
-      });
 
       console.log("Kết quả đã xử lý:", {
         totalPapers: papers.length,
@@ -888,10 +931,21 @@ const HomePage = () => {
 
   const PaperItem = ({ index, style, data }) => {
     const paper = data[index];
-    if (!paper.id) {
-      console.error("Bài báo thiếu id:", paper);
+    
+    // Kiểm tra và log dữ liệu paper
+    if (!paper || !paper.id) {
+      console.warn("Bài báo không hợp lệ:", paper);
       return null;
     }
+
+    console.log("Rendering paper:", {
+      id: paper.id,
+      title: paper.title,
+      author: paper.author,
+      department: paper.department,
+      departmentName: paper.departmentName
+    });
+
     return (
       <div
         style={{
@@ -912,15 +966,18 @@ const HomePage = () => {
           >
             <div className="flex justify-center w-fit lg:block max-lg:hidden">
               <img
-                src={paper.thumbnailUrl}
+                src={paper.thumbnailUrl || "https://via.placeholder.com/150"}
                 className="object-cover align-middle rounded-md w-auto max-w-full md:max-w-[150px] h-[180px] aspect-[4/3] max-md:aspect-[16/9] max-md:h-[100px] max-md:max-w-[80px] m-0 border border-gray-200"
-                alt={paper.title_vn || "Không có tiêu đề"}
+                alt={paper.title || "Không có tiêu đề"}
+                onError={(e) => {
+                  e.target.src = "https://via.placeholder.com/150";
+                }}
               />
             </div>
             <div className="grid grid-cols-1 gap-2 w-full max-md:gap-1 max-md:overflow-hidden relative">
               <div className="flex justify-between items-start">
                 <h2 className="text-sm font-bold break-words max-w-[70%] line-clamp-2 max-md:max-w-full max-md:text-xs max-md:w-full">
-                  {paper.title || paper.title_en || "Không có tiêu đề"}
+                  {paper.title || "Không có tiêu đề"}
                 </h2>
 
                 <div className="flex flex-col items-end text-xs text-neutral-500 max-md:text-[10px] max-md:hidden ml-2 flex-shrink-0">
@@ -939,9 +996,7 @@ const HomePage = () => {
                       alt="Biểu tượng lượt tải"
                     />
                     <div>
-                      {typeof paper.downloads === "number"
-                        ? paper.downloads
-                        : 0}
+                      {typeof paper.downloads === "number" ? paper.downloads : 0}
                     </div>
                   </div>
                   <div>
@@ -980,9 +1035,7 @@ const HomePage = () => {
                       alt="Biểu tượng lượt tải"
                     />
                     <div>
-                      {typeof paper.downloads === "number"
-                        ? paper.downloads
-                        : 0}
+                      {typeof paper.downloads === "number" ? paper.downloads : 0}
                     </div>
                   </div>
                   <div className="ml-2">
@@ -1319,7 +1372,8 @@ const HomePage = () => {
         'height': 'data(size)',
         'opacity': 1,
         'transition-property': 'opacity, background-color, width, height',
-        'transition-duration': '0.2s'
+        'transition-duration': '0.2s',
+        'cursor': 'grab'
       }
     },
     {
@@ -1335,7 +1389,7 @@ const HomePage = () => {
     {
       selector: 'node[type="related"]',
       style: {
-        'background-color': '#3498db', // Change color to make it more visible
+        'background-color': '#3498db',
         'border-width': '2px',
         'border-color': '#2980b9'
       }
@@ -1348,14 +1402,18 @@ const HomePage = () => {
         'curve-style': 'straight',
         'opacity': 1,
         'transition-property': 'opacity, width',
-        'transition-duration': '0.2s'
+        'transition-duration': '0.2s',
+        'target-arrow-shape': 'triangle',
+        'target-arrow-color': '#95a5a6',
+        'cursor': 'pointer'
       }
     },
     {
       selector: 'edge[type="related"]',
       style: {
         'line-style': 'dashed',
-        'line-color': '#3498db'
+        'line-color': '#3498db',
+        'target-arrow-color': '#3498db'
       }
     },
     {
@@ -1377,10 +1435,17 @@ const HomePage = () => {
       style: {
         'opacity': 1,
         'line-color': '#e67e22',
+        'target-arrow-color': '#e67e22',
         'z-index': 9999,
         'width': function(ele) {
           return parseFloat(ele.data('weight')) + 2;
         }
+      }
+    },
+    {
+      selector: 'node:active',
+      style: {
+        'cursor': 'grabbing'
       }
     }
   ];
@@ -1416,8 +1481,17 @@ const HomePage = () => {
       resetAllElements();
       if (nodeId && nodeId !== 'query') {
         cy.elements().addClass('faded');
-        cy.$(`#${nodeId}`).removeClass('faded').addClass('highlighted');
-        cy.edges(`[source = "${nodeId}"]`).removeClass('faded').addClass('highlighted-edge');
+        const node = cy.$(`#${nodeId}`);
+        node.removeClass('faded').addClass('highlighted');
+        
+        // Highlight edges connected to this node
+        const connectedEdges = node.connectedEdges();
+        connectedEdges.removeClass('faded').addClass('highlighted-edge');
+        
+        // Highlight connected nodes
+        const connectedNodes = connectedEdges.connectedNodes();
+        connectedNodes.removeClass('faded');
+        
         cy.$('#query').removeClass('faded');
       }
     };
@@ -1442,6 +1516,16 @@ const HomePage = () => {
       }
     });
 
+    // Enable node dragging
+    cy.nodes().ungrabify(); // First ungrabify all nodes
+    cy.nodes().grabify();   // Then enable grabbing again
+    
+    // Handle node dragging
+    cy.on('dragfree', 'node', function(evt) {
+      const node = evt.target;
+      node.unlock(); // Allow the node to be moved
+    });
+
     cy.on('tap', 'node', function(evt) {
       const node = evt.target;
       const nodeId = node.id();
@@ -1464,6 +1548,29 @@ const HomePage = () => {
       }
     });
 
+    // Handle edge hover events
+    cy.on('mouseover', 'edge', function(evt) {
+      if (!selectedNodeId) {
+        const edge = evt.target;
+        edge.addClass('highlighted-edge');
+        
+        // Highlight connected nodes
+        const connectedNodes = edge.connectedNodes();
+        connectedNodes.addClass('highlighted');
+      }
+    });
+
+    cy.on('mouseout', 'edge', function(evt) {
+      if (!selectedNodeId) {
+        const edge = evt.target;
+        edge.removeClass('highlighted-edge');
+        
+        // Remove highlight from connected nodes
+        const connectedNodes = edge.connectedNodes();
+        connectedNodes.removeClass('highlighted');
+      }
+    });
+
     cy.on('mouseover', 'node', function(evt) {
       const node = evt.target;
       const nodeId = node.id();
@@ -1472,7 +1579,13 @@ const HomePage = () => {
 
       if (!selectedNodeId) {
         node.addClass('highlighted');
-        cy.edges(`[source = "${nodeId}"]`).addClass('highlighted-edge');
+        
+        // Highlight connected edges and nodes
+        const connectedEdges = node.connectedEdges();
+        connectedEdges.addClass('highlighted-edge');
+        
+        const connectedNodes = connectedEdges.connectedNodes();
+        connectedNodes.addClass('highlighted');
       }
     });
 
@@ -1484,7 +1597,13 @@ const HomePage = () => {
 
       if (!selectedNodeId) {
         node.removeClass('highlighted');
-        cy.edges(`[source = "${nodeId}"]`).removeClass('highlighted-edge');
+        
+        // Remove highlight from connected edges and nodes
+        const connectedEdges = node.connectedEdges();
+        connectedEdges.removeClass('highlighted-edge');
+        
+        const connectedNodes = connectedEdges.connectedNodes();
+        connectedNodes.removeClass('highlighted');
       }
     });
 
@@ -1493,6 +1612,29 @@ const HomePage = () => {
         resetAllElements();
         setSelectedNodeId(null);
         setSelectedPaper(null);
+      }
+    });
+
+    // Add wheel handling for better zoom behavior
+    cy.on('wheel', function(evt) {
+      evt.preventDefault();
+      const delta = evt.originalEvent.deltaY;
+      const position = evt.position || cy.pan();
+      
+      if (delta > 0) {
+        // Zoom out
+        cy.animate({
+          zoom: cy.zoom() * 0.9,
+          center: position,
+          duration: 50
+        });
+      } else {
+        // Zoom in
+        cy.animate({
+          zoom: cy.zoom() * 1.1,
+          center: position,
+          duration: 50
+        });
       }
     });
   };
@@ -1891,7 +2033,6 @@ const HomePage = () => {
                               level: 1,
                               position: { x: 0, y: 0 }
                             });
-                            // Remove custom wheel handling and use default zoom behavior
                           }}
                         />
                         <div className="absolute top-4 right-4 flex gap-2">
