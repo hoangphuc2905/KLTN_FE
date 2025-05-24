@@ -1274,16 +1274,16 @@ const HomePage = () => {
           fontSize: 10
         },
         position: { x, y },
-        locked: true
+        locked: false
       });
 
-      // Edge from query to top paper
+      // Edge from query to top paper with similarity score
       elements.push({
         data: {
           id: `edge-query-${paper.id}`,
           source: 'query',
           target: paper.id,
-          weight: 2
+          weight: paper.score || 2
         }
       });
     });
@@ -1298,7 +1298,7 @@ const HomePage = () => {
         }
 
         const angle = (2 * Math.PI * index) / relatedPapers.length;
-        const radius = 400; // Larger radius for outer circle
+        const radius = 400;
         const x = radius * Math.cos(angle);
         const y = radius * Math.sin(angle);
 
@@ -1314,19 +1314,29 @@ const HomePage = () => {
             fontSize: 8
           },
           position: { x, y },
-          locked: true
+          locked: false
+        });
+
+        // Always connect to query node with a thinner line
+        elements.push({
+          data: {
+            id: `edge-query-related-${paper.id}`,
+            source: 'query',
+            target: paper.id,
+            weight: 1,
+            type: 'related'
+          }
         });
 
         // Connect to most similar top papers
         papers.forEach(topPaper => {
-          // Calculate similarity score (simple text matching for now)
           const similarity = calculateSimilarity(paper.title, topPaper.title);
-          if (similarity > 0.3) { // Add edge only if similarity is above threshold
+          if (similarity > 0.3) {
             elements.push({
               data: {
                 id: `edge-related-${paper.id}-${topPaper.id}`,
-                source: paper.id,
-                target: topPaper.id,
+                source: topPaper.id,
+                target: paper.id,
                 weight: similarity,
                 type: 'related'
               }
@@ -1338,6 +1348,10 @@ const HomePage = () => {
 
     console.log('Final cytoscape elements:', elements);
     setCyElements(elements);
+
+    // Update the papers list to include all papers
+    const allPapers = [...papers, ...(relatedPapers || [])];
+    setTopPapers(allPapers);
   };
 
   // Helper function to calculate text similarity
@@ -1979,7 +1993,7 @@ const HomePage = () => {
                       
                       {!leftPanelCollapsed && (
                         <>
-                          <h3 className="font-bold text-sm mb-2 text-sky-900 flex-shrink-0">Top 10 bài báo</h3>
+                          <h3 className="font-bold text-sm mb-2 text-sky-900 flex-shrink-0">Danh sách bài báo ({topPapers.length})</h3>
                           <div className="overflow-y-auto flex-grow custom-scrollbar">
                             {topPapers.map((paper) => (
                               <div 
@@ -1992,19 +2006,24 @@ const HomePage = () => {
                                   if (cyRef.current && !selectedNodeId) {
                                     const cy = cyRef.current;
                                     cy.$(`#${paper.id}`).addClass('highlighted');
-                                    cy.edges(`[source = "${paper.id}"]`).addClass('highlighted-edge');
+                                    cy.edges(`[source = "${paper.id}"], [target = "${paper.id}"]`).addClass('highlighted-edge');
+                                    cy.edges(`[source = "${paper.id}"], [target = "${paper.id}"]`).connectedNodes().addClass('highlighted');
                                   }
                                 }}
                                 onMouseLeave={() => {
                                   if (cyRef.current && !selectedNodeId) {
                                     const cy = cyRef.current;
                                     cy.$(`#${paper.id}`).removeClass('highlighted');
-                                    cy.edges(`[source = "${paper.id}"]`).removeClass('highlighted-edge');
+                                    cy.edges(`[source = "${paper.id}"], [target = "${paper.id}"]`).removeClass('highlighted-edge');
+                                    cy.edges(`[source = "${paper.id}"], [target = "${paper.id}"]`).connectedNodes().removeClass('highlighted');
                                   }
                                 }}
                               >
-                                <h3 className="font-semibold text-sm line-clamp-2">{paper.title}</h3>
-                                <p className="text-xs text-gray-500">{paper.author}</p>
+                                <div className="flex items-center gap-2">
+                                  <div className={`w-2 h-2 rounded-full ${paper.type === 'related' ? 'bg-blue-500' : 'bg-orange-500'}`}></div>
+                                  <h3 className="font-semibold text-sm line-clamp-2">{paper.title}</h3>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">{paper.author}</p>
                                 <p className="text-xs text-gray-400">
                                   {paper.publish_date ? new Date(paper.publish_date).toLocaleDateString() : "Không có ngày"}
                                 </p>
