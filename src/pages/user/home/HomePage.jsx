@@ -527,6 +527,17 @@ const HomePage = () => {
 
       setResearchPapers(papers);
       setCurrentPage(1);
+
+      // Cập nhật top papers và biểu đồ
+      const top10Papers = papers.slice(0, 10);
+      await saveTopPapersToLocal(top10Papers);
+      
+      // Lấy bài báo liên quan cho top 10
+      const relatedPapersResult = await fetchRelatedPapers(top10Papers);
+      
+      // Cập nhật biểu đồ với câu truy vấn mới
+      updateCytoscapeElements(top10Papers, searchQuery, relatedPapersResult);
+
       if (papers.length === 0) {
         message.warning("Không tìm thấy bài báo phù hợp.");
       } else {
@@ -579,6 +590,17 @@ const HomePage = () => {
 
       setResearchPapers(approvedPapers);
       setCurrentPage(1);
+
+      // Cập nhật top papers và biểu đồ khi reset
+      const top10Papers = approvedPapers.slice(0, 10);
+      await saveTopPapersToLocal(top10Papers);
+      
+      // Lấy bài báo liên quan cho top 10
+      const relatedPapersResult = await fetchRelatedPapers(top10Papers);
+      
+      // Cập nhật biểu đồ với trạng thái reset (không có câu truy vấn)
+      updateCytoscapeElements(top10Papers, "", relatedPapersResult);
+
       message.success("Đã reset kết quả tìm kiếm.");
     } catch (error) {
       console.error("Lỗi khi reset tìm kiếm:", error);
