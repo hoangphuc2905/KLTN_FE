@@ -672,7 +672,7 @@ const ScientificPaperGuidePage = () => {
                       readOnly
                     />
                     <Button type="primary" disabled>
-                      Choose
+                      Tải lên
                     </Button>
                     <Button icon={<CloseCircleOutlined />} danger disabled />
                   </div>
@@ -736,9 +736,9 @@ const ScientificPaperGuidePage = () => {
                 </div>
                 <p className="mt-4 text-xs leading-5 text-black">
                   Minh chứng cần file upload full bài báo và link bài báo. Hệ
-                  thống chỉ hỗ trợ file PDF và có kích thước nhỏ hơn 3.5MB.
-                  Trường hợp có nhiều hơn 1 file sử dụng nén thành file Zip hoặc
-                  file Rar trước khi upload.
+                  thống chỉ hỗ trợ file PDF và có kích thước nhỏ hơn 3.5MB. Nếu
+                  file lớn hơn 3.5MB, hệ thống sẽ tự động nén file và lưu lại
+                  file nén trên hệ thống.
                 </p>
                 <div className="flex justify-end space-x-4 mt-6">
                   <Button
