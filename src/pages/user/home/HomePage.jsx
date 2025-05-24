@@ -77,6 +77,7 @@ const HomePage = () => {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
+  const [relatedPapers, setRelatedPapers] = useState([]);
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -469,31 +470,62 @@ const HomePage = () => {
     }
     setIsSearching(true);
     try {
-      const response = await userApi.semanticSearch(searchQuery, selectedDepartment, selectedCriteria);
+      console.log("Thông tin tìm kiếm:", {
+        searchQuery,
+        selectedDepartment,
+        selectedCriteria,
+        timestamp: new Date().toISOString()
+      });
+
+      const response = await userApi.semanticSearch(
+        searchQuery,
+        selectedDepartment,
+        selectedCriteria
+      );
+      console.log("Kết quả tìm kiếm:", {
+        totalResults: response?.results?.length || 0,
+        searchTime: new Date().toISOString(),
+        response
+      });
 
       if (!response || !response.results) {
         throw new Error("Phản hồi API không chứa dữ liệu kết quả.");
       }
 
-      const papers = response.results.map((result) => ({
-        id: result.paper._id,
-        title: result.paper.title_vn || result.paper.title_en || "Không có tiêu đề",
-        author: result.paper.author,
-        department: result.paper.department || "Khoa không xác định",
-        departmentName: departments[result.paper.department] || "Khoa không xác định",
-        thumbnailUrl: result.paper.cover_image || "",
-        summary: result.paper.summary || "Không có tóm tắt",
-        publish_date: result.paper.publish_date || "",
-        keywords: result.paper.keywords || [],
-        file: result.paper.file || "",
-        doi: result.paper.doi || "",
-        status: result.paper.status || "",
-        score: result.score || 1
-      }));
+      const papers = response.results.map((result) => {
+        console.log("Chi tiết kết quả:", {
+          id: result.paper._id,
+          title: result.paper.title_vn || result.paper.title_en,
+          score: result.score,
+          department: result.paper.department
+        });
+        
+        return {
+          id: result.paper._id,
+          title: result.paper.title_vn || result.paper.title_en || "Không có tiêu đề",
+          author: result.paper.author
+            ?.map((a) => a.author_name_vi || a.author_name_en)
+            .join(", ") || "Tác giả không xác định",
+          department: result.paper.department || "Khoa không xác định",
+          departmentName: departments[result.paper.department] || "Khoa không xác định",
+          thumbnailUrl: result.paper.cover_image || "",
+          summary: result.paper.summary || "Không có tóm tắt",
+          publish_date: result.paper.publish_date || "",
+          keywords: result.paper.keywords || [],
+          file: result.paper.file || "",
+          doi: result.paper.doi || "",
+          status: result.paper.status || "",
+          score: result.score || 1
+        };
+      });
+
+      console.log("Kết quả đã xử lý:", {
+        totalPapers: papers.length,
+        firstPaper: papers[0],
+        lastPaper: papers[papers.length - 1]
+      });
 
       setResearchPapers(papers);
-      saveTopPapersToLocal(papers);
-      
       setCurrentPage(1);
       if (papers.length === 0) {
         message.warning("Không tìm thấy bài báo phù hợp.");
@@ -501,7 +533,13 @@ const HomePage = () => {
         message.success(`Tìm thấy ${papers.length} bài báo.`);
       }
     } catch (error) {
-      console.error("Lỗi tìm kiếm:", error);
+      console.error("Chi tiết lỗi tìm kiếm:", {
+        error,
+        searchQuery,
+        selectedDepartment,
+        selectedCriteria,
+        timestamp: new Date().toISOString()
+      });
       message.error(`Lỗi khi tìm kiếm: ${error.message || "Vui lòng thử lại."}`);
       setResearchPapers([]);
     } finally {
@@ -971,84 +1009,277 @@ const HomePage = () => {
     setPaperToRemove(null);
   };
 
-  const saveTopPapersToLocal = (papers) => {
-    const top10Papers = papers.slice(0, 10).map(paper => {
-      let authorString = "";
-      if (Array.isArray(paper.author)) {
-        authorString = paper.author
-          .map(a => a.author_name_vi || a.author_name_en || "")
-          .filter(Boolean)
-          .join(", ");
-      } else if (typeof paper.author === 'object' && paper.author !== null) {
-        authorString = paper.author.author_name_vi || paper.author.author_name_en || "Tác giả không xác định";
-      } else if (typeof paper.author === 'string') {
-        authorString = paper.author;
-      } else {
-        authorString = "Tác giả không xác định";
+  const fetchRelatedPapers = async (papers) => {
+    try {
+      console.log('Starting to fetch related papers for:', papers);
+      
+      const recommendationsPromises = papers.map(paper => {
+        console.log('Fetching recommendations for paper:', paper.id);
+        return userApi.getRecommendations(paper.id);
+      });
+      
+      const recommendationsResults = await Promise.all(recommendationsPromises);
+      console.log('Recommendations results:', recommendationsResults);
+      
+      // Log the structure of first result to debug
+      if (recommendationsResults.length > 0) {
+        console.log('First result structure:', JSON.stringify(recommendationsResults[0], null, 2));
       }
+      
+      const allRelatedPapers = recommendationsResults.flatMap(result => {
+        // Log each result structure
+        console.log('Processing result:', result);
+        
+        // If result is an array, use it directly
+        if (Array.isArray(result)) {
+          return result;
+        }
+        
+        // If result has data property that is an array, use it
+        if (result && Array.isArray(result.data)) {
+          return result.data;
+        }
+        
+        // If result has recommendations property that is an array, use it
+        if (result && Array.isArray(result.recommendations)) {
+          return result.recommendations;
+        }
+        
+        // If result is an object with papers property, use it
+        if (result && Array.isArray(result.papers)) {
+          return result.papers;
+        }
+        
+        // If none of the above, try to extract any array we find
+        if (result && typeof result === 'object') {
+          const possibleArrays = Object.values(result).filter(val => Array.isArray(val));
+          if (possibleArrays.length > 0) {
+            // Use the longest array found
+            return possibleArrays.reduce((a, b) => a.length > b.length ? a : b);
+          }
+        }
+        
+        return [];
+      });
 
-      return {
-        id: paper.id || paper._id,
-        title: paper.title || paper.title_vn || paper.title_en || "Không có tiêu đề",
-        author: authorString,
-        score: paper.score || 1,
-        departmentName: paper.departmentName || paper.department_name || "Khoa không xác định",
-        summary: paper.summary || "Không có tóm tắt",
-        publish_date: paper.publish_date || null,
-        keywords: paper.keywords || []
-      };
-    });
-    
-    localStorage.setItem('topPapers', JSON.stringify(top10Papers));
-    setTopPapers(top10Papers);
-    updateCytoscapeElements(top10Papers, searchQuery);
+      console.log('All related papers before filtering:', allRelatedPapers);
+
+      const uniquePapersMap = new Map();
+      allRelatedPapers.forEach(paper => {
+        // Skip if paper is null or undefined
+        if (!paper) return;
+        
+        // Log paper structure to debug
+        console.log('Processing paper:', paper);
+        
+        const paperId = paper._id || paper.id;
+        if (!paperId) {
+          console.log('Paper missing ID:', paper);
+          return;
+        }
+
+        // Skip if this paper is already in our top papers
+        if (papers.some(p => p.id === paperId)) {
+          console.log('Skipping duplicate paper:', paperId);
+          return;
+        }
+
+        // Only add if not already in our map
+        if (!uniquePapersMap.has(paperId)) {
+          const mappedPaper = {
+            id: paperId,
+            title: paper.title_vn || paper.title_en || paper.title || "Không có tiêu đề",
+            author: Array.isArray(paper.author) 
+              ? paper.author.map(a => a.author_name_vi || a.author_name_en || a.name || a).join(", ")
+              : typeof paper.author === 'string' 
+                ? paper.author
+                : paper.author?.author_name_vi || paper.author?.author_name_en || "Tác giả không xác định",
+            departmentName: paper.department_name || paper.departmentName || "Khoa không xác định",
+            score: paper.score || paper.similarity || 1,
+            summary: paper.summary || paper.abstract || "Không có tóm tắt",
+            publish_date: paper.publish_date || paper.publishDate || null,
+            keywords: paper.keywords || []
+          };
+          
+          console.log('Adding mapped paper:', mappedPaper);
+          uniquePapersMap.set(paperId, mappedPaper);
+        }
+      });
+
+      const uniqueRelatedPapers = Array.from(uniquePapersMap.values());
+      console.log('Final unique related papers:', uniqueRelatedPapers);
+      
+      localStorage.setItem('relatedPapers', JSON.stringify(uniqueRelatedPapers));
+      setRelatedPapers(uniqueRelatedPapers);
+      return uniqueRelatedPapers;
+    } catch (error) {
+      console.error('Error fetching related papers:', error);
+      message.error('Lỗi khi tải bài báo liên quan');
+      return [];
+    }
   };
 
-  const updateCytoscapeElements = (papers, query) => {
+  const saveTopPapersToLocal = async (papers) => {
+    try {
+      const top10Papers = papers.slice(0, 10).map(paper => {
+        let authorString = "";
+        if (Array.isArray(paper.author)) {
+          authorString = paper.author
+            .map(a => a.author_name_vi || a.author_name_en || "")
+            .filter(Boolean)
+            .join(", ");
+        } else if (typeof paper.author === 'object' && paper.author !== null) {
+          authorString = paper.author.author_name_vi || paper.author.author_name_en || "Tác giả không xác định";
+        } else if (typeof paper.author === 'string') {
+          authorString = paper.author;
+        } else {
+          authorString = "Tác giả không xác định";
+        }
+
+        return {
+          id: paper.id || paper._id,
+          title: paper.title || paper.title_vn || paper.title_en || "Không có tiêu đề",
+          author: authorString,
+          score: paper.score || 1,
+          departmentName: paper.departmentName || paper.department_name || "Khoa không xác định",
+          summary: paper.summary || "Không có tóm tắt",
+          publish_date: paper.publish_date || null,
+          keywords: paper.keywords || []
+        };
+      });
+      
+      localStorage.setItem('topPapers', JSON.stringify(top10Papers));
+      setTopPapers(top10Papers);
+
+      // Fetch related papers
+      console.log('Fetching related papers for top10:', top10Papers);
+      const relatedPapersResult = await fetchRelatedPapers(top10Papers);
+      console.log('Got related papers:', relatedPapersResult);
+
+      // Update cytoscape elements with both top papers and related papers
+      updateCytoscapeElements(top10Papers, searchQuery, relatedPapersResult);
+    } catch (error) {
+      console.error('Error in saveTopPapersToLocal:', error);
+      message.error('Có lỗi xảy ra khi xử lý dữ liệu');
+    }
+  };
+
+  const updateCytoscapeElements = (papers, query, relatedPapers = []) => {
+    console.log('Updating cytoscape elements with:', { papers, query, relatedPapers });
     const elements = [];
     
-    // Tìm score max để chuẩn hóa
-    const maxScore = Math.max(...papers.map(p => p.score || 1));
-    
+    // Add query node at center
     elements.push({
       data: {
         id: 'query',
         label: query || 'Không có câu truy vấn',
         shortLabel: (query || 'Không có câu truy vấn').substring(0, 15) + '...',
-        type: 'query'
-      }
+        type: 'query',
+        fontSize: 12
+      },
+      position: { x: 0, y: 0 },
+      locked: true
     });
 
-    papers.forEach((paper) => {
-      const title = paper.title || "Không có tiêu đề";
-      const normalizedScore = ((paper.score || 1) / maxScore); // Score từ 0 đến 1
-      
+    // Add top papers in inner circle
+    papers.forEach((paper, index) => {
+      const angle = (2 * Math.PI * index) / papers.length;
+      const radius = 200;
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle);
+
       elements.push({
         data: {
           id: paper.id,
-          label: title,
-          shortLabel: title.substring(0, 15) + '...',
+          label: paper.title,
+          shortLabel: paper.title.substring(0, 15) + '...',
           type: 'paper',
-          score: normalizedScore,
           fullData: paper,
-          size: 20 + (normalizedScore * 30), // Node size từ 20px đến 50px
-          fontSize: 8 + (normalizedScore * 4), // Font size từ 8px đến 12px
-          edgeWidth: 1 + (normalizedScore * 4) // Edge width từ 1px đến 5px
-        }
+          size: 25,
+          fontSize: 10
+        },
+        position: { x, y },
+        locked: true
       });
 
+      // Edge from query to top paper
       elements.push({
         data: {
-          id: `edge-${paper.id}`,
-          source: paper.id,
-          target: 'query',
-          weight: 1 + (normalizedScore * 4), // Edge width từ 1px đến 5px
-          arrow: 10 + (normalizedScore * 10) // Arrow size từ 10px đến 20px
+          id: `edge-query-${paper.id}`,
+          source: 'query',
+          target: paper.id,
+          weight: 2
         }
       });
     });
 
+    // Add related papers in outer circle
+    if (relatedPapers && relatedPapers.length > 0) {
+      console.log('Adding related papers to graph:', relatedPapers);
+      relatedPapers.forEach((paper, index) => {
+        if (!paper || !paper.id) {
+          console.warn('Invalid related paper:', paper);
+          return;
+        }
+
+        const angle = (2 * Math.PI * index) / relatedPapers.length;
+        const radius = 400; // Larger radius for outer circle
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+
+        // Add related paper node
+        elements.push({
+          data: {
+            id: paper.id,
+            label: paper.title,
+            shortLabel: paper.title.substring(0, 15) + '...',
+            type: 'related',
+            fullData: paper,
+            size: 20,
+            fontSize: 8
+          },
+          position: { x, y },
+          locked: true
+        });
+
+        // Connect to most similar top papers
+        papers.forEach(topPaper => {
+          // Calculate similarity score (simple text matching for now)
+          const similarity = calculateSimilarity(paper.title, topPaper.title);
+          if (similarity > 0.3) { // Add edge only if similarity is above threshold
+            elements.push({
+              data: {
+                id: `edge-related-${paper.id}-${topPaper.id}`,
+                source: paper.id,
+                target: topPaper.id,
+                weight: similarity,
+                type: 'related'
+              }
+            });
+          }
+        });
+      });
+    }
+
+    console.log('Final cytoscape elements:', elements);
     setCyElements(elements);
+  };
+
+  // Helper function to calculate text similarity
+  const calculateSimilarity = (text1, text2) => {
+    if (!text1 || !text2) return 0;
+    
+    // Convert to lowercase and remove special characters
+    const normalize = (text) => text.toLowerCase().replace(/[^a-z0-9\s]/g, '');
+    const words1 = normalize(text1).split(/\s+/);
+    const words2 = normalize(text2).split(/\s+/);
+    
+    // Count common words
+    const common = words1.filter(word => words2.includes(word));
+    
+    // Calculate Jaccard similarity
+    const union = new Set([...words1, ...words2]);
+    return common.length / union.size;
   };
 
   const cyStyle = [
@@ -1080,19 +1311,29 @@ const HomePage = () => {
       }
     },
     {
+      selector: 'node[type="related"]',
+      style: {
+        'background-color': '#3498db', // Change color to make it more visible
+        'border-width': '2px',
+        'border-color': '#2980b9'
+      }
+    },
+    {
       selector: 'edge',
       style: {
         'width': 'data(weight)',
         'line-color': '#95a5a6',
-        'target-arrow-color': '#95a5a6',
-        'target-arrow-shape': 'triangle',
-        'curve-style': 'bezier',
+        'curve-style': 'straight',
         'opacity': 1,
-        'transition-property': 'opacity, width, target-arrow-shape',
-        'transition-duration': '0.2s',
-        'target-arrow-width': 'data(arrow)',
-        'target-arrow-height': 'data(arrow)',
-        'arrow-scale': 1
+        'transition-property': 'opacity, width',
+        'transition-duration': '0.2s'
+      }
+    },
+    {
+      selector: 'edge[type="related"]',
+      style: {
+        'line-style': 'dashed',
+        'line-color': '#3498db'
       }
     },
     {
@@ -1105,7 +1346,7 @@ const HomePage = () => {
       selector: '.highlighted',
       style: {
         'opacity': 1,
-        'background-color': '#3498db',
+        'background-color': '#e67e22',
         'z-index': 9999
       }
     },
@@ -1113,17 +1354,10 @@ const HomePage = () => {
       selector: '.highlighted-edge',
       style: {
         'opacity': 1,
-        'line-color': '#3498db',
-        'target-arrow-color': '#3498db',
+        'line-color': '#e67e22',
         'z-index': 9999,
         'width': function(ele) {
           return parseFloat(ele.data('weight')) + 2;
-        },
-        'target-arrow-width': function(ele) {
-          return parseFloat(ele.data('arrow')) + 5;
-        },
-        'target-arrow-height': function(ele) {
-          return parseFloat(ele.data('arrow')) + 5;
         }
       }
     }
@@ -1135,21 +1369,27 @@ const HomePage = () => {
       return node.data('type') === 'query' ? 2 : 1;
     },
     levelWidth: function() { return 1; },
-    minNodeSpacing: 80, // Tăng khoảng cách giữa các node
+    minNodeSpacing: 80,
     animate: true,
     animationDuration: 500,
     fit: true,
     padding: 50,
-    spacingFactor: 1.5 // Tăng spacing factor để nodes không bị chồng lấn
+    spacingFactor: 1.5,
+    stop: function() {
+      if (cyRef.current) {
+        const zoom = cyRef.current.zoom();
+        const pan = cyRef.current.pan();
+        cyRef.current._private.currentZoom = zoom;
+        cyRef.current._private.currentPan = pan;
+      }
+    }
   };
 
   const handleCytoscapeEvents = (cy) => {
-    // Hàm helper để reset tất cả elements về trạng thái mặc định
     const resetAllElements = () => {
       cy.elements().removeClass('faded highlighted highlighted-edge');
     };
 
-    // Hàm helper để highlight node và các edges liên quan
     const highlightNode = (nodeId) => {
       resetAllElements();
       if (nodeId && nodeId !== 'query') {
@@ -1159,6 +1399,26 @@ const HomePage = () => {
         cy.$('#query').removeClass('faded');
       }
     };
+
+    let lastZoom = cy.zoom();
+    let lastPan = cy.pan();
+
+    cy.on('zoom', () => {
+      lastZoom = cy.zoom();
+    });
+
+    cy.on('pan', () => {
+      lastPan = cy.pan();
+    });
+
+    cy.on('layoutstop', () => {
+      if (lastZoom && lastPan) {
+        cy.viewport({
+          zoom: lastZoom,
+          pan: lastPan
+        });
+      }
+    });
 
     cy.on('tap', 'node', function(evt) {
       const node = evt.target;
@@ -1172,12 +1432,10 @@ const HomePage = () => {
       }
 
       if (nodeId === selectedNodeId) {
-        // Nếu click vào node đang được chọn, reset về trạng thái ban đầu
         resetAllElements();
         setSelectedNodeId(null);
         setSelectedPaper(null);
       } else {
-        // Chọn node mới
         setSelectedNodeId(nodeId);
         setSelectedPaper(node.data('fullData'));
         highlightNode(nodeId);
@@ -1191,7 +1449,6 @@ const HomePage = () => {
       if (nodeId === 'query') return;
 
       if (!selectedNodeId) {
-        // Chỉ highlight khi hover nếu không có node nào đang được chọn
         node.addClass('highlighted');
         cy.edges(`[source = "${nodeId}"]`).addClass('highlighted-edge');
       }
@@ -1204,13 +1461,11 @@ const HomePage = () => {
       if (nodeId === 'query') return;
 
       if (!selectedNodeId) {
-        // Chỉ remove highlight khi hover nếu không có node nào đang được chọn
         node.removeClass('highlighted');
         cy.edges(`[source = "${nodeId}"]`).removeClass('highlighted-edge');
       }
     });
 
-    // Click vào background để reset
     cy.on('tap', function(evt) {
       if (evt.target === cy) {
         resetAllElements();
@@ -1222,14 +1477,12 @@ const HomePage = () => {
 
   const handlePaperClick = (paper) => {
     if (selectedPaper?.id === paper.id) {
-      // Nếu click vào bài đang chọn, reset về trạng thái ban đầu
       setSelectedPaper(null);
       setSelectedNodeId(null);
       if (cyRef.current) {
         cyRef.current.elements().removeClass('faded highlighted highlighted-edge');
       }
     } else {
-      // Chọn bài mới
       setSelectedPaper(paper);
       setSelectedNodeId(paper.id);
       if (cyRef.current) {
@@ -1608,19 +1861,33 @@ const HomePage = () => {
                           cy={(cy) => {
                             cyRef.current = cy;
                             handleCytoscapeEvents(cy);
-                            // Thêm các controls
                             cy.userZoomingEnabled(true);
                             cy.userPanningEnabled(true);
-                            cy.minZoom(0.5);
-                            cy.maxZoom(2);
+                            cy.minZoom(0.1);
+                            cy.maxZoom(3);
+                            cy.zoom({
+                              level: 1,
+                              position: { x: 0, y: 0 }
+                            });
+                            // Remove custom wheel handling and use default zoom behavior
                           }}
-                          wheelSensitivity={0.2}
                         />
-                        {/* Thêm controls UI */}
-                        <div className="absolute bottom-4 right-4 flex gap-2">
+                        <div className="absolute top-4 right-4 flex gap-2">
                           <button
                             className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-                            onClick={() => cyRef.current?.zoom(cyRef.current.zoom() * 1.2)}
+                            onClick={() => {
+                              const cy = cyRef.current;
+                              if (cy) {
+                                const currentZoom = cy.zoom();
+                                const newZoom = currentZoom * 1.2;
+                                if (newZoom <= cy.maxZoom()) {
+                                  cy.animate({
+                                    zoom: newZoom,
+                                    duration: 200
+                                  });
+                                }
+                              }
+                            }}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
@@ -1628,7 +1895,19 @@ const HomePage = () => {
                           </button>
                           <button
                             className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-                            onClick={() => cyRef.current?.zoom(cyRef.current.zoom() / 1.2)}
+                            onClick={() => {
+                              const cy = cyRef.current;
+                              if (cy) {
+                                const currentZoom = cy.zoom();
+                                const newZoom = currentZoom / 1.2;
+                                if (newZoom >= cy.minZoom()) {
+                                  cy.animate({
+                                    zoom: newZoom,
+                                    duration: 200
+                                  });
+                                }
+                              }
+                            }}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
@@ -1636,7 +1915,15 @@ const HomePage = () => {
                           </button>
                           <button
                             className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
-                            onClick={() => cyRef.current?.fit()}
+                            onClick={() => {
+                              const cy = cyRef.current;
+                              if (cy) {
+                                cy.fit({
+                                  padding: 50,
+                                  duration: 200
+                                });
+                              }
+                            }}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                               <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
