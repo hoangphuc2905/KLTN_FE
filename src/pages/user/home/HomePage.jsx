@@ -518,7 +518,12 @@ const HomePage = () => {
 
       console.log("Kết quả API gốc:", response);
 
-      const papers = response.results
+      // Lấy 10 kết quả đầu tiên với score cao nhất
+      const top10Results = response.results
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 10);
+
+      const papers = top10Results
         .filter(result => {
           if (!result || !result.paper || !result.paper._id) {
             console.warn("Bỏ qua kết quả không hợp lệ:", result);
@@ -558,7 +563,9 @@ const HomePage = () => {
             file: result.paper.file || "",
             doi: result.paper.doi || "",
             status: result.paper.status || "",
-            score: result.score || 1
+            score: result.score || 0, // Lưu điểm tương đồng từ API
+            views: result.paper.views || 0,
+            downloads: result.paper.downloads || 0
           };
         });
 
@@ -572,14 +579,13 @@ const HomePage = () => {
       setCurrentPage(1);
 
       // Cập nhật top papers và biểu đồ
-      const top10Papers = papers.slice(0, 10);
-      await saveTopPapersToLocal(top10Papers);
+      await saveTopPapersToLocal(papers);
       
       // Lấy bài báo liên quan cho top 10
-      const relatedPapersResult = await fetchRelatedPapers(top10Papers);
+      const relatedPapersResult = await fetchRelatedPapers(papers);
       
       // Cập nhật biểu đồ với câu truy vấn mới
-      updateCytoscapeElements(top10Papers, searchQuery, relatedPapersResult);
+      updateCytoscapeElements(papers, searchQuery, relatedPapersResult);
 
       if (papers.length === 0) {
         message.warning("Không tìm thấy bài báo phù hợp.");
@@ -1256,34 +1262,40 @@ const HomePage = () => {
       locked: true
     });
 
-    // Add top papers in inner circle
+    // Add search result papers in inner circle
     papers.forEach((paper, index) => {
       const angle = (2 * Math.PI * index) / papers.length;
       const radius = 200;
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
 
+      // Normalize score to determine node size (20-35px)
+      const normalizedScore = paper.score ? (paper.score * 15) + 20 : 25;
+
       elements.push({
         data: {
           id: paper.id,
           label: paper.title,
           shortLabel: paper.title.substring(0, 15) + '...',
-          type: 'paper',
+          type: 'search',
           fullData: paper,
-          size: 25,
-          fontSize: 10
+          size: normalizedScore,
+          fontSize: 10,
+          score: paper.score
         },
         position: { x, y },
         locked: false
       });
 
-      // Edge from query to top paper with similarity score
+      // Edge from query to search result paper with score-based weight
       elements.push({
         data: {
           id: `edge-query-${paper.id}`,
           source: 'query',
           target: paper.id,
-          weight: paper.score || 2
+          weight: paper.score ? paper.score * 5 : 2, // Scale score for better visualization
+          type: 'search',
+          label: paper.score ? paper.score.toFixed(2) : ''
         }
       });
     });
@@ -1302,7 +1314,6 @@ const HomePage = () => {
         const x = radius * Math.cos(angle);
         const y = radius * Math.sin(angle);
 
-        // Add related paper node
         elements.push({
           data: {
             id: paper.id,
@@ -1317,7 +1328,7 @@ const HomePage = () => {
           locked: false
         });
 
-        // Always connect to query node with a thinner line
+        // Connect to query node with thin line
         elements.push({
           data: {
             id: `edge-query-related-${paper.id}`,
@@ -1328,16 +1339,16 @@ const HomePage = () => {
           }
         });
 
-        // Connect to most similar top papers
-        papers.forEach(topPaper => {
-          const similarity = calculateSimilarity(paper.title, topPaper.title);
+        // Connect to similar search results based on score
+        papers.forEach(searchPaper => {
+          const similarity = calculateSimilarity(paper.title, searchPaper.title);
           if (similarity > 0.3) {
             elements.push({
               data: {
-                id: `edge-related-${paper.id}-${topPaper.id}`,
-                source: topPaper.id,
+                id: `edge-related-${paper.id}-${searchPaper.id}`,
+                source: searchPaper.id,
                 target: paper.id,
-                weight: similarity,
+                weight: similarity * 2,
                 type: 'related'
               }
             });
@@ -1349,8 +1360,11 @@ const HomePage = () => {
     console.log('Final cytoscape elements:', elements);
     setCyElements(elements);
 
-    // Update the papers list to include all papers
-    const allPapers = [...papers, ...(relatedPapers || [])];
+    // Update the papers list to include all papers with scores
+    const allPapers = [
+      ...papers.map(p => ({ ...p, type: 'search' })),
+      ...(relatedPapers || []).map(p => ({ ...p, type: 'related' }))
+    ];
     setTopPapers(allPapers);
   };
 
@@ -1375,7 +1389,6 @@ const HomePage = () => {
     {
       selector: 'node',
       style: {
-        'background-color': '#666',
         'label': 'data(shortLabel)',
         'text-wrap': 'wrap',
         'text-max-width': '80px',
@@ -1401,6 +1414,14 @@ const HomePage = () => {
       }
     },
     {
+      selector: 'node[type="search"]',
+      style: {
+        'background-color': '#f39c12', // Orange color for search results
+        'border-width': '2px',
+        'border-color': '#d35400'
+      }
+    },
+    {
       selector: 'node[type="related"]',
       style: {
         'background-color': '#3498db',
@@ -1420,6 +1441,20 @@ const HomePage = () => {
         'target-arrow-shape': 'triangle',
         'target-arrow-color': '#95a5a6',
         'cursor': 'pointer'
+      }
+    },
+    {
+      selector: 'edge[type="search"]',
+      style: {
+        'line-color': '#f39c12',
+        'target-arrow-color': '#f39c12',
+        'label': 'data(label)', // Show score on edge
+        'font-size': '8px',
+        'text-rotation': 'autorotate',
+        'text-margin-y': '-10px',
+        'text-background-color': '#fff',
+        'text-background-opacity': 0.8,
+        'text-background-padding': '2px'
       }
     },
     {
@@ -1629,27 +1664,31 @@ const HomePage = () => {
       }
     });
 
-    // Add wheel handling for better zoom behavior
+    // Remove the old wheel handler and add a new one
+    cy.removeListener('wheel');
     cy.on('wheel', function(evt) {
-      evt.preventDefault();
-      const delta = evt.originalEvent.deltaY;
-      const position = evt.position || cy.pan();
-      
-      if (delta > 0) {
-        // Zoom out
-        cy.animate({
-          zoom: cy.zoom() * 0.9,
-          center: position,
-          duration: 50
+        const delta = evt.originalEvent.deltaY;
+        const zoomFactor = delta > 0 ? 0.95 : 1.05;
+        const position = evt.renderedPosition || cy.pan();
+
+        cy.zoom({
+            level: cy.zoom() * zoomFactor,
+            renderedPosition: position
         });
-      } else {
-        // Zoom in
-        cy.animate({
-          zoom: cy.zoom() * 1.1,
-          center: position,
-          duration: 50
-        });
-      }
+        evt.preventDefault();
+    });
+
+    // Add mousewheel zoom with Ctrl key
+    document.addEventListener('keydown', function(e) {
+        if (e.ctrlKey) {
+            cy.userZoomingEnabled(true);
+        }
+    });
+
+    document.addEventListener('keyup', function(e) {
+        if (!e.ctrlKey) {
+            cy.userZoomingEnabled(false);
+        }
     });
   };
 
@@ -2044,7 +2083,7 @@ const HomePage = () => {
                           cy={(cy) => {
                             cyRef.current = cy;
                             handleCytoscapeEvents(cy);
-                            cy.userZoomingEnabled(true);
+                            cy.userZoomingEnabled(false); // Disable default zoom
                             cy.userPanningEnabled(true);
                             cy.minZoom(0.1);
                             cy.maxZoom(3);
