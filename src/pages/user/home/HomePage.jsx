@@ -12,6 +12,7 @@ import { Modal, Button, Input, message, Spin, Select } from "antd";
 import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
+import Cytoscape from 'react-cytoscapejs';
 
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
@@ -43,6 +44,9 @@ const HomePage = () => {
   const [recentPapers, setRecentPapers] = useState([]);
   const [featuredPapers, setFeaturedPapers] = useState([]);
   const [researchPapers, setResearchPapers] = useState([]);
+  const [topPapers, setTopPapers] = useState([]);
+  const [cyElements, setCyElements] = useState([]);
+  const cyRef = useRef(null);
   const [authors, setAuthors] = useState({});
   const [departments, setDepartments] = useState({});
   const [departmentsList, setDepartmentsList] = useState([]);
@@ -56,8 +60,8 @@ const HomePage = () => {
   const [categories, setCategories] = useState([]);
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCriteria, setSelectedCriteria] = useState(""); // Add state for selected criteria
-  const [isSearching, setIsSearching] = useState(false); // Trạng thái tải
+  const [selectedCriteria, setSelectedCriteria] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [collections, setCollections] = useState([]);
   const userId = localStorage.getItem("user_id");
   const userType = localStorage.getItem("user_type");
@@ -65,13 +69,14 @@ const HomePage = () => {
   const [papersPerPage, setPapersPerPage] = useState(10);
   const [isRemoveModalVisible, setIsRemoveModalVisible] = useState(false);
   const [paperToRemove, setPaperToRemove] = useState(null);
-  const [availableYears, setAvailableYears] = useState([]); // State to store available years
-  const [isLoadingRecent, setIsLoadingRecent] = useState(false); // Loading state for recent papers
-  const [isLoadingFeatured, setIsLoadingFeatured] = useState(false); // Loading state for featured papers
-  const [isLoadingPapers, setIsLoadingPapers] = useState(false); // Loading state for all papers
-  const [viewMode, setViewMode] = useState("list"); // Add this state after other state declarations
+  const [availableYears, setAvailableYears] = useState([]);
+  const [isLoadingRecent, setIsLoadingRecent] = useState(false);
+  const [isLoadingFeatured, setIsLoadingFeatured] = useState(false);
+  const [isLoadingPapers, setIsLoadingPapers] = useState(false);
+  const [viewMode, setViewMode] = useState("list");
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false);
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
+  const [selectedNodeId, setSelectedNodeId] = useState(null);
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -83,13 +88,11 @@ const HomePage = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    // Fetch available years dynamically (or hardcode if needed)
     const currentYear = new Date().getFullYear();
-    const years = Array.from({ length: 50 }, (_, i) => currentYear - i); // Last 50 years
+    const years = Array.from({ length: 50 }, (_, i) => currentYear - i);
     setAvailableYears(years);
   }, []);
 
-  // Lọc bài báo chỉ dựa trên department, không dựa trên searchQuery
   const filteredPapers = useMemo(() => {
     return researchPapers.filter((paper) => {
       const departmentMatch = selectedDepartment
@@ -107,7 +110,6 @@ const HomePage = () => {
     return filteredPapers
       .slice((currentPage - 1) * papersPerPage, currentPage * papersPerPage)
       .map((paper) => {
-        // Lấy tên khoa ưu tiên theo thứ tự
         const departmentName =
           paper.department_name ||
           (paper.department && paper.department.department_name) ||
@@ -312,6 +314,10 @@ const HomePage = () => {
         setResearchPapers(approvedPapers);
         setCollections(collectionsResponse || []);
 
+        if (papers.length > 0) {
+          saveTopPapersToLocal(approvedPapers);
+        }
+
         setIsLoadingRecent(false);
         setIsLoadingFeatured(false);
         setIsLoadingPapers(false);
@@ -461,32 +467,20 @@ const HomePage = () => {
       message.warning("Vui lòng nhập từ khóa tìm kiếm.");
       return;
     }
-    setIsSearching(true); // Bật trạng thái tải
+    setIsSearching(true);
     try {
-      console.log("Tìm kiếm với từ khóa:", searchQuery);
-      const response = await userApi.semanticSearch(
-        searchQuery,
-        selectedDepartment,
-        selectedCriteria // Use selected criteria
-      );
-      console.log("Phản hồi API tìm kiếm:", response);
+      const response = await userApi.semanticSearch(searchQuery, selectedDepartment, selectedCriteria);
 
-      // Kiểm tra cấu trúc phản hồi
       if (!response || !response.results) {
         throw new Error("Phản hồi API không chứa dữ liệu kết quả.");
       }
 
       const papers = response.results.map((result) => ({
         id: result.paper._id,
-        title:
-          result.paper.title_vn || result.paper.title_en || "Không có tiêu đề",
-        author:
-          result.paper.author
-            ?.map((a) => a.author_name_vi || a.author_name_en)
-            .join(", ") || "Tác giả không xác định",
+        title: result.paper.title_vn || result.paper.title_en || "Không có tiêu đề",
+        author: result.paper.author,
         department: result.paper.department || "Khoa không xác định",
-        departmentName:
-          departments[result.paper.department] || "Khoa không xác định",
+        departmentName: departments[result.paper.department] || "Khoa không xác định",
         thumbnailUrl: result.paper.cover_image || "",
         summary: result.paper.summary || "Không có tóm tắt",
         publish_date: result.paper.publish_date || "",
@@ -494,9 +488,12 @@ const HomePage = () => {
         file: result.paper.file || "",
         doi: result.paper.doi || "",
         status: result.paper.status || "",
+        score: result.score || 1
       }));
 
       setResearchPapers(papers);
+      saveTopPapersToLocal(papers);
+      
       setCurrentPage(1);
       if (papers.length === 0) {
         message.warning("Không tìm thấy bài báo phù hợp.");
@@ -505,14 +502,12 @@ const HomePage = () => {
       }
     } catch (error) {
       console.error("Lỗi tìm kiếm:", error);
-      message.error(
-        `Lỗi khi tìm kiếm: ${error.message || "Vui lòng thử lại."}`
-      );
-      setResearchPapers([]); // Đặt rỗng để hiển thị thông báo không tìm thấy
+      message.error(`Lỗi khi tìm kiếm: ${error.message || "Vui lòng thử lại."}`);
+      setResearchPapers([]);
     } finally {
-      setIsSearching(false); // Tắt trạng thái tải
+      setIsSearching(false);
     }
-  }, [searchQuery, selectedDepartment, selectedCriteria]);
+  }, [searchQuery, selectedDepartment, selectedCriteria, departments]);
 
   const handleResetSearch = useCallback(async () => {
     setSearchQuery("");
@@ -525,7 +520,6 @@ const HomePage = () => {
         : await userApi.getAllScientificPapers();
 
       const papers = response?.data || response?.scientificPapers || [];
-      // Map lại departmentName cho từng paper
       const mappedPapers = await Promise.all(
         papers.map(async (paper) => {
           try {
@@ -977,6 +971,278 @@ const HomePage = () => {
     setPaperToRemove(null);
   };
 
+  const saveTopPapersToLocal = (papers) => {
+    const top10Papers = papers.slice(0, 10).map(paper => {
+      let authorString = "";
+      if (Array.isArray(paper.author)) {
+        authorString = paper.author
+          .map(a => a.author_name_vi || a.author_name_en || "")
+          .filter(Boolean)
+          .join(", ");
+      } else if (typeof paper.author === 'object' && paper.author !== null) {
+        authorString = paper.author.author_name_vi || paper.author.author_name_en || "Tác giả không xác định";
+      } else if (typeof paper.author === 'string') {
+        authorString = paper.author;
+      } else {
+        authorString = "Tác giả không xác định";
+      }
+
+      return {
+        id: paper.id || paper._id,
+        title: paper.title || paper.title_vn || paper.title_en || "Không có tiêu đề",
+        author: authorString,
+        score: paper.score || 1,
+        departmentName: paper.departmentName || paper.department_name || "Khoa không xác định",
+        summary: paper.summary || "Không có tóm tắt",
+        publish_date: paper.publish_date || null,
+        keywords: paper.keywords || []
+      };
+    });
+    
+    localStorage.setItem('topPapers', JSON.stringify(top10Papers));
+    setTopPapers(top10Papers);
+    updateCytoscapeElements(top10Papers, searchQuery);
+  };
+
+  const updateCytoscapeElements = (papers, query) => {
+    const elements = [];
+    
+    // Tìm score max để chuẩn hóa
+    const maxScore = Math.max(...papers.map(p => p.score || 1));
+    
+    elements.push({
+      data: {
+        id: 'query',
+        label: query || 'Không có câu truy vấn',
+        shortLabel: (query || 'Không có câu truy vấn').substring(0, 15) + '...',
+        type: 'query'
+      }
+    });
+
+    papers.forEach((paper) => {
+      const title = paper.title || "Không có tiêu đề";
+      const normalizedScore = ((paper.score || 1) / maxScore); // Score từ 0 đến 1
+      
+      elements.push({
+        data: {
+          id: paper.id,
+          label: title,
+          shortLabel: title.substring(0, 15) + '...',
+          type: 'paper',
+          score: normalizedScore,
+          fullData: paper,
+          size: 20 + (normalizedScore * 30), // Node size từ 20px đến 50px
+          fontSize: 8 + (normalizedScore * 4), // Font size từ 8px đến 12px
+          edgeWidth: 1 + (normalizedScore * 4) // Edge width từ 1px đến 5px
+        }
+      });
+
+      elements.push({
+        data: {
+          id: `edge-${paper.id}`,
+          source: paper.id,
+          target: 'query',
+          weight: 1 + (normalizedScore * 4), // Edge width từ 1px đến 5px
+          arrow: 10 + (normalizedScore * 10) // Arrow size từ 10px đến 20px
+        }
+      });
+    });
+
+    setCyElements(elements);
+  };
+
+  const cyStyle = [
+    {
+      selector: 'node',
+      style: {
+        'background-color': '#666',
+        'label': 'data(shortLabel)',
+        'text-wrap': 'wrap',
+        'text-max-width': '80px',
+        'font-size': 'data(fontSize)',
+        'text-valign': 'center',
+        'text-halign': 'center',
+        'width': 'data(size)',
+        'height': 'data(size)',
+        'opacity': 1,
+        'transition-property': 'opacity, background-color, width, height',
+        'transition-duration': '0.2s'
+      }
+    },
+    {
+      selector: 'node[type="query"]',
+      style: {
+        'background-color': '#e74c3c',
+        'width': '50px',
+        'height': '50px',
+        'font-size': '12px',
+        'font-weight': 'bold'
+      }
+    },
+    {
+      selector: 'edge',
+      style: {
+        'width': 'data(weight)',
+        'line-color': '#95a5a6',
+        'target-arrow-color': '#95a5a6',
+        'target-arrow-shape': 'triangle',
+        'curve-style': 'bezier',
+        'opacity': 1,
+        'transition-property': 'opacity, width, target-arrow-shape',
+        'transition-duration': '0.2s',
+        'target-arrow-width': 'data(arrow)',
+        'target-arrow-height': 'data(arrow)',
+        'arrow-scale': 1
+      }
+    },
+    {
+      selector: '.faded',
+      style: {
+        'opacity': 0.2
+      }
+    },
+    {
+      selector: '.highlighted',
+      style: {
+        'opacity': 1,
+        'background-color': '#3498db',
+        'z-index': 9999
+      }
+    },
+    {
+      selector: '.highlighted-edge',
+      style: {
+        'opacity': 1,
+        'line-color': '#3498db',
+        'target-arrow-color': '#3498db',
+        'z-index': 9999,
+        'width': function(ele) {
+          return parseFloat(ele.data('weight')) + 2;
+        },
+        'target-arrow-width': function(ele) {
+          return parseFloat(ele.data('arrow')) + 5;
+        },
+        'target-arrow-height': function(ele) {
+          return parseFloat(ele.data('arrow')) + 5;
+        }
+      }
+    }
+  ];
+
+  const cyLayout = {
+    name: 'concentric',
+    concentric: function(node) {
+      return node.data('type') === 'query' ? 2 : 1;
+    },
+    levelWidth: function() { return 1; },
+    minNodeSpacing: 80, // Tăng khoảng cách giữa các node
+    animate: true,
+    animationDuration: 500,
+    fit: true,
+    padding: 50,
+    spacingFactor: 1.5 // Tăng spacing factor để nodes không bị chồng lấn
+  };
+
+  const handleCytoscapeEvents = (cy) => {
+    // Hàm helper để reset tất cả elements về trạng thái mặc định
+    const resetAllElements = () => {
+      cy.elements().removeClass('faded highlighted highlighted-edge');
+    };
+
+    // Hàm helper để highlight node và các edges liên quan
+    const highlightNode = (nodeId) => {
+      resetAllElements();
+      if (nodeId && nodeId !== 'query') {
+        cy.elements().addClass('faded');
+        cy.$(`#${nodeId}`).removeClass('faded').addClass('highlighted');
+        cy.edges(`[source = "${nodeId}"]`).removeClass('faded').addClass('highlighted-edge');
+        cy.$('#query').removeClass('faded');
+      }
+    };
+
+    cy.on('tap', 'node', function(evt) {
+      const node = evt.target;
+      const nodeId = node.id();
+      
+      if (nodeId === 'query') {
+        resetAllElements();
+        setSelectedNodeId(null);
+        setSelectedPaper(null);
+        return;
+      }
+
+      if (nodeId === selectedNodeId) {
+        // Nếu click vào node đang được chọn, reset về trạng thái ban đầu
+        resetAllElements();
+        setSelectedNodeId(null);
+        setSelectedPaper(null);
+      } else {
+        // Chọn node mới
+        setSelectedNodeId(nodeId);
+        setSelectedPaper(node.data('fullData'));
+        highlightNode(nodeId);
+      }
+    });
+
+    cy.on('mouseover', 'node', function(evt) {
+      const node = evt.target;
+      const nodeId = node.id();
+      
+      if (nodeId === 'query') return;
+
+      if (!selectedNodeId) {
+        // Chỉ highlight khi hover nếu không có node nào đang được chọn
+        node.addClass('highlighted');
+        cy.edges(`[source = "${nodeId}"]`).addClass('highlighted-edge');
+      }
+    });
+
+    cy.on('mouseout', 'node', function(evt) {
+      const node = evt.target;
+      const nodeId = node.id();
+      
+      if (nodeId === 'query') return;
+
+      if (!selectedNodeId) {
+        // Chỉ remove highlight khi hover nếu không có node nào đang được chọn
+        node.removeClass('highlighted');
+        cy.edges(`[source = "${nodeId}"]`).removeClass('highlighted-edge');
+      }
+    });
+
+    // Click vào background để reset
+    cy.on('tap', function(evt) {
+      if (evt.target === cy) {
+        resetAllElements();
+        setSelectedNodeId(null);
+        setSelectedPaper(null);
+      }
+    });
+  };
+
+  const handlePaperClick = (paper) => {
+    if (selectedPaper?.id === paper.id) {
+      // Nếu click vào bài đang chọn, reset về trạng thái ban đầu
+      setSelectedPaper(null);
+      setSelectedNodeId(null);
+      if (cyRef.current) {
+        cyRef.current.elements().removeClass('faded highlighted highlighted-edge');
+      }
+    } else {
+      // Chọn bài mới
+      setSelectedPaper(paper);
+      setSelectedNodeId(paper.id);
+      if (cyRef.current) {
+        const cy = cyRef.current;
+        cy.elements().removeClass('faded highlighted highlighted-edge');
+        cy.elements().addClass('faded');
+        cy.$(`#${paper.id}`).removeClass('faded').addClass('highlighted');
+        cy.edges(`[source = "${paper.id}"]`).removeClass('faded').addClass('highlighted-edge');
+        cy.$('#query').removeClass('faded');
+      }
+    }
+  };
+
   return (
     <ErrorBoundary>
       <div className="bg-[#E7ECF0] min-h-screen">
@@ -1021,7 +1287,7 @@ const HomePage = () => {
               <select
                 className="p-2 border rounded-lg w-60 text-sm max-md:w-full max-md:p-1.5 max-md:text-xs"
                 value={selectedCriteria}
-                onChange={(e) => setSelectedCriteria(e.target.value)} // Update selected criteria
+                onChange={(e) => setSelectedCriteria(e.target.value)}
               >
                 <option value="">Tất cả</option>
                 <option value="title">Tiêu đề</option>
@@ -1276,7 +1542,6 @@ const HomePage = () => {
               ) : (
                 <section className="w-full mb-8">
                   <div className="grid grid-cols-[auto,1fr,auto] gap-4 h-[calc(100vh-400px)] min-h-[500px] max-h-[700px] max-md:grid-cols-1 max-md:h-auto">
-                    {/* Left Panel */}
                     <div className={`transition-all duration-300 ease-in-out ${
                       leftPanelCollapsed ? 'w-[40px]' : 'w-[300px]'
                     } overflow-hidden border rounded-lg bg-white p-2 max-md:h-[200px] relative flex flex-col`}>
@@ -1299,13 +1564,27 @@ const HomePage = () => {
                         <>
                           <h3 className="font-bold text-sm mb-2 text-sky-900 flex-shrink-0">Top 10 bài báo</h3>
                           <div className="overflow-y-auto flex-grow custom-scrollbar">
-                            {currentPapers.slice(0, 10).map((paper) => (
+                            {topPapers.map((paper) => (
                               <div 
                                 key={paper.id}
-                                className={`p-2 border-b cursor-pointer hover:bg-gray-50 ${
+                                className={`p-2 border-b cursor-pointer hover:bg-gray-50 transition-all duration-200 ${
                                   selectedPaper?.id === paper.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                                }`}
-                                onClick={() => setSelectedPaper(paper)}
+                                } ${selectedNodeId && selectedNodeId !== paper.id ? 'opacity-20' : ''}`}
+                                onClick={() => handlePaperClick(paper)}
+                                onMouseEnter={() => {
+                                  if (cyRef.current && !selectedNodeId) {
+                                    const cy = cyRef.current;
+                                    cy.$(`#${paper.id}`).addClass('highlighted');
+                                    cy.edges(`[source = "${paper.id}"]`).addClass('highlighted-edge');
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  if (cyRef.current && !selectedNodeId) {
+                                    const cy = cyRef.current;
+                                    cy.$(`#${paper.id}`).removeClass('highlighted');
+                                    cy.edges(`[source = "${paper.id}"]`).removeClass('highlighted-edge');
+                                  }
+                                }}
                               >
                                 <h3 className="font-semibold text-sm line-clamp-2">{paper.title}</h3>
                                 <p className="text-xs text-gray-500">{paper.author}</p>
@@ -1319,14 +1598,54 @@ const HomePage = () => {
                       )}
                     </div>
 
-                    {/* Middle Panel */}
                     <div className="border rounded-lg bg-white p-4 overflow-hidden">
-                      <div className="w-full h-full flex items-center justify-center text-gray-500">
-                        Khu vực hiển thị biểu đồ
+                      <div className="w-full h-full relative">
+                        <Cytoscape
+                          elements={cyElements}
+                          style={{ width: '100%', height: '100%' }}
+                          stylesheet={cyStyle}
+                          layout={cyLayout}
+                          cy={(cy) => {
+                            cyRef.current = cy;
+                            handleCytoscapeEvents(cy);
+                            // Thêm các controls
+                            cy.userZoomingEnabled(true);
+                            cy.userPanningEnabled(true);
+                            cy.minZoom(0.5);
+                            cy.maxZoom(2);
+                          }}
+                          wheelSensitivity={0.2}
+                        />
+                        {/* Thêm controls UI */}
+                        <div className="absolute bottom-4 right-4 flex gap-2">
+                          <button
+                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+                            onClick={() => cyRef.current?.zoom(cyRef.current.zoom() * 1.2)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <button
+                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+                            onClick={() => cyRef.current?.zoom(cyRef.current.zoom() / 1.2)}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M5 10a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                          <button
+                            className="p-2 bg-white rounded-full shadow-md hover:bg-gray-100"
+                            onClick={() => cyRef.current?.fit()}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Right Panel */}
                     <div className={`transition-all duration-300 ease-in-out ${
                       rightPanelCollapsed ? 'w-[40px]' : 'w-[300px]'
                     } border rounded-lg bg-white p-4 max-md:h-[300px] relative flex flex-col overflow-hidden`}>
