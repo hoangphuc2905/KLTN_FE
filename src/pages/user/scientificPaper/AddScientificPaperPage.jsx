@@ -8,15 +8,17 @@ import {
   Modal,
   Tabs,
   Upload,
+  Progress,
 } from "antd";
 import {
   CloseCircleOutlined,
   MinusOutlined,
   PlusOutlined,
   UploadOutlined,
+  CompressOutlined,
 } from "@ant-design/icons";
 import TextArea from "antd/es/input/TextArea";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Header from "../../../components/Header";
 import Footer from "../../../components/Footer";
 import userApi from "../../../api/api";
@@ -60,6 +62,10 @@ const AddScientificPaperPage = () => {
   const [doi, setDoi] = useState(""); // State for DOI
   const [coverImageError, setCoverImageError] = useState("");
   const [coverImageTouched, setCoverImageTouched] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false); // Trạng thái nén file
+  const [compressionProgress, setCompressionProgress] = useState(0); // Tiến trình nén
+  const [originalFileSize, setOriginalFileSize] = useState(0); // Kích thước file ban đầu
+  const [compressedFileSize, setCompressedFileSize] = useState(0); // Kích thước file sau khi nén
   // Removed duplicate declarations of fileError and fileTouched
   const navigate = useNavigate();
 
@@ -389,7 +395,7 @@ const AddScientificPaperPage = () => {
       try {
         const response = await userApi.uploadImage(file);
         setCoverImage(response.url);
-        setCoverImageError(""); // Clear error when image is selected
+        setCoverImageError("");
         message.success("Ảnh bìa đã được tải lên thành công!");
         console.log("Uploaded image response:", response);
       } catch (error) {
@@ -412,33 +418,97 @@ const AddScientificPaperPage = () => {
         // Check file size (limit to 3.5MB)
         const maxSize = 3.5 * 1024 * 1024; // 3.5MB in bytes
         if (file.size > maxSize) {
-          message.error("Kích thước tệp vượt quá giới hạn 3.5MB.");
+          // Hiển thị modal hỏi người dùng có muốn nén file không
+          Modal.confirm({
+            title: "File vượt quá kích thước cho phép",
+            content: (
+              <div>
+                <p>
+                  Kích thước file hiện tại:{" "}
+                  <b>{(file.size / (1024 * 1024)).toFixed(2)}MB</b>, vượt quá
+                  giới hạn 3.5MB.
+                </p>
+                <p>Bạn có muốn nén file để tải lên không?</p>
+              </div>
+            ),
+            icon: <CompressOutlined style={{ color: "#1890ff" }} />,
+            okText: "Nén file",
+            cancelText: "Hủy",
+            onOk: async () => {
+              const compressedResult = await compressFile(file);
+              if (compressedResult && compressedResult.compressedSize) {
+                // Parse compressedSize string to bytes
+                let sizeStr = compressedResult.compressedSize.trim();
+                let sizeBytes = 0;
+                if (sizeStr.toLowerCase().endsWith("mb")) {
+                  sizeBytes = parseFloat(sizeStr) * 1024 * 1024;
+                } else if (sizeStr.toLowerCase().endsWith("kb")) {
+                  sizeBytes = parseFloat(sizeStr) * 1024;
+                } else if (sizeStr.toLowerCase().endsWith("b")) {
+                  sizeBytes = parseFloat(sizeStr);
+                }
+                if (sizeBytes <= maxSize) {
+                  // Tải file nén từ downloadUrl và upload lại
+                  if (
+                    compressedResult.cloudinaryUrl &&
+                    compressedResult.originalName
+                  ) {
+                    fetch(compressedResult.cloudinaryUrl)
+                      .then((compressedRes) => compressedRes.blob())
+                      .then(async (compressedBlob) => {
+                        const compressedFile = new File(
+                          [compressedBlob],
+                          compressedResult.originalName,
+                          { type: "application/pdf" }
+                        );
+                        await uploadFile(compressedFile);
+                        setOriginalFileName(compressedResult.originalName);
+                      })
+                      .catch((err) => {
+                        console.error("Lỗi khi tải file nén:", err);
+                        message.error("Không thể upload file nén.");
+                      });
+                  }
+                } else {
+                  message.warning(
+                    `File sau khi nén vẫn có kích thước ${sizeStr}, vượt quá giới hạn 3.5MB. Vui lòng chọn file nhỏ hơn.`
+                  );
+                }
+              }
+            },
+          });
           return;
         }
 
-        try {
-          setOriginalFileName(file.name); // Save the original file name for display
-          const response = await userApi.uploadFile(file);
-          setSelectedFile(response.url); // Save the Cloudinary URL for backend
-          setFileError(""); // Clear error when file is uploaded
-          setFileTouched(true);
-          message.success("File đã được tải lên thành công!");
-          console.log("Uploaded file response:", response);
-        } catch (error) {
-          console.error(
-            "Error uploading file:",
-            error.response?.data || error.message
-          );
-          message.error("Không thể tải file lên. Vui lòng thử lại.");
-          setOriginalFileName(""); // Reset original file name on error
-          setSelectedFile(null); // Reset Cloudinary URL on error
-        }
+        // Upload original file if size is within limit
+        uploadFile(file);
       } else {
         setFileTouched(true);
         validateFile();
       }
     };
     input.click();
+  };
+
+  // Helper function to upload file
+  const uploadFile = async (file) => {
+    try {
+      setOriginalFileName(file.name);
+      const response = await userApi.uploadFile(file);
+      setSelectedFile(response.url);
+      setFileError("");
+      setFileTouched(true);
+      message.success("File đã được tải lên thành công!");
+      console.log("Uploaded file response:", response);
+    } catch (error) {
+      console.error(
+        "Error uploading file:",
+        error.response?.data || error.message
+      );
+      message.error("Không thể tải file lên. Vui lòng thử lại.");
+      setOriginalFileName("");
+      setSelectedFile(null);
+    }
   };
 
   const handleRemoveFile = () => {
@@ -857,6 +927,83 @@ const AddScientificPaperPage = () => {
 
   const handleHelpModalCancel = () => {
     setIsHelpModalVisible(false);
+  };
+
+  const [compressionResult, setCompressionResult] = useState(null); // Thông tin nén thực tế
+  const [showUploadCompressedModal, setShowUploadCompressedModal] =
+    useState(false);
+  const compressedFileRef = useRef(null);
+
+  // Sửa hàm compressFile để gọi API thực tế
+  const compressFile = async (file) => {
+    try {
+      setIsCompressing(true);
+      setCompressionProgress(0);
+      setOriginalFileSize(file.size);
+      setCompressionResult(null);
+
+      message.loading({ content: "Đang nén file...", key: "compress" });
+
+      // Tạo hiệu ứng tiến trình giả lập
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += Math.random() * 10 + 5;
+        if (progress >= 95) {
+          clearInterval(interval);
+        } else {
+          setCompressionProgress(Math.floor(progress));
+        }
+      }, 200);
+
+      // Gọi API nén PDF
+      const result = await userApi.compressPDF(file);
+
+      clearInterval(interval);
+      setCompressionProgress(100);
+
+      if (!result || !result.cloudinaryUrl || !result.originalName) {
+        throw new Error("API nén không trả về thông tin hợp lệ");
+      }
+
+      // Lấy kích thước thực tế từ response
+      let compressedSizeInMB = 0;
+      if (result.compressedSize) {
+        const sizeStr = result.compressedSize.trim().toLowerCase();
+        if (sizeStr.endsWith("mb")) {
+          compressedSizeInMB = parseFloat(sizeStr);
+        } else if (sizeStr.endsWith("kb")) {
+          compressedSizeInMB = parseFloat(sizeStr) / 1024;
+        } else if (sizeStr.endsWith("b")) {
+          compressedSizeInMB = parseFloat(sizeStr) / (1024 * 1024);
+        }
+      }
+      setCompressedFileSize(compressedSizeInMB * 1024 * 1024); // Chuyển về bytes
+      setCompressionResult(result);
+
+      setCompressionProgress(100);
+
+      // TỰ ĐỘNG LƯU LINK FILE NÉN
+      setSelectedFile(result.cloudinaryUrl);
+      setOriginalFileName(result.originalName);
+
+      message.success({
+        content: result.display || "Đã nén file thành công",
+        key: "compress",
+      });
+
+      setIsCompressing(false);
+
+      return result;
+    } catch (error) {
+      console.error("Lỗi khi nén file:", error);
+      message.error({
+        content: error.message || "Không thể nén file",
+        key: "compress",
+      });
+      setIsCompressing(false);
+      setCompressionResult(null);
+      throw error; // Ném lỗi để xử lý bên ngoài
+    }
   };
 
   return (
@@ -1959,7 +2106,7 @@ const AddScientificPaperPage = () => {
                         status={fileError ? "error" : ""}
                       />
                       <Button type="primary" onClick={handleFileChange}>
-                        Choose
+                        Tải lên
                       </Button>
                       {selectedFile && (
                         <Button
@@ -1968,7 +2115,50 @@ const AddScientificPaperPage = () => {
                           danger
                         />
                       )}
+                      {selectedFile && (
+                        <Button
+                          type="default"
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(selectedFile);
+                              const blob = await response.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = originalFileName || "compressed.pdf";
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              window.URL.revokeObjectURL(url);
+                            } catch (err) {
+                              message.error("Không thể tải file về.");
+                            }
+                          }}
+                        >
+                          Tải file
+                        </Button>
+                      )}
                     </div>
+
+                    {/* Hiển thị tiến trình nén */}
+                    {isCompressing && (
+                      <div className="mt-2">
+                        <Progress
+                          percent={compressionProgress}
+                          status="active"
+                        />
+                      </div>
+                    )}
+
+                    {/* Hiển thị kết quả nén thực tế */}
+                    {/* Không còn hiển thị link tải file nén nữa, chỉ thông báo */}
+                    {compressionResult && (
+                      <div className="mt-2 text-sm bg-green-50 border border-green-200 rounded p-2">
+                        <div>
+                          <b>Kết quả nén:</b> {compressionResult.display}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 {/* Link và DOI */}
@@ -1988,13 +2178,10 @@ const AddScientificPaperPage = () => {
                         className={`w-full ${
                           linkError ? "border-red-500" : ""
                         }`}
-                        placeholder="Link công bố bài báo (http://...)"
-                        required
+                        placeholder="Nhập link công bố bài báo"
+                        value={link}
+                        onChange={handleLinkChange}
                         status={linkError ? "error" : ""}
-                        onChange={(e) => {
-                          setLink(e.target.value);
-                          setLinkError("");
-                        }}
                         onBlur={() => {
                           setLinkTouched(true);
                           validateLink();
@@ -2025,6 +2212,7 @@ const AddScientificPaperPage = () => {
                     <Input
                       id="doi"
                       placeholder="Số DOI (vd: http://doi.org/10.1155.2019)"
+                      value={doi}
                       onChange={(e) => setDoi(e.target.value)}
                     />
                   </div>
@@ -2032,8 +2220,8 @@ const AddScientificPaperPage = () => {
                 <p className="mt-4 text-xs leading-5 text-black">
                   Minh chứng cần file upload full bài báo và link bài báo. Hệ
                   thống chỉ hỗ trợ file PDF và có kích thước nhỏ hơn 3.5MB.
-                  Trường hợp có nhiều hơn 1 file sử dụng nén thành file Zip hoặc
-                  file Rar trước khi upload.
+                  Nếu file lớn hơn 3.5MB, hệ thống sẽ tự động nén file và lưu lại file nén trên hệ
+                  thống.
                 </p>
                 <div className="flex justify-end space-x-4 mt-6">
                   <Button type="primary" onClick={handleClear}>
