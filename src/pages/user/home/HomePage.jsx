@@ -13,7 +13,7 @@ import userApi from "../../../api/api";
 import { FaArchive, FaRegFileArchive } from "react-icons/fa";
 import { FixedSizeList } from "react-window";
 import Cytoscape from "react-cytoscapejs";
-import { QrReader } from "react-qr-reader"; // Thay vì react-qr-scanner
+import { QrReader } from "@blackbox-vision/react-qr-reader";
 import { QrCode } from "lucide-react"; // Nếu dùng icon này, hoặc dùng svg tuỳ bạn
 import jsQR from "jsqr";
 
