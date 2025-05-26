@@ -520,12 +520,12 @@ const HomePage = () => {
 
       console.log("Kết quả API gốc:", response);
 
-      // Lấy 10 kết quả đầu tiên với score cao nhất
-      const top10Results = response.results
+      // Lấy 100 kết quả đầu tiên với score cao nhất cho dạng card
+      const top100Results = response.results
         .sort((a, b) => b.score - a.score)
-        .slice(0, 10);
+        .slice(0, 100);
 
-      const papers = top10Results
+      const papers = top100Results
         .filter(result => {
           if (!result || !result.paper || !result.paper._id) {
             console.warn("Bỏ qua kết quả không hợp lệ:", result);
@@ -565,7 +565,7 @@ const HomePage = () => {
             file: result.paper.file || "",
             doi: result.paper.doi || "",
             status: result.paper.status || "",
-            score: result.score || 0, // Lưu điểm tương đồng từ API
+            score: result.score || 0,
             views: result.paper.views || 0,
             downloads: result.paper.downloads || 0
           };
@@ -579,17 +579,18 @@ const HomePage = () => {
 
       setResearchPapers(papers);
       setCurrentPage(1);
-      setHasSearched(true); // Set hasSearched to true only after successful search
-      setViewMode("list"); // Reset view mode to list on new search
+      setHasSearched(true);
+      setViewMode("list");
 
       if (papers.length === 0) {
         message.warning("Không tìm thấy bài báo phù hợp.");
       } else {
         message.success(`Tìm thấy ${papers.length} bài báo.`);
-        // Update top papers and graph only if we have results
-        await saveTopPapersToLocal(papers);
-        const relatedPapersResult = await fetchRelatedPapers(papers);
-        updateCytoscapeElements(papers, searchQuery, relatedPapersResult);
+        // Chỉ lưu top 10 papers vào local storage và cập nhật graph
+        const top10Papers = papers.slice(0, 10);
+        await saveTopPapersToLocal(top10Papers);
+        const relatedPapersResult = await fetchRelatedPapers(top10Papers);
+        updateCytoscapeElements(top10Papers, searchQuery, relatedPapersResult);
       }
     } catch (error) {
       console.error("Chi tiết lỗi tìm kiếm:", {
