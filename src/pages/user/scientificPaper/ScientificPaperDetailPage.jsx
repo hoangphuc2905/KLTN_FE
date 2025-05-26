@@ -424,8 +424,10 @@ const ScientificPaperDetailPage = () => {
 
     if (paper.fileUrl) {
       try {
-        // Fetch file as blob
-        const response = await fetch(paper.fileUrl);
+        // Luôn chuyển sang https
+        const fileUrl = paper.fileUrl.replace(/^http:/, "https:");
+        const response = await fetch(fileUrl);
+        if (!response.ok) throw new Error("Không thể tải file về!");
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
 
