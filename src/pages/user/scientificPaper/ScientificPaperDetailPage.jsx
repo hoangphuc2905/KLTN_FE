@@ -218,6 +218,7 @@ const ScientificPaperDetailPage = () => {
             })
             .then(() => {
               hasTrackedView.current = true;
+              refreshPaperStats(); // Thêm dòng này
             })
             .catch((err) => {
               console.error("Error saving view:", err);
@@ -422,17 +423,23 @@ const ScientificPaperDetailPage = () => {
     }
 
     if (paper.fileUrl) {
-      const link = document.createElement("a");
-      link.href = paper.fileUrl;
-      link.download = paper.title
-        ? `${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
-        : "scientific_paper.pdf";
-      link.target = "_blank";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
       try {
+        // Fetch file as blob
+        const response = await fetch(paper.fileUrl);
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+
+        // Create a temporary link to download
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = paper.title
+          ? `${paper.title.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
+          : "scientific_paper.pdf";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
         await userApi.createPaperDownload({
           paper_id: id,
           user_id: user_id,
@@ -440,8 +447,10 @@ const ScientificPaperDetailPage = () => {
           download_time: new Date().toISOString(),
         });
         message.success("Tải file thành công!");
+        await refreshPaperStats(); // Thêm dòng này
       } catch (error) {
-        console.error("Error logging download:", error);
+        console.error("Error downloading file:", error);
+        message.error("Không thể tải file về!");
       }
 
       setDownloadAttempts((prev) => prev + 1);
@@ -455,6 +464,19 @@ const ScientificPaperDetailPage = () => {
       }
     } else {
       message.error("Không có file để tải về!");
+    }
+  };
+
+  const refreshPaperStats = async () => {
+    if (!id) return;
+    try {
+      const [downloads, views] = await Promise.all([
+        fetchDownloadCount(id),
+        fetchViewCount(id),
+      ]);
+      setPaper((prev) => (prev ? { ...prev, downloads, views } : prev));
+    } catch (error) {
+      // Có thể log lỗi nếu muốn
     }
   };
 
