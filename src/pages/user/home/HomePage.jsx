@@ -20,7 +20,7 @@ import jsQR from "jsqr";
 class ErrorBoundary extends React.Component {
   state = { hasError: false, error: null };
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error) {                                
     return { hasError: true, error };
   }
 
