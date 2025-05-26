@@ -78,6 +78,7 @@ const HomePage = () => {
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState(null);
   const [relatedPapers, setRelatedPapers] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const scrollRef = useRef(null);
   const papersListRef = useRef(null);
@@ -498,6 +499,7 @@ const HomePage = () => {
       return;
     }
     setIsSearching(true);
+    setHasSearched(false); // Reset hasSearched at start of search
     try {
       console.log("Thông tin tìm kiếm:", {
         searchQuery,
@@ -577,20 +579,17 @@ const HomePage = () => {
 
       setResearchPapers(papers);
       setCurrentPage(1);
-
-      // Cập nhật top papers và biểu đồ
-      await saveTopPapersToLocal(papers);
-      
-      // Lấy bài báo liên quan cho top 10
-      const relatedPapersResult = await fetchRelatedPapers(papers);
-      
-      // Cập nhật biểu đồ với câu truy vấn mới
-      updateCytoscapeElements(papers, searchQuery, relatedPapersResult);
+      setHasSearched(true); // Set hasSearched to true only after successful search
+      setViewMode("list"); // Reset view mode to list on new search
 
       if (papers.length === 0) {
         message.warning("Không tìm thấy bài báo phù hợp.");
       } else {
         message.success(`Tìm thấy ${papers.length} bài báo.`);
+        // Update top papers and graph only if we have results
+        await saveTopPapersToLocal(papers);
+        const relatedPapersResult = await fetchRelatedPapers(papers);
+        updateCytoscapeElements(papers, searchQuery, relatedPapersResult);
       }
     } catch (error) {
       console.error("Chi tiết lỗi tìm kiếm:", {
@@ -602,6 +601,7 @@ const HomePage = () => {
       });
       message.error(`Lỗi khi tìm kiếm: ${error.message || "Vui lòng thử lại."}`);
       setResearchPapers([]);
+      setHasSearched(false);
     } finally {
       setIsSearching(false);
     }
@@ -611,6 +611,7 @@ const HomePage = () => {
     setSearchQuery("");
     setSelectedCriteria("");
     setIsSearching(true);
+    setHasSearched(false);
     try {
       const userId = localStorage.getItem("user_id");
       const response = userId
@@ -1254,55 +1255,54 @@ const HomePage = () => {
       data: {
         id: 'query',
         label: query || 'Không có câu truy vấn',
-        shortLabel: (query || 'Không có câu truy vấn').substring(0, 15) + '...',
+        shortLabel: (query || 'Không có câu truy vấn').substring(0, 20) + '...',
         type: 'query',
-        fontSize: 12
+        fontSize: 14
       },
       position: { x: 0, y: 0 },
       locked: true
     });
 
-    // Add search result papers in inner circle
-    papers.forEach((paper, index) => {
-      const angle = (2 * Math.PI * index) / papers.length;
-      const radius = 200;
+    // Add top 10 search result papers in middle ring
+    const top10Papers = papers.slice(0, 10);
+    top10Papers.forEach((paper, index) => {
+      const angle = (2 * Math.PI * index) / top10Papers.length;
+      const radius = 250; // Middle ring radius
       const x = radius * Math.cos(angle);
       const y = radius * Math.sin(angle);
 
-      // Normalize score to determine node size (20-35px)
-      const normalizedScore = paper.score ? (paper.score * 15) + 20 : 25;
+      // Normalize score to determine node size (35-50px)
+      const normalizedScore = paper.score ? (paper.score * 15) + 35 : 40;
 
       elements.push({
         data: {
           id: paper.id,
           label: paper.title,
-          shortLabel: paper.title.substring(0, 15) + '...',
+          shortLabel: paper.title.substring(0, 20) + '...',
           type: 'search',
           fullData: paper,
           size: normalizedScore,
-          fontSize: 10,
-          score: paper.score
+          fontSize: 12,
+          score: paper.score || 1
         },
-        position: { x, y },
-        locked: false
+        position: { x, y }
       });
 
-      // Edge from query to search result paper with score-based weight
+      // Edge from query to search result paper
       elements.push({
         data: {
           id: `edge-query-${paper.id}`,
           source: 'query',
           target: paper.id,
-          weight: paper.score ? paper.score * 5 : 2, // Scale score for better visualization
+          weight: paper.score ? paper.score * 6 : 3,
           type: 'search',
           label: paper.score ? paper.score.toFixed(2) : ''
         }
       });
     });
 
-    // Add related papers in outer circle
+    // Add related papers in outer ring
     if (relatedPapers && relatedPapers.length > 0) {
-      console.log('Adding related papers to graph:', relatedPapers);
       relatedPapers.forEach((paper, index) => {
         if (!paper || !paper.id) {
           console.warn('Invalid related paper:', paper);
@@ -1310,7 +1310,7 @@ const HomePage = () => {
         }
 
         const angle = (2 * Math.PI * index) / relatedPapers.length;
-        const radius = 400;
+        const radius = 450; // Outer ring radius
         const x = radius * Math.cos(angle);
         const y = radius * Math.sin(angle);
 
@@ -1318,17 +1318,16 @@ const HomePage = () => {
           data: {
             id: paper.id,
             label: paper.title,
-            shortLabel: paper.title.substring(0, 15) + '...',
+            shortLabel: paper.title.substring(0, 20) + '...',
             type: 'related',
             fullData: paper,
-            size: 20,
-            fontSize: 8
+            size: 30,
+            fontSize: 10
           },
-          position: { x, y },
-          locked: false
+          position: { x, y }
         });
 
-        // Connect to query node with thin line
+        // Connect to query node
         elements.push({
           data: {
             id: `edge-query-related-${paper.id}`,
@@ -1339,8 +1338,8 @@ const HomePage = () => {
           }
         });
 
-        // Connect to similar search results based on score
-        papers.forEach(searchPaper => {
+        // Connect to similar search results
+        top10Papers.forEach(searchPaper => {
           const similarity = calculateSimilarity(paper.title, searchPaper.title);
           if (similarity > 0.3) {
             elements.push({
@@ -1360,7 +1359,6 @@ const HomePage = () => {
     console.log('Final cytoscape elements:', elements);
     setCyElements(elements);
 
-    // Update the papers list to include all papers with scores
     const allPapers = [
       ...papers.map(p => ({ ...p, type: 'search' })),
       ...(relatedPapers || []).map(p => ({ ...p, type: 'related' }))
@@ -1391,7 +1389,7 @@ const HomePage = () => {
       style: {
         'label': 'data(shortLabel)',
         'text-wrap': 'wrap',
-        'text-max-width': '80px',
+        'text-max-width': '120px',
         'font-size': 'data(fontSize)',
         'text-valign': 'center',
         'text-halign': 'center',
@@ -1399,25 +1397,32 @@ const HomePage = () => {
         'height': 'data(size)',
         'opacity': 1,
         'transition-property': 'opacity, background-color, width, height',
-        'transition-duration': '0.2s',
-        'cursor': 'grab'
+        'transition-duration': '0.3s',
+        'cursor': 'grab',
+        'text-outline-color': '#fff',
+        'text-outline-width': 2,
+        'text-background-opacity': 0.9,
+        'text-background-color': '#fff',
+        'text-background-padding': 4
       }
     },
     {
       selector: 'node[type="query"]',
       style: {
         'background-color': '#e74c3c',
-        'width': '50px',
-        'height': '50px',
-        'font-size': '12px',
-        'font-weight': 'bold'
+        'width': '80px',
+        'height': '80px',
+        'font-size': '14px',
+        'font-weight': 'bold',
+        'border-width': '3px',
+        'border-color': '#c0392b'
       }
     },
     {
       selector: 'node[type="search"]',
       style: {
-        'background-color': '#f39c12', // Orange color for search results
-        'border-width': '2px',
+        'background-color': '#f39c12',
+        'border-width': '3px',
         'border-color': '#d35400'
       }
     },
@@ -1426,7 +1431,9 @@ const HomePage = () => {
       style: {
         'background-color': '#3498db',
         'border-width': '2px',
-        'border-color': '#2980b9'
+        'border-color': '#2980b9',
+        'width': '30px',
+        'height': '30px'
       }
     },
     {
@@ -1434,12 +1441,15 @@ const HomePage = () => {
       style: {
         'width': 'data(weight)',
         'line-color': '#95a5a6',
-        'curve-style': 'straight',
-        'opacity': 1,
+        'curve-style': 'unbundled-bezier',
+        'control-point-distances': [40],
+        'control-point-weights': [0.5],
+        'opacity': 0.6,
         'transition-property': 'opacity, width',
-        'transition-duration': '0.2s',
+        'transition-duration': '0.3s',
         'target-arrow-shape': 'triangle',
         'target-arrow-color': '#95a5a6',
+        'arrow-scale': 0.8,
         'cursor': 'pointer'
       }
     },
@@ -1448,13 +1458,14 @@ const HomePage = () => {
       style: {
         'line-color': '#f39c12',
         'target-arrow-color': '#f39c12',
-        'label': 'data(label)', // Show score on edge
-        'font-size': '8px',
+        'width': 'data(weight)',
+        'label': 'data(label)',
+        'font-size': '10px',
         'text-rotation': 'autorotate',
         'text-margin-y': '-10px',
         'text-background-color': '#fff',
-        'text-background-opacity': 0.8,
-        'text-background-padding': '2px'
+        'text-background-opacity': 0.9,
+        'text-background-padding': '3px'
       }
     },
     {
@@ -1462,13 +1473,15 @@ const HomePage = () => {
       style: {
         'line-style': 'dashed',
         'line-color': '#3498db',
-        'target-arrow-color': '#3498db'
+        'target-arrow-color': '#3498db',
+        'opacity': 0.4,
+        'width': 1
       }
     },
     {
       selector: '.faded',
       style: {
-        'opacity': 0.2
+        'opacity': 0.15
       }
     },
     {
@@ -1476,7 +1489,15 @@ const HomePage = () => {
       style: {
         'opacity': 1,
         'background-color': '#e67e22',
-        'z-index': 9999
+        'z-index': 9999,
+        'border-width': '4px',
+        'border-color': '#d35400',
+        'width': function(ele) {
+          return parseFloat(ele.data('size')) + 10;
+        },
+        'height': function(ele) {
+          return parseFloat(ele.data('size')) + 10;
+        }
       }
     },
     {
@@ -1490,34 +1511,39 @@ const HomePage = () => {
           return parseFloat(ele.data('weight')) + 2;
         }
       }
-    },
-    {
-      selector: 'node:active',
-      style: {
-        'cursor': 'grabbing'
-      }
     }
   ];
 
   const cyLayout = {
     name: 'concentric',
     concentric: function(node) {
-      return node.data('type') === 'query' ? 2 : 1;
+      // Return values determine which circle/level the node will be placed in
+      // Higher values = closer to center
+      if (node.data('type') === 'query') return 3;  // Center
+      if (node.data('type') === 'search') return 2; // Middle ring
+      return 1; // Outer ring (related papers)
     },
-    levelWidth: function() { return 1; },
-    minNodeSpacing: 80,
+    levelWidth: function(nodes) {
+      // Adjust spacing between levels
+      return 1;
+    },
+    minNodeSpacing: 50,
     animate: true,
-    animationDuration: 500,
+    animationDuration: 1000,
+    animationEasing: 'ease-in-out',
     fit: true,
-    padding: 50,
+    padding: 75,
     spacingFactor: 1.5,
-    stop: function() {
-      if (cyRef.current) {
-        const zoom = cyRef.current.zoom();
-        const pan = cyRef.current.pan();
-        cyRef.current._private.currentZoom = zoom;
-        cyRef.current._private.currentPan = pan;
+    radius: 200,
+    startAngle: 3/2 * Math.PI,
+    sweep: undefined,
+    clockwise: true,
+    sort: function(a, b) {
+      // Sort nodes within each level by score
+      if (a.data('score') && b.data('score')) {
+        return b.data('score') - a.data('score');
       }
+      return 0;
     }
   };
 
@@ -1810,21 +1836,35 @@ const HomePage = () => {
             </div>
           </div>
           <div className="self-center mt-6 w-full max-w-[1563px] max-md:max-w-full">
-            <div className="flex gap-4 items-center mb-4">
-              <span className="text-sm text-gray-600">Chế độ xem:</span>
-              <button 
-                className={`px-4 py-1.5 rounded-lg text-sm ${viewMode === "list" ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-700"}`}
-                onClick={() => setViewMode("list")}
-              >
-                Dạng bảng
-              </button>
-              <button 
-                className={`px-4 py-1.5 rounded-lg text-sm ${viewMode === "graph" ? "bg-sky-500 text-white" : "bg-gray-200 text-gray-700"}`}
-                onClick={() => setViewMode("graph")}
-              >
-                Dạng biểu đồ
-              </button>
-            </div>
+            {researchPapers.length > 0 && hasSearched && (
+              <div className="flex gap-6 items-center mb-4 bg-white p-3 rounded-lg shadow-sm">
+                <span className="text-sm font-medium text-gray-700">Chế độ xem:</span>
+                <div className="flex gap-6">
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      className="form-radio h-4 w-4 text-sky-500 transition duration-150 ease-in-out"
+                      name="view-mode"
+                      value="list"
+                      checked={viewMode === "list"}
+                      onChange={(e) => setViewMode(e.target.value)}
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Dạng bảng</span>
+                  </label>
+                  <label className="inline-flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      className="form-radio h-4 w-4 text-sky-500 transition duration-150 ease-in-out"
+                      name="view-mode"
+                      value="graph"
+                      checked={viewMode === "graph"}
+                      onChange={(e) => setViewMode(e.target.value)}
+                    />
+                    <span className="ml-2 text-sm text-gray-700">Dạng biểu đồ</span>
+                  </label>
+                </div>
+              </div>
+            )}
 
             <div className="flex gap-5 max-md:flex-col">
               {viewMode === "list" ? (
