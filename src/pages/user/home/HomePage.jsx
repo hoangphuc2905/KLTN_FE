@@ -1835,34 +1835,32 @@ const HomePage = () => {
               </button>
             </div>
           </div>
-          <div className="self-center mt-6 w-full max-w-[1563px] max-md:max-w-full">
+          <div className="self-center mt-2 w-full max-w-[1563px] max-md:max-w-full">
             {researchPapers.length > 0 && hasSearched && (
-              <div className="flex gap-6 items-center mb-4 bg-white p-3 rounded-lg shadow-sm">
+              <div className="flex gap-6 items-center mb-4">
                 <span className="text-sm font-medium text-gray-700">Chế độ xem:</span>
-                <div className="flex gap-6">
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      className="form-radio h-4 w-4 text-sky-500 transition duration-150 ease-in-out"
-                      name="view-mode"
-                      value="list"
-                      checked={viewMode === "list"}
-                      onChange={(e) => setViewMode(e.target.value)}
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Dạng bảng</span>
-                  </label>
-                  <label className="inline-flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      className="form-radio h-4 w-4 text-sky-500 transition duration-150 ease-in-out"
-                      name="view-mode"
-                      value="graph"
-                      checked={viewMode === "graph"}
-                      onChange={(e) => setViewMode(e.target.value)}
-                    />
-                    <span className="ml-2 text-sm text-gray-700">Dạng biểu đồ</span>
-                  </label>
-                </div>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    className="form-radio h-4 w-4 text-sky-500 transition duration-150 ease-in-out"
+                    name="view-mode"
+                    value="list"
+                    checked={viewMode === "list"}
+                    onChange={(e) => setViewMode(e.target.value)}
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Dạng card</span>
+                </label>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    className="form-radio h-4 w-4 text-sky-500 transition duration-150 ease-in-out"
+                    name="view-mode"
+                    value="graph"
+                    checked={viewMode === "graph"}
+                    onChange={(e) => setViewMode(e.target.value)}
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Dạng biểu đồ</span>
+                </label>
               </div>
             )}
 
